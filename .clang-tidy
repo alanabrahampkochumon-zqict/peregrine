@@ -1,0 +1,55 @@
+# prettier-ignore
+---
+# 1. Added minus sign to disable trailing return type warnings for GTest
+Checks: "-*,readability-identifier-naming,clang-diagnostic-*,clang-analyzer-*,bugprone-*,performance-*,modernize-*,-modernize-use-trailing-return-type"
+WarningsAsErrors: ""
+HeaderFileExtensions: [h, hh, hpp, hxx, tpp, inl]
+ImplementationFileExtensions: [c, cc, cpp, cxx]
+HeaderFilterRegex: ""
+ExcludeHeaderFilterRegex: ""
+FormatStyle: none
+CheckOptions:
+    - { key: readability-identifier-naming.DefaultCase, value: camelBack }
+    - { key: readability-identifier-naming.NamespaceCase, value: lower_case }
+
+    - { key: readability-identifier-naming.ClassCase, value: CamelCase }
+    - { key: readability-identifier-naming.EnumCase, value: CamelCase }
+    - { key: readability-identifier-naming.StructCase, value: CamelCase }
+    - { key: readability-identifier-naming.UnionCase, value: CamelCase }
+
+    - { key: readability-identifier-naming.FunctionCase, value: camelBack }
+    - { key: readability-identifier-naming.VariableCase, value: camelBack }
+    - { key: readability-identifier-naming.ParameterCase, value: camelBack }
+    - { key: readability-identifier-naming.MemberCase, value: camelBack }
+    - { key: readability-identifier-naming.MemberPrefix, value: "" }
+
+    - { key: readability-identifier-naming.PrivateMemberCase, value: camelBack }
+    - { key: readability-identifier-naming.PrivateMemberPrefix, value: "_" }
+    - { key: readability-identifier-naming.ProtectedMemberCase, value: camelBack }
+    - { key: readability-identifier-naming.ProtectedMemberPrefix, value: "_" }
+    - { key: readability-identifier-naming.PrivateMethodCase, value: camelBack }
+    - { key: readability-identifier-naming.PrivateMethodPrefix, value: "_" }
+    - { key: readability-identifier-naming.ProtectedMethodCase, value: camelBack }
+    - { key: readability-identifier-naming.ProtectedMethodPrefix, value: "_" }
+
+    - { key: readability-identifier-naming.ClassMemberCase, value: camelBack }
+    - { key: readability-identifier-naming.StaticVariableCase, value: camelBack }
+    - { key: readability-identifier-naming.StaticVariablePrefix, value: "s_" }
+    - { key: readability-identifier-naming.GlobalVariableCase, value: camelBack }
+    - { key: readability-identifier-naming.GlobalVariablePrefix, value: "g_" }
+
+    # - { key: readability-identifier-naming.ConstexprVariableCase, value: UPPER_CASE }
+    - { key: readability-identifier-naming.GlobalConstexprVariableCase, value: UPPER_CASE }
+    - { key: readability-identifier-naming.LocalConstexprVariableCase, value: camelBack }
+
+    - { key: readability-identifier-naming.ConstantCase, value: UPPER_CASE }
+    - { key: readability-identifier-naming.GlobalConstantCase, value: UPPER_CASE }
+    - { key: readability-identifier-naming.ClassConstantCase, value: UPPER_CASE }
+    - { key: readability-identifier-naming.EnumConstantCase, value: UPPER_CASE }
+    - { key: readability-identifier-naming.MacroDefinitionCase, value: UPPER_CASE }
+    - { key: readability-identifier-naming.LocalConstantCase, value: camelBack }
+
+    - { key: readability-identifier-naming.FunctionIgnoredRegexp, value: "^(TEST|TEST_F|TYPED_TEST|TEST_P|TYPED_TEST_SUITE|SetUp|TearDown)$" }
+
+SystemHeaders: false
+...

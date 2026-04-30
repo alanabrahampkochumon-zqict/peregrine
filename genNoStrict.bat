@@ -1,0 +1,1 @@
+cmake -D ENABLE_STRICT=OFF -B build
