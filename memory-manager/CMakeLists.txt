@@ -29,6 +29,8 @@ target_include_directories(
     $<INSTALL_INTERFACE:include>
 )
 
+target_link_libraries(MemoryManager INTERFACE StrictWarnings)
+
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/include" PREFIX "Header Files" FILES 
     ${AllocatorHeaderFiles}
     ${UtilFiles}
