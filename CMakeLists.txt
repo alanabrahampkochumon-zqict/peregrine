@@ -105,6 +105,7 @@ include(dependencies.cmake)
 add_subdirectory(memory-manager)
 add_subdirectory(test-suite)
 add_subdirectory(benchmark-suite)
+add_subdirectory(demo)
 
 # Link ProjectStrictWarnings to enable strict mode.
 target_link_libraries(TestSuite PRIVATE StrictWarnings)

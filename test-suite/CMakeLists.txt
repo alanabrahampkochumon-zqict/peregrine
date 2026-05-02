@@ -1,3 +1,5 @@
+add_executable(TestSuite)
+
 set(TestDir "src/")
 set(TestFiles "SampleTest.cpp")
 list(TRANSFORM TestFiles PREPEND ${TestDir})
@@ -5,8 +7,6 @@ list(TRANSFORM TestFiles PREPEND ${TestDir})
 set(IncludeDir "include/")
 set(IncludeFiles "Utils.h")
 list(TRANSFORM IncludeFiles PREPEND ${IncludeDir})
-
-add_executable(TestSuite ${TestFiles})
 
 target_sources(
     TestSuite
