@@ -1,5 +1,3 @@
-add_library(MemoryManager INTERFACE)
-
 # Files
 set(AllocatorDir "include/allocators/")
 set(AllocatorHeaderFiles "Arena.h")
@@ -11,6 +9,7 @@ set(UtilDir "include/utils/")
 set(UtilFiles "Constants.h")
 list(TRANSFORM UtilFiles PREPEND ${UtilDir})
 
+add_library(MemoryManager INTERFACE ${AllocatorHeaderFiles} ${AllocatorTemplateFiles} ${UtilFiles})
 
 target_sources(
     MemoryManager
@@ -38,6 +37,3 @@ source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/include" PREFIX "Header Files" FI
 source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/include" PREFIX "Template Files" FILES 
     ${AllocatorTemplateFiles} 
 )
-
-
-# add_custom_target(MemManager ALL )
