@@ -9,6 +9,10 @@ set(UtilDir "include/utils/")
 set(UtilFiles "Constants.h")
 list(TRANSFORM UtilFiles PREPEND ${UtilDir})
 
+set(IncludeDir "include/")
+set(IncludeFiles "DoxygenGroups.h")
+list(TRANSFORM IncludeFiles PREPEND ${IncludeDir})
+
 add_library(MemoryManager INTERFACE ${AllocatorHeaderFiles} ${AllocatorTemplateFiles} ${UtilFiles})
 
 target_sources(
@@ -20,6 +24,7 @@ target_sources(
     ${AllocatorHeaderFiles}
     ${AllocatorTemplateFiles}
     ${UtilFiles}
+    ${IncludeFiles}
 )
 
 target_include_directories(
