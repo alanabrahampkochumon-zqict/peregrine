@@ -19,7 +19,7 @@ namespace pmm
      *                                    *
      **************************************/
 
-    constexpr Arena::Arena(const std::size_t bytes)
+    constexpr Arena::Arena(const std::size_t bytes) noexcept
     {
         _buffer = new uint8_t[bytes];
         _sizeInBytes = bytes;
@@ -27,8 +27,26 @@ namespace pmm
     }
 
 
-    constexpr Arena::~Arena()
+    constexpr Arena::~Arena() noexcept
     {
         delete[] _buffer;
     }
+
+    constexpr std::size_t Arena::freeSize() const noexcept
+    {
+        return _sizeInBytes - _offset;
+    }
+
+
+    constexpr std::size_t Arena::usedSize() const noexcept
+    {
+        return _offset;
+    }
+
+
+    constexpr std::size_t Arena::size() const noexcept
+    {
+        return _sizeInBytes;
+    }
+
 } // namespace pmm

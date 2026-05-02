@@ -20,15 +20,37 @@ namespace pmm
     {
         /**
          * @brief Instantiate an Arena allocator of the given size.
-         * @param bytes The byte size of the arena.
+         * @param[in] bytes The byte size of the arena.
          */
-        constexpr Arena(std::size_t bytes);
+        constexpr Arena(std::size_t bytes) noexcept;
+
 
         /**
          * @brief Destroy Arena, freeing up any memory it holds.
          * @note For clearing the Arena, use @ref freeAll.
          */
-        constexpr ~Arena();
+        constexpr ~Arena() noexcept;
+
+
+        /**
+         * @brief Get the free capacity in bytes of the arena.
+         * @return The free capacity of the arena in bytes.
+         */
+        [[nodiscard]] constexpr std::size_t freeSize() const noexcept;
+
+
+        /**
+         * @brief Get the used capacity in bytes of the arena.
+         * @return The used capacity of the arena in bytes.
+         */
+        [[nodiscard]] constexpr std::size_t usedSize() const noexcept;
+
+
+        /**
+         * @brief Get the total capacity in bytes of the arena.
+         * @return The total capacity of the arena.
+         */
+        [[nodiscard]] constexpr std::size_t size() const noexcept;
 
         //constexpr void* allocBytes(std::size_t bytes, std::size_t alignment);
 
@@ -61,6 +83,8 @@ namespace pmm
         uint64_t _sizeInBytes, _offset;
     };
 
+
+    
 } // namespace pmm
 
 #include "Arena.tpp"
