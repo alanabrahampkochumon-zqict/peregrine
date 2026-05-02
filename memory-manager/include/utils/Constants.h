@@ -10,23 +10,75 @@
  */
 
 
-#include <cstddef>
+#include <cstdint>
 
 
 namespace pmm::constants
 {
-	inline constexpr std::size_t BYTE = 1; ///< Byte Size of a byte.
-	inline constexpr std::size_t WORD = 2; ///< Byte Size of a Word.
-	inline constexpr std::size_t DWORD = 4; ///< Byte size of a DoubleWord.
-	inline constexpr std::size_t QWORD = 8; ///< Byte size of a QuadWord.
-	inline constexpr std::size_t KB = 1024; ///< Byte size of 1 Kilobyte.
-	inline constexpr std::size_t MB = KB * KB; ///< Byte size of 1 Megabyte.
-	inline constexpr std::size_t GB = KB * MB; ///< Byte size of 1 Gigabyte.
-	inline constexpr std::size_t TB = KB * GB; ///< Byte size of 1 Terabyte.
 
-	//constexpr std::size_t operator""MB(const std::size_t byte) noexcept
-	//{
-	//	return M
-	//}
+	inline constexpr uint64_t BYTE = 1;         ///< Size of a single byte.
+	inline constexpr uint64_t WORD = 2;         ///< Size of a Word (2 bytes).
+	inline constexpr uint64_t DWORD = 4;         ///< Size of a DoubleWord (4 bytes).
+	inline constexpr uint64_t QWORD = 8;         ///< Size of a QuadWord (8 bytes).
+
+	inline constexpr uint64_t KB = 1024;         ///< Size of 1 Kilobyte in bytes.
+	inline constexpr uint64_t MB = KB * KB;      ///< Size of 1 Megabyte in bytes.
+	inline constexpr uint64_t GB = KB * MB;      ///< Size of 1 Gigabyte in bytes.
+	inline constexpr uint64_t TB = KB * GB;      ///< Size of 1 Terabyte in bytes.
+
+
+	/**
+	 * @brief User-defined literal for Byte assignment.
+	 * @param[in] byte The amount of bytes.
+	 * @return The equivalent size in bytes.
+	 */
+	constexpr uint64_t operator""_B(const unsigned long long byte) noexcept
+	{
+		return byte;
+	}
+
+
+	/**
+	 * @brief User-defined literal for Kilobyte to byte conversion.
+	 * @param[in] byte The amount of Kilobytes.
+	 * @return The equivalent size in bytes.
+	 */
+	constexpr uint64_t operator""_KB(const unsigned long long byte) noexcept
+	{
+		return byte * KB;
+	}
+
+
+	/**
+	 * @brief User-defined literal for Megabyte to byte conversion.
+	 * @param[in] byte The amount of Megabytes.
+	 * @return The equivalent size in bytes.
+	 */
+	constexpr uint64_t operator""_MB(const unsigned long long byte) noexcept
+	{
+		return byte * MB;
+	}
+
+
+	/**
+	 * @brief User-defined literal for Gigabyte to byte conversion.
+	 * @param[in] byte The amount of Gigabytes.
+	 * @return The equivalent size in bytes.
+	 */
+	constexpr uint64_t operator""_GB(const unsigned long long byte) noexcept
+	{
+		return byte * GB;
+	}
+
+
+	/**
+	 * @brief User-defined literal for Terabyte to byte conversion.
+	 * @param[in] byte The amount of Terabytes.
+	 * @return The equivalent size in bytes.
+	 */
+	constexpr uint64_t operator""_TB(const unsigned long long byte) noexcept
+	{
+		return byte * TB;
+	}
 }
 
