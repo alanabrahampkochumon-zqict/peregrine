@@ -4,7 +4,7 @@
  * @author Alan Abraham P Kochumon
  * @date Created on: May 02, 2026
  *
- * @brief Definitions for doxygen groups used across Peregrine Memory library.
+ * @brief Doxygen group for organizing Peregrine Memory library into modular units.
  *
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */

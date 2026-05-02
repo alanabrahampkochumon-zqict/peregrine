@@ -5,7 +5,7 @@ set(TestFiles "ConstantTests.cpp")
 list(TRANSFORM TestFiles PREPEND ${TestDir})
 
 set(IncludeDir "include/")
-set(IncludeFiles "Utils.h")
+set(IncludeFiles "Utils.h;DoxygenGroups.h")
 list(TRANSFORM IncludeFiles PREPEND ${IncludeDir})
 
 target_sources(
