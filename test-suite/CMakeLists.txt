@@ -1,7 +1,7 @@
 add_executable(TestSuite)
 
 set(TestDir "src/")
-set(TestFiles "SampleTest.cpp")
+set(TestFiles "ConstantTests.cpp")
 list(TRANSFORM TestFiles PREPEND ${TestDir})
 
 set(IncludeDir "include/")
