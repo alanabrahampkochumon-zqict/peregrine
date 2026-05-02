@@ -5,10 +5,11 @@
  * @date Created on: May 02, 2026
  *
  * @brief Implementation for Linear/Arena allocator member functions defined in
- * Arena.h
+ *        Arena.h
  *
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
+
 
 namespace pmm
 {
@@ -19,7 +20,7 @@ namespace pmm
      *                                    *
      **************************************/
 
-    constexpr Arena::Arena(const std::size_t bytes) noexcept
+    Arena::Arena(const std::size_t bytes) noexcept
     {
         _buffer = new uint8_t[bytes];
         _sizeInBytes = bytes;
@@ -27,7 +28,7 @@ namespace pmm
     }
 
 
-    constexpr Arena::~Arena() noexcept
+    Arena::~Arena() noexcept
     {
         delete[] _buffer;
     }

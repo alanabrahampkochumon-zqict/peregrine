@@ -19,17 +19,21 @@ namespace pmm
     struct Arena
     {
         /**
-         * @brief Instantiate an Arena allocator of the given size.
-         * @param[in] bytes The byte size of the arena.
+         * @brief Allocate a new physical memory vault from the Operating System.
+         *
+         * @param[in] bytes The total capacity of the arena in bytes.
+         *
+         * @warning The memory block is NOT zero-initialized.
+         * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        constexpr Arena(std::size_t bytes) noexcept;
+        explicit Arena(std::size_t bytes) noexcept;
 
 
         /**
          * @brief Destroy Arena, freeing up any memory it holds.
          * @note For clearing the Arena, use @ref freeAll.
          */
-        constexpr ~Arena() noexcept;
+        ~Arena() noexcept;
 
 
         /**

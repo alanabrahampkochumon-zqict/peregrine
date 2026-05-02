@@ -1,8 +1,12 @@
 add_executable(TestSuite)
 
 set(TestDir "src/")
-set(TestFiles "ConstantTests.cpp")
-list(TRANSFORM TestFiles PREPEND ${TestDir})
+set(CommonFiles "ConstantTests.cpp")
+list(TRANSFORM CommonFiles PREPEND ${TestDir})
+
+set(AllocatorDir "src/allocators/")
+set(AllocatorFiles "ArenaTests.cpp;")
+list(TRANSFORM AllocatorFiles PREPEND ${AllocatorDir})
 
 set(IncludeDir "include/")
 set(IncludeFiles "Utils.h;DoxygenGroups.h")
@@ -11,7 +15,7 @@ list(TRANSFORM IncludeFiles PREPEND ${IncludeDir})
 target_sources(
     TestSuite
     PRIVATE
-    ${TestFiles}
+    ${CommonFiles} ${AllocatorFiles}
 
     PRIVATE
     FILE_SET HEADERS
