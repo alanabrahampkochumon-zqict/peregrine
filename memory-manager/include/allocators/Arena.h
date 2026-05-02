@@ -26,14 +26,28 @@ namespace pmm
          * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        explicit Arena(std::size_t bytes) noexcept;
+        inline explicit Arena(std::size_t bytes) noexcept;
 
 
         /**
          * @brief Destroy Arena, freeing up any memory it holds.
          * @note For clearing the Arena, use @ref freeAll.
          */
-        ~Arena() noexcept;
+        inline ~Arena() noexcept;
+
+
+        /**
+         * @brief Copying is strictly prohibited to prevent double-free crashes.
+         * @note Use std::move() to transfer ownership of the arena.
+         */
+        Arena(const Arena&) = delete;
+
+
+        /**
+         * @brief Copying is strictly prohibited to prevent double-free crashes.
+         * @note Use std::move() to transfer ownership of the arena.
+         */
+        Arena& operator=(const Arena&) = delete;
 
 
         /**
