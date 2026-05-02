@@ -9,3 +9,26 @@
  *
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
+
+namespace pmm
+{
+
+    /**************************************
+     *                                    *
+     *           INITIALIZERS             *
+     *                                    *
+     **************************************/
+
+    constexpr Arena::Arena(const std::size_t bytes)
+    {
+        _buffer = new uint8_t[bytes];
+        _sizeInBytes = bytes;
+        _offset = 0;
+    }
+
+
+    constexpr Arena::~Arena()
+    {
+        delete[] _buffer;
+    }
+} // namespace pmm
