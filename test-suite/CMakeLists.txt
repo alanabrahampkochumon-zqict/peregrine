@@ -30,6 +30,5 @@ target_link_libraries(
     GTest::gtest_main
 )
 
-enable_testing()
 include(GoogleTest)
 gtest_discover_tests(TestSuite)
