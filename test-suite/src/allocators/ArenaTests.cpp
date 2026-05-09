@@ -283,7 +283,7 @@ namespace pmm
     {
         constexpr auto size = 512;
         Arena arena(size);
-        const auto vec = arena.alloc<Vec4>(1, 2, 3, 4);
+        const auto vec = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
         EXPECT_FLOAT_EQ(1.0f,vec->x);
         EXPECT_FLOAT_EQ(2.0f,vec->y);
@@ -293,6 +293,6 @@ namespace pmm
 
 } // namespace pmm
 
-// TODO: Add ArenaAlloc tests
+// TODO: Add ArenaAlloc alloc tests
 
 /** @} */
