@@ -10,6 +10,8 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
+#include <utility>
+
 
 namespace pmm {
     /**************************************
@@ -31,15 +33,10 @@ namespace pmm {
 
 
     constexpr Arena::Arena(Arena &&arena) noexcept {
-        // Transfer the resources to the current instance
-        _buffer = arena._buffer;
-        _offset = arena._offset;
-        _sizeInBytes = arena._sizeInBytes;
-
-        // Nullify the source buffer to prevent double-free.
-        arena._buffer = nullptr;
-        arena._offset = 0;
-        arena._sizeInBytes = 0;
+        // Move the resource and null-out the moved resources.
+        _buffer = std::exchange(arena._buffer, nullptr);
+        _offset = std::exchange(arena._offset, 0);
+        _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
     }
 
 
