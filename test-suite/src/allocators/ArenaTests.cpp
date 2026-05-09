@@ -9,28 +9,51 @@
  */
 
 
-
 #include <allocators/Arena.h>
 
 #include <gtest/gtest.h>
+#include <utility>
 
+/**
+ * @addtogroup T_PMM_Arena
+ * @{
+ */
 
-TEST(ArenaInitialization, InitializesArenaWithTheGivenBytes)
-{
-    pmm::Arena arena(512);
+/**
+ * @brief Verify that Arena gets intialized with the correct size.
+ */
+TEST(ArenaInitialization, InitializesArenaWithTheGivenBytes) {
+    const pmm::Arena arena(512);
     EXPECT_EQ(512, arena.size());
 }
 
 
-TEST(ArenaInitialization, ArenaHasZeroUsedSize)
-{
+/**
+ * @brief Verify that usedSize is equal to zero size before any allocations.
+ */
+TEST(ArenaInitialization, ArenaHasZeroUsedSize) {
     const pmm::Arena arena(512);
     EXPECT_EQ(0, arena.usedSize());
 }
 
 
-TEST(ArenaInitialization, ArenaHasFreeSpaceEqualToSize)
-{
+/**
+ * @brief Verify that freeSize is equal to Arena size before any allocations.
+ */
+TEST(ArenaInitialization, ArenaHasFreeSpaceEqualToSize) {
     const pmm::Arena arena(512);
     EXPECT_EQ(512, arena.freeSize());
 }
+
+
+/**
+ * @brief Move constructor moves the Arena to new variable and sets the old location to null.
+ */
+TEST(ArenaMove, MovesToNewVariable) {
+    pmm::Arena arena(512);
+
+    const pmm::Arena arena2 = std::move(arena);
+    // arena.
+}
+
+/** @} */

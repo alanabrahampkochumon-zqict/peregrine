@@ -51,6 +51,14 @@ namespace pmm
 
 
         /**
+         * @brief Move the current Arena instance to a new object.
+         *
+         * @param[in/out] arena The arena to move into the new object.
+         */
+        constexpr Arena(Arena&& arena) noexcept;
+
+
+        /**
          * @brief Get the free capacity in bytes of the arena.
          * @return The free capacity of the arena in bytes.
          */

@@ -11,43 +11,49 @@
  */
 
 
-namespace pmm
-{
-
+namespace pmm {
     /**************************************
      *                                    *
      *           INITIALIZERS             *
      *                                    *
      **************************************/
 
-    Arena::Arena(const std::size_t bytes) noexcept
-    {
+    Arena::Arena(const std::size_t bytes) noexcept {
         _buffer = new uint8_t[bytes];
         _sizeInBytes = bytes;
         _offset = 0;
     }
 
 
-    Arena::~Arena() noexcept
-    {
+    Arena::~Arena() noexcept {
         delete[] _buffer;
     }
 
-    constexpr std::size_t Arena::freeSize() const noexcept
-    {
+
+    constexpr Arena::Arena(Arena &&arena) noexcept {
+        // Transfer the resources to the current instance
+        _buffer = arena._buffer;
+        _offset = arena._offset;
+        _sizeInBytes = arena._sizeInBytes;
+
+        // Nullify the source buffer to prevent double-free.
+        arena._buffer = nullptr;
+        arena._offset = 0;
+        arena._sizeInBytes = 0;
+    }
+
+
+    constexpr std::size_t Arena::freeSize() const noexcept {
         return _sizeInBytes - _offset;
     }
 
 
-    constexpr std::size_t Arena::usedSize() const noexcept
-    {
+    constexpr std::size_t Arena::usedSize() const noexcept {
         return _offset;
     }
 
 
-    constexpr std::size_t Arena::size() const noexcept
-    {
+    constexpr std::size_t Arena::size() const noexcept {
         return _sizeInBytes;
     }
-
 } // namespace pmm

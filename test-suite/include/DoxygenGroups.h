@@ -22,6 +22,12 @@
      * @brief Verify Memory Literals.
      * @ingroup T_PMM_Lib
      */
+
+    /**
+    * @defgroup T_PMM_Arena Arena Allocator
+    * @brief Verify Arena Allocator Logic.
+    * @ingroup T_PMM_Lib
+    */
     
 /** @} */ // End of FGM_Math
 
