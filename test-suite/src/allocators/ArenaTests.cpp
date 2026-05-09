@@ -285,10 +285,10 @@ namespace pmm
         Arena arena(size);
         const auto vec = arena.alloc<Vec4>(1, 2, 3, 4);
 
-        EXPECT_EQ(vec->x, 1);
-        EXPECT_EQ(vec->y, 2);
-        EXPECT_EQ(vec->z, 3);
-        EXPECT_EQ(vec->w, 4);
+        EXPECT_FLOAT_EQ(1.0f,vec->x);
+        EXPECT_FLOAT_EQ(2.0f,vec->y);
+        EXPECT_FLOAT_EQ(3.0f,vec->z);
+        EXPECT_FLOAT_EQ(4.0f,vec->w);
     }
 
 } // namespace pmm
