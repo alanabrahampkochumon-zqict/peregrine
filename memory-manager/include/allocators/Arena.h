@@ -16,11 +16,8 @@
 #include "gtest/gtest_prod.h"
 
 
-namespace pmm
-{
-
-    struct Arena
-    {
+namespace pmm {
+    struct Arena {
         /**
          * @brief Allocate a new physical memory vault from the Operating System.
          *
@@ -43,14 +40,14 @@ namespace pmm
          * @brief Copying is strictly prohibited to prevent double-free crashes.
          * @note Use std::move() to transfer ownership of the arena.
          */
-        Arena(const Arena&) = delete;
+        Arena(const Arena &) = delete;
 
 
         /**
          * @brief Copying is strictly prohibited to prevent double-free crashes.
          * @note Use std::move() to transfer ownership of the arena.
          */
-        Arena& operator=(const Arena&) = delete;
+        Arena &operator=(const Arena &) = delete;
 
 
         /**
@@ -58,7 +55,7 @@ namespace pmm
          *
          * @param[in/out] arena The arena to move into the new object.
          */
-        Arena(Arena&& arena) noexcept;
+        Arena(Arena &&arena) noexcept;
 
 
         /**
@@ -70,7 +67,7 @@ namespace pmm
          *
          * @return The current arena instance.
          */
-        Arena& operator=(Arena&& arena) noexcept;
+        Arena &operator=(Arena &&arena) noexcept;
 
 
         /**
@@ -93,7 +90,19 @@ namespace pmm
          */
         [[nodiscard]] constexpr std::size_t size() const noexcept;
 
-        //constexpr void* allocBytes(std::size_t bytes, std::size_t alignment);
+
+        /**
+         * @brief Allocate @p bytes of memory.
+         *
+         * @param bytes     The memory in bytes to allocate from the Arena.
+         * @param alignment The alignment to use when allocating memory.
+         *
+         * @warning Can cause internal fragmentation, when aligning ill-aligned values.
+         *
+         * @return A void pointer to the start of allocated memory or
+         *         `nullptr` if the arena cannot allocate memory of requested size.
+         */
+        constexpr void *allocBytes(std::size_t bytes, std::size_t alignment);
 
         //constexpr void* allocBytes(std::size_t bytes);
 
@@ -118,9 +127,10 @@ namespace pmm
 
         // TODO: Add resize
         // TODO: Add temp arena
+        // TODO: Add namespace based new allocation eg: namespace arena { Mat3 mat = new Mat3(); // Uses arena new not C++ heap}
 
     private:
-        uint8_t* _buffer;
+        uint8_t *_buffer;
         uint64_t _sizeInBytes, _offset;
 
         // FRIEND TEST macros for verifying internal states
@@ -130,9 +140,6 @@ namespace pmm
         FRIEND_TEST(ArenaMoveAssignment, MovesBufferIntoNewObject);
         FRIEND_TEST(ArenaMoveAssignment, DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
     };
-
-
-    
 } // namespace pmm
 
 #include "Arena.tpp"

@@ -11,7 +11,9 @@
  */
 
 #include <utility>
-
+#include <bit>
+#include <cstring>
+#include <cassert>
 
 namespace pmm {
     /**************************************
@@ -40,7 +42,7 @@ namespace pmm {
     }
 
 
-    inline Arena& Arena::operator=(Arena &&arena) noexcept {
+    inline Arena &Arena::operator=(Arena &&arena) noexcept {
         // Release the buffer held by the current arena
         delete _buffer; // TODO: Update as we move to HAL
 
@@ -65,5 +67,27 @@ namespace pmm {
 
     constexpr std::size_t Arena::size() const noexcept {
         return _sizeInBytes;
+    }
+
+    constexpr void alignForward(const std::size_t alignment) {
+        assert(std::has_single_bit(alignment));
+    }
+
+    constexpr void *Arena::allocBytes(const std::size_t bytes, const std::size_t alignment) {
+        // Bytes = 13 -> 1101
+        // Alignment = 4 -> 0100
+        // Modulo = 1 -> 1101 & 0011 (4 - 1 = 3) = 01
+        // const auto modulo = bytes & (alignment - 1);
+        //
+        // if (const auto alignedSize = bytes + (alignment - modulo); _offset + alignedSize <= _sizeInBytes) {
+        //     void* ptr = &_buffer[_offset];
+        //     _offset += alignedSize;
+        //
+        //     memset(ptr, 0, alignedSize); // TODO: Remove when moving to HAL
+        //     return ptr;
+        // }
+
+        // Return nullptr if the requested memory cannot be allocated
+        return nullptr;
     }
 } // namespace pmm

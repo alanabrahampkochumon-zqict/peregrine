@@ -6,7 +6,7 @@ list(TRANSFORM AllocatorHeaderFiles PREPEND ${AllocatorDir})
 list(TRANSFORM AllocatorTemplateFiles PREPEND ${AllocatorDir})
 
 set(UtilDir "include/utils/")
-set(UtilFiles "Constants.h")
+set(UtilFiles "Constants.h;Utilities.h")
 list(TRANSFORM UtilFiles PREPEND ${UtilDir})
 
 set(IncludeDir "include/")
@@ -14,6 +14,9 @@ set(IncludeFiles "DoxygenGroups.h")
 list(TRANSFORM IncludeFiles PREPEND ${IncludeDir})
 
 add_library(MemoryManager INTERFACE ${AllocatorHeaderFiles} ${AllocatorTemplateFiles} ${UtilFiles})
+
+target_compile_features(MemoryManager INTERFACE cxx_std_20)
+set_target_properties(MemoryManager PROPERTIES INTERFACE_CXX_EXTENSIONS OFF)
 
 target_sources(
     MemoryManager
