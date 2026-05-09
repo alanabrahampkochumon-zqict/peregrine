@@ -96,13 +96,14 @@ namespace pmm {
          *
          * @param bytes     The memory in bytes to allocate from the Arena.
          * @param alignment The alignment to use when allocating memory.
+         *                  Defaults to `sizeof(void*)`.
          *
          * @warning Can cause internal fragmentation, when aligning ill-aligned values.
          *
          * @return A void pointer to the start of allocated memory or
          *         `nullptr` if the arena cannot allocate memory of requested size.
          */
-        void *allocBytes(std::size_t bytes, std::size_t alignment);
+        void *allocBytes(std::size_t bytes, std::size_t alignment = sizeof(void*));
 
         //constexpr void* allocBytes(std::size_t bytes);
 
