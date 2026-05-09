@@ -44,7 +44,7 @@ namespace pmm {
 
     inline Arena &Arena::operator=(Arena &&arena) noexcept {
         // Release the buffer held by the current arena
-        delete _buffer; // TODO: Update as we move to HAL
+        delete[] _buffer; // TODO: Update as we move to HAL
 
         // Move the data members and null-out the moved data members.
         _buffer = std::exchange(arena._buffer, nullptr);
@@ -68,6 +68,7 @@ namespace pmm {
     constexpr std::size_t Arena::size() const noexcept {
         return _sizeInBytes;
     }
+
 
     inline void Arena::_alignForward(const std::size_t alignment) noexcept {
         // To make sure alignment is the power of 2
