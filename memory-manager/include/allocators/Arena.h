@@ -133,6 +133,12 @@ namespace pmm {
         uint8_t *_buffer;
         uint64_t _sizeInBytes, _offset;
 
+        /**
+         * @brief Align the internal buffer to @p alignment.
+         * @param alignment The memory alignment to align the buffer to.
+         */
+        void _alignForward(std::size_t alignment) noexcept;
+
         // FRIEND TEST macros for verifying internal states
         FRIEND_TEST(ArenaMoveConstructor, NullsOutInternalBuffer);
         FRIEND_TEST(ArenaMoveConstructor, MovesBufferIntoNewObject);

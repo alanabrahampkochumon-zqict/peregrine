@@ -69,8 +69,27 @@ namespace pmm {
         return _sizeInBytes;
     }
 
-    constexpr void alignForward(const std::size_t alignment) {
+    inline void Arena::_alignForward(const std::size_t alignment) noexcept {
+        // To make sure alignment is the power of 2
         assert(std::has_single_bit(alignment));
+
+        // Base address of the pointer
+        const auto absoluteBaseAddress = reinterpret_cast<uintptr_t>(_buffer);
+        // Current memory address
+        const auto absoluteAddress = absoluteBaseAddress + _offset;
+
+        // Modulo arithmetic for numbers that are power of two
+        // Bytes = 13 -> 1101
+        // Alignment = 4 -> 0100
+        // Modulo = 1 -> 1101 & 0011 (4 - 1 = 3) = 01
+        const auto modulo = absoluteAddress & (alignment - 1);
+        uintptr_t alignedAddress = 0;
+
+        if (modulo != 0)
+            alignedAddress = absoluteAddress + (alignment - modulo);
+        // Convert the offset back to 8 relative offset
+        _offset = alignedAddress - absoluteBaseAddress;
+
     }
 
     constexpr void *Arena::allocBytes(const std::size_t bytes, const std::size_t alignment) {
