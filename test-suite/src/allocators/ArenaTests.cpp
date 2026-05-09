@@ -128,7 +128,7 @@ namespace pmm
         Arena arena(size);
         [[maybe_unused]] Arena arena2(256);
 
-        arena2 = std::move(arena);
+        static_cast<void>(arena2 = std::move(arena));
         EXPECT_EQ(nullptr, arena._buffer);
         EXPECT_EQ(0, arena._offset);
         EXPECT_EQ(0, arena._sizeInBytes);
@@ -186,7 +186,7 @@ namespace pmm
     TEST(ArenaAllocBytes, Returns8ByteAlignedAddress)
     {
         constexpr auto size = 512;
-        pmm::Arena arena(size);
+        Arena arena(size);
 
         void* bytes = arena.allocBytes(8);
 
@@ -202,7 +202,7 @@ namespace pmm
     {
         constexpr auto size = 512;
         constexpr auto byteAlignment = 32;
-        pmm::Arena arena(size);
+        Arena arena(size);
 
         void* bytes = arena.allocBytes(128, byteAlignment);
 
@@ -216,7 +216,7 @@ namespace pmm
     TEST(ArenaAllocBytes, ReturnsNonNullPtrWhenAllocatingMemoryLessThanArenaSize)
     {
         constexpr auto size = 512;
-        pmm::Arena arena(size);
+        Arena arena(size);
 
         void* bytes = arena.allocBytes(256);
 
@@ -229,7 +229,7 @@ namespace pmm
     TEST(ArenaAllocBytes, ReturnsNonNullPtrWhenAllocatingMemoryEqualArenaSize)
     {
         constexpr auto size = 512;
-        pmm::Arena arena(size);
+        Arena arena(size);
 
         // To ensure test integrity we need to subtract max alignment of 7, which
         // the maximum offset will be moved when aligning.
@@ -244,7 +244,7 @@ namespace pmm
     TEST(ArenaAllocBytes, ReturnsNullPtrWhenAllocatingMemoryGreaterThanArenaSize)
     {
         constexpr auto size = 512;
-        pmm::Arena arena(size);
+        Arena arena(size);
 
         void* bytes = arena.allocBytes(size + 1);
 
@@ -257,7 +257,7 @@ namespace pmm
     TEST(ArenaAllocBytes, ReadWritesDoNotOverlap)
     {
         constexpr auto size = 512;
-        pmm::Arena arena(size);
+        Arena arena(size);
 
         constexpr auto bufferLength = 8;
         // Given two contiguous block of memory allocated back to back
@@ -293,5 +293,6 @@ namespace pmm
 
 } // namespace pmm
 
+// TODO: Add ArenaAlloc tests
 
 /** @} */
