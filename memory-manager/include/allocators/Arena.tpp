@@ -32,11 +32,24 @@ namespace pmm {
     }
 
 
-    Arena::Arena(Arena &&arena) noexcept {
-        // Move the resource and null-out the moved resources.
+    inline Arena::Arena(Arena &&arena) noexcept {
+        // Move the data members and null-out the moved data members.
         _buffer = std::exchange(arena._buffer, nullptr);
         _offset = std::exchange(arena._offset, 0);
         _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
+    }
+
+
+    inline Arena& Arena::operator=(Arena &&arena) noexcept {
+        // Release the buffer held by the current arena
+        delete _buffer; // TODO: Update as we move to HAL
+
+        // Move the data members and null-out the moved data members.
+        _buffer = std::exchange(arena._buffer, nullptr);
+        _offset = std::exchange(arena._offset, 0);
+        _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
+
+        return *this;
     }
 
 

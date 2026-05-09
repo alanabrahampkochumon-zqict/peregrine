@@ -54,11 +54,23 @@ namespace pmm
 
 
         /**
-         * @brief Move the current Arena instance to a new object.
+         * @brief Transfer the current Arena's memory to a new object.
          *
          * @param[in/out] arena The arena to move into the new object.
          */
         Arena(Arena&& arena) noexcept;
+
+
+        /**
+         * @brief Transfer the current Arena's memory to another object.
+         *
+         * @warning This will delete any buffers held by the LHS object.
+         *
+         * @param[in/out] arena The arena to move into the object.
+         *
+         * @return The current arena instance.
+         */
+        Arena& operator=(Arena&& arena) noexcept;
 
 
         /**
