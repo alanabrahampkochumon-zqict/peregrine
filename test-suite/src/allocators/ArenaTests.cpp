@@ -48,7 +48,7 @@ TEST(ArenaInitialization, ArenaHasFreeSpaceEqualToSize) {
 
 
 /**
- * @brief Move constructor copies properties to new object.
+ * @brief Move constructor copies data members to new object.
  */
 TEST(ArenaMoveConstructor, CopiesAttributesToNewObject) {
     constexpr auto size = 512;
@@ -63,6 +63,10 @@ TEST(ArenaMoveConstructor, CopiesAttributesToNewObject) {
 
 // Namespacing is required for testing internal state
 namespace pmm {
+
+    /**
+     * @brief Move constructor nulls out current object internal buffer and related data members.
+     */
     TEST(ArenaMoveConstructor, NullsOutInternalBuffer) {
         constexpr auto size = 512;
         Arena arena(size);
@@ -73,6 +77,10 @@ namespace pmm {
         EXPECT_EQ(0, arena._sizeInBytes);
     }
 
+
+    /**
+     * @brief Move constructor moves all data members, including buffer into new object.
+     */
     TEST(ArenaMoveConstructor, MovesBufferIntoNewObject) {
         constexpr auto size = 512;
         Arena arena(size);

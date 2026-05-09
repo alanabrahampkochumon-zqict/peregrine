@@ -114,6 +114,7 @@ namespace pmm
         // FRIEND TEST macros for verifying internal states
         FRIEND_TEST(ArenaMoveConstructor, NullsOutInternalBuffer);
         FRIEND_TEST(ArenaMoveConstructor, MovesBufferIntoNewObject);
+        FRIEND_TEST(ArenaMoveConstructor, DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
     };
 
 
