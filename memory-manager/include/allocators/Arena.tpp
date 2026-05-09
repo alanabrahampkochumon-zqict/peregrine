@@ -14,6 +14,8 @@
 #include <bit>
 #include <cstring>
 #include <cassert>
+#include <new>
+
 
 namespace pmm {
     /**************************************
@@ -107,4 +109,23 @@ namespace pmm {
         // Return nullptr if the requested memory cannot be allocated
         return nullptr;
     }
+
+    template <typename T, typename... Args>
+    constexpr T* Arena::alloc(Args... args)
+    {
+        if (constexpr auto objectSize = sizeof(T); _sizeInBytes >= _offset + objectSize)
+        {
+            // Allocate memory in the arena.
+            void* raw = &_buffer[_offset];
+            _offset += objectSize;
+
+            // Instantiate the object with arguments.
+            T* object = new (raw) T(std::forward<Args>(args)...);
+            return object;
+        }
+
+        // Return nullptr if the requested memory cannot be allocated
+        return nullptr;
+    }
+
 } // namespace pmm

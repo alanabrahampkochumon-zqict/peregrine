@@ -10,14 +10,15 @@
  */
 
 
+#include "gtest/gtest_prod.h"
 #include <cstddef>
 #include <cstdint>
 
-#include "gtest/gtest_prod.h"
 
-
-namespace pmm {
-    struct Arena {
+namespace pmm
+{
+    struct Arena
+    {
         /**
          * @brief Allocate a new physical memory vault from the Operating System.
          *
@@ -40,14 +41,14 @@ namespace pmm {
          * @brief Copying is strictly prohibited to prevent double-free crashes.
          * @note Use std::move() to transfer ownership of the arena.
          */
-        Arena(const Arena &) = delete;
+        Arena(const Arena&) = delete;
 
 
         /**
          * @brief Copying is strictly prohibited to prevent double-free crashes.
          * @note Use std::move() to transfer ownership of the arena.
          */
-        Arena &operator=(const Arena &) = delete;
+        Arena& operator=(const Arena&) = delete;
 
 
         /**
@@ -55,7 +56,7 @@ namespace pmm {
          *
          * @param[in/out] arena The arena to move into the new object.
          */
-        Arena(Arena &&arena) noexcept;
+        Arena(Arena&& arena) noexcept;
 
 
         /**
@@ -67,7 +68,7 @@ namespace pmm {
          *
          * @return The current arena instance.
          */
-        Arena &operator=(Arena &&arena) noexcept;
+        Arena& operator=(Arena&& arena) noexcept;
 
 
         /**
@@ -103,35 +104,47 @@ namespace pmm {
          * @return A void pointer to the start of allocated memory or
          *         `nullptr` if the arena cannot allocate memory of requested size.
          */
-        void *allocBytes(std::size_t bytes, std::size_t alignment = sizeof(void*));
+        void* allocBytes(std::size_t bytes, std::size_t alignment = sizeof(void*));
 
-        //constexpr void* allocBytes(std::size_t bytes);
+        // constexpr void* allocBytes(std::size_t bytes);
 
-        //template <typename T, typename... Args>
-        //constexpr T* alloc(Args... args);
+        /**
+         * @brief Allocate an object of type @p T in the arena.
+         * @note The memory alignment is dictated by the arena's alignment which can be set upon instantiation.
+         *
+         * @tparam T    The type of object to allocate.
+         * @tparam Args The type of arguments to instantiate the object.
+         *
+         * @param args The arguments to instantiate the object.
+         *
+         * @return A reference to the allocated memory.
+         */
+        template <typename T, typename... Args>
+        constexpr T* alloc(Args... args);
 
-        //template<typename T, typename... Args>
-        //constexpr T* alloc(std::size_t alignment, Args... args);
+        // template<typename T, typename... Args>
+        // constexpr T* alloc(std::size_t alignment, Args... args);
 
-        //template <typename T>
-        //constexpr T* alloc();
+        // template <typename T>
+        // constexpr T* alloc();
 
-        //template <typename T>
-        //constexpr T* alloc(std::size_t alignment);
+        // template <typename T>
+        // constexpr T* alloc(std::size_t alignment);
 
-        //template <typename T>
-        //constexpr void free(T* ptr) {}
+        // template <typename T>
+        // constexpr void free(T* ptr) {}
 
-        //constexpr void free(void* ptr) {}
+        // constexpr void free(void* ptr) {}
 
-        //constexpr void freeAll();
+        // constexpr void freeAll();
 
         // TODO: Add resize
         // TODO: Add temp arena
-        // TODO: Add namespace based new allocation eg: namespace arena { Mat3 mat = new Mat3(); // Uses arena new not C++ heap}
+        // TODO: Add namespace based new allocation eg: namespace arena { Mat3 mat = new Mat3(); // Uses arena new not
+        // C++ heap}
 
     private:
-        uint8_t *_buffer;
+        uint8_t* _buffer;
         uint64_t _sizeInBytes, _offset;
 
         /**
@@ -147,6 +160,8 @@ namespace pmm {
         FRIEND_TEST(ArenaMoveAssignment, MovesBufferIntoNewObject);
         FRIEND_TEST(ArenaMoveAssignment, DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
     };
+
 } // namespace pmm
+
 
 #include "Arena.tpp"
