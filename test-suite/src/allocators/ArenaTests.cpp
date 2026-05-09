@@ -14,6 +14,7 @@
 #include <gtest/gtest.h>
 #include <utility>
 
+
 /**
  * @addtogroup T_PMM_Arena
  * @{
@@ -47,13 +48,42 @@ TEST(ArenaInitialization, ArenaHasFreeSpaceEqualToSize) {
 
 
 /**
- * @brief Move constructor moves the Arena to new variable and sets the old location to null.
+ * @brief Move constructor copies properties to new object.
  */
-TEST(ArenaMove, MovesToNewVariable) {
-    pmm::Arena arena(512);
+TEST(ArenaMoveConstructor, CopiesAttributesToNewObject) {
+    constexpr auto size = 512;
+    pmm::Arena arena(size);
 
     const pmm::Arena arena2 = std::move(arena);
-    // arena.
+    EXPECT_EQ(size, arena2.freeSize());
+    EXPECT_EQ(size, arena2.size());
+    EXPECT_EQ(0, arena2.usedSize());
 }
+
+
+// Namespacing is required for testing internal state
+namespace pmm {
+    TEST(ArenaMoveConstructor, NullsOutInternalBuffer) {
+        constexpr auto size = 512;
+        Arena arena(size);
+
+        const Arena arena2 = std::move(arena);
+        EXPECT_EQ(nullptr, arena._buffer);
+        EXPECT_EQ(0, arena._offset);
+        EXPECT_EQ(0, arena._sizeInBytes);
+    }
+
+    TEST(ArenaMoveConstructor, MovesBufferIntoNewObject) {
+        constexpr auto size = 512;
+        Arena arena(size);
+        const auto initialPointer = arena._buffer;
+
+        const Arena arena2 = std::move(arena);
+        EXPECT_EQ(initialPointer, arena2._buffer);
+        EXPECT_EQ(0, arena2._offset);
+        EXPECT_EQ(size, arena2._sizeInBytes);
+    }
+}
+
 
 /** @} */

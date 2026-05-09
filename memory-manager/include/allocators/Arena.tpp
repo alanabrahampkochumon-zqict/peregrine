@@ -32,7 +32,7 @@ namespace pmm {
     }
 
 
-    constexpr Arena::Arena(Arena &&arena) noexcept {
+    Arena::Arena(Arena &&arena) noexcept {
         // Move the resource and null-out the moved resources.
         _buffer = std::exchange(arena._buffer, nullptr);
         _offset = std::exchange(arena._offset, 0);

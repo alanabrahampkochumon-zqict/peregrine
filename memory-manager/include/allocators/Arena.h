@@ -13,6 +13,9 @@
 #include <cstddef>
 #include <cstdint>
 
+#include "gtest/gtest_prod.h"
+
+
 namespace pmm
 {
 
@@ -55,7 +58,7 @@ namespace pmm
          *
          * @param[in/out] arena The arena to move into the new object.
          */
-        constexpr Arena(Arena&& arena) noexcept;
+        Arena(Arena&& arena) noexcept;
 
 
         /**
@@ -107,6 +110,10 @@ namespace pmm
     private:
         uint8_t* _buffer;
         uint64_t _sizeInBytes, _offset;
+
+        // FRIEND TEST macros for verifying internal states
+        FRIEND_TEST(ArenaMoveConstructor, NullsOutInternalBuffer);
+        FRIEND_TEST(ArenaMoveConstructor, MovesBufferIntoNewObject);
     };
 
 
