@@ -102,7 +102,7 @@ namespace pmm {
          * @return A void pointer to the start of allocated memory or
          *         `nullptr` if the arena cannot allocate memory of requested size.
          */
-        constexpr void *allocBytes(std::size_t bytes, std::size_t alignment);
+        void *allocBytes(std::size_t bytes, std::size_t alignment);
 
         //constexpr void* allocBytes(std::size_t bytes);
 

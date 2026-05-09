@@ -82,29 +82,26 @@ namespace pmm {
         // Bytes = 13 -> 1101
         // Alignment = 4 -> 0100
         // Modulo = 1 -> 1101 & 0011 (4 - 1 = 3) = 01
-        const auto modulo = absoluteAddress & (alignment - 1);
-        uintptr_t alignedAddress = 0;
-
-        if (modulo != 0)
-            alignedAddress = absoluteAddress + (alignment - modulo);
-        // Convert the offset back to 8 relative offset
-        _offset = alignedAddress - absoluteBaseAddress;
+        if (const auto modulo = absoluteAddress & (alignment - 1); modulo != 0) {
+            const uintptr_t alignedAddress = absoluteAddress + (alignment - modulo);
+            // Convert the offset back to a relative offset
+            _offset = alignedAddress - absoluteBaseAddress;
+        }
 
     }
 
-    constexpr void *Arena::allocBytes(const std::size_t bytes, const std::size_t alignment) {
-        // Bytes = 13 -> 1101
-        // Alignment = 4 -> 0100
-        // Modulo = 1 -> 1101 & 0011 (4 - 1 = 3) = 01
-        // const auto modulo = bytes & (alignment - 1);
-        //
-        // if (const auto alignedSize = bytes + (alignment - modulo); _offset + alignedSize <= _sizeInBytes) {
-        //     void* ptr = &_buffer[_offset];
-        //     _offset += alignedSize;
-        //
-        //     memset(ptr, 0, alignedSize); // TODO: Remove when moving to HAL
-        //     return ptr;
-        // }
+
+    inline void* Arena::allocBytes(const std::size_t bytes, const std::size_t alignment) {
+        _alignForward(alignment);
+
+        if (_sizeInBytes >= _offset + bytes) {
+            void* ptr = &_buffer[_offset];
+
+            _offset += bytes;
+
+            memset(ptr, 0, bytes); // TODO: Remove when moving to HAL
+            return ptr;
+        }
 
         // Return nullptr if the requested memory cannot be allocated
         return nullptr;
