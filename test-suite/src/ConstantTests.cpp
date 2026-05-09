@@ -6,18 +6,6 @@
 
 
 
-template <typename T>
-class UserDefinedLiteralParam
-{
-public:
-    T size, expectedBytes;
-};
-/** Test fixture for @ref pmm::constant user-defined literals, parameterized by @ref UserDefinedLiteralParam. */
-class UserDefinedLiteralTest: public ::testing::TestWithParam<UserDefinedLiteralParam<uint64_t>>
-{};
-
-
-
 /**
  * @addtogroup T_PMM_Constants
  * @{
