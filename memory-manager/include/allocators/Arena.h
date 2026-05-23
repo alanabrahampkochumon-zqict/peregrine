@@ -151,8 +151,9 @@ namespace pmm
         template <typename T, typename... Args>
         constexpr T* allocAs(std::size_t alignment, Args... args);
 
+
         /**
-         * [NO-OP] Objects cannot be individually freed in an arena.
+         * @brief [NO-OP] Objects cannot be individually freed in an arena.
          *
          * @tparam T  The type of allocated object.
          *
@@ -163,7 +164,7 @@ namespace pmm
 
 
         /**
-         * [NO-OP] Byte memory cannot be individually freed in an arena.
+         * @brief [NO-OP] Byte memory cannot be individually freed in an arena.
          *
          * @tparam T  The type of allocated object.
          *
@@ -173,6 +174,14 @@ namespace pmm
         constexpr void free(void* ptr) = delete;
 
 
+        /**
+         * @brief Frees the entire arena.
+         *
+         * @note This is not a hard reset.
+         *       All memory states may/may not get erased.
+         *
+         */
+        constexpr void freeAll();
 
 
 
@@ -185,7 +194,7 @@ namespace pmm
 
     private:
         uint8_t* _buffer;
-        uint64_t _sizeInBytes, _offset, _prevOffset;
+        uint64_t _sizeInBytes, _offset, _prevOffset, _defaultAlignment;
 
         /**
          * @brief Align the internal buffer to @p alignment.
@@ -199,6 +208,7 @@ namespace pmm
         FRIEND_TEST(ArenaMoveConstructor, MovesBufferIntoNewObject);
         FRIEND_TEST(ArenaMoveAssignment, NullsOutInternalBuffer);
         FRIEND_TEST(ArenaMoveAssignment, MovesBufferIntoNewObject);
+        FRIEND_TEST(ArenaMoveConstructor, AlignedArena_MovesBufferIntoNewObject);
         FRIEND_TEST(ArenaMoveAssignment, DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
         FRIEND_TEST(ArenaAllocBytes, OffsetMinusPrevOffsetGivesObjectSize);
         FRIEND_TEST(ArenaAlloc, AlignsToTargetAlignment);

@@ -107,8 +107,9 @@ namespace pmm
         const Arena arena2 = std::move(arena);
         EXPECT_EQ(nullptr, arena._buffer);
         EXPECT_EQ(0, arena._offset);
-        EXPECT_EQ(0, arena2._prevOffset);
+        EXPECT_EQ(0, arena._prevOffset);
         EXPECT_EQ(0, arena._sizeInBytes);
+        EXPECT_EQ(0, arena._defaultAlignment);
     }
 
 
@@ -120,13 +121,41 @@ namespace pmm
         constexpr auto size = 512;
         Arena arena(size);
         const auto initialPointer = arena._buffer;
+        const auto initialOffset = arena._offset;
+        const auto initialPrevOffset = arena._prevOffset;
+        const auto initialAlignment = arena._defaultAlignment;
+
 
         const Arena arena2 = std::move(arena);
         EXPECT_EQ(initialPointer, arena2._buffer);
-        EXPECT_EQ(0, arena2._offset);
-        EXPECT_EQ(0, arena2._prevOffset);
+        EXPECT_EQ(initialOffset, arena2._offset);
+        EXPECT_EQ(initialPrevOffset, arena2._prevOffset);
+        EXPECT_EQ(initialAlignment, arena2._defaultAlignment);
         EXPECT_EQ(size, arena2._sizeInBytes);
     }
+
+
+    /**
+ * @brief Verify that move constructor moves all data members, including buffer into new object.
+ */
+    TEST(ArenaMoveConstructor, AlignedArena_MovesBufferIntoNewObject)
+    {
+        constexpr auto size = 512;
+        constexpr auto alignment = 128;
+        Arena arena(size, alignment);
+        const auto initialPointer = arena._buffer;
+        const auto initialOffset = arena._offset;
+        const auto initialPrevOffset = arena._prevOffset;
+
+
+        const Arena arena2 = std::move(arena);
+        EXPECT_EQ(initialPointer, arena2._buffer);
+        EXPECT_EQ(initialOffset, arena2._offset);
+        EXPECT_EQ(initialPrevOffset, arena2._prevOffset);
+        EXPECT_EQ(alignment, arena2._defaultAlignment);
+        EXPECT_EQ(size, arena2._sizeInBytes);
+    }
+
 } // namespace pmm
 
 
@@ -408,7 +437,6 @@ namespace pmm
         arena.allocBytes(2, 2);
 
         // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
-        constexpr auto expectedAlignment = 128;
         [[maybe_unused]] const auto vec = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
         EXPECT_EQ(sizeof(Vec4), arena._offset - arena._prevOffset);

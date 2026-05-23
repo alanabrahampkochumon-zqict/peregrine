@@ -29,16 +29,18 @@ namespace pmm {
         _sizeInBytes = bytes;
         _offset = 0;
         _prevOffset = 0;
+        _defaultAlignment = 0;
     }
 
     Arena::Arena(const std::size_t bytes, const std::size_t alignment) noexcept
     {
         _buffer = new uint8_t[bytes];
         _sizeInBytes = bytes;
+        _defaultAlignment = alignment;
+
         // Sets the offset
         _offset = 0;
         _alignForward(alignment);
-
         _prevOffset= _offset;
     }
 
@@ -54,6 +56,7 @@ namespace pmm {
         _offset = std::exchange(arena._offset, 0);
         _prevOffset = std::exchange(arena._prevOffset, 0);
         _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
+        _defaultAlignment = std::exchange(arena._defaultAlignment, 0);
     }
 
 
@@ -66,6 +69,7 @@ namespace pmm {
         _offset = std::exchange(arena._offset, 0);
         _prevOffset = std::exchange(arena._prevOffset, 0);
         _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
+        _defaultAlignment = std::exchange(arena._defaultAlignment, 0);
 
         return *this;
     }
