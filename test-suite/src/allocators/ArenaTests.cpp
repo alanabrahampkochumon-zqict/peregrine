@@ -9,10 +9,11 @@
  */
 
 
+#include "Utils.h"
+
 #include <allocators/Arena.h>
 #include <gtest/gtest.h>
 #include <utility>
-#include "Utils.h"
 
 
 class AlignedArenaInitialization: public testing::TestWithParam<std::size_t>
@@ -177,6 +178,7 @@ namespace pmm
         EXPECT_EQ(size, arena2._sizeInBytes);
     }
 
+
     /**
      * @brief Verify that move assignment operator moves all data members, including buffer into new object.
      */
@@ -205,6 +207,13 @@ namespace pmm
         }
     }
 
+
+    /**************************************
+     *                                    *
+     *            ALLOC BYTES             *
+     *                                    *
+     **************************************/
+
     /**
      * @brief Verify that allocBytes returns an 8-byte address by default on 64-bit machines.
      */
@@ -212,6 +221,9 @@ namespace pmm
     {
         constexpr auto size = 512;
         Arena arena(size);
+
+        // Misaligned bytes to 2
+        [[maybe_unused]] void* misalignedBytes = arena.allocBytes(2, 2);
 
         void* bytes = arena.allocBytes(8);
 
@@ -304,19 +316,41 @@ namespace pmm
     }
 
 
+    /**************************************
+     *                                    *
+     *              ALLOC                 *
+     *                                    *
+     **************************************/
 
+    /** @brief Verify that @ref pmm::Arena::alloc allocates an object in the arena with correct RAII. */
     TEST(ArenaAlloc, AllocatesAnObjectInTheArena)
     {
         constexpr auto size = 512;
         Arena arena(size);
         const auto vec = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
-        EXPECT_FLOAT_EQ(1.0f,vec->x);
-        EXPECT_FLOAT_EQ(2.0f,vec->y);
-        EXPECT_FLOAT_EQ(3.0f,vec->z);
-        EXPECT_FLOAT_EQ(4.0f,vec->w);
+        EXPECT_FLOAT_EQ(1.0f, vec->x);
+        EXPECT_FLOAT_EQ(2.0f, vec->y);
+        EXPECT_FLOAT_EQ(3.0f, vec->z);
+        EXPECT_FLOAT_EQ(4.0f, vec->w);
     }
 
+
+    /** @brief Verify that @ref pmm::Arena::alloc returns a nullptr when the arena is full. */
+    TEST(ArenaAlloc, ReturnsNullPtrWhenAllocatingInAFullArena)
+    {
+        constexpr auto size = 512;
+        Arena arena(size);
+
+        // Use the full capacity
+        [[maybe_unused]] const auto fullSize = arena.allocBytes(size);
+
+        const auto vec = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+        EXPECT_EQ(nullptr, vec);
+    }
+
+    #include <iostream>
 
     /** @brief Verify that Arena's object allocation default to the alignment of object's T. */
     TEST(ArenaAlloc, AlignsToTargetAlignment)
@@ -331,8 +365,64 @@ namespace pmm
         [[maybe_unused]] const auto vec = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
         // Arena is aligned to alignment of vec4 which is 16 bytes.
-        EXPECT_TRUE(((reinterpret_cast<uintptr_t>(arena._buffer) + arena._offset) & (expectedAlignment - 1)) == 0);
+        // Checking previous offset is required since current offset is will not be aligned to the boundary
+        // but the base address.
+        EXPECT_TRUE(((reinterpret_cast<uintptr_t>(arena._buffer) + arena._prevOffset) & (expectedAlignment - 1)) == 0);
+    }
 
+
+    /**************************************
+     *                                    *
+     *             ALLOC AS               *
+     *                                    *
+     **************************************/
+
+    /** @brief Verify that @ref pmm::Arena::allocAs allocates an object in the arena with correct RAII. */
+    TEST(ArenaAllocAs, AllocatesAnObjectInTheArena)
+    {
+        constexpr auto size = 512;
+        Arena arena(size);
+        const auto vec = arena.allocAs<Vec4>(alignof(Vec4), 1.0f, 2.0f, 3.0f, 4.0f);
+
+        EXPECT_FLOAT_EQ(1.0f, vec->x);
+        EXPECT_FLOAT_EQ(2.0f, vec->y);
+        EXPECT_FLOAT_EQ(3.0f, vec->z);
+        EXPECT_FLOAT_EQ(4.0f, vec->w);
+    }
+
+
+    /** @brief Verify that @ref pmm::Arena::allocAs returns a nullptr when the arena is full. */
+    TEST(ArenaAllocAs, ReturnsNullPtrWhenAllocatingInAFullArena)
+    {
+        constexpr auto size = 512;
+        Arena arena(size);
+
+        // Use the full capacity
+        [[maybe_unused]] const auto fullSize = arena.allocBytes(size);
+
+        const auto vec = arena.allocAs<Vec4>(alignof(Vec4), 1.0f, 2.0f, 3.0f, 4.0f);
+
+        EXPECT_EQ(nullptr, vec);
+    }
+
+
+    /** @brief Verify that Arena's object allocation aligns to passed-in alignment. */
+    TEST(ArenaAllocAs, AlignsToGivenAlignment)
+    {
+        constexpr auto size = 512;
+        Arena arena(size);
+
+        // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+        arena.allocBytes(2, 2);
+
+        // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
+        constexpr auto expectedAlignment = 128;
+        [[maybe_unused]] const auto vec = arena.allocAs<Vec4>(expectedAlignment, 1.0f, 2.0f, 3.0f, 4.0f);
+
+        // Arena is aligned to alignment of 128 bytes.
+        // Checking previous offset is required since current offset is will not be aligned to the boundary
+        // but the base address.
+        EXPECT_TRUE(((reinterpret_cast<uintptr_t>(arena._buffer) + arena._prevOffset) & (expectedAlignment - 1)) == 0);
     }
 
 } // namespace pmm

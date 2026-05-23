@@ -121,10 +121,10 @@ namespace pmm
 
 
         /**
-         * @brief Allocate an object of type @p T in the arena.
+         * @brief Allocate an object of type @p T in the arena with natural alignment.
          *
          * @note Memory gets aligned to the default of alignment of @p T.
-         *       For finer control use @ref allocBytes.
+         *       For finer control use @ref allocBytes or @ref allocAs.
          *
          * @tparam T    The type of object to allocate.
          * @tparam Args The type of arguments to instantiate the object.
@@ -135,6 +135,21 @@ namespace pmm
          */
         template <typename T, typename... Args>
         constexpr T* alloc(Args... args);
+
+
+        /**
+         * @brief Allocate an object of type @p T in the arena with @p alignment.
+         *
+         * @tparam T    The type of object to allocate.
+         * @tparam Args The type of arguments to instantiate the object.
+         *
+         * @param alignment The byte alignment of the object.
+         * @param args      The arguments to instantiate the object.
+         *
+         * @return A reference to the allocated memory.
+         */
+        template <typename T, typename... Args>
+        constexpr T* allocAs(std::size_t alignment, Args... args);
 
         // template <typename T>
         // constexpr T* alloc();
@@ -156,7 +171,7 @@ namespace pmm
 
     private:
         uint8_t* _buffer;
-        uint64_t _sizeInBytes, _offset;
+        uint64_t _sizeInBytes, _offset, _prevOffset;
 
         /**
          * @brief Align the internal buffer to @p alignment.
@@ -172,6 +187,7 @@ namespace pmm
         FRIEND_TEST(ArenaMoveAssignment, MovesBufferIntoNewObject);
         FRIEND_TEST(ArenaMoveAssignment, DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
         FRIEND_TEST(ArenaAlloc, AlignsToTargetAlignment);
+        FRIEND_TEST(ArenaAllocAs, AlignsToGivenAlignment);
     };
 
 } // namespace pmm

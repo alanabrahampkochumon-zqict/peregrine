@@ -28,6 +28,7 @@ namespace pmm {
         _buffer = new uint8_t[bytes];
         _sizeInBytes = bytes;
         _offset = 0;
+        _prevOffset = 0;
     }
 
     Arena::Arena(const std::size_t bytes, const std::size_t alignment) noexcept
@@ -37,6 +38,8 @@ namespace pmm {
         // Sets the offset
         _offset = 0;
         _alignForward(alignment);
+
+        _prevOffset= _offset;
     }
 
 
@@ -49,6 +52,7 @@ namespace pmm {
         // Move the data members and null-out the moved data members.
         _buffer = std::exchange(arena._buffer, nullptr);
         _offset = std::exchange(arena._offset, 0);
+        _prevOffset = std::exchange(arena._prevOffset, 0);
         _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
     }
 
@@ -60,6 +64,7 @@ namespace pmm {
         // Move the data members and null-out the moved data members.
         _buffer = std::exchange(arena._buffer, nullptr);
         _offset = std::exchange(arena._offset, 0);
+        _prevOffset = std::exchange(arena._prevOffset, 0);
         _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
 
         return *this;
@@ -114,6 +119,7 @@ namespace pmm {
         if (_sizeInBytes >= _offset + bytes) {
             void* ptr = &_buffer[_offset];
 
+            _prevOffset = _offset;
             _offset += bytes;
 
             memset(ptr, 0, bytes); // TODO: Remove when moving to HAL
@@ -135,6 +141,7 @@ namespace pmm {
         {
             // Allocate memory in the arena.
             void* raw = &_buffer[_offset];
+            _prevOffset = _offset;
             _offset += objectSize;
 
             // Instantiate the object with arguments.
@@ -144,6 +151,30 @@ namespace pmm {
 
         // Return nullptr if the requested memory cannot be allocated
         return nullptr;
+    }
+
+
+    template <typename T, typename... Args>
+    constexpr T* Arena::allocAs(std::size_t alignment, Args... args)
+    {
+        // Forward align the memory by the alignment
+        _alignForward(alignment);
+
+        if (constexpr auto objectSize = sizeof(T); _sizeInBytes >= _offset + objectSize)
+        {
+            // Allocate memory in the arena.
+            void* raw = &_buffer[_offset];
+            _prevOffset = _offset;
+            _offset += objectSize;
+
+            // Instantiate the object with arguments.
+            T* object = new (raw) T(std::forward<Args>(args)...);
+            return object;
+        }
+
+        // Return nullptr if the requested memory cannot be allocated
+        return nullptr;
+
     }
 
 } // namespace pmm
