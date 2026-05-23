@@ -195,4 +195,45 @@ namespace pmm {
         _prevOffset = _offset;
     }
 
+
+    constexpr void* Arena::resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
+                                  std::size_t alignment) noexcept
+    {
+        // The allocation is new
+        if (oldMemory == nullptr || oldSize == 0)
+            return allocBytes(newSize, alignment);
+
+        // If the new size is smaller than the old size
+        // No resizing required
+        if (oldSize >= newSize)
+            return oldMemory;
+
+        // Check whether the old memory is the last allocation we made
+        const auto allocationAddress = reinterpret_cast<uintptr_t>(oldMemory);
+        const auto lastAllocatedAddress = reinterpret_cast<uintptr_t>(_buffer) + _prevOffset;
+        const auto offsetDiff = newSize - oldSize;
+        // If there is enough memory in the arena to "expand" last allocation
+        // expand the offset to the difference between new size and old size
+        if (allocationAddress == lastAllocatedAddress && _sizeInBytes >= _offset + offsetDiff)
+        {
+            _offset += offsetDiff;
+            return oldMemory;
+        }
+
+        // The memory exists else where in the arena, so create a new byte chunk
+        // copy the existing data and return it
+        // @note: This leaves a "hole" where the previous allocation was
+        if (_sizeInBytes >= _offset + newSize)
+        {
+            void* newLocation = allocBytes(newSize, alignment);
+            memmove(newLocation, oldMemory, oldSize);
+            return newLocation;
+        }
+
+        // Allocation not possible due to lack of memory in arena
+        // So return a nullptr.
+        return nullptr;
+
+    }
+
 } // namespace pmm

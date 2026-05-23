@@ -184,10 +184,20 @@ namespace pmm
         constexpr void freeAll() noexcept;
 
 
-        // constexpr void
-
-
-        // constexpr void freeAll();
+        /**
+         * @brief Resize @p oldMemory block from @p oldSize to @p newSize.
+         *
+         * @note This does not resize the arena.
+         *
+         * @param oldMemory The pointer to the memory to resize.
+         * @param oldSize   The current size of the @p oldMemory.
+         * @param newSize   The size of resize @p oldMemory to.
+         * @param alignment The byte alignment of the @p oldMemory.
+         *
+         * @return A reference to the new memory location in arena or nullptr if allocation fails.
+         */
+        constexpr void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
+                              std::size_t alignment) noexcept;
 
         // TODO: Add resize
         // TODO: Add temp arena
@@ -219,6 +229,8 @@ namespace pmm
         FRIEND_TEST(ArenaAllocAs, OffsetMinusPrevOffsetGivesObjectSize);
         FRIEND_TEST(ArenaFreeAll, ResetsOffsetToZero);
         FRIEND_TEST(ArenaFreeAll, AlignedArena_ResetsOffsetToAlignedAddress);
+        FRIEND_TEST(ArenaResize, LatestAllocationResizeBuffer);
+        FRIEND_TEST(ArenaResize, LatestAllocationOnlyResizeByOffsetDifference);
     };
 
 } // namespace pmm

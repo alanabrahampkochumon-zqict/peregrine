@@ -572,7 +572,160 @@ namespace pmm
         EXPECT_EQ(offsetBuffer, prevOffsetBuffer);
     }
 
+
+    /**************************************
+     *                                    *
+     *       RESIZE (INTERNAL STATE)      *
+     *                                    *
+     **************************************/
+
+    /** @brief Verify that arena resize with last allocated buffer only resizes the arena. */
+    TEST(ArenaResize, LatestAllocationResizeBuffer)
+    {
+        constexpr auto arenaSize = 1024;
+        Arena arena(arenaSize);
+        constexpr auto byteSize = 128;
+        constexpr auto newByteSize = byteSize * 2;
+
+        [[maybe_unused]] const auto firstByteChunk = arena.allocBytes(byteSize);
+        auto secondByteChunk = arena.allocBytes(byteSize);
+        const auto offsetBeforeResize = arena._offset;
+
+        [[maybe_unused]] const auto data = arena.resize(secondByteChunk, byteSize, newByteSize, alignof(void*));
+
+        EXPECT_GT(arena._offset, offsetBeforeResize);
+        EXPECT_EQ(reinterpret_cast<uintptr_t>(secondByteChunk), reinterpret_cast<uintptr_t>(data));
+    }
+
+
+    /** @brief Verify that arena resize with last allocated buffer resizes only by the size difference. */
+    TEST(ArenaResize, LatestAllocationOnlyResizeByOffsetDifference)
+    {
+        constexpr auto arenaSize = 1024;
+        Arena arena(arenaSize);
+        constexpr auto byteSize = 128;
+        constexpr auto newByteSize = byteSize * 2;
+
+        [[maybe_unused]] const auto firstByteChunk = arena.allocBytes(byteSize);
+        const auto secondByteChunk = arena.allocBytes(byteSize);
+        const auto offsetBeforeResize = arena._offset;
+        const auto expectedOffset = offsetBeforeResize + (newByteSize - byteSize);
+
+        [[maybe_unused]] const auto data = arena.resize(secondByteChunk, byteSize, newByteSize, alignof(void*));
+
+        EXPECT_EQ(expectedOffset, arena._offset);
+    }
+
 } // namespace pmm
+
+
+/**************************************
+ *                                    *
+ *             RESIZE                 *
+ *                                    *
+ **************************************/
+
+/** @brief Verify that arena resize on a nullptr returns a new allocation. */
+TEST(ArenaResize, NullptrReturnsNewLocation)
+{
+    constexpr auto arenaSize = 1024;
+    pmm::Arena arena(arenaSize);
+
+    constexpr auto byteSize = 128;
+    const auto data = arena.resize(nullptr, 0, byteSize, alignof(void*));
+
+    EXPECT_NE(nullptr, data);
+}
+
+
+/** @brief Verify that arena resize on a nullptr allocation beyond size of arena returns a nullptr. */
+TEST(ArenaResize, NullptrResizeBeyondArenaSizeReturnsNullptr)
+{
+    constexpr auto arenaSize = 1024;
+    pmm::Arena arena(arenaSize);
+
+    constexpr auto byteSize = arenaSize + 1;
+    const auto data = arena.resize(nullptr, 0, byteSize, alignof(void*));
+
+    EXPECT_EQ(nullptr, data);
+}
+
+
+/** @brief Verify that arena resize on a 0 size allocation returns a new allocation. */
+TEST(ArenaResize, ZeroSizeReturnsNewLocation)
+{
+    constexpr auto arenaSize = 1024;
+    pmm::Arena arena(arenaSize);
+
+    constexpr auto byteSize = 128;
+    const auto data = arena.resize(nullptr, 0, byteSize, alignof(void*));
+
+    EXPECT_NE(nullptr, data);
+}
+
+
+/** @brief Verify that arena resize on a nullptr returns a new location with read-write access. */
+TEST(ArenaResize, NullptrAllocatesMemoryWithReadWrite)
+{
+    constexpr auto arenaSize = 1024;
+    pmm::Arena arena(arenaSize);
+
+    constexpr auto byteSize = 128;
+    constexpr auto arraySize = 128 / sizeof(int);
+    const auto data = static_cast<int*>(arena.resize(nullptr, 0, byteSize, alignof(int)));
+
+    for (std::size_t i = 0; i < arraySize; ++i)
+        data[i] = static_cast<int>(i + 100);
+    for (std::size_t i = 0; i < arraySize; ++i)
+        EXPECT_EQ(i + 100, data[i]);
+}
+
+
+/** @brief Verify that arena resize with new size less than old size returns the same address. */
+TEST(ArenaResize, NewSizeLowerThanOldSizeReturnsSameLocation)
+{
+    constexpr auto arenaSize = 1024;
+    pmm::Arena arena(arenaSize);
+    constexpr auto byteSize = 128;
+
+    const auto firstByteChunk = arena.allocBytes(byteSize);
+    // Additional allocation
+    [[maybe_unused]] const auto secondByteChunk = arena.allocBytes(byteSize);
+
+    const auto data = arena.resize(firstByteChunk, byteSize, byteSize / 2, alignof(void*));
+
+    EXPECT_EQ(reinterpret_cast<uintptr_t>(firstByteChunk), reinterpret_cast<uintptr_t>(data));
+}
+
+
+/** @brief Verify that arena resize with last allocated returns writable memory after resize. */
+TEST(ArenaResize, LatestAllocationOnlyResizeByOffsetDifference)
+{
+    constexpr auto arenaSize = 1024;
+    pmm::Arena arena(arenaSize);
+    constexpr auto byteSize = 128;
+    constexpr auto newByteSize = byteSize * 2;
+
+    // Allocate the chunk
+    const auto firstByteChunk = arena.allocBytes(byteSize);
+    [[maybe_unused]] const auto data = static_cast<int*>(arena.resize(firstByteChunk, byteSize, newByteSize, alignof(int)));
+    // Resize it
+    constexpr auto firstArraySize = newByteSize / sizeof(int);
+
+    // Write some data
+    for (std::size_t i = 0; i < firstArraySize; ++i)
+        data[i] = static_cast<int>(i + 100);
+
+    // Allocate some more memory
+    auto vec = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+    // Verify data is not overwritten
+    for (std::size_t i = 0; i < firstArraySize; ++i)
+        EXPECT_EQ(i + 100, data[i]);
+
+    const auto secondByteChunk = arena.allocBytes(byteSize);
+}
+
 
 
 /** @} */
