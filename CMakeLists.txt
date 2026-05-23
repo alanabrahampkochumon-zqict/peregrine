@@ -70,7 +70,7 @@ if(ENABLE_STRICT)
     message(STATUS "Configuring Strict Warnings")
     if(MSVC AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         target_compile_options(StrictWarnings INTERFACE
-            $<$<COMPILE_LANGUAGE:CXX>:/WX;/W4;/permissive-;/fp:strict>
+            $<$<COMPILE_LANGUAGE:CXX>:/WX;/W4;/permissive-;/fp:strict;/wd4068>
         )
     else()
         target_compile_options(StrictWarnings INTERFACE
