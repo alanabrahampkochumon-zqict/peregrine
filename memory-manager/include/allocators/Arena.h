@@ -117,7 +117,7 @@ namespace pmm
          * @return A void pointer to the start of allocated memory or
          *         `nullptr` if the arena cannot allocate memory of requested size.
          */
-        void* allocBytes(std::size_t bytes, std::size_t alignment = sizeof(void*)) noexcept;
+        [[nodiscard]] void* allocBytes(std::size_t bytes, std::size_t alignment = sizeof(void*)) noexcept;
 
 
         /**
@@ -134,7 +134,7 @@ namespace pmm
          * @return A reference to the allocated memory.
          */
         template <typename T, typename... Args>
-        constexpr T* alloc(Args... args) noexcept;
+        [[nodiscard]] constexpr T* alloc(Args... args) noexcept;
 
 
         /**
@@ -149,7 +149,7 @@ namespace pmm
          * @return A reference to the allocated memory.
          */
         template <typename T, typename... Args>
-        constexpr T* allocAs(std::size_t alignment, Args... args) noexcept;
+        [[nodiscard]] constexpr T* allocAs(std::size_t alignment, Args... args) noexcept;
 
 
         /**
@@ -196,7 +196,7 @@ namespace pmm
          *
          * @return A reference to the new memory location in arena or nullptr if allocation fails.
          */
-        constexpr void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
+        [[nodiscard]] constexpr void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
                               std::size_t alignment) noexcept;
 
         // TODO: Add resize
@@ -231,6 +231,7 @@ namespace pmm
         FRIEND_TEST(ArenaFreeAll, AlignedArena_ResetsOffsetToAlignedAddress);
         FRIEND_TEST(ArenaResize, LatestAllocationResizeBuffer);
         FRIEND_TEST(ArenaResize, LatestAllocationOnlyResizeByOffsetDifference);
+        FRIEND_TEST(ArenaResize, AllocationBeforePriorAllocationReturnNewBuffer);
     };
 
 } // namespace pmm

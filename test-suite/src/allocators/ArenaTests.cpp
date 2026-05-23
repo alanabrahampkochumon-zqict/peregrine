@@ -727,5 +727,51 @@ TEST(ArenaResize, LatestAllocationOnlyResizeByOffsetDifference)
 }
 
 
+/** @brief Verify that arena resize with allocation in the middle returns new memory. */
+TEST(ArenaResize, AllocationBeforePriorAllocationReturnNewBuffer)
+{
+    constexpr auto arenaSize = 1024;
+    pmm::Arena arena(arenaSize);
+    constexpr auto byteSize = 128;
+    constexpr auto newByteSize = byteSize * 2;
+
+
+    const auto firstByteChunk = arena.allocBytes(byteSize);
+    [[maybe_unused]] const auto secondByteChunk = arena.allocBytes(byteSize);
+
+    [[maybe_unused]] const auto data = arena.resize(firstByteChunk, byteSize, newByteSize, alignof(void*));
+
+    EXPECT_NE(reinterpret_cast<uintptr_t>(firstByteChunk), reinterpret_cast<uintptr_t>(data));
+}
+
+
+/** @brief Verify that arena resize with allocation in the middle copies old data. */
+TEST(ArenaResize, AllocationBeforePriorAllocationCopiesOldData)
+{
+    constexpr auto arenaSize = 1024;
+    pmm::Arena arena(arenaSize);
+    constexpr auto byteSize = 128;
+    constexpr auto newByteSize = byteSize * 2;
+
+    // Allocate memory
+    const auto firstByteChunk = static_cast<int*>(arena.allocBytes(byteSize));
+    constexpr auto arraySize = byteSize / sizeof(int);
+
+    // Write some data to the allocated memory
+    for (std::size_t i = 0; i < arraySize; ++i)
+        firstByteChunk[i] = static_cast<int>(i + 100);
+
+    // Allocate some more memory
+    [[maybe_unused]] const auto secondByteChunk = arena.allocBytes(byteSize);
+
+    // Resize the first buffer
+    const auto data = static_cast<int*>(arena.resize(firstByteChunk, byteSize, newByteSize, alignof(int)));
+
+    // Verify data is copied
+    for (std::size_t i = 0; i < arraySize; ++i)
+        EXPECT_EQ(i + 100, data[i]);
+}
+
+
 
 /** @} */

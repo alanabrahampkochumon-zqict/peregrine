@@ -61,6 +61,12 @@ namespace pmm {
 
 
     inline Arena &Arena::operator=(Arena &&arena) noexcept {
+        // TODO: Add test
+        // For self assignment return the current arena.
+        if (this == &arena) {
+            return *this;
+        }
+
         // Release the buffer held by the current arena
         delete[] _buffer; // TODO: Update as we move to HAL
 
