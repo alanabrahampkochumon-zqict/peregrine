@@ -35,6 +35,7 @@ namespace pmm {
         _buffer = new uint8_t[bytes];
         _sizeInBytes = bytes;
         // Sets the offset
+        _offset = 0;
         _alignForward(alignment);
     }
 
