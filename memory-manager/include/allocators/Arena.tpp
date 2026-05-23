@@ -10,47 +10,48 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
-#include <utility>
 #include <bit>
-#include <cstring>
 #include <cassert>
+#include <cstring>
 #include <new>
+#include <utility>
 
 
-namespace pmm {
+namespace pmm
+{
     /**************************************
      *                                    *
-     *           INITIALIZERS             *
+     *           CONSTRUCTORS             *
      *                                    *
      **************************************/
 
-    Arena::Arena(const std::size_t bytes) noexcept {
-        _buffer = new uint8_t[bytes];
-        _sizeInBytes = bytes;
-        _offset = 0;
-        _prevOffset = 0;
-        _defaultAlignment = 0;
+    Arena::Arena(const std::size_t bytes) noexcept
+        : _buffer(new uint8_t[bytes]), _sizeInBytes(bytes), _offset(0), _prevOffset(0), _defaultAlignment(0)
+    {
+
     }
+
 
     Arena::Arena(const std::size_t bytes, const std::size_t alignment) noexcept
+        : _buffer(new uint8_t[bytes]), _sizeInBytes(bytes), _offset(0), _prevOffset(0), _defaultAlignment(alignment)
     {
-        _buffer = new uint8_t[bytes];
-        _sizeInBytes = bytes;
-        _defaultAlignment = alignment;
-
-        // Sets the offset
-        _offset = 0;
-        _alignForward(alignment);
-        _prevOffset= _offset;
+        // Sets the offset based on alignment
+        if (alignment > 0)
+        {
+            _alignForward(alignment);
+            _prevOffset = _offset;
+        }
     }
 
 
-    Arena::~Arena() noexcept {
+    Arena::~Arena() noexcept
+    {
         delete[] _buffer;
     }
 
 
-    inline Arena::Arena(Arena &&arena) noexcept {
+    inline Arena::Arena(Arena&& arena) noexcept
+    {
         // Move the data members and null-out the moved data members.
         _buffer = std::exchange(arena._buffer, nullptr);
         _offset = std::exchange(arena._offset, 0);
@@ -60,10 +61,12 @@ namespace pmm {
     }
 
 
-    inline Arena &Arena::operator=(Arena &&arena) noexcept {
+    inline Arena& Arena::operator=(Arena&& arena) noexcept
+    {
         // TODO: Add test
         // For self assignment return the current arena.
-        if (this == &arena) {
+        if (this == &arena)
+        {
             return *this;
         }
 
@@ -81,17 +84,20 @@ namespace pmm {
     }
 
 
-    constexpr std::size_t Arena::freeSize() const noexcept {
+    constexpr std::size_t Arena::freeSize() const noexcept
+    {
         return _sizeInBytes - _offset;
     }
 
 
-    constexpr std::size_t Arena::usedSize() const noexcept {
+    constexpr std::size_t Arena::usedSize() const noexcept
+    {
         return _offset;
     }
 
 
-    constexpr std::size_t Arena::size() const noexcept {
+    constexpr std::size_t Arena::size() const noexcept
+    {
         return _sizeInBytes;
     }
 
@@ -99,7 +105,8 @@ namespace pmm {
      * Align the "base address" of the arena's next allocation to @p alignment.
      * @param alignment The alignment to which the offset + base address is aligned to.
      */
-    inline void Arena::_alignForward(const std::size_t alignment) noexcept {
+    inline void Arena::_alignForward(const std::size_t alignment) noexcept
+    {
         // To make sure alignment is the power of 2
         assert(std::has_single_bit(alignment));
 
@@ -125,11 +132,13 @@ namespace pmm {
     }
 
 
-    inline void* Arena::allocBytes(const std::size_t bytes, const std::size_t alignment) noexcept {
+    inline void* Arena::allocBytes(const std::size_t bytes, const std::size_t alignment) noexcept
+    {
         _alignForward(alignment);
 
         // Check if the arena has enough memory for allocation
-        if (_sizeInBytes >= _offset + bytes) {
+        if (_sizeInBytes >= _offset + bytes)
+        {
             void* ptr = &_buffer[_offset];
 
             _prevOffset = _offset;
@@ -239,7 +248,6 @@ namespace pmm {
         // Allocation not possible due to lack of memory in arena
         // So return a nullptr.
         return nullptr;
-
     }
 
 } // namespace pmm
