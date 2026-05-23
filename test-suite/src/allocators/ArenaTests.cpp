@@ -228,9 +228,9 @@ namespace pmm
         constexpr auto size = 512;
         Arena arena(size);
         const auto initialAddress = reinterpret_cast<uintptr_t>(arena._buffer);
-        const auto initialOffset = reinterpret_cast<uintptr_t>(arena._offset);
-        const auto initialPrevOffset = reinterpret_cast<uintptr_t>(arena._prevOffset);
-        const auto initialAlignment = reinterpret_cast<uintptr_t>(arena._defaultAlignment);
+        const auto initialOffset = arena._offset;
+        const auto initialPrevOffset = arena._prevOffset;
+        const auto initialAlignment = arena._defaultAlignment;
 
         arena = std::move(arena);
 

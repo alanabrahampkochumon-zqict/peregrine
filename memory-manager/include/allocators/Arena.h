@@ -199,7 +199,7 @@ namespace pmm
         [[nodiscard]] constexpr void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
                               std::size_t alignment) noexcept;
 
-        // TODO: Add resize
+        // TODO: Add array allocation
         // TODO: Add temp arena
         // TODO: Add namespace based new allocation eg: namespace arena { Mat3 mat = new Mat3(); // Uses arena new not
         // C++ heap}
