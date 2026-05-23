@@ -29,7 +29,7 @@ INSTANTIATE_TEST_SUITE_P(ArenaInitialization, AlignedArenaInitialization, testin
  */
 
 /**
- * @brief Verify that Arena gets intialized with the correct size.
+ * @brief Verify that Arena gets initialized with the correct size.
  */
 TEST(ArenaInitialization, InitializesArenaWithTheGivenBytes)
 {
@@ -86,11 +86,13 @@ namespace pmm
 
         const auto baseAddress = reinterpret_cast<uintptr_t>(arena._buffer);
         const auto absoluteOffset = baseAddress + arena._offset;
+        const auto absolutePrevOffset = baseAddress + arena._prevOffset;
         // Since the alignment is a power of two, we can extract the lower bits
         // to find out if the memory address is aligned
         // E.g: 1000 1000 -> 4 byte aligned since AND it with 0000 0111(31) will result 0
         // If misaligned 1000 1001 -> not 4 byte aligned since the op will result in 0000 0001
         EXPECT_TRUE((absoluteOffset & (alignment - 1)) == 0);
+        EXPECT_TRUE((absolutePrevOffset & (alignment - 1)) == 0);
     }
 
 
@@ -105,6 +107,7 @@ namespace pmm
         const Arena arena2 = std::move(arena);
         EXPECT_EQ(nullptr, arena._buffer);
         EXPECT_EQ(0, arena._offset);
+        EXPECT_EQ(0, arena2._prevOffset);
         EXPECT_EQ(0, arena._sizeInBytes);
     }
 
@@ -121,6 +124,7 @@ namespace pmm
         const Arena arena2 = std::move(arena);
         EXPECT_EQ(initialPointer, arena2._buffer);
         EXPECT_EQ(0, arena2._offset);
+        EXPECT_EQ(0, arena2._prevOffset);
         EXPECT_EQ(size, arena2._sizeInBytes);
     }
 } // namespace pmm
@@ -157,6 +161,7 @@ namespace pmm
         static_cast<void>(arena2 = std::move(arena));
         EXPECT_EQ(nullptr, arena._buffer);
         EXPECT_EQ(0, arena._offset);
+        EXPECT_EQ(0, arena._prevOffset);
         EXPECT_EQ(0, arena._sizeInBytes);
     }
 
@@ -176,6 +181,7 @@ namespace pmm
         EXPECT_EQ(initialPointer, arena2._buffer);
         EXPECT_EQ(0, arena2._offset);
         EXPECT_EQ(size, arena2._sizeInBytes);
+        EXPECT_EQ(0, arena2._prevOffset);
     }
 
 
@@ -315,6 +321,26 @@ namespace pmm
         }
     }
 
+    /**
+     * @brief Verify that after allocation using @ref pmm::Arena::alloc, the difference between
+     *        prevOffset and offset is the size of the object.
+     */
+    TEST(ArenaAllocBytes, OffsetMinusPrevOffsetGivesObjectSize)
+    {
+        constexpr auto size = 512;
+        Arena arena(size);
+
+        // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+        arena.allocBytes(2, 2);
+
+        // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
+        constexpr auto alignment = 128;
+        constexpr auto bufferSize = 64;
+        [[maybe_unused]] const auto buffer = arena.allocBytes(bufferSize, alignment);
+
+        EXPECT_EQ(bufferSize, arena._offset - arena._prevOffset);
+    }
+
 
     /**************************************
      *                                    *
@@ -350,7 +376,6 @@ namespace pmm
         EXPECT_EQ(nullptr, vec);
     }
 
-    #include <iostream>
 
     /** @brief Verify that Arena's object allocation default to the alignment of object's T. */
     TEST(ArenaAlloc, AlignsToTargetAlignment)
@@ -368,6 +393,25 @@ namespace pmm
         // Checking previous offset is required since current offset is will not be aligned to the boundary
         // but the base address.
         EXPECT_TRUE(((reinterpret_cast<uintptr_t>(arena._buffer) + arena._prevOffset) & (expectedAlignment - 1)) == 0);
+    }
+
+    /**
+     * @brief Verify that after allocation using @ref pmm::Arena::alloc, the difference between
+     *        prevOffset and offset is the size of the object.
+     */
+    TEST(ArenaAlloc, OffsetMinusPrevOffsetGivesObjectSize)
+    {
+        constexpr auto size = 512;
+        Arena arena(size);
+
+        // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+        arena.allocBytes(2, 2);
+
+        // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
+        constexpr auto expectedAlignment = 128;
+        [[maybe_unused]] const auto vec = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+        EXPECT_EQ(sizeof(Vec4), arena._offset - arena._prevOffset);
     }
 
 
@@ -423,6 +467,25 @@ namespace pmm
         // Checking previous offset is required since current offset is will not be aligned to the boundary
         // but the base address.
         EXPECT_TRUE(((reinterpret_cast<uintptr_t>(arena._buffer) + arena._prevOffset) & (expectedAlignment - 1)) == 0);
+    }
+
+    /**
+     * @brief Verify that after allocation using @ref pmm::Arena::allocAs, the difference between
+     *        prevOffset and offset is the size of the object.
+     */
+    TEST(ArenaAllocAs, OffsetMinusPrevOffsetGivesObjectSize)
+    {
+        constexpr auto size = 512;
+        Arena arena(size);
+
+        // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+        arena.allocBytes(2, 2);
+
+        // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
+        constexpr auto expectedAlignment = 128;
+        [[maybe_unused]] const auto vec = arena.allocAs<Vec4>(expectedAlignment, 1.0f, 2.0f, 3.0f, 4.0f);
+
+        EXPECT_EQ(sizeof(Vec4), arena._offset - arena._prevOffset);
     }
 
 } // namespace pmm

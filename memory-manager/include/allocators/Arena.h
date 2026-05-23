@@ -151,16 +151,30 @@ namespace pmm
         template <typename T, typename... Args>
         constexpr T* allocAs(std::size_t alignment, Args... args);
 
-        // template <typename T>
-        // constexpr T* alloc();
+        /**
+         * [NO-OP] Objects cannot be individually freed in an arena.
+         *
+         * @tparam T  The type of allocated object.
+         *
+         * @param ptr The pointer to the allocated object.
+         */
+        template <typename T>
+        constexpr void free(T* ptr) = delete;
 
-        // template <typename T>
-        // constexpr T* alloc(std::size_t alignment);
 
-        // template <typename T>
-        // constexpr void free(T* ptr) {}
+        /**
+         * [NO-OP] Byte memory cannot be individually freed in an arena.
+         *
+         * @tparam T  The type of allocated object.
+         *
+         * @param ptr The pointer to the allocated object.
+         */
+        template <typename T>
+        constexpr void free(void* ptr) = delete;
 
-        // constexpr void free(void* ptr) {}
+
+
+
 
         // constexpr void freeAll();
 
@@ -186,8 +200,11 @@ namespace pmm
         FRIEND_TEST(ArenaMoveAssignment, NullsOutInternalBuffer);
         FRIEND_TEST(ArenaMoveAssignment, MovesBufferIntoNewObject);
         FRIEND_TEST(ArenaMoveAssignment, DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
+        FRIEND_TEST(ArenaAllocBytes, OffsetMinusPrevOffsetGivesObjectSize);
         FRIEND_TEST(ArenaAlloc, AlignsToTargetAlignment);
+        FRIEND_TEST(ArenaAlloc, OffsetMinusPrevOffsetGivesObjectSize);
         FRIEND_TEST(ArenaAllocAs, AlignsToGivenAlignment);
+        FRIEND_TEST(ArenaAllocAs, OffsetMinusPrevOffsetGivesObjectSize);
     };
 
 } // namespace pmm
