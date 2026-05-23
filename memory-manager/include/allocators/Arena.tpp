@@ -119,7 +119,7 @@ namespace pmm {
     }
 
 
-    inline void* Arena::allocBytes(const std::size_t bytes, const std::size_t alignment) {
+    inline void* Arena::allocBytes(const std::size_t bytes, const std::size_t alignment) noexcept {
         _alignForward(alignment);
 
         // Check if the arena has enough memory for allocation
@@ -139,7 +139,7 @@ namespace pmm {
 
 
     template <typename T, typename... Args>
-    constexpr T* Arena::alloc(Args... args)
+    constexpr T* Arena::alloc(Args... args) noexcept
     {
         // Forward align the memory by the types default alignment
         _alignForward(alignof(T));
@@ -162,7 +162,7 @@ namespace pmm {
 
 
     template <typename T, typename... Args>
-    constexpr T* Arena::allocAs(std::size_t alignment, Args... args)
+    constexpr T* Arena::allocAs(std::size_t alignment, Args... args) noexcept
     {
         // Forward align the memory by the alignment
         _alignForward(alignment);
@@ -184,7 +184,7 @@ namespace pmm {
     }
 
 
-    constexpr void Arena::freeAll()
+    constexpr void Arena::freeAll() noexcept
     {
         _offset = 0;
 

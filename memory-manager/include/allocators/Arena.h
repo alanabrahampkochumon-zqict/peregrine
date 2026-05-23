@@ -117,7 +117,7 @@ namespace pmm
          * @return A void pointer to the start of allocated memory or
          *         `nullptr` if the arena cannot allocate memory of requested size.
          */
-        void* allocBytes(std::size_t bytes, std::size_t alignment = sizeof(void*));
+        void* allocBytes(std::size_t bytes, std::size_t alignment = sizeof(void*)) noexcept;
 
 
         /**
@@ -134,7 +134,7 @@ namespace pmm
          * @return A reference to the allocated memory.
          */
         template <typename T, typename... Args>
-        constexpr T* alloc(Args... args);
+        constexpr T* alloc(Args... args) noexcept;
 
 
         /**
@@ -149,7 +149,7 @@ namespace pmm
          * @return A reference to the allocated memory.
          */
         template <typename T, typename... Args>
-        constexpr T* allocAs(std::size_t alignment, Args... args);
+        constexpr T* allocAs(std::size_t alignment, Args... args) noexcept;
 
 
         /**
@@ -181,8 +181,10 @@ namespace pmm
          *       All memory states may/may not get erased.
          *
          */
-        constexpr void freeAll();
+        constexpr void freeAll() noexcept;
 
+
+        // constexpr void
 
 
         // constexpr void freeAll();
