@@ -76,19 +76,6 @@ TEST(ArenaMoveConstructor, CopiesAttributesToNewObject)
 namespace pmm
 {
 
-    /** @brief  Verify that the initializer with default alignment creates an offset for alignment internally. */
-    // TEST(AlignedArenaInitialization, InternalState_AlignBaseOffset)
-    // {
-    //     constexpr auto size = 512;
-    //     const auto alignment = 32;
-    //     Arena arena(size, alignment);
-    //
-    //     const auto baseAddress = reinterpret_cast<uintptr_t>(arena._buffer);
-    //     const auto offset = baseAddress + arena._offset;
-    //     EXPECT_TRUE((baseAddress & alignment - 1) == 0);
-    // }
-
-
     /** @brief Verify that the initializer with default alignment creates an offset for alignment. */
     TEST_P(AlignedArenaInitialization, InternalState_AlignBaseOffset)
     {
@@ -102,7 +89,7 @@ namespace pmm
         // to find out if the memory address is aligned
         // E.g: 1000 1000 -> 4 byte aligned since AND it with 0000 0111(31) will result 0
         // If misaligned 1000 1001 -> not 4 byte aligned since the op will result in 0000 0001
-        EXPECT_TRUE((absoluteOffset & alignment - 1) == 0);
+        EXPECT_TRUE((absoluteOffset & (alignment - 1)) == 0);
     }
 
 
