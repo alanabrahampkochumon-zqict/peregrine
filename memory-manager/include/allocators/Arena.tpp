@@ -30,6 +30,14 @@ namespace pmm {
         _offset = 0;
     }
 
+    Arena::Arena(const std::size_t bytes, const std::size_t alignment) noexcept
+    {
+        _buffer = new uint8_t[bytes];
+        _sizeInBytes = bytes;
+        // Sets the offset
+        _alignForward(alignment);
+    }
+
 
     Arena::~Arena() noexcept {
         delete[] _buffer;

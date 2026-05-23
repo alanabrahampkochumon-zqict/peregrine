@@ -31,6 +31,19 @@ namespace pmm
 
 
         /**
+         * @brief Allocate a new physical memory vault from the Operating System with a base alignment of @p alignment.
+         *
+         * @param[in] bytes     The total capacity of the arena in bytes.
+         * @param[in] alignment The base alignment of the arena.
+         *                      Must be a power of 2.
+         *
+         * @warning The memory block is NOT zero-initialized.
+         * @warning This allocator is Linear and is NOT thread-safe by default.
+         */
+        inline explicit Arena(std::size_t bytes, std::size_t alignment) noexcept;
+
+
+        /**
          * @brief Destroy Arena, freeing up any memory it holds.
          * @note For clearing the Arena, use @ref freeAll.
          */
