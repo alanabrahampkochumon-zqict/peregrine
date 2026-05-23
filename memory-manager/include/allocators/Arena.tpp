@@ -86,25 +86,30 @@ namespace pmm {
 
         // Base address of the pointer
         const auto absoluteBaseAddress = reinterpret_cast<uintptr_t>(_buffer);
+
         // Current memory address
         const auto absoluteAddress = absoluteBaseAddress + _offset;
-
-        // Modulo arithmetic for numbers that are power of two
-        // Bytes = 13 -> 1101
-        // Alignment = 4 -> 0100
-        // Modulo = 1 -> 1101 & 0011 (4 - 1 = 3) = 01
-        if (const auto modulo = absoluteAddress & (alignment - 1); modulo != 0) {
-            const uintptr_t alignedAddress = absoluteAddress + (alignment - modulo);
-            // Convert the offset back to a relative offset
-            _offset = alignedAddress - absoluteBaseAddress;
-        }
-
+        const auto misalignment = absoluteAddress & (alignment - 1);
+        // & (alignment - 1) skips the need for branching since
+        // we are masking-off bits greater than or equal to alignment.
+        // So, when we hit a misalignment of 0, and the result of subtraction go to alignment,
+        // essentially cancelling it out to 0
+        // E.g: 64 -> 1 0 0 0 0 0 0 (Alignment)
+        //      63 -> 0 1 1 1 1 1 1 (Mask)
+        //
+        //      24 -> 0 0 1 1 0 0 0 (Padding Required)
+        //      24 -> 0 0 1 1 0 0 0 (Offset Increment)
+        //
+        //      64 -> 1 0 0 0 0 0 0 (Padding Required)
+        //       0 -> 0 0 0 0 0 0 0 (Offset Increment)
+        _offset += (alignment - misalignment) & (alignment - 1);
     }
 
 
     inline void* Arena::allocBytes(const std::size_t bytes, const std::size_t alignment) {
         _alignForward(alignment);
 
+        // Check if the arena has enough memory for allocation
         if (_sizeInBytes >= _offset + bytes) {
             void* ptr = &_buffer[_offset];
 
@@ -117,6 +122,7 @@ namespace pmm {
         // Return nullptr if the requested memory cannot be allocated
         return nullptr;
     }
+
 
     template <typename T, typename... Args>
     constexpr T* Arena::alloc(Args... args)

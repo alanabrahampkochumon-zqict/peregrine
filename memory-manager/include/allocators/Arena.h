@@ -109,8 +109,8 @@ namespace pmm
          * @brief Allocate @p bytes of memory.
          *
          * @param bytes     The memory in bytes to allocate from the Arena.
-         * @param alignment The alignment to use when allocating memory.
-         *                  Defaults to `sizeof(void*)`.
+         * @param alignment The alignment to use when allocating memory (in bytes).
+         *                  Defaults to sizeof(void*) which is 8 bytes in 64-bit machines.
          *
          * @warning Can cause internal fragmentation, when aligning ill-aligned values.
          *
@@ -119,7 +119,6 @@ namespace pmm
          */
         void* allocBytes(std::size_t bytes, std::size_t alignment = sizeof(void*));
 
-        // constexpr void* allocBytes(std::size_t bytes);
 
         /**
          * @brief Allocate an object of type @p T in the arena.
@@ -134,9 +133,6 @@ namespace pmm
          */
         template <typename T, typename... Args>
         constexpr T* alloc(Args... args);
-
-        // template<typename T, typename... Args>
-        // constexpr T* alloc(std::size_t alignment, Args... args);
 
         // template <typename T>
         // constexpr T* alloc();
@@ -167,6 +163,7 @@ namespace pmm
         void _alignForward(std::size_t alignment) noexcept;
 
         // FRIEND TEST macros for verifying internal states
+        FRIEND_TEST(AlignedArenaInitialization, InternalState_AlignBaseOffset);
         FRIEND_TEST(ArenaMoveConstructor, NullsOutInternalBuffer);
         FRIEND_TEST(ArenaMoveConstructor, MovesBufferIntoNewObject);
         FRIEND_TEST(ArenaMoveAssignment, NullsOutInternalBuffer);
