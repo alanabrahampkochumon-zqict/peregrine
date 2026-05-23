@@ -130,7 +130,6 @@ namespace pmm {
     {
         // Forward align the memory by the types default alignment
         _alignForward(alignof(T));
-        // TODO: Add tests
 
         if (constexpr auto objectSize = sizeof(T); _sizeInBytes >= _offset + objectSize)
         {

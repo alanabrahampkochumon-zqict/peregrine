@@ -171,6 +171,7 @@ namespace pmm
         FRIEND_TEST(ArenaMoveAssignment, NullsOutInternalBuffer);
         FRIEND_TEST(ArenaMoveAssignment, MovesBufferIntoNewObject);
         FRIEND_TEST(ArenaMoveAssignment, DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
+        FRIEND_TEST(ArenaAlloc, AlignsToTargetAlignment);
     };
 
 } // namespace pmm

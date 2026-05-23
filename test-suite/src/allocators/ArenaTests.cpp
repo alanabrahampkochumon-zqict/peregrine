@@ -317,6 +317,24 @@ namespace pmm
         EXPECT_FLOAT_EQ(4.0f,vec->w);
     }
 
+
+    /** @brief Verify that Arena's object allocation default to the alignment of object's T. */
+    TEST(ArenaAlloc, AlignsToTargetAlignment)
+    {
+        constexpr auto size = 512;
+        Arena arena(size);
+
+        // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+        arena.allocBytes(2, 2);
+
+        constexpr auto expectedAlignment = alignof(Vec4);
+        [[maybe_unused]] const auto vec = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+        // Arena is aligned to alignment of vec4 which is 16 bytes.
+        EXPECT_TRUE(((reinterpret_cast<uintptr_t>(arena._buffer) + arena._offset) & (expectedAlignment - 1)) == 0);
+
+    }
+
 } // namespace pmm
 
 
