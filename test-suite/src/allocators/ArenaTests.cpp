@@ -261,6 +261,7 @@ namespace pmm
         EXPECT_NE(nullptr, bytes);
     }
 
+
     /**
      * @brief Arena allocBytes return non-null address when allocating size equal to total size of the arena.
      */

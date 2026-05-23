@@ -122,7 +122,9 @@ namespace pmm
 
         /**
          * @brief Allocate an object of type @p T in the arena.
-         * @note The memory alignment is dictated by the arena's alignment which can be set upon instantiation.
+         *
+         * @note Memory gets aligned to the default of alignment of @p T.
+         *       For finer control use @ref allocBytes.
          *
          * @tparam T    The type of object to allocate.
          * @tparam Args The type of arguments to instantiate the object.
