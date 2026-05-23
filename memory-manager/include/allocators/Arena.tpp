@@ -89,7 +89,10 @@ namespace pmm {
         return _sizeInBytes;
     }
 
-
+    /**
+     * Align the "base address" of the arena's next allocation to @p alignment.
+     * @param alignment The alignment to which the offset + base address is aligned to.
+     */
     inline void Arena::_alignForward(const std::size_t alignment) noexcept {
         // To make sure alignment is the power of 2
         assert(std::has_single_bit(alignment));
@@ -178,7 +181,18 @@ namespace pmm {
 
         // Return nullptr if the requested memory cannot be allocated
         return nullptr;
+    }
 
+
+    constexpr void Arena::freeAll()
+    {
+        _offset = 0;
+
+        // Forward align by default alignment (if specified during construction)
+        if (_defaultAlignment > 0)
+            _alignForward(_defaultAlignment);
+
+        _prevOffset = _offset;
     }
 
 } // namespace pmm

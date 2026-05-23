@@ -175,7 +175,7 @@ namespace pmm
 
 
         /**
-         * @brief Frees the entire arena.
+         * @brief Free the entire arena.
          *
          * @note This is not a hard reset.
          *       All memory states may/may not get erased.
@@ -215,6 +215,8 @@ namespace pmm
         FRIEND_TEST(ArenaAlloc, OffsetMinusPrevOffsetGivesObjectSize);
         FRIEND_TEST(ArenaAllocAs, AlignsToGivenAlignment);
         FRIEND_TEST(ArenaAllocAs, OffsetMinusPrevOffsetGivesObjectSize);
+        FRIEND_TEST(ArenaFreeAll, ResetsOffsetToZero);
+        FRIEND_TEST(ArenaFreeAll, AlignedArena_ResetsOffsetToAlignedAddress);
     };
 
 } // namespace pmm

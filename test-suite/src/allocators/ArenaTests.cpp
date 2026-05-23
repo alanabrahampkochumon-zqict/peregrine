@@ -136,8 +136,8 @@ namespace pmm
 
 
     /**
- * @brief Verify that move constructor moves all data members, including buffer into new object.
- */
+     * @brief Verify that move constructor moves all data members, including buffer into new object.
+     */
     TEST(ArenaMoveConstructor, AlignedArena_MovesBufferIntoNewObject)
     {
         constexpr auto size = 512;
@@ -514,6 +514,62 @@ namespace pmm
         [[maybe_unused]] const auto vec = arena.allocAs<Vec4>(expectedAlignment, 1.0f, 2.0f, 3.0f, 4.0f);
 
         EXPECT_EQ(sizeof(Vec4), arena._offset - arena._prevOffset);
+    }
+
+
+    /**************************************
+     *                                    *
+     *             FREE ALL               *
+     *                                    *
+     **************************************/
+
+    /** @brief Verify that freeing an unaligned arena resets the offsets to zero. */
+    TEST(ArenaFreeAll, ResetsOffsetToZero)
+    {
+        constexpr auto size = 512;
+        Arena arena(size);
+
+        [[maybe_unused]] const auto chunkOne = arena.allocBytes(128);
+        [[maybe_unused]] const auto chunkTwo = arena.allocBytes(128);
+
+        // Initially expect offset and prevOffset are not zero
+        EXPECT_NE(0, arena._offset);
+        EXPECT_NE(0, arena._prevOffset);
+
+        // After freeing, offsets are reset
+        arena.freeAll();
+
+        // Offsets are reset to zero
+        EXPECT_EQ(0, arena._offset);
+        EXPECT_EQ(0, arena._prevOffset);
+    }
+
+
+    /** @brief Verify that freeing an aligned arena resets the offsets to an aligned address. */
+    TEST(ArenaFreeAll, AlignedArena_ResetsOffsetToAlignedAddress)
+    {
+        constexpr auto size = 512;
+        constexpr auto alignment = 128;
+        Arena arena(size, alignment);
+
+        // 64 byte allocation proves to use in the latter phases that allocation was successful
+        // since 128 aligned address + 64 bytes will not result in a 128 byte alignment.
+        [[maybe_unused]] const auto bytes = arena.allocBytes(64);
+
+        // Initially, expect offset to not equal previous offset after allocation
+        EXPECT_NE(arena._prevOffset, arena._offset);
+
+        // After freeing, offsets are reset
+        arena.freeAll();
+
+        // Offsets are reset to zero
+        // Modulo arithmetic.
+        const auto offsetBuffer = reinterpret_cast<uintptr_t>(arena._buffer) + arena._offset;
+        const auto prevOffsetBuffer = reinterpret_cast<uintptr_t>(arena._buffer) + arena._prevOffset;
+        EXPECT_EQ(0, offsetBuffer & (alignment - 1));
+        EXPECT_EQ(0, prevOffsetBuffer & (alignment - 1));
+        // Besides that equality, both offset and previous offset must be equal
+        EXPECT_EQ(offsetBuffer, prevOffsetBuffer);
     }
 
 } // namespace pmm
