@@ -178,6 +178,13 @@ TEST(ArenaMoveAssignment, CopiesAttributesToNewObject)
 // Namespacing is required for testing internal state
 namespace pmm
 {
+
+    /**************************************
+     *                                    *
+     *          MOVE ASSIGNMENT           *
+     *                                    *
+     **************************************/
+
     /**
      * @brief Verify that move assignment operator nulls out current object internal buffer and related data members.
      */
@@ -211,6 +218,26 @@ namespace pmm
         EXPECT_EQ(0, arena2._offset);
         EXPECT_EQ(size, arena2._sizeInBytes);
         EXPECT_EQ(0, arena2._prevOffset);
+    }
+
+
+    /**
+     * @brief Verify that move assignment within self returns the same arena. */
+    TEST(ArenaMoveAssignment, SelfAssignmentReturnsTheSameArena)
+    {
+        constexpr auto size = 512;
+        Arena arena(size);
+        const auto initialAddress = reinterpret_cast<uintptr_t>(arena._buffer);
+        const auto initialOffset = reinterpret_cast<uintptr_t>(arena._offset);
+        const auto initialPrevOffset = reinterpret_cast<uintptr_t>(arena._prevOffset);
+        const auto initialAlignment = reinterpret_cast<uintptr_t>(arena._defaultAlignment);
+
+        arena = std::move(arena);
+
+        EXPECT_EQ(initialAddress, reinterpret_cast<uintptr_t>(arena._buffer));
+        EXPECT_EQ(initialOffset, arena._offset);
+        EXPECT_EQ(initialPrevOffset, arena._prevOffset);
+        EXPECT_EQ(initialAlignment, arena._defaultAlignment);
     }
 
 
@@ -360,7 +387,7 @@ namespace pmm
         Arena arena(size);
 
         // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-        arena.allocBytes(2, 2);
+        static_cast<void>(arena.allocBytes(2, 2));
 
         // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
         constexpr auto alignment = 128;
@@ -413,7 +440,7 @@ namespace pmm
         Arena arena(size);
 
         // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-        arena.allocBytes(2, 2);
+        static_cast<void>(arena.allocBytes(2, 2));
 
         constexpr auto expectedAlignment = alignof(Vec4);
         [[maybe_unused]] const auto vec = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
@@ -434,7 +461,7 @@ namespace pmm
         Arena arena(size);
 
         // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-        arena.allocBytes(2, 2);
+        static_cast<void>(arena.allocBytes(2, 2));
 
         // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
         [[maybe_unused]] const auto vec = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
@@ -485,7 +512,7 @@ namespace pmm
         Arena arena(size);
 
         // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-        arena.allocBytes(2, 2);
+        static_cast<void>(arena.allocBytes(2, 2));
 
         // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
         constexpr auto expectedAlignment = 128;
@@ -507,7 +534,7 @@ namespace pmm
         Arena arena(size);
 
         // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-        arena.allocBytes(2, 2);
+        static_cast<void>(arena.allocBytes(2, 2));
 
         // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
         constexpr auto expectedAlignment = 128;
@@ -717,13 +744,11 @@ TEST(ArenaResize, LatestAllocationOnlyResizeByOffsetDifference)
         data[i] = static_cast<int>(i + 100);
 
     // Allocate some more memory
-    auto vec = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+    [[maybe_unused]] auto vec = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
     // Verify data is not overwritten
     for (std::size_t i = 0; i < firstArraySize; ++i)
         EXPECT_EQ(i + 100, data[i]);
-
-    const auto secondByteChunk = arena.allocBytes(byteSize);
 }
 
 

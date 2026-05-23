@@ -220,6 +220,7 @@ namespace pmm
         FRIEND_TEST(ArenaMoveConstructor, MovesBufferIntoNewObject);
         FRIEND_TEST(ArenaMoveAssignment, NullsOutInternalBuffer);
         FRIEND_TEST(ArenaMoveAssignment, MovesBufferIntoNewObject);
+        FRIEND_TEST(ArenaMoveAssignment, SelfAssignmentReturnsTheSameArena);
         FRIEND_TEST(ArenaMoveConstructor, AlignedArena_MovesBufferIntoNewObject);
         FRIEND_TEST(ArenaMoveAssignment, DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
         FRIEND_TEST(ArenaAllocBytes, OffsetMinusPrevOffsetGivesObjectSize);
