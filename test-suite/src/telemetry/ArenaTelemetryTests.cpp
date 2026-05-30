@@ -9,9 +9,6 @@
  */
 
 
-#define ENABLE_PMM_TELEMETRY // TODO: Move to CMake of TestSuite
-
-
 #include <gtest/gtest.h>
 #include <telemetry/ArenaTelemetry.h>
 

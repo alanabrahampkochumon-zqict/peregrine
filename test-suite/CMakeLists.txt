@@ -39,5 +39,9 @@ target_link_libraries(
     MemoryManager
 )
 
+# Preprocessor Macros
+# ENABLE_PMM_TELEMETRY -> Enable telemetry testing
+target_compile_definitions(TestSuite PRIVATE ENABLE_PMM_TELEMETRY)
+
 include(GoogleTest)
 gtest_discover_tests(TestSuite)
