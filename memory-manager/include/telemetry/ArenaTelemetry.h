@@ -21,7 +21,6 @@ namespace pmm
      * @{
      */
 
-#define ENABLE_PMM_TELEMETRY // TODO: Remove
 #ifdef ENABLE_PMM_TELEMETRY
     struct ArenaTelemetry
     {
@@ -51,10 +50,6 @@ namespace pmm
          */
         constexpr void resetTelemetry() noexcept;
     };
-
-
-    #include "ArenaTelemetry.tpp"
-
 
 #else
     struct ArenaTelemetry
@@ -88,3 +83,6 @@ namespace pmm
     /** @} */
 
 } // namespace pmm
+
+
+#include "ArenaTelemetry.tpp"

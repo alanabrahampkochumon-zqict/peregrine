@@ -10,13 +10,16 @@
  */
 
 
+#include <limits>
+
 
 namespace pmm
 {
-    #define ENABLE_PMM_TELEMETRY // TODO: Remove
+
 #ifdef ENABLE_PMM_TELEMETRY
+
     constexpr ArenaTelemetry::ArenaTelemetry(std::size_t size) noexcept
-        : size(size), currentUsage(0), minUsage(0), peakUsage(0)
+        : size(size), currentUsage(0), minUsage(std::numeric_limits<std::size_t>::max()), peakUsage(0)
     {}
 
 
@@ -31,8 +34,9 @@ namespace pmm
     constexpr void ArenaTelemetry::resetTelemetry() noexcept
     {
         currentUsage = 0;
-        minUsage = 0;
+        minUsage = std::numeric_limits<std::size_t>::max();
         peakUsage = 0;
     }
+
 #endif
 } // namespace pmm
