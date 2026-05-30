@@ -45,8 +45,34 @@ namespace pmm
          * @brief Delete the arena snapshot and restore the arena's state to the last known state.
          */
         constexpr ~TempArena() noexcept;
-    };
 
+
+        /**
+         * @copydoc pmm::Arena::allocBytes(std::size_t, std::size_t)
+         */
+        [[nodiscard]] void* allocBytes(std::size_t bytes, std::size_t alignment = sizeof(void*)) noexcept;
+
+
+        // /**
+        //  *  @copydoc pmm::Arena::alloc(Args...)
+        //  */
+        // template <typename T, typename... Args>
+        // [[nodiscard]] constexpr T* alloc(Args... args) noexcept;
+        //
+        //
+        // /**
+        //  *  @copydoc pmm::Arena::allocAs(std::size_t, Args...)
+        //  */
+        // template <typename T, typename... Args>
+        // [[nodiscard]] constexpr T* allocAs(std::size_t alignment, Args... args) noexcept;
+        //
+        //
+        // /**
+        //  *  @copydoc pmm::Arena::allocV(std::size_t)
+        //  */
+        // template <typename T>
+        // [[nodiscard]] constexpr std::span<T> allocV(std::size_t count) noexcept;
+    };
 
     /** @} */
 

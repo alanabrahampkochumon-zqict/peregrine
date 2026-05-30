@@ -95,4 +95,16 @@ TEST_F(TempArenaTest, RewindsStateFreeingMemoryHeldByTempArena)
 }
 
 
+/**
+ * @brief Verify that @ref TempArena::allocBytes return a non-nullptr in an arena with free space.
+ */
+TEST_F(TempArenaTest, AllocBytes_ReturnsNonNullValue)
+{
+    auto tArena1 = pmm::TempArena(this->_arena);
+    const auto memory = tArena1.allocBytes(512);
+
+    EXPECT_NE(nullptr, memory);
+}
+
+
 /** @} */

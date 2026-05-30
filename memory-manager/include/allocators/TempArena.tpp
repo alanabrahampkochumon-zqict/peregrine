@@ -14,6 +14,12 @@
 
 namespace pmm
 {
+    /**************************************
+     *                                    *
+     *          INITIALIZATIONS           *
+     *                                    *
+     **************************************/
+
     constexpr TempArena::TempArena(Arena* arena) noexcept
         : arena(arena), prevOffset(arena->_prevOffset), currentOffset(arena->_offset)
     {}
@@ -24,5 +30,18 @@ namespace pmm
         arena->_prevOffset = prevOffset;
         arena->_offset = currentOffset;
     }
+
+
+    /**************************************
+     *                                    *
+     *            ALLOCATIONS             *
+     *                                    *
+     **************************************/
+
+    inline void* TempArena::allocBytes(std::size_t bytes, std::size_t alignment) noexcept
+    {
+        return arena->allocBytes(bytes, alignment);
+    }
+
 
 } // namespace pmm
