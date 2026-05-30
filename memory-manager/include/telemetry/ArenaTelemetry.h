@@ -29,7 +29,7 @@ namespace pmm
         /**
          * @brief Initialize a new Arena telemetry instance with the current arena size.
          *
-         * @param size The size of the Arena.
+         * @param[in] size The size of the Arena.
          */
         [[nodiscard]] explicit constexpr ArenaTelemetry(std::size_t size) noexcept;
 
@@ -40,9 +40,10 @@ namespace pmm
          * @note The function expects the size of current allocation, not the size of the arena's buffer,
          *       or the current offset.
          *
-         * @param allocatedByteSize The byte allocated in the current allocation call of the arena.
+         * @param[in] allocatedByteSize The byte allocated in the current allocation call of the arena.
          */
         constexpr void updateAllocationUsage(std::size_t allocatedByteSize) noexcept;
+
 
         /**
          * @brief Reset the currentUsage, while preserving the peak and minimum usage.

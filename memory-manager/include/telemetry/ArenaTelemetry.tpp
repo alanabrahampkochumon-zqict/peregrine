@@ -18,12 +18,12 @@ namespace pmm
 
 #ifdef ENABLE_PMM_TELEMETRY
 
-    constexpr ArenaTelemetry::ArenaTelemetry(std::size_t size) noexcept
-        : size(size), currentUsage(0), minUsage(std::numeric_limits<std::size_t>::max()), peakUsage(0)
+    constexpr ArenaTelemetry::ArenaTelemetry(const std::size_t size) noexcept
+        : currentUsage(0), peakUsage(0), minUsage(std::numeric_limits<std::size_t>::max()), size(size)
     {}
 
 
-    constexpr void ArenaTelemetry::updateAllocationUsage(std::size_t allocatedByteSize) noexcept
+    constexpr void ArenaTelemetry::updateAllocationUsage(const std::size_t allocatedByteSize) noexcept
     {
         currentUsage += allocatedByteSize;
         minUsage = std::min(minUsage, allocatedByteSize);
