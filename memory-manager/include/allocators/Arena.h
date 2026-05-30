@@ -254,6 +254,7 @@ namespace pmm
         FRIEND_TEST(ArenaResize, LatestAllocationResizeBuffer);
         FRIEND_TEST(ArenaResize, LatestAllocationOnlyResizeByOffsetDifference);
         FRIEND_TEST(ArenaResize, AllocationBeforePriorAllocationReturnNewBuffer);
+        FRIEND_TEST(TempArenaTest, ArenaStateIsRestoredAfterTempArenaDeallocation);
     };
 
 } // namespace pmm

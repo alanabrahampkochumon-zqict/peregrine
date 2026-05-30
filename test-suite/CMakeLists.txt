@@ -5,7 +5,7 @@ set(CommonFiles "ConstantTests.cpp")
 list(TRANSFORM CommonFiles PREPEND ${TestDir})
 
 set(AllocatorDir "src/allocators/")
-set(AllocatorFiles "ArenaTests.cpp;")
+set(AllocatorFiles "ArenaTests.cpp;TempArenaTests.cpp;")
 list(TRANSFORM AllocatorFiles PREPEND ${AllocatorDir})
 
 set(IncludeDir "include/")
