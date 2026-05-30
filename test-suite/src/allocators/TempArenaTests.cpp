@@ -8,6 +8,8 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
+#include "Utils.h"
+
 #include <allocators/Arena.h>
 #include <allocators/TempArena.h>
 #include <gtest/gtest.h>
@@ -105,6 +107,39 @@ TEST_F(TempArenaTest, AllocBytes_ReturnsNonNullValue)
 
     EXPECT_NE(nullptr, memory);
 }
+
+
+/**
+ * @brief Verify that @ref TempArena::alloc return a non-nullptr in an arena with free space.
+ */
+TEST_F(TempArenaTest, Alloc_ReturnsNonNullValue)
+{
+    auto tArena1 = pmm::TempArena(this->_arena);
+    const auto memory = tArena1.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+    EXPECT_NE(nullptr, memory);
+    EXPECT_EQ(1.0f, memory->x);
+    EXPECT_EQ(2.0f, memory->y);
+    EXPECT_EQ(3.0f, memory->z);
+    EXPECT_EQ(4.0f, memory->w);
+}
+
+
+/**
+ * @brief Verify that @ref TempArena::allocAs return a non-nullptr in an arena with free space.
+ */
+// TEST_F(TempArenaTest, Alloc_ReturnsNonNullValue)
+// {
+//     auto tArena1 = pmm::TempArena(this->_arena);
+//     const auto memory = tArena1.allocAs<Vec4>(32, 1.0f, 2.0f, 3.0f, 4.0f);
+//
+//     EXPECT_NE(nullptr, memory);
+//     EXPECT_EQ(1.0f, memory->x);
+//     EXPECT_EQ(2.0f, memory->y);
+//     EXPECT_EQ(3.0f, memory->z);
+//     EXPECT_EQ(4.0f, memory->w);
+// }
+
 
 
 /** @} */

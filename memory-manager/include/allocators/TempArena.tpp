@@ -44,4 +44,11 @@ namespace pmm
     }
 
 
+    template <typename T, typename... Args>
+    constexpr T* TempArena::alloc(Args... args) noexcept
+    {
+        return arena->alloc<T>(args...);
+    }
+
+
 } // namespace pmm
