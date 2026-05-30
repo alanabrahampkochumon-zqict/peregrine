@@ -73,6 +73,92 @@ TEST(ArenaMoveConstructor, CopiesAttributesToNewObject)
 }
 
 
+/**
+ * @brief Verify that @ref pmm::Arena::allocV allocates a block of memory.
+ */
+TEST(ArenaAllocV, ReturnsAContinguousBlockOfMemory)
+{
+    constexpr auto size = 1024;
+    constexpr auto blockCount = 10;
+    pmm::Arena arena(size);
+
+    auto vertices = arena.allocV<Vec4>(blockCount);
+
+    EXPECT_EQ(blockCount, vertices.size());
+    EXPECT_EQ(blockCount * sizeof(Vec4), vertices.size_bytes());
+}
+
+
+/**
+ * @brief Verify that @ref pmm::Arena::allocV returns an empty span when allocating in out-of-memory arena.
+ */
+TEST(ArenaAllocV, FullArenaReturnsEmptySpan)
+{
+    constexpr auto size = 1024;
+    constexpr auto blockCount = 10;
+    pmm::Arena arena(size);
+    static_cast<void>(arena.allocBytes(size - 1));
+
+    auto vertices = arena.allocV<Vec4>(blockCount);
+
+    EXPECT_EQ(0, vertices.size());
+    EXPECT_EQ(0, vertices.size_bytes());
+}
+
+/**
+ * @brief Verify that the memory allocated with @ref pmm::Arena::allocV prevents memory overrides.
+ */
+TEST(ArenaAllocV, DataIsNotOverriden)
+{
+    constexpr auto size = 1024;
+    constexpr auto blockCount = 5;
+    constexpr float vertexData[] = {
+        1.0f,  2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  8.0f,  9.0f,  10.0f,
+        11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f, 20.0f,
+    };
+    constexpr float edgeData[] = {
+        101.0f, 102.0f, 103.0f,  104.0f, 105.0f, 106.0f, 107.0f,  108.0f, 109.0f, 110.0f,
+        111.0f, 112.0f, 1013.0f, 114.0f, 115.0f, 116.0f, 1017.0f, 118.0f, 119.0f, 120.0f,
+    };
+
+    constexpr auto epsilon = 1e-5;
+
+    pmm::Arena arena(size);
+
+    auto vertices = arena.allocV<Vec4>(blockCount);
+    auto edges = arena.allocV<Vec4>(blockCount);
+
+    float firstBase = 1.5f, secondBase = 2.0f;
+
+    // Write into the first allocated span
+    for (std::size_t i = 0; i < blockCount; ++i)
+        vertices[i] =
+            Vec4{ vertexData[i * 4], vertexData[(i * 4) + 1], vertexData[(i * 4) + 2], vertexData[(i * 4) + 3] };
+
+    // Write into the second allocated span
+    for (std::size_t i = 0; i < blockCount; ++i)
+        edges[i] = Vec4{ edgeData[i * 4], edgeData[(i * 4) + 1], edgeData[(i * 4) + 2], edgeData[(i * 4) + 3] };
+
+
+    // Verify data integrity is maintained for both
+    for (std::size_t i = 0; i < blockCount; ++i)
+    {
+        auto vert = vertices[i];
+        EXPECT_NEAR(vertexData[i * 4], vert.x, epsilon);
+        EXPECT_NEAR(vertexData[(i * 4) + 1], vert.y, epsilon);
+        EXPECT_NEAR(vertexData[(i * 4) + 2], vert.z, epsilon);
+        EXPECT_NEAR(vertexData[(i * 4) + 3], vert.w, epsilon);
+
+        auto edge = edges[i];
+        EXPECT_NEAR(edgeData[i * 4], edge.x, epsilon);
+        EXPECT_NEAR(edgeData[(i * 4) + 1], edge.y, epsilon);
+        EXPECT_NEAR(edgeData[(i * 4) + 2], edge.z, epsilon);
+        EXPECT_NEAR(edgeData[(i * 4) + 3], edge.w, epsilon);
+    }
+}
+
+
+
 // Namespacing is required for testing internal state
 namespace pmm
 {
@@ -232,13 +318,13 @@ namespace pmm
         const auto initialPrevOffset = arena._prevOffset;
         const auto initialAlignment = arena._defaultAlignment;
 
-        #pragma clang diagnostic push
-        #pragma clang diagnostic ignored "-Wself-move"
-        #pragma GCC diagnostic push
-        #pragma GCC diagnostic ignored "-Wself-move"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wself-move"
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wself-move"
         arena = std::move(arena);
-        #pragma GCC diagnostic pop
-        #pragma clang diagnostic pop
+#pragma GCC diagnostic pop
+#pragma clang diagnostic pop
 
         EXPECT_EQ(initialAddress, reinterpret_cast<uintptr_t>(arena._buffer));
         EXPECT_EQ(initialOffset, arena._offset);
@@ -741,7 +827,8 @@ TEST(ArenaResize, LatestAllocationOnlyResizeByOffsetDifference)
 
     // Allocate the chunk
     const auto firstByteChunk = arena.allocBytes(byteSize);
-    [[maybe_unused]] const auto data = static_cast<int*>(arena.resize(firstByteChunk, byteSize, newByteSize, alignof(int)));
+    [[maybe_unused]] const auto data =
+        static_cast<int*>(arena.resize(firstByteChunk, byteSize, newByteSize, alignof(int)));
     // Resize it
     constexpr auto firstArraySize = newByteSize / sizeof(int);
 

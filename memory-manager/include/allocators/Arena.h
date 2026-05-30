@@ -156,7 +156,8 @@ namespace pmm
         /**
          * @brief Allocate a contiguous block of memory of type @p T.
          *
-         * @note The constructor is not called, so the user needs to initialize the values via constructor call.
+         * @note The constructor is not invoked per object, so the user needs to manually initialize the values via
+         *       constructor call.
          *
          * @tparam T    The type of object to allocate.
          *
