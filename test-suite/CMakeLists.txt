@@ -8,6 +8,10 @@ set(AllocatorDir "src/allocators/")
 set(AllocatorFiles "ArenaTests.cpp;TempArenaTests.cpp;")
 list(TRANSFORM AllocatorFiles PREPEND ${AllocatorDir})
 
+set(TelemetryDir "src/telemetry/")
+set(TelemetryFiles "ArenaTelemetryTests.cpp;")
+list(TRANSFORM TelemetryFiles PREPEND ${TelemetryDir})
+
 set(IncludeDir "include/")
 set(IncludeFiles "Utils.h;DoxygenGroups.h")
 list(TRANSFORM IncludeFiles PREPEND ${IncludeDir})
@@ -15,7 +19,7 @@ list(TRANSFORM IncludeFiles PREPEND ${IncludeDir})
 target_sources(
     TestSuite
     PRIVATE
-    ${CommonFiles} ${AllocatorFiles}
+    ${CommonFiles} ${AllocatorFiles} ${TelemetryFiles}
 
     PRIVATE
     FILE_SET HEADERS
