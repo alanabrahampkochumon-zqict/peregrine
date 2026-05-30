@@ -121,14 +121,10 @@ TEST(ArenaAllocV, DataIsNotOverriden)
         111.0f, 112.0f, 1013.0f, 114.0f, 115.0f, 116.0f, 1017.0f, 118.0f, 119.0f, 120.0f,
     };
 
-    constexpr auto epsilon = 1e-5;
-
     pmm::Arena arena(size);
 
     auto vertices = arena.allocV<Vec4>(blockCount);
     auto edges = arena.allocV<Vec4>(blockCount);
-
-    float firstBase = 1.5f, secondBase = 2.0f;
 
     // Write into the first allocated span
     for (std::size_t i = 0; i < blockCount; ++i)
@@ -141,6 +137,7 @@ TEST(ArenaAllocV, DataIsNotOverriden)
 
 
     // Verify data integrity is maintained for both
+    constexpr auto epsilon = 1e-5;
     for (std::size_t i = 0; i < blockCount; ++i)
     {
         auto vert = vertices[i];
