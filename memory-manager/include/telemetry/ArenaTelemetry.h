@@ -44,6 +44,11 @@ namespace pmm
          */
         constexpr void updateAllocationUsage(std::size_t allocatedByteSize) noexcept;
 
+        /**
+         * @brief Reset the currentUsage, while preserving the peak and minimum usage.
+         */
+        constexpr void resetCurrentUsage() noexcept;
+
 
         /**
          * @brief Update the telemetry usage statistics to zero.
@@ -69,6 +74,13 @@ namespace pmm
          */
         constexpr void updateAllocationUsage(std::size_t allocatedByteSize) noexcept {}
 
+
+        /**
+         * @brief Reset the currentUsage, while preserving the peak and minimum usage.
+         *
+         * @note STUB Method. Telemetry is disabled.
+         */
+        constexpr void resetCurrentUsage() noexcept {}
 
         /**
          * @brief Update the telemetry usage statistics to zero.

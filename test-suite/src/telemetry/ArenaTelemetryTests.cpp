@@ -54,6 +54,32 @@ TEST(ArenaTelemetry, UpdateTelemetry_UpdatesWithCorrectUsage)
 }
 
 
+/**
+ * @brief Verify that @ref pmm::ArenaTelemetry::resetCurrentUsage resets current usage
+ *        but preserves peak and minimum usage.
+ */
+TEST(ArenaTelemetry, ResetCurrentUsage_OnlyResetsCurrentUsage)
+{
+    constexpr auto size = 1024;
+    pmm::ArenaTelemetry telemetry(size);
+
+    telemetry.updateAllocationUsage(10);
+    telemetry.updateAllocationUsage(50);
+    telemetry.updateAllocationUsage(20);
+    telemetry.updateAllocationUsage(30);
+    telemetry.updateAllocationUsage(10);
+
+    // Reset current usage
+    telemetry.resetCurrentUsage();
+
+    // Only reset current usage
+    EXPECT_EQ(0, telemetry.currentUsage);
+
+    // But preserves the min and peak usage
+    EXPECT_EQ(10, telemetry.minUsage);
+    EXPECT_EQ(50, telemetry.peakUsage);
+}
+
 /** @brief Verify that arena telemetry reset to default values. */
 TEST(ArenaTelemetry, Reset_ResetsUsages)
 {

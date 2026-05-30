@@ -31,6 +31,12 @@ namespace pmm
     }
 
 
+    constexpr void ArenaTelemetry::resetCurrentUsage() noexcept
+    {
+        currentUsage = 0;
+    }
+
+
     constexpr void ArenaTelemetry::resetTelemetry() noexcept
     {
         currentUsage = 0;
