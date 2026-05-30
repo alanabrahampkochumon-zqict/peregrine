@@ -27,6 +27,11 @@ protected:
 
 
 /**
+ * @addtogroup T_PMM_TArena
+ * @{
+ */
+
+/**
  * @brief Verify that temporary arena stores the internal state of the arena.
  */
 TEST_F(TempArenaTest, SnapshotsArenaStateOnConstructor)
@@ -88,3 +93,6 @@ TEST_F(TempArenaTest, RewindsStateFreeingMemoryHeldByTempArena)
         EXPECT_NE(nullptr, memory);
     }
 }
+
+
+/** @} */

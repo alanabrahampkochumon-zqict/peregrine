@@ -22,6 +22,20 @@
      * @brief Literals for common memory units.
      * @ingroup PMM_Lib
      */
+
+
+    /**
+     * @defgroup PMM_Arena Arena Allocator
+     * @brief Arena/Linear Allocator.
+     * @ingroup PMM_Lib
+     */
+
+
+    /**
+     * @defgroup PMM_TArena Temporary Arena
+     * @brief Temporary Arena(Snapshot).
+     * @ingroup PMM_Lib
+     */
     
 /** @} */ // End of FGM_Math
 

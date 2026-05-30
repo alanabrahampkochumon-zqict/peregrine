@@ -13,6 +13,12 @@
 
 namespace pmm
 {
+
+    /**
+     * @addtogroup PMM_TArena
+     * @{
+     */
+
     /**
      * @brief A lightweight, RAII-based scratch pad for temporary allocations.
      *        TempArena does NOT allocate OS memory. It acts as a bookmark for an existing
@@ -40,6 +46,9 @@ namespace pmm
          */
         constexpr ~TempArena() noexcept;
     };
+
+
+    /** @} */
 
 } // namespace pmm
 
