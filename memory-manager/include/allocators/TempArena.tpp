@@ -51,4 +51,11 @@ namespace pmm
     }
 
 
+    template <typename T, typename... Args>
+    constexpr T* TempArena::allocAs(std::size_t alignment, Args... args) noexcept
+    {
+        return arena->allocAs<T>(alignment, args...);
+    }
+
+
 } // namespace pmm
