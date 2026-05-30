@@ -21,7 +21,7 @@
  */
 
 /**
- * @brief Verify that Arena gets intialized with the correct size.
+ * @brief Verify that Arena gets initialized with the correct size.
  */
 TEST(ArenaInitialization, InitializesArenaWithTheGivenBytes)
 {

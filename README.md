@@ -1,8 +1,13 @@
 [![Unit Tests](https://github.com/alanabrahampkochumon-zqict/peregrine/actions/workflows/unit-tests.yml/badge.svg)](https://github.com/alanabrahampkochumon-zqict/peregrine/actions/workflows/unit-tests.yml)
 
-# Modern C++ Project Template
+# Peregrine Memory Manager
 
-A high-performance boilerplate for C++ development featuring CMake integration, Google Test (GTest) for unit testing, and Google Benchmark for performance analysis.
+High Performance Memory allocation toolkit with modern C++ implementation of common memory allocation strategies used in games.
+* Arena Allocator
+* Stack Allocator (WIP)
+* Pool Allocator (WIP)
+* Buddy Allocator (WIP)
+* Freelist Allocator (WIP)
 
 # Prerequisites
 
