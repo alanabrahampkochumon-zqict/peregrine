@@ -1,7 +1,7 @@
 # Files
 set(AllocatorDir "include/allocators/")
-set(AllocatorHeaderFiles "Arena.h")
-set(AllocatorTemplateFiles "Arena.tpp")
+set(AllocatorHeaderFiles "Arena.h;TempArena.h")
+set(AllocatorTemplateFiles "Arena.tpp;TempArena.tpp")
 list(TRANSFORM AllocatorHeaderFiles PREPEND ${AllocatorDir})
 list(TRANSFORM AllocatorTemplateFiles PREPEND ${AllocatorDir})
 

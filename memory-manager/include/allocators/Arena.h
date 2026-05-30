@@ -154,16 +154,18 @@ namespace pmm
 
 
         /**
-         * @brief Allocate a contiguous block of memory of type @p T.
+         * @brief Allocate a contiguous memory block for an array of @p count objects.
          *
-         * @note The constructor is not invoked per object, so the user needs to manually initialize the values via
-         *       constructor call.
+         * @note This function allocates raw, uninitialized memory aligned to type @p T.
+         *       Object constructors are NOT called automatically. You must manually construct
+         *       the objects in the returned memory (e.g., using placement-new or `std::uninitialized_fill`).
          *
-         * @tparam T    The type of object to allocate.
+         * @tparam T The type of object to allocate.
          *
-         * @param count The number of objects to allocate.
+         * @param count The total number of contiguous elements requested.
          *
-         * @return A `std::span` of size @p size.
+         * @return A `std::span<T>` viewing the allocated memory block.
+         *         Returns an empty span (`.empty() == true`) if the Arena lacks sufficient capacity.
          */
         template <typename T>
         [[nodiscard]] constexpr std::span<T> allocV(std::size_t count) noexcept;
@@ -217,9 +219,6 @@ namespace pmm
                                              std::size_t alignment) noexcept;
 
 
-
-        // TODO: Add array allocation
-        // TODO: Add temp arena
         // TODO: Add namespace based new allocation eg: namespace arena { Mat3 mat = new Mat3(); // Uses arena new not
         // C++ heap}
 
@@ -232,6 +231,9 @@ namespace pmm
          * @param alignment The memory alignment to align the buffer to.
          */
         void _alignForward(std::size_t alignment) noexcept;
+
+        // For internal variable access
+        friend struct TempArena;
 
         // FRIEND TEST macros for verifying internal states
         FRIEND_TEST(AlignedArenaInitialization, InternalState_AlignBaseOffset);

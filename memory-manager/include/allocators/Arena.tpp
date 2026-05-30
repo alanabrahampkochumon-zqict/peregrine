@@ -61,7 +61,6 @@ namespace pmm
 
     inline Arena& Arena::operator=(Arena&& arena) noexcept
     {
-        // TODO: Add test
         // For self assignment return the current arena.
         if (this == &arena)
         {
@@ -200,6 +199,7 @@ namespace pmm
     template <typename T>
     constexpr std::span<T> Arena::allocV(std::size_t count) noexcept
     {
+        // Allocate the raw memory and wrap it in a span
         if (T* rawPointer = static_cast<T*>(allocBytes(sizeof(T) * count, alignof(T))))
             return std::span(rawPointer, count);
         return std::span<T>();
