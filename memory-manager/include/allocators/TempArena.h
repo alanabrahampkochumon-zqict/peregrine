@@ -67,11 +67,11 @@ namespace pmm
         [[nodiscard]] constexpr T* allocAs(std::size_t alignment, Args... args) noexcept;
 
 
-        // /**
-        //  *  @copydoc pmm::Arena::allocV(std::size_t)
-        //  */
-        // template <typename T>
-        // [[nodiscard]] constexpr std::span<T> allocV(std::size_t count) noexcept;
+        /**
+         *  @copydoc pmm::Arena::allocV(std::size_t)
+         */
+        template <typename T>
+        [[nodiscard]] constexpr std::span<T> allocV(std::size_t count) noexcept;
     };
 
 

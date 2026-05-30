@@ -98,7 +98,7 @@ TEST_F(TempArenaTest, RewindsStateFreeingMemoryHeldByTempArena)
 
 
 /**
- * @brief Verify that @ref TempArena::allocBytes return a non-nullptr in an arena with free space.
+ * @brief Verify that @ref TempArena::allocBytes returns a non-nullptr in an arena with free space.
  */
 TEST_F(TempArenaTest, AllocBytes_ReturnsNonNullValue)
 {
@@ -110,7 +110,7 @@ TEST_F(TempArenaTest, AllocBytes_ReturnsNonNullValue)
 
 
 /**
- * @brief Verify that @ref TempArena::alloc return a non-nullptr in an arena with free space.
+ * @brief Verify that @ref TempArena::alloc returns a non-nullptr in an arena with free space.
  */
 TEST_F(TempArenaTest, Alloc_ReturnsNonNullValue)
 {
@@ -126,7 +126,7 @@ TEST_F(TempArenaTest, Alloc_ReturnsNonNullValue)
 
 
 /**
- * @brief Verify that @ref TempArena::allocAs return a non-nullptr in an arena with free space.
+ * @brief Verify that @ref TempArena::allocAs returns a non-nullptr in an arena with free space.
  */
 TEST_F(TempArenaTest, AllocAs_ReturnsNonNullValue)
 {
@@ -141,16 +141,15 @@ TEST_F(TempArenaTest, AllocAs_ReturnsNonNullValue)
 }
 
 /**
- * @brief Verify that @ref TempArena::allocV return a non-nullptr in an arena with free space.
+ * @brief Verify that @ref TempArena::allocV returns a non-empty span in an arena with free space.
  */
-// TEST_F(TempArenaTest, AllocV_ReturnsNonNullValue)
-// {
-//     auto tArena1 = pmm::TempArena(this->_arena);
-//     const auto memory = tArena1.allocV<Vec4>(10);
-//
-//     EXPECT_NE(nullptr, memory);
-//     EXPECT_EQ(10, memory.size());
-// }
+TEST_F(TempArenaTest, AllocV_ReturnsNonNullValue)
+{
+    auto tArena1 = pmm::TempArena(this->_arena);
+    const auto memory = tArena1.allocV<Vec4>(10);
+
+    EXPECT_EQ(10, memory.size());
+}
 
 
 /** @} */

@@ -58,4 +58,11 @@ namespace pmm
     }
 
 
+    template <typename T>
+    constexpr std::span<T> TempArena::allocV(std::size_t count) noexcept
+    {
+        return arena->allocV<T>(count);
+    }
+
+
 } // namespace pmm
