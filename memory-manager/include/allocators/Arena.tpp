@@ -27,9 +27,7 @@ namespace pmm
 
     Arena::Arena(const std::size_t bytes) noexcept
         : _buffer(new uint8_t[bytes]), _sizeInBytes(bytes), _offset(0), _prevOffset(0), _defaultAlignment(0)
-    {
-
-    }
+    {}
 
 
     Arena::Arena(const std::size_t bytes, const std::size_t alignment) noexcept
@@ -196,6 +194,15 @@ namespace pmm
 
         // Return nullptr if the requested memory cannot be allocated
         return nullptr;
+    }
+
+
+    template <typename T>
+    constexpr std::span<T> Arena::allocV(std::size_t count) noexcept
+    {
+        if (T* rawPointer = static_cast<T*>(allocBytes(sizeof(T) * count, alignof(T))))
+            return std::span(rawPointer, count);
+        return std::span<T>();
     }
 
 

@@ -13,6 +13,7 @@
 #include "gtest/gtest_prod.h"
 #include <cstddef>
 #include <cstdint>
+#include <span>
 
 
 namespace pmm
@@ -153,6 +154,21 @@ namespace pmm
 
 
         /**
+         * @brief Allocate a contiguous block of memory of type @p T.
+         *
+         * @note The constructor is not called, so the user needs to initialize the values via constructor call.
+         *
+         * @tparam T    The type of object to allocate.
+         *
+         * @param count The number of objects to allocate.
+         *
+         * @return A `std::span` of size @p size.
+         */
+        template <typename T>
+        [[nodiscard]] constexpr std::span<T> allocV(std::size_t count) noexcept;
+
+
+        /**
          * @brief [NO-OP] Objects cannot be individually freed in an arena.
          *
          * @tparam T  The type of allocated object.
@@ -197,7 +213,9 @@ namespace pmm
          * @return A reference to the new memory location in arena or nullptr if allocation fails.
          */
         [[nodiscard]] constexpr void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
-                              std::size_t alignment) noexcept;
+                                             std::size_t alignment) noexcept;
+
+
 
         // TODO: Add array allocation
         // TODO: Add temp arena
