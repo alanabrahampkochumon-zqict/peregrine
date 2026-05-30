@@ -15,6 +15,12 @@
 
 namespace pmm
 {
+
+    /**
+     * @addtogroup PMM_Telemetry
+     * @{
+     */
+
 #define ENABLE_PMM_TELEMETRY // TODO: Remove
 #ifdef ENABLE_PMM_TELEMETRY
     struct ArenaTelemetry
@@ -66,7 +72,7 @@ namespace pmm
          *
          * @note STUB Method. Telemetry is disabled.
          */
-         constexpr void updateAllocationUsage(std::size_t allocatedByteSize) noexcept {}
+        constexpr void updateAllocationUsage(std::size_t allocatedByteSize) noexcept {}
 
 
         /**
@@ -78,4 +84,7 @@ namespace pmm
     };
 
 #endif
+
+    /** @} */
+
 } // namespace pmm

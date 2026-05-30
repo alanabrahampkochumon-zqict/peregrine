@@ -36,6 +36,12 @@
      * @brief Temporary Arena(Snapshot).
      * @ingroup PMM_Lib
      */
+
+    /**
+     * @defgroup PMM_Telemetry Telemetry
+     * @brief Telemetry statistics for Allocators.
+     * @ingroup PMM_Lib
+     */
     
 /** @} */ // End of FGM_Math
 

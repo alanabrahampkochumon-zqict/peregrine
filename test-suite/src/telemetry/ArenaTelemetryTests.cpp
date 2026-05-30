@@ -13,3 +13,9 @@
 
 
 
+/**
+ * @addtogroup T_PMM_Telemetry
+ * @{
+ */
+
+/** @} */
