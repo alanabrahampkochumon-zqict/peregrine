@@ -31,6 +31,19 @@ namespace pmm
 
 
         /**
+         * @brief Allocate a new physical memory vault from the Operating System with a base alignment of @p alignment.
+         *
+         * @param[in] bytes     The total capacity of the arena in bytes.
+         * @param[in] alignment The base alignment of the arena.
+         *                      Must be a power of 2.
+         *
+         * @warning The memory block is NOT zero-initialized.
+         * @warning This allocator is Linear and is NOT thread-safe by default.
+         */
+        inline explicit Arena(std::size_t bytes, std::size_t alignment) noexcept;
+
+
+        /**
          * @brief Destroy Arena, freeing up any memory it holds.
          * @note For clearing the Arena, use @ref freeAll.
          */
@@ -96,21 +109,22 @@ namespace pmm
          * @brief Allocate @p bytes of memory.
          *
          * @param bytes     The memory in bytes to allocate from the Arena.
-         * @param alignment The alignment to use when allocating memory.
-         *                  Defaults to `sizeof(void*)`.
+         * @param alignment The alignment to use when allocating memory (in bytes).
+         *                  Defaults to sizeof(void*) which is 8 bytes in 64-bit machines.
          *
          * @warning Can cause internal fragmentation, when aligning ill-aligned values.
          *
          * @return A void pointer to the start of allocated memory or
          *         `nullptr` if the arena cannot allocate memory of requested size.
          */
-        void* allocBytes(std::size_t bytes, std::size_t alignment = sizeof(void*));
+        [[nodiscard]] void* allocBytes(std::size_t bytes, std::size_t alignment = sizeof(void*)) noexcept;
 
-        // constexpr void* allocBytes(std::size_t bytes);
 
         /**
-         * @brief Allocate an object of type @p T in the arena.
-         * @note The memory alignment is dictated by the arena's alignment which can be set upon instantiation.
+         * @brief Allocate an object of type @p T in the arena with natural alignment.
+         *
+         * @note Memory gets aligned to the default of alignment of @p T.
+         *       For finer control use @ref allocBytes or @ref allocAs.
          *
          * @tparam T    The type of object to allocate.
          * @tparam Args The type of arguments to instantiate the object.
@@ -120,32 +134,79 @@ namespace pmm
          * @return A reference to the allocated memory.
          */
         template <typename T, typename... Args>
-        constexpr T* alloc(Args... args);
+        [[nodiscard]] constexpr T* alloc(Args... args) noexcept;
 
-        // template<typename T, typename... Args>
-        // constexpr T* alloc(std::size_t alignment, Args... args);
 
-        // template <typename T>
-        // constexpr T* alloc();
+        /**
+         * @brief Allocate an object of type @p T in the arena with @p alignment.
+         *
+         * @tparam T    The type of object to allocate.
+         * @tparam Args The type of arguments to instantiate the object.
+         *
+         * @param alignment The byte alignment of the object.
+         * @param args      The arguments to instantiate the object.
+         *
+         * @return A reference to the allocated memory.
+         */
+        template <typename T, typename... Args>
+        [[nodiscard]] constexpr T* allocAs(std::size_t alignment, Args... args) noexcept;
 
-        // template <typename T>
-        // constexpr T* alloc(std::size_t alignment);
 
-        // template <typename T>
-        // constexpr void free(T* ptr) {}
+        /**
+         * @brief [NO-OP] Objects cannot be individually freed in an arena.
+         *
+         * @tparam T  The type of allocated object.
+         *
+         * @param ptr The pointer to the allocated object.
+         */
+        template <typename T>
+        constexpr void free(T* ptr) = delete;
 
-        // constexpr void free(void* ptr) {}
 
-        // constexpr void freeAll();
+        /**
+         * @brief [NO-OP] Byte memory cannot be individually freed in an arena.
+         *
+         * @tparam T  The type of allocated object.
+         *
+         * @param ptr The pointer to the allocated object.
+         */
+        template <typename T>
+        constexpr void free(void* ptr) = delete;
 
-        // TODO: Add resize
+
+        /**
+         * @brief Free the entire arena.
+         *
+         * @note This is not a hard reset.
+         *       All memory states may/may not get erased.
+         *
+         */
+        constexpr void freeAll() noexcept;
+
+
+        /**
+         * @brief Resize @p oldMemory block from @p oldSize to @p newSize.
+         *
+         * @note This does not resize the arena.
+         *
+         * @param oldMemory The pointer to the memory to resize.
+         * @param oldSize   The current size of the @p oldMemory.
+         * @param newSize   The size of resize @p oldMemory to.
+         * @param alignment The byte alignment of the @p oldMemory.
+         *
+         * @return A reference to the new memory location in arena or nullptr if allocation fails.
+         */
+        [[nodiscard]] constexpr void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
+                              std::size_t alignment) noexcept;
+
+        // TODO: Add array allocation
         // TODO: Add temp arena
         // TODO: Add namespace based new allocation eg: namespace arena { Mat3 mat = new Mat3(); // Uses arena new not
         // C++ heap}
 
     private:
         uint8_t* _buffer;
-        uint64_t _sizeInBytes, _offset;
+        uint64_t _sizeInBytes, _offset, _prevOffset, _defaultAlignment;
 
         /**
          * @brief Align the internal buffer to @p alignment.
@@ -154,11 +215,24 @@ namespace pmm
         void _alignForward(std::size_t alignment) noexcept;
 
         // FRIEND TEST macros for verifying internal states
+        FRIEND_TEST(AlignedArenaInitialization, InternalState_AlignBaseOffset);
         FRIEND_TEST(ArenaMoveConstructor, NullsOutInternalBuffer);
         FRIEND_TEST(ArenaMoveConstructor, MovesBufferIntoNewObject);
         FRIEND_TEST(ArenaMoveAssignment, NullsOutInternalBuffer);
         FRIEND_TEST(ArenaMoveAssignment, MovesBufferIntoNewObject);
+        FRIEND_TEST(ArenaMoveAssignment, SelfAssignmentReturnsTheSameArena);
+        FRIEND_TEST(ArenaMoveConstructor, AlignedArena_MovesBufferIntoNewObject);
         FRIEND_TEST(ArenaMoveAssignment, DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
+        FRIEND_TEST(ArenaAllocBytes, OffsetMinusPrevOffsetGivesObjectSize);
+        FRIEND_TEST(ArenaAlloc, AlignsToTargetAlignment);
+        FRIEND_TEST(ArenaAlloc, OffsetMinusPrevOffsetGivesObjectSize);
+        FRIEND_TEST(ArenaAllocAs, AlignsToGivenAlignment);
+        FRIEND_TEST(ArenaAllocAs, OffsetMinusPrevOffsetGivesObjectSize);
+        FRIEND_TEST(ArenaFreeAll, ResetsOffsetToZero);
+        FRIEND_TEST(ArenaFreeAll, AlignedArena_ResetsOffsetToAlignedAddress);
+        FRIEND_TEST(ArenaResize, LatestAllocationResizeBuffer);
+        FRIEND_TEST(ArenaResize, LatestAllocationOnlyResizeByOffsetDifference);
+        FRIEND_TEST(ArenaResize, AllocationBeforePriorAllocationReturnNewBuffer);
     };
 
 } // namespace pmm

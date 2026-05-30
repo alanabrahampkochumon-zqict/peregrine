@@ -1,7 +1,7 @@
 # prettier-ignore
 ---
 # 1. Added minus sign to disable trailing return type warnings for GTest
-Checks: "-*,readability-identifier-naming,clang-diagnostic-*,clang-analyzer-*,bugprone-*,performance-*,modernize-*,-modernize-use-trailing-return-type"
+Checks: "-*,readability-identifier-naming,clang-diagnostic-*,clang-analyzer-*,bugprone-*,performance-*,modernize-*,-modernize-use-trailing-return-type,-cert-err58-cpp"
 WarningsAsErrors: ""
 HeaderFileExtensions: [h, hh, hpp, hxx, tpp, inl]
 ImplementationFileExtensions: [c, cc, cpp, cxx]
@@ -20,6 +20,7 @@ CheckOptions:
     - { key: readability-identifier-naming.FunctionCase, value: camelBack }
     - { key: readability-identifier-naming.VariableCase, value: camelBack }
     - { key: readability-identifier-naming.ParameterCase, value: camelBack }
+    - { key: readability-identifier-naming.ConstantParameterCase, value: camelBack }
     - { key: readability-identifier-naming.MemberCase, value: camelBack }
     - { key: readability-identifier-naming.MemberPrefix, value: "" }
 
@@ -50,6 +51,8 @@ CheckOptions:
     - { key: readability-identifier-naming.LocalConstantCase, value: camelBack }
 
     - { key: readability-identifier-naming.FunctionIgnoredRegexp, value: "^(TEST|TEST_F|TYPED_TEST|TEST_P|TYPED_TEST_SUITE|SetUp|TearDown)$" }
+
+    - { key: readability-identifier-naming.TypeTemplateParameterCase, value: CamelCase }
 
 SystemHeaders: false
 ...
