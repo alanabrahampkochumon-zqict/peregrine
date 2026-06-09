@@ -26,12 +26,48 @@ namespace pmm
      **************************************/
 
     Arena::Arena(const std::size_t bytes) noexcept
-        : _buffer(new uint8_t[bytes]), _sizeInBytes(bytes), _offset(0), _prevOffset(0), _defaultAlignment(0)
+        : _buffer(new uint8_t[bytes]),
+          _sizeInBytes(bytes),
+          _offset(0),
+          _prevOffset(0),
+          _defaultAlignment(0),
+          _telemetry(ArenaTelemetry(bytes))
+    {}
+
+    inline Arena::Arena(std::size_t bytes, ArenaTelemetry telemetry) noexcept
+        : _buffer(new uint8_t[bytes]),
+          _sizeInBytes(bytes),
+          _offset(0),
+          _prevOffset(0),
+          _defaultAlignment(0),
+          _telemetry(telemetry)
     {}
 
 
     Arena::Arena(const std::size_t bytes, const std::size_t alignment) noexcept
-        : _buffer(new uint8_t[bytes]), _sizeInBytes(bytes), _offset(0), _prevOffset(0), _defaultAlignment(alignment)
+        : _buffer(new uint8_t[bytes]),
+          _sizeInBytes(bytes),
+          _offset(0),
+          _prevOffset(0),
+          _defaultAlignment(alignment),
+          _telemetry(ArenaTelemetry(bytes))
+    {
+        // Sets the offset based on alignment
+        if (alignment > 0)
+        {
+            _alignForward(alignment);
+            _prevOffset = _offset;
+        }
+    }
+
+
+    inline Arena::Arena(std::size_t bytes, std::size_t alignment, ArenaTelemetry telemetry) noexcept
+        : _buffer(new uint8_t[bytes]),
+          _sizeInBytes(bytes),
+          _offset(0),
+          _prevOffset(0),
+          _defaultAlignment(alignment),
+          _telemetry(telemetry)
     {
         // Sets the offset based on alignment
         if (alignment > 0)
@@ -56,6 +92,7 @@ namespace pmm
         _prevOffset = std::exchange(arena._prevOffset, 0);
         _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
         _defaultAlignment = std::exchange(arena._defaultAlignment, 0);
+        _telemetry = std::exchange(arena._telemetry, ArenaTelemetry{});
     }
 
 

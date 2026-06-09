@@ -11,6 +11,7 @@
 
 
 #include <limits>
+#include <algorithm>
 
 
 namespace pmm

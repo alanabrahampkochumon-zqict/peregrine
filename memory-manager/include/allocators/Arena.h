@@ -10,6 +10,8 @@
  */
 
 
+#include "telemetry/ArenaTelemetry.h"
+
 #include "gtest/gtest_prod.h"
 #include <cstddef>
 #include <cstdint>
@@ -36,6 +38,18 @@ namespace pmm
          */
         inline explicit Arena(std::size_t bytes) noexcept;
 
+        // TODO: Update zero initialization docs when updating to OS HAL
+        /**
+         * @brief Allocate a new physical memory vault from the Operating System, with custom telemetry support.
+         *
+         * @param[in] bytes     The total capacity of the arena in bytes.
+         * @param[in] telemetry The telemetry instance to use for tracking arena allocation metrics.
+         *
+         * @warning The memory block is NOT zero-initialized.
+         * @warning This allocator is Linear and is NOT thread-safe by default.
+         */
+        inline explicit Arena(std::size_t bytes, ArenaTelemetry telemetry) noexcept;
+
 
         /**
          * @brief Allocate a new physical memory vault from the Operating System with a base alignment of @p alignment.
@@ -48,6 +62,21 @@ namespace pmm
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
         inline explicit Arena(std::size_t bytes, std::size_t alignment) noexcept;
+
+
+        /**
+         * @brief Allocate a new physical memory vault from the Operating System with a base alignment of @p alignment,
+         *        with custom telemetry support.
+         *
+         * @param[in] bytes     The total capacity of the arena in bytes.
+         * @param[in] alignment The base alignment of the arena.
+         *                      Must be a power of 2.
+         * @param[in] telemetry The telemetry instance to use for tracking arena allocation metrics.
+         *
+         * @warning The memory block is NOT zero-initialized.
+         * @warning This allocator is Linear and is NOT thread-safe by default.
+         */
+        inline explicit Arena(std::size_t bytes, std::size_t alignment, ArenaTelemetry telemetry) noexcept;
 
 
         /**
@@ -231,6 +260,7 @@ namespace pmm
     private:
         uint8_t* _buffer;
         uint64_t _sizeInBytes, _offset, _prevOffset, _defaultAlignment;
+        ArenaTelemetry _telemetry;
 
         /**
          * @brief Align the internal buffer to @p alignment.
