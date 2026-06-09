@@ -8,6 +8,22 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
+#include "utils/Constants.h"
+
+#include <allocators/Arena.h>
 #include <iostream>
 
-int main() { std::cout << "Hello from Demo!\n"; }
+
+// TODO: Add getters for stats since there are non-existent without the preprocessor macro
+#define ENABLE_PMM_TELEMETRY
+
+int main() {
+
+    using namespace pmm::constants;
+
+    // TODO: Reduce API Friction with the dual inits
+    pmm::ArenaTelemetry telemetry{5_KB};
+    pmm::Arena arena(5_KB, telemetry);
+
+
+ }
