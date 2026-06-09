@@ -12,7 +12,6 @@
 
 #include "telemetry/ArenaTelemetry.h"
 
-#include "gtest/gtest_prod.h"
 #include <cstddef>
 #include <cstdint>
 #include <span>
@@ -279,7 +278,9 @@ namespace pmm
         // For internal variable access
         friend struct TempArena;
 
-        // FRIEND TEST macros for verifying internal states
+#ifdef ENABLE_PMM_TESTS
+    // FRIEND TEST macros for verifying internal states
+    #include "gtest/gtest_prod.h"
         FRIEND_TEST(AlignedArenaInitialization, InternalState_AlignBaseOffset);
         FRIEND_TEST(ArenaMoveConstructor, NullsOutInternalBuffer);
         FRIEND_TEST(ArenaMoveConstructor, MovesBufferIntoNewObject);
@@ -298,6 +299,7 @@ namespace pmm
         FRIEND_TEST(ArenaResize, LatestAllocationResizeBuffer);
         FRIEND_TEST(ArenaResize, LatestAllocationOnlyResizeByOffsetDifference);
         FRIEND_TEST(ArenaResize, AllocationBeforePriorAllocationReturnNewBuffer);
+#endif
     };
 
     /** @} */

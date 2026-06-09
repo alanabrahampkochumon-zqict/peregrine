@@ -83,7 +83,7 @@ namespace pmm
          *
          * @note STUB Method. Telemetry is disabled.
          */
-        [[nodiscard]] explicit constexpr ArenaTelemetry(std::size_t size) noexcept {}
+        [[nodiscard]] explicit constexpr ArenaTelemetry(std::size_t) noexcept {}
 
 
         /**
@@ -91,7 +91,7 @@ namespace pmm
          *
          * @note STUB Method. Telemetry is disabled.
          */
-        constexpr void updateAllocationUsage(std::size_t allocatedByteSize) noexcept {}
+        constexpr void updateAllocationUsage(std::size_t) noexcept {}
 
 
         /**

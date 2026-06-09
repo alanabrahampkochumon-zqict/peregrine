@@ -42,6 +42,9 @@ target_link_libraries(
 # Preprocessor Macros
 # ENABLE_PMM_TELEMETRY -> Enable telemetry testing
 target_compile_definitions(TestSuite PRIVATE ENABLE_PMM_TELEMETRY)
+# Enables GTest's Friend tests
+# Unless the consuming application has GTest imported, DON'T enable this!!
+target_compile_definitions(TestSuite PRIVATE ENABLE_PMM_TESTS)
 
 include(GoogleTest)
 gtest_discover_tests(TestSuite)
