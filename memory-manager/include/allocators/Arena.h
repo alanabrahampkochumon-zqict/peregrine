@@ -254,6 +254,14 @@ namespace pmm
                                              std::size_t alignment) noexcept;
 
 
+        /**
+         * @brief Get the telemetry instance associated with this arena.
+         *
+         * @return A readonly @ref ArenaTelemetry instance.
+         */
+        [[nodiscard]] constexpr ArenaTelemetry getTelemetry() const noexcept;
+
+
         // TODO: Add namespace based new allocation eg: namespace arena { Mat3 mat = new Mat3(); // Uses arena new not
         // C++ heap}
 

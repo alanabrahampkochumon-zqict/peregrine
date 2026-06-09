@@ -70,6 +70,15 @@ namespace pmm
     struct ArenaTelemetry
     {
         /**
+         * @brief Default construct an arena telemetry with uninitialized parameters.
+         *
+         * @warning It is not recommended to use this method.
+         *          Only provided for internal use.
+         *          Use @ref Arena(std::size_t) to construct an ArenaTelemetry with an arena size.
+         */
+        ArenaTelemetry() = default;
+
+        /**
          * @brief Initialize a dummy arena telemetry.
          *
          * @note STUB Method. Telemetry is disabled.

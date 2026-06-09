@@ -86,6 +86,7 @@ namespace pmm
 
     inline Arena::Arena(Arena&& arena) noexcept
     {
+        // TODO: Move to value init
         // Move the data members and null-out the moved data members.
         _buffer = std::exchange(arena._buffer, nullptr);
         _offset = std::exchange(arena._offset, 0);
@@ -292,6 +293,12 @@ namespace pmm
         // Allocation not possible due to lack of memory in arena
         // So return a nullptr.
         return nullptr;
+    }
+
+
+    constexpr ArenaTelemetry Arena::getTelemetry() const noexcept
+    {
+        return _telemetry;
     }
 
 } // namespace pmm

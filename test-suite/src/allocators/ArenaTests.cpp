@@ -33,8 +33,50 @@ INSTANTIATE_TEST_SUITE_P(ArenaInitialization, AlignedArenaInitialization, testin
  */
 TEST(ArenaInitialization, InitializesArenaWithTheGivenBytes)
 {
-    const pmm::Arena arena(512);
-    EXPECT_EQ(512, arena.size());
+    constexpr std::size_t arenaSize = 512;
+    const pmm::Arena arena(arenaSize);
+    EXPECT_EQ(arenaSize, arena.size());
+    auto telemetry = arena.getTelemetry();
+
+    EXPECT_EQ(arenaSize, telemetry.size);
+}
+
+/**
+ * @brief Verify that Arena gets initialized with the passed in telemetry instance.
+ */
+TEST(ArenaInitialization, InitializesArenaWithTheGivenTelemetryInstance)
+{
+
+    constexpr std::size_t arenaSize = 512;
+    constexpr std::size_t markerBytes = 213;
+
+    pmm::ArenaTelemetry telemetry{ arenaSize };
+    telemetry.updateAllocationUsage(markerBytes);
+
+    const pmm::Arena arena(arenaSize, telemetry);
+    EXPECT_EQ(arenaSize, arena.size());
+
+    EXPECT_EQ(markerBytes, arena.getTelemetry().currentUsage);
+}
+
+
+/**
+ * @brief Verify that Arena gets initialized with the passed in telemetry instance.
+ */
+TEST(ArenaInitialization, AlignedArena_InitializesArenaWithTheGivenTelemetryInstance)
+{
+
+    constexpr std::size_t arenaSize = 512;
+    constexpr std::size_t markerBytes = 213;
+    constexpr std::size_t alignment = 4;
+
+    pmm::ArenaTelemetry telemetry{ arenaSize };
+    telemetry.updateAllocationUsage(markerBytes);
+
+    const pmm::Arena arena(arenaSize, alignment, telemetry);
+    EXPECT_EQ(arenaSize, arena.size());
+
+    EXPECT_EQ(markerBytes, arena.getTelemetry().currentUsage);
 }
 
 
@@ -70,6 +112,7 @@ TEST(ArenaMoveConstructor, CopiesAttributesToNewObject)
     EXPECT_EQ(size, arena2.freeSize());
     EXPECT_EQ(size, arena2.size());
     EXPECT_EQ(0, arena2.usedSize());
+    EXPECT_EQ(size, arena2.getTelemetry().size);
 }
 
 
@@ -193,6 +236,7 @@ namespace pmm
         EXPECT_EQ(0, arena._prevOffset);
         EXPECT_EQ(0, arena._sizeInBytes);
         EXPECT_EQ(0, arena._defaultAlignment);
+        EXPECT_EQ(0, arena.getTelemetry().size);
     }
 
 
@@ -215,6 +259,7 @@ namespace pmm
         EXPECT_EQ(initialPrevOffset, arena2._prevOffset);
         EXPECT_EQ(initialAlignment, arena2._defaultAlignment);
         EXPECT_EQ(size, arena2._sizeInBytes);
+        EXPECT_EQ(size, arena2.getTelemetry().size);
     }
 
 
