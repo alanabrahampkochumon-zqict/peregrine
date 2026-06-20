@@ -53,6 +53,19 @@ namespace pmm
          */
         constexpr void updateAllocationUsage(std::size_t allocatedByteSize) noexcept;
 
+        /**
+         * @brief Update the current minimum usage with @p usage if it is lower than the recorded minimum.
+         * @param usage The new minimum usage.
+         */
+        constexpr void updateMinUsage(std::size_t usage) noexcept;
+
+
+        /**
+         * @brief Update the current peak usage with @p usage if it is higher than the recorded peak.
+         * @param usage The new peak usage.
+         */
+        constexpr void updatePeakUsage(std::size_t usage) noexcept;
+
 
         /**
          * @brief Reset the currentUsage, while preserving the peak and minimum usage.
@@ -125,11 +138,28 @@ namespace pmm
 
 
         /**
+         * @brief Update the current minimum usage with @p usage if it is lower than the recorded minimum.
+         *
+         * @note STUB Method. Telemetry is disabled.
+         */
+        constexpr void updateMinUsage(std::size_t) noexcept {}
+
+
+        /**
+         * @brief Update the current peak usage with @p usage if it is higher than the recorded peak.
+         *
+         * @note STUB Method. Telemetry is disabled.
+         */
+        constexpr void updatePeakUsage(std::size_t) noexcept {}
+
+
+        /**
          * @brief Reset the currentUsage, while preserving the peak and minimum usage.
          *
          * @note STUB Method. Telemetry is disabled.
          */
         constexpr void resetCurrentUsage() noexcept {}
+
 
         /**
          * @brief Update the telemetry usage statistics to zero.
@@ -145,7 +175,10 @@ namespace pmm
          *
          * @return 0.
          */
-        [[nodiscard]] constexpr std::size_t getArenaSize() const noexcept { return 0; }
+        [[nodiscard]] constexpr std::size_t getArenaSize() const noexcept
+        {
+            return 0;
+        }
 
         /**
          * @brief Get the current memory usage of the arena, the telemetry is attached to.
@@ -153,7 +186,10 @@ namespace pmm
          *
          * @return 0.
          */
-        [[nodiscard]] constexpr std::size_t getCurrentUsage() const noexcept { return 0; }
+        [[nodiscard]] constexpr std::size_t getCurrentUsage() const noexcept
+        {
+            return 0;
+        }
 
         /**
          * @brief Get the all-time minimum of memory used in the arena, that the telemetry is attached to.
@@ -161,7 +197,10 @@ namespace pmm
          *
          * @return 0.
          */
-        [[nodiscard]] constexpr std::size_t getMinUsage() const noexcept { return 0; }
+        [[nodiscard]] constexpr std::size_t getMinUsage() const noexcept
+        {
+            return 0;
+        }
 
         /**
          * @brief Get the all-time maximum of memory used in the arena, that the telemetry is attached to.
@@ -169,7 +208,10 @@ namespace pmm
          *
          * @return 0.
          */
-        [[nodiscard]] constexpr std::size_t getPeakUsage() const noexcept { return 0; }
+        [[nodiscard]] constexpr std::size_t getPeakUsage() const noexcept
+        {
+            return 0;
+        }
     };
 
 #endif

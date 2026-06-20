@@ -52,6 +52,82 @@ TEST(ArenaTelemetry, UpdateTelemetry_UpdatesWithCorrectUsage)
 
 
 /**
+ * @brief Verify that arena telemetry update min usage updates the minimum usage
+ *        when passing in a smaller usage value.
+ */
+TEST(ArenaTelemetry, UpdateMinUsage_UpdateMinimumWhenPassingInASmallValue)
+{
+    constexpr auto size = 1024;
+    pmm::ArenaTelemetry telemetry(size);
+    constexpr std::size_t newMin = 5;
+
+    telemetry.updateAllocationUsage(10);
+    telemetry.updateAllocationUsage(50);
+
+    telemetry.updateMinUsage(newMin);
+    EXPECT_EQ(newMin, telemetry.getMinUsage());
+}
+
+
+/**
+ * @brief Verify that arena telemetry update min usage does not update the minimum usage
+ *        when passing in a larger usage value.
+ */
+TEST(ArenaTelemetry, UpdateMinUsage_DoesNotUpdateMinimumWhenPassingInALargerValue)
+{
+    constexpr auto size = 1024;
+    pmm::ArenaTelemetry telemetry(size);
+    constexpr std::size_t newMin = 50;
+
+    telemetry.updateAllocationUsage(10);
+    telemetry.updateAllocationUsage(50);
+
+    const auto oldMin = telemetry.getMinUsage();
+
+    telemetry.updateMinUsage(newMin);
+    EXPECT_EQ(oldMin, telemetry.getMinUsage());
+}
+
+
+/**
+ * @brief Verify that arena telemetry update peak usage updates the peak usage
+ *        when passing in a larger usage value.
+ */
+TEST(ArenaTelemetry, UpdatePeakUsage_UpdatePeakUsageWhenPassingInALargerValue)
+{
+    constexpr auto size = 1024;
+    pmm::ArenaTelemetry telemetry(size);
+    constexpr std::size_t newPeak = 500;
+
+    telemetry.updateAllocationUsage(10);
+    telemetry.updateAllocationUsage(50);
+
+    telemetry.updatePeakUsage(newPeak);
+    EXPECT_EQ(newPeak, telemetry.getPeakUsage());
+}
+
+
+/**
+ * @brief Verify that arena telemetry update peak usage does not update the peak usage
+ *        when passing in a smaller usage value.
+ */
+TEST(ArenaTelemetry, UpdatePeakUsage_DoesNotUpdatePeakUsageWhenPassingInASmallerValue)
+{
+    constexpr auto size = 1024;
+    pmm::ArenaTelemetry telemetry(size);
+    constexpr std::size_t newPeak = 15;
+
+    telemetry.updateAllocationUsage(10);
+    telemetry.updateAllocationUsage(50);
+
+    const auto oldMin = telemetry.getPeakUsage();
+
+    telemetry.updatePeakUsage(newPeak);
+    EXPECT_EQ(oldMin, telemetry.getPeakUsage());
+}
+
+
+/**
  * @brief Verify that @ref pmm::ArenaTelemetry::resetCurrentUsage resets current usage
  *        but preserves peak and minimum usage.
  */
@@ -77,6 +153,7 @@ TEST(ArenaTelemetry, ResetCurrentUsage_OnlyResetsCurrentUsage)
     EXPECT_EQ(50, telemetry.getPeakUsage());
 }
 
+
 /** @brief Verify that arena telemetry reset to default values. */
 TEST(ArenaTelemetry, Reset_ResetsUsages)
 {
@@ -94,7 +171,6 @@ TEST(ArenaTelemetry, Reset_ResetsUsages)
     EXPECT_EQ(std::numeric_limits<std::size_t>::max(), telemetry.getMinUsage());
     EXPECT_EQ(0, telemetry.getPeakUsage());
 }
-
 
 #endif
 

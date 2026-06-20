@@ -27,8 +27,19 @@ namespace pmm
     constexpr void ArenaTelemetry::updateAllocationUsage(const std::size_t allocatedByteSize) noexcept
     {
         _currentUsage += allocatedByteSize;
-        _minUsage = std::min(_minUsage, allocatedByteSize);
-        _peakUsage = std::max(_peakUsage, allocatedByteSize);
+        updateMinUsage(allocatedByteSize);
+        updatePeakUsage(allocatedByteSize);
+    }
+
+    constexpr void ArenaTelemetry::updateMinUsage(std::size_t usage) noexcept
+    {
+        _minUsage = std::min(_minUsage, usage);
+    }
+
+
+    constexpr void ArenaTelemetry::updatePeakUsage(std::size_t usage) noexcept
+    {
+        _peakUsage = std::max(_peakUsage, usage);
     }
 
 
