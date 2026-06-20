@@ -26,6 +26,7 @@ namespace pmm
     {
         std::size_t currentUsage, peakUsage, minUsage, size;
 
+        // TODO: Delete the default constructor
         /**
          * @brief Default construct an arena telemetry with uninitialized parameters.
          *

@@ -32,6 +32,8 @@ namespace pmm
         /**
          * @brief Allocate a new physical memory vault from the Operating System.
          *
+         * @note When telemetry is enabled, allocates a Telemetry instance on the **Heap**.
+         *
          * @param[in] bytes The total capacity of the arena in bytes.
          *
          * @warning The memory block is NOT zero-initialized.
@@ -54,6 +56,8 @@ namespace pmm
 
         /**
          * @brief Allocate a new physical memory vault from the Operating System with a base alignment of @p alignment.
+         *
+         * @note When telemetry is enabled, allocates a Telemetry instance on the **Heap**.
          *
          * @param[in] bytes     The total capacity of the arena in bytes.
          * @param[in] alignment The base alignment of the arena.

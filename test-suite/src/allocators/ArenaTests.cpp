@@ -95,7 +95,7 @@ TEST(ArenaInitialization, DoesNotOwnAPassedInTelemetry)
     telemetry.updateAllocationUsage(markerBytes);
 
     // Since we can't directly verify the telemetry memory address
-    // We can update the telemetry instance from outside and it should get reflected in arena's instance
+    // We can update the telemetry instance from outside, and it should get reflected in arena's instance
     EXPECT_EQ(2 * markerBytes, arena.getTelemetry().currentUsage);
 }
 
@@ -116,7 +116,7 @@ TEST(ArenaInitialization, AlignedArena_DoesNotOwnAPassedInTelemetry)
     telemetry.updateAllocationUsage(markerBytes);
 
     // Since we can't directly verify the telemetry memory address
-    // We can update the telemetry instance from outside and it should get reflected in arena's instance
+    // We can update the telemetry instance from outside, and it should get reflected in arena's instance
     EXPECT_EQ(2 * markerBytes, arena.getTelemetry().currentUsage);
 }
 
