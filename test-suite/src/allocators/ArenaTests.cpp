@@ -633,7 +633,7 @@ namespace pmm
     }
 
     /**
-     * @brief Verify that after allocation using @ref pmm::Arena::allocBytes, updates the telemetry.
+     * @brief Verify that allocation using @ref pmm::Arena::allocBytes, updates the telemetry.
      */
     TEST(ArenaAllocBytes, UpdatesTelemetry)
     {
@@ -725,7 +725,7 @@ namespace pmm
 
 
     /**
-     * @brief Verify that after allocation using @ref pmm::Arena::alloc, updates the telemetry.
+     * @brief Verify that allocation using @ref pmm::Arena::alloc, updates the telemetry.
      */
     TEST(ArenaAlloc, UpdatesTelemetry)
     {
@@ -818,6 +818,29 @@ namespace pmm
         [[maybe_unused]] const auto vec = arena.allocAs<Vec4>(expectedAlignment, 1.0f, 2.0f, 3.0f, 4.0f);
 
         EXPECT_EQ(sizeof(Vec4), arena._offset - arena._prevOffset);
+    }
+
+    /**
+ * @brief Verify that allocation using @ref pmm::Arena::alloc, updates the telemetry.
+ */
+    TEST(ArenaAllocAs, UpdatesTelemetry)
+    {
+        constexpr auto size = 512;
+        Arena arena(size);
+
+        // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+        static_cast<void>(arena.allocAs<Vec4>(4, 1.0f, 2.0f, 3.0f, 4.0f));
+        static_cast<void>(arena.allocAs<Vec4>(4, 1.0f, 2.0f, 3.0f, 4.0f));
+        static_cast<void>(arena.allocAs<Vec4>(4, 1.0f, 2.0f, 3.0f, 4.0f));
+        static_cast<void>(arena.allocAs<int>(4, 1));
+
+        constexpr std::size_t expectedMinUsage = sizeof(int);
+        constexpr std::size_t expectedPeakUsage = sizeof(Vec4);
+        constexpr std::size_t expectedUsage = sizeof(Vec4) * 3 + sizeof(int);
+
+        EXPECT_EQ(expectedMinUsage, arena.getTelemetry().minUsage);
+        EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().peakUsage);
+        EXPECT_EQ(expectedUsage, arena.getTelemetry().currentUsage);
     }
 
 
