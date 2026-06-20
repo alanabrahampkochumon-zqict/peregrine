@@ -183,6 +183,10 @@ namespace pmm
             _offset += bytes;
 
             memset(ptr, 0, bytes); // TODO: Remove when moving to HAL
+
+            // Update the telemetry usage
+            _telemetry->updateAllocationUsage(bytes);
+
             return ptr;
         }
 

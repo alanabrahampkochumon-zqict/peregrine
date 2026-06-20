@@ -632,6 +632,27 @@ namespace pmm
         EXPECT_EQ(bufferSize, arena._offset - arena._prevOffset);
     }
 
+    /**
+     * @brief Verify that after allocation using @ref pmm::Arena::allocBytes, updates the telemetry
+     */
+    TEST(ArenaAllocBytes, UpdatesTelemetry)
+    {
+        constexpr auto size = 512;
+
+        constexpr std::size_t byteSize1 = 20, byteSize2 = 24, byteSize3 = 50;
+
+        Arena arena(size);
+
+        // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+        static_cast<void>(arena.allocBytes(byteSize1, 2));
+        static_cast<void>(arena.allocBytes(byteSize2, 2));
+        static_cast<void>(arena.allocBytes(byteSize3, 2));
+
+        EXPECT_EQ(byteSize1, arena.getTelemetry().minUsage);
+        EXPECT_EQ(byteSize3, arena.getTelemetry().peakUsage);
+        EXPECT_EQ(byteSize1 + byteSize2 + byteSize3, arena.getTelemetry().currentUsage);
+    }
+
 
     /**************************************
      *                                    *
@@ -703,6 +724,8 @@ namespace pmm
 
         EXPECT_EQ(sizeof(Vec4), arena._offset - arena._prevOffset);
     }
+
+
 
 
     /**************************************
