@@ -23,7 +23,7 @@ int main() {
 
     // TODO: Reduce API Friction with the dual inits
     pmm::ArenaTelemetry telemetry{5_KB};
-    pmm::Arena arena(5_KB, telemetry);
+    pmm::Arena arena(5_KB, &telemetry);
 
 
  }

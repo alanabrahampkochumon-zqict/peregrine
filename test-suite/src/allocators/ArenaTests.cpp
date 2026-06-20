@@ -53,7 +53,7 @@ TEST(ArenaInitialization, InitializesArenaWithTheGivenTelemetryInstance)
     pmm::ArenaTelemetry telemetry{ arenaSize };
     telemetry.updateAllocationUsage(markerBytes);
 
-    const pmm::Arena arena(arenaSize, telemetry);
+    const pmm::Arena arena(arenaSize, &telemetry);
     EXPECT_EQ(arenaSize, arena.size());
 
     EXPECT_EQ(markerBytes, arena.getTelemetry().currentUsage);
@@ -73,7 +73,7 @@ TEST(ArenaInitialization, AlignedArena_InitializesArenaWithTheGivenTelemetryInst
     pmm::ArenaTelemetry telemetry{ arenaSize };
     telemetry.updateAllocationUsage(markerBytes);
 
-    const pmm::Arena arena(arenaSize, alignment, telemetry);
+    const pmm::Arena arena(arenaSize, alignment, &telemetry);
     EXPECT_EQ(arenaSize, arena.size());
 
     EXPECT_EQ(markerBytes, arena.getTelemetry().currentUsage);
@@ -183,13 +183,13 @@ TEST(ArenaAllocV, DataIsNotOverriden)
     constexpr auto epsilon = 1e-5;
     for (std::size_t i = 0; i < blockCount; ++i)
     {
-        auto vert = vertices[i];
+        const auto vert = vertices[i];
         EXPECT_NEAR(vertexData[i * 4], vert.x, epsilon);
         EXPECT_NEAR(vertexData[(i * 4) + 1], vert.y, epsilon);
         EXPECT_NEAR(vertexData[(i * 4) + 2], vert.z, epsilon);
         EXPECT_NEAR(vertexData[(i * 4) + 3], vert.w, epsilon);
 
-        auto edge = edges[i];
+        const auto edge = edges[i];
         EXPECT_NEAR(edgeData[i * 4], edge.x, epsilon);
         EXPECT_NEAR(edgeData[(i * 4) + 1], edge.y, epsilon);
         EXPECT_NEAR(edgeData[(i * 4) + 2], edge.z, epsilon);
@@ -236,7 +236,9 @@ namespace pmm
         EXPECT_EQ(0, arena._prevOffset);
         EXPECT_EQ(0, arena._sizeInBytes);
         EXPECT_EQ(0, arena._defaultAlignment);
-        EXPECT_EQ(0, arena.getTelemetry().size);
+        // Since, we are dereferencing a nullptr internally, it will cause SEH
+        // UB
+        // EXPECT_DEATH(static_cast<void>(arena.getTelemetry()), "");
     }
 
 

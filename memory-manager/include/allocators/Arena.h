@@ -12,7 +12,9 @@
 
 #include "telemetry/ArenaTelemetry.h"
 
+
 #include <cstddef>
+#include <memory>
 #include <cstdint>
 #include <span>
 
@@ -47,7 +49,7 @@ namespace pmm
          * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        inline explicit Arena(std::size_t bytes, ArenaTelemetry telemetry) noexcept;
+        inline explicit Arena(std::size_t bytes, ArenaTelemetry* telemetry) noexcept;
 
 
         /**
@@ -75,7 +77,7 @@ namespace pmm
          * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        inline explicit Arena(std::size_t bytes, std::size_t alignment, ArenaTelemetry telemetry) noexcept;
+        inline explicit Arena(std::size_t bytes, std::size_t alignment, ArenaTelemetry* telemetry) noexcept;
 
 
         /**
@@ -262,12 +264,12 @@ namespace pmm
 
 
         // TODO: Add namespace based new allocation eg: namespace arena { Mat3 mat = new Mat3(); // Uses arena new not
-        // C++ heap}
+        // C++ heap
 
     private:
         uint8_t* _buffer;
         uint64_t _sizeInBytes, _offset, _prevOffset, _defaultAlignment;
-        ArenaTelemetry _telemetry;
+        ArenaTelemetry* _telemetry;
 
         /**
          * @brief Align the internal buffer to @p alignment.
@@ -280,7 +282,7 @@ namespace pmm
 
 #ifdef ENABLE_PMM_TESTS
     // FRIEND TEST macros for verifying internal states
-    #include "gtest/gtest_prod.h"
+    #include <gtest/gtest_prod.h>
         FRIEND_TEST(AlignedArenaInitialization, InternalState_AlignBaseOffset);
         FRIEND_TEST(ArenaMoveConstructor, NullsOutInternalBuffer);
         FRIEND_TEST(ArenaMoveConstructor, MovesBufferIntoNewObject);

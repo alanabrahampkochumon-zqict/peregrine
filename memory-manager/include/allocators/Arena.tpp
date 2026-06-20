@@ -10,6 +10,7 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
+
 #include <bit>
 #include <cassert>
 #include <cstring>
@@ -32,10 +33,10 @@ namespace pmm
           _offset(0),
           _prevOffset(0),
           _defaultAlignment(0),
-          _telemetry(ArenaTelemetry(bytes))
+          _telemetry{ new ArenaTelemetry(bytes) }
     {}
 
-    inline Arena::Arena(std::size_t bytes, ArenaTelemetry telemetry) noexcept
+    inline Arena::Arena(const std::size_t bytes, ArenaTelemetry* telemetry) noexcept
         : _buffer(new uint8_t[bytes]),
           _sizeInBytes(bytes),
           _offset(0),
@@ -51,7 +52,7 @@ namespace pmm
           _offset(0),
           _prevOffset(0),
           _defaultAlignment(alignment),
-          _telemetry(ArenaTelemetry(bytes))
+          _telemetry{ new ArenaTelemetry(bytes) }
     {
         // Sets the offset based on alignment
         if (alignment > 0)
@@ -62,7 +63,7 @@ namespace pmm
     }
 
 
-    inline Arena::Arena(std::size_t bytes, std::size_t alignment, ArenaTelemetry telemetry) noexcept
+    inline Arena::Arena(const std::size_t bytes, const std::size_t alignment, ArenaTelemetry* telemetry) noexcept
         : _buffer(new uint8_t[bytes]),
           _sizeInBytes(bytes),
           _offset(0),
@@ -94,7 +95,7 @@ namespace pmm
         _prevOffset = std::exchange(arena._prevOffset, 0);
         _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
         _defaultAlignment = std::exchange(arena._defaultAlignment, 0);
-        _telemetry = std::exchange(arena._telemetry, ArenaTelemetry{});
+        _telemetry = std::exchange(arena._telemetry, nullptr);
     }
 
 
@@ -115,6 +116,7 @@ namespace pmm
         _prevOffset = std::exchange(arena._prevOffset, 0);
         _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
         _defaultAlignment = std::exchange(arena._defaultAlignment, 0);
+        _telemetry = std::exchange(arena._telemetry, nullptr);
 
         return *this;
     }
@@ -213,7 +215,7 @@ namespace pmm
 
 
     template <typename T, typename... Args>
-    constexpr T* Arena::allocAs(std::size_t alignment, Args... args) noexcept
+    constexpr T* Arena::allocAs(const std::size_t alignment, Args... args) noexcept
     {
         // Forward align the memory by the alignment
         _alignForward(alignment);
@@ -257,8 +259,8 @@ namespace pmm
     }
 
 
-    constexpr void* Arena::resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
-                                  std::size_t alignment) noexcept
+    constexpr void* Arena::resize(void* oldMemory, const std::size_t oldSize, const std::size_t newSize,
+                                  const std::size_t alignment) noexcept
     {
         // The allocation is new
         if (oldMemory == nullptr || oldSize == 0)
@@ -299,7 +301,7 @@ namespace pmm
 
     constexpr ArenaTelemetry Arena::getTelemetry() const noexcept
     {
-        return _telemetry;
+        return *_telemetry;
     }
 
 } // namespace pmm
