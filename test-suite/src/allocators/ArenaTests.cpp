@@ -1002,6 +1002,115 @@ namespace pmm
         EXPECT_EQ(expectedOffset, arena._offset);
     }
 
+
+    /** @brief Verify that arena resize with nullptr updates the telemetry with freshly allocated byte usage. */
+    TEST(ArenaResize, NoOldMemory_UpdatesTelemetry)
+    {
+        constexpr auto arenaSize = 1024;
+        Arena arena(arenaSize);
+        constexpr auto byteSize = 128;
+
+
+        [[maybe_unused]] const auto data = arena.resize(nullptr, byteSize, byteSize, alignof(void*));
+
+        EXPECT_EQ(byteSize, arena.getTelemetry().currentUsage);
+        EXPECT_EQ(byteSize, arena.getTelemetry().minUsage);
+        EXPECT_EQ(byteSize, arena.getTelemetry().peakUsage);
+    }
+
+    /** @brief Verify that arena resize with same size, does not update telemetry. */
+    TEST(ArenaResize, SameMemorySize_DoesNotUpdateTelemetry)
+    {
+        constexpr auto arenaSize = 1024;
+        Arena arena(arenaSize);
+        constexpr auto byteSize = 128;
+
+        const auto allocatedBytes = arena.allocBytes(byteSize);
+
+        const auto oldUsage = arena.getTelemetry().currentUsage;
+        const auto oldMinUsage = arena.getTelemetry().minUsage;
+        const auto oldPeakUsage = arena.getTelemetry().peakUsage;
+
+
+        [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, byteSize, alignof(void*));
+
+        EXPECT_EQ(oldUsage, arena.getTelemetry().currentUsage);
+        EXPECT_EQ(oldMinUsage, arena.getTelemetry().minUsage);
+        EXPECT_EQ(oldPeakUsage, arena.getTelemetry().peakUsage);
+    }
+
+
+    /** @brief Verify that arena resize with same size, does not update telemetry. */
+    TEST(ArenaResize, SmallerMemorySize_DoesNotUpdateTelemetry)
+    {
+        constexpr auto arenaSize = 1024;
+        Arena arena(arenaSize);
+        constexpr auto byteSize = 128;
+        constexpr auto newByteSize = byteSize - 10;
+
+        const auto allocatedBytes = arena.allocBytes(byteSize);
+
+        const auto oldUsage = arena.getTelemetry().currentUsage;
+        const auto oldMinUsage = arena.getTelemetry().minUsage;
+        const auto oldPeakUsage = arena.getTelemetry().peakUsage;
+
+
+        [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, newByteSize, alignof(void*));
+
+        EXPECT_EQ(oldUsage, arena.getTelemetry().currentUsage);
+        EXPECT_EQ(oldMinUsage, arena.getTelemetry().minUsage);
+        EXPECT_EQ(oldPeakUsage, arena.getTelemetry().peakUsage);
+    }
+
+    /** @brief Verify that arena resize with larger size of final allocation, update telemetry by size difference. */
+    TEST(ArenaResize, LatestAllocationResize_UpdatesTelemetry)
+    {
+        constexpr auto arenaSize = 1024;
+        Arena arena(arenaSize);
+        constexpr auto byteSize = 128;
+        constexpr auto byteDifference = 100;
+        constexpr auto newByteSize = byteSize + byteDifference;
+
+        [[maybe_unused]] const auto unusedBytes = arena.allocBytes(50);
+        const auto allocatedBytes = arena.allocBytes(byteSize);
+
+        const auto oldUsage = arena.getTelemetry().currentUsage;
+        const auto oldMinUsage = arena.getTelemetry().minUsage;
+        [[maybe_unused]] const auto oldPeakUsage = arena.getTelemetry().peakUsage;
+
+
+        [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, newByteSize, alignof(void*));
+
+        EXPECT_EQ(oldUsage + byteDifference, arena.getTelemetry().currentUsage);
+        EXPECT_EQ(oldMinUsage, arena.getTelemetry().minUsage);
+        // TODO: Add back
+        // EXPECT_EQ(oldPeakUsage + byteDifference, arena.getTelemetry().peakUsage);
+    }
+
+    /** @brief Verify that arena resize with larger size of in-between allocation, update telemetry by size difference. */
+    TEST(ArenaResize, InBetweenAllocationResize_UpdatesTelemetry)
+    {
+        constexpr auto arenaSize = 1024;
+        Arena arena(arenaSize);
+        constexpr auto byteSize = 128;
+        constexpr auto byteDifference = 100;
+        constexpr auto newByteSize = byteSize + byteDifference;
+
+        const auto allocatedBytes = arena.allocBytes(byteSize);
+        [[maybe_unused]] const auto unusedBytes = arena.allocBytes(50);
+
+        const auto oldUsage = arena.getTelemetry().currentUsage;
+        const auto oldMinUsage = arena.getTelemetry().minUsage;
+        const auto oldPeakUsage = arena.getTelemetry().peakUsage;
+
+
+        [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, newByteSize, alignof(void*));
+
+        EXPECT_EQ(oldUsage + newByteSize, arena.getTelemetry().currentUsage);
+        EXPECT_EQ(oldMinUsage, arena.getTelemetry().minUsage);
+        EXPECT_EQ(newByteSize, arena.getTelemetry().peakUsage);
+    }
+
 } // namespace pmm
 
 

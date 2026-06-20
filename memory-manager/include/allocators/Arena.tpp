@@ -280,6 +280,7 @@ namespace pmm
                                   const std::size_t alignment) noexcept
     {
         // The allocation is new
+        // No need to add telemetry since allocBytes does that for us
         if (oldMemory == nullptr || oldSize == 0)
             return allocBytes(newSize, alignment);
 
@@ -292,11 +293,16 @@ namespace pmm
         const auto allocationAddress = reinterpret_cast<uintptr_t>(oldMemory);
         const auto lastAllocatedAddress = reinterpret_cast<uintptr_t>(_buffer) + _prevOffset;
         const auto offsetDiff = newSize - oldSize;
+
         // If there is enough memory in the arena to "expand" last allocation
         // expand the offset to the difference between new size and old size
         if (allocationAddress == lastAllocatedAddress && _sizeInBytes >= _offset + offsetDiff)
         {
             _offset += offsetDiff;
+
+            // Update the telemetry to include the difference
+            _telemetry->updateAllocationUsage(offsetDiff);
+
             return oldMemory;
         }
 
