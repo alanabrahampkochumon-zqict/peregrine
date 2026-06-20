@@ -36,6 +36,12 @@
     */
 
     /**
+    * @defgroup T_PMM_Stack Stack Allocator
+    * @brief Verify Stack Allocator Logic.
+    * @ingroup T_PMM_Lib
+    */
+
+    /**
     * @defgroup T_PMM_Telemetry Telemetry
     * @brief Verify Memory Allocator's Telemetry Logic.
     * @ingroup T_PMM_Lib

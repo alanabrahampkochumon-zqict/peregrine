@@ -30,6 +30,12 @@
      * @ingroup PMM_Lib
      */
 
+    /**
+     * @defgroup PMM_Stack Stack Allocator
+     * @brief Stack Allocator.
+     * @ingroup PMM_Lib
+     */
+
 
     /**
      * @defgroup PMM_TArena Temporary Arena

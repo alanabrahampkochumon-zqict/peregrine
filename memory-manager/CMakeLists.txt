@@ -1,7 +1,7 @@
 # Files
 set(AllocatorDir "include/peregrine/allocators/")
-set(AllocatorHeaderFiles "Arena.h;TempArena.h")
-set(AllocatorTemplateFiles "Arena.tpp;TempArena.tpp")
+set(AllocatorHeaderFiles "Arena.h;TempArena.h;Stack.h")
+set(AllocatorTemplateFiles "Arena.tpp;TempArena.tpp;Stack.tpp")
 list(TRANSFORM AllocatorHeaderFiles PREPEND ${AllocatorDir})
 list(TRANSFORM AllocatorTemplateFiles PREPEND ${AllocatorDir})
 

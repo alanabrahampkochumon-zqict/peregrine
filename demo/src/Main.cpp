@@ -52,7 +52,7 @@ int main() {
 
     using namespace pmm::constants;
 
-    // TODO: Add byte formatter
+    // TODO: Add byte (bytes => KB, MB, GB, TB) etc formatter
     // TODO: Reduce API Friction with the dual inits
     constexpr auto arenaSize = 5_KB;
     pmm::ArenaTelemetry telemetry{arenaSize};
