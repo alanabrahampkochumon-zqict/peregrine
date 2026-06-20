@@ -271,6 +271,7 @@ namespace pmm
         if (_defaultAlignment > 0)
             _alignForward(_defaultAlignment);
 
+        _telemetry->resetCurrentUsage();
         _prevOffset = _offset;
     }
 
