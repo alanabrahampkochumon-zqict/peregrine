@@ -1083,8 +1083,7 @@ namespace pmm
 
         EXPECT_EQ(oldUsage + byteDifference, arena.getTelemetry().getCurrentUsage());
         EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
-        // TODO: Add back
-        // EXPECT_EQ(oldPeakUsage + byteDifference, arena.getTelemetry().peakUsage);
+        EXPECT_EQ(oldPeakUsage + byteDifference, arena.getTelemetry().getPeakUsage());
     }
 
     /** @brief Verify that arena resize with larger size of in-between allocation, update telemetry by size difference. */

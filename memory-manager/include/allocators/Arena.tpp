@@ -14,7 +14,6 @@
 #include <bit>
 #include <cassert>
 #include <cstring>
-#include <iostream>
 #include <new>
 #include <utility>
 
@@ -302,6 +301,8 @@ namespace pmm
 
             // Update the telemetry to include the difference
             _telemetry->updateAllocationUsage(offsetDiff);
+            _telemetry->updateMinUsage(newSize);
+            _telemetry->updatePeakUsage(newSize);
 
             return oldMemory;
         }
