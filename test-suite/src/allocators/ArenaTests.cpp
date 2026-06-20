@@ -81,6 +81,47 @@ TEST(ArenaInitialization, AlignedArena_InitializesArenaWithTheGivenTelemetryInst
 
 
 /**
+ * @brief Verify that Arena does not copy the passed in telemetry instance.
+ */
+TEST(ArenaInitialization, DoesNotOwnAPassedInTelemetry)
+{
+    constexpr std::size_t arenaSize = 512;
+    constexpr std::size_t markerBytes = 213;
+
+    pmm::ArenaTelemetry telemetry{ arenaSize };
+    telemetry.updateAllocationUsage(markerBytes);
+
+    const pmm::Arena arena(arenaSize, &telemetry);
+    telemetry.updateAllocationUsage(markerBytes);
+
+    // Since we can't directly verify the telemetry memory address
+    // We can update the telemetry instance from outside and it should get reflected in arena's instance
+    EXPECT_EQ(2 * markerBytes, arena.getTelemetry().currentUsage);
+}
+
+
+/**
+ * @brief Verify that an aligned Arena does not copy the passed in telemetry instance.
+ */
+TEST(ArenaInitialization, AlignedArena_DoesNotOwnAPassedInTelemetry)
+{
+    constexpr std::size_t arenaSize = 512;
+    constexpr std::size_t markerBytes = 213;
+    constexpr std::size_t alignment = 4;
+
+    pmm::ArenaTelemetry telemetry{ arenaSize };
+    telemetry.updateAllocationUsage(markerBytes);
+
+    const pmm::Arena arena(arenaSize, alignment, &telemetry);
+    telemetry.updateAllocationUsage(markerBytes);
+
+    // Since we can't directly verify the telemetry memory address
+    // We can update the telemetry instance from outside and it should get reflected in arena's instance
+    EXPECT_EQ(2 * markerBytes, arena.getTelemetry().currentUsage);
+}
+
+
+/**
  * @brief Verify that usedSize is equal to zero size before any allocations.
  */
 TEST(ArenaInitialization, ArenaHasZeroUsedSize)
@@ -253,7 +294,7 @@ namespace pmm
         const auto initialOffset = arena._offset;
         const auto initialPrevOffset = arena._prevOffset;
         const auto initialAlignment = arena._defaultAlignment;
-
+        const auto initialTelemetry = arena.getTelemetry();
 
         const Arena arena2 = std::move(arena);
         EXPECT_EQ(initialPointer, arena2._buffer);
@@ -261,12 +302,43 @@ namespace pmm
         EXPECT_EQ(initialPrevOffset, arena2._prevOffset);
         EXPECT_EQ(initialAlignment, arena2._defaultAlignment);
         EXPECT_EQ(size, arena2._sizeInBytes);
-        EXPECT_EQ(size, arena2.getTelemetry().size);
+
+        // Checking for telemetry equality
+        EXPECT_EQ(initialTelemetry.currentUsage, arena2.getTelemetry().currentUsage);
+        EXPECT_EQ(initialTelemetry.peakUsage, arena2.getTelemetry().peakUsage);
+        EXPECT_EQ(initialTelemetry.size, arena2.getTelemetry().size);
+        EXPECT_EQ(initialTelemetry.minUsage, arena2.getTelemetry().minUsage);
     }
 
 
     /**
-     * @brief Verify that move constructor moves all data members, including buffer into new object.
+     * @brief Verify that move constructor moves the telemetry object(ptr).
+     */
+    TEST(ArenaMoveConstructor, MovesTelemetry)
+    {
+        constexpr auto size = 512;
+        ArenaTelemetry telemetry;
+        telemetry.updateAllocationUsage(512);
+        telemetry.updateAllocationUsage(256);
+        Arena arena(size, &telemetry);
+
+        const Arena arena2 = std::move(arena);
+
+        // Update telemetry usage from outside
+        // Since the arena class only holds a ptr
+        // Updating the telemetry should reflect the change in the telemetry held by arena2
+        telemetry.updateAllocationUsage(128);
+
+        // Checking for telemetry equality
+        EXPECT_EQ(telemetry.currentUsage, arena2.getTelemetry().currentUsage);
+        EXPECT_EQ(telemetry.peakUsage, arena2.getTelemetry().peakUsage);
+        EXPECT_EQ(telemetry.size, arena2.getTelemetry().size);
+        EXPECT_EQ(telemetry.minUsage, arena2.getTelemetry().minUsage);
+    }
+
+
+    /**
+     * @brief Verify that move constructor moves all data members of an aligned arena, including buffer into new object.
      */
     TEST(ArenaMoveConstructor, AlignedArena_MovesBufferIntoNewObject)
     {
@@ -284,6 +356,33 @@ namespace pmm
         EXPECT_EQ(initialPrevOffset, arena2._prevOffset);
         EXPECT_EQ(alignment, arena2._defaultAlignment);
         EXPECT_EQ(size, arena2._sizeInBytes);
+    }
+
+
+    /**
+     * @brief Verify that move constructor moves the telemetry object(ptr) of aligned arena.
+     */
+    TEST(ArenaMoveConstructor, AlignedArena_MovesTelemetry)
+    {
+        constexpr auto size = 512;
+        constexpr auto alignment = 128;
+        ArenaTelemetry telemetry;
+        telemetry.updateAllocationUsage(512);
+        telemetry.updateAllocationUsage(256);
+        Arena arena(size, alignment, &telemetry);
+
+        const Arena arena2 = std::move(arena);
+
+        // Update telemetry usage from outside
+        // Since the arena class only holds a ptr
+        // Updating the telemetry should reflect the change in the telemetry held by arena2
+        telemetry.updateAllocationUsage(128);
+
+        // Checking for telemetry equality
+        EXPECT_EQ(telemetry.currentUsage, arena2.getTelemetry().currentUsage);
+        EXPECT_EQ(telemetry.peakUsage, arena2.getTelemetry().peakUsage);
+        EXPECT_EQ(telemetry.size, arena2.getTelemetry().size);
+        EXPECT_EQ(telemetry.minUsage, arena2.getTelemetry().minUsage);
     }
 
 } // namespace pmm
