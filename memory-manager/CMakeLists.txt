@@ -1,18 +1,18 @@
 # Files
-set(AllocatorDir "include/allocators/")
+set(AllocatorDir "include/peregrine/allocators/")
 set(AllocatorHeaderFiles "Arena.h;TempArena.h")
 set(AllocatorTemplateFiles "Arena.tpp;TempArena.tpp")
 list(TRANSFORM AllocatorHeaderFiles PREPEND ${AllocatorDir})
 list(TRANSFORM AllocatorTemplateFiles PREPEND ${AllocatorDir})
 
 # Telemetry Files
-set(TelemetryDir "include/telemetry/")
+set(TelemetryDir "include/peregrine/telemetry/")
 set(TelemetryHeaderFiles "ArenaTelemetry.h;")
 set(TelemetryTemplateFiles "ArenaTelemetry.tpp;")
 list(TRANSFORM TelemetryHeaderFiles PREPEND ${TelemetryDir})
 list(TRANSFORM TelemetryTemplateFiles PREPEND ${TelemetryDir})
 
-set(UtilDir "include/utils/")
+set(UtilDir "include/peregrine/utils/")
 set(UtilFiles "Constants.h;Utilities.h")
 list(TRANSFORM UtilFiles PREPEND ${UtilDir})
 

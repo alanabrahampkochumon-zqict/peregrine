@@ -10,8 +10,8 @@
 
 #include "Utils.h"
 
-#include <allocators/Arena.h>
-#include <allocators/TempArena.h>
+#include <peregrine/allocators/Arena.h>
+#include <peregrine/allocators/TempArena.h>
 #include <gtest/gtest.h>
 
 

@@ -10,7 +10,7 @@
  */
 
 
-#include "telemetry/ArenaTelemetry.h"
+#include "peregrine/telemetry/ArenaTelemetry.h"
 
 
 #include <cstddef>

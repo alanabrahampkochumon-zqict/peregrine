@@ -10,7 +10,7 @@
 
 
 #include <gtest/gtest.h>
-#include <telemetry/ArenaTelemetry.h>
+#include <peregrine/telemetry/ArenaTelemetry.h>
 
 
 /**

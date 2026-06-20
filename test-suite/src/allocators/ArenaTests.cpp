@@ -11,7 +11,7 @@
 
 #include "Utils.h"
 
-#include <allocators/Arena.h>
+#include <peregrine/allocators/Arena.h>
 #include <gtest/gtest.h>
 #include <utility>
 

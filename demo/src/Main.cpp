@@ -8,14 +8,17 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
-#include "utils/Constants.h"
 
-#include <allocators/Arena.h>
+#include <peregrine/allocators/Arena.h>
+#include <peregrine/utils/Constants.h>
+
 #include <iostream>
 
 
-// TODO: Add getters for stats since there are non-existent without the preprocessor macro
 #define ENABLE_PMM_TELEMETRY
+
+// void printArenaTelemetry(const pmm::ArenaTelemetry)
+
 
 int main() {
 
