@@ -274,6 +274,7 @@ namespace pmm
         uint8_t* _buffer;
         uint64_t _sizeInBytes, _offset, _prevOffset, _defaultAlignment;
         ArenaTelemetry* _telemetry;
+        bool _ownedTelemetry; // Used for freeing the allocated telemetry if it was allocated by the Arena
 
         /**
          * @brief Align the internal buffer to @p alignment.
@@ -287,6 +288,10 @@ namespace pmm
 #ifdef ENABLE_PMM_TESTS
     // FRIEND TEST macros for verifying internal states
     #include <gtest/gtest_prod.h>
+        FRIEND_TEST(ArenaInitialization, NoPassedInTelemetry_ArenaOwnsTelemetry);
+        FRIEND_TEST(ArenaInitialization, PassedInTelemetry_ArenaDoesNotOwnTelemetry);
+        FRIEND_TEST(ArenaInitialization, AlignedArena_NoPassedInTelemetry_ArenaOwnsTelemetry);
+        FRIEND_TEST(ArenaInitialization, AlignedArena_PassedInTelemetry_ArenaDoesNotOwnTelemetry);
         FRIEND_TEST(AlignedArenaInitialization, InternalState_AlignBaseOffset);
         FRIEND_TEST(ArenaMoveConstructor, NullsOutInternalBuffer);
         FRIEND_TEST(ArenaMoveConstructor, MovesBufferIntoNewObject);

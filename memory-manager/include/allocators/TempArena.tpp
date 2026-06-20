@@ -38,7 +38,7 @@ namespace pmm
      *                                    *
      **************************************/
 
-    inline void* TempArena::allocBytes(std::size_t bytes, std::size_t alignment) noexcept
+    inline void* TempArena::allocBytes(const std::size_t bytes, const std::size_t alignment) const noexcept
     {
         return arena->allocBytes(bytes, alignment);
     }
@@ -52,14 +52,14 @@ namespace pmm
 
 
     template <typename T, typename... Args>
-    constexpr T* TempArena::allocAs(std::size_t alignment, Args... args) noexcept
+    constexpr T* TempArena::allocAs(const std::size_t alignment, Args... args) noexcept
     {
         return arena->allocAs<T>(alignment, args...);
     }
 
 
     template <typename T>
-    constexpr std::span<T> TempArena::allocV(std::size_t count) noexcept
+    constexpr std::span<T> TempArena::allocV(const std::size_t count) noexcept
     {
         return arena->allocV<T>(count);
     }

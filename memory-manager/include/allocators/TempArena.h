@@ -50,7 +50,7 @@ namespace pmm
         /**
          * @copydoc pmm::Arena::allocBytes(std::size_t, std::size_t)
          */
-        [[nodiscard]] void* allocBytes(std::size_t bytes, std::size_t alignment = sizeof(void*)) noexcept;
+        [[nodiscard]] void* allocBytes(std::size_t bytes, std::size_t alignment = sizeof(void*)) const noexcept;
 
 
         /**

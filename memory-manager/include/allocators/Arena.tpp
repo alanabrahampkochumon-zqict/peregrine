@@ -17,7 +17,6 @@
 #include <new>
 #include <utility>
 
-// TODO: Add tests to verify that the ownership of passed in arena telemetry is upto the class
 
 namespace pmm
 {
@@ -33,7 +32,8 @@ namespace pmm
           _offset(0),
           _prevOffset(0),
           _defaultAlignment(0),
-          _telemetry{ new ArenaTelemetry(bytes) }
+          _telemetry{ new ArenaTelemetry(bytes) },
+          _ownedTelemetry(true)
     {}
 
     inline Arena::Arena(const std::size_t bytes, ArenaTelemetry* telemetry) noexcept
@@ -42,7 +42,8 @@ namespace pmm
           _offset(0),
           _prevOffset(0),
           _defaultAlignment(0),
-          _telemetry(telemetry)
+          _telemetry(telemetry),
+          _ownedTelemetry(false)
     {}
 
 
@@ -52,7 +53,8 @@ namespace pmm
           _offset(0),
           _prevOffset(0),
           _defaultAlignment(alignment),
-          _telemetry{ new ArenaTelemetry(bytes) }
+          _telemetry{ new ArenaTelemetry(bytes) },
+          _ownedTelemetry(true)
     {
         // Sets the offset based on alignment
         if (alignment > 0)
@@ -69,7 +71,8 @@ namespace pmm
           _offset(0),
           _prevOffset(0),
           _defaultAlignment(alignment),
-          _telemetry(telemetry)
+          _telemetry(telemetry),
+          _ownedTelemetry(false)
     {
         // Sets the offset based on alignment
         if (alignment > 0)
@@ -82,6 +85,8 @@ namespace pmm
 
     Arena::~Arena() noexcept
     {
+        // Only free the telemetry if it's owned by the arena
+        if (_ownedTelemetry) delete _telemetry;
         delete[] _buffer;
     }
 
@@ -96,6 +101,7 @@ namespace pmm
         _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
         _defaultAlignment = std::exchange(arena._defaultAlignment, 0);
         _telemetry = std::exchange(arena._telemetry, nullptr);
+        _ownedTelemetry = std::exchange(arena._ownedTelemetry, false);
     }
 
 
@@ -117,6 +123,7 @@ namespace pmm
         _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
         _defaultAlignment = std::exchange(arena._defaultAlignment, 0);
         _telemetry = std::exchange(arena._telemetry, nullptr);
+        _ownedTelemetry = std::exchange(arena._ownedTelemetry, false);
 
         return *this;
     }

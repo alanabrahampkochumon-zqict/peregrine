@@ -219,8 +219,7 @@ TEST(ArenaAllocV, DataIsNotOverriden)
 
     // Write into the first allocated span
     for (std::size_t i = 0; i < blockCount; ++i)
-        vertices[i] =
-            Vec4{ vertexData[i * 4], vertexData[(i * 4) + 1], vertexData[i * 4 + 2], vertexData[i * 4 + 3] };
+        vertices[i] = Vec4{ vertexData[i * 4], vertexData[(i * 4) + 1], vertexData[i * 4 + 2], vertexData[i * 4 + 3] };
 
     // Write into the second allocated span
     for (std::size_t i = 0; i < blockCount; ++i)
@@ -274,6 +273,59 @@ TEST(ArenaAllocV, UpdatesTelemetry)
 namespace pmm
 {
 
+    /**
+     * @brief Verify that Arena's telemetry is owned by arena if telemetry is not passed-in.
+     */
+    TEST(ArenaInitialization, NoPassedInTelemetry_ArenaOwnsTelemetry)
+    {
+        constexpr auto size = 512;
+        const Arena arena(size);
+
+        EXPECT_TRUE(arena._ownedTelemetry);
+    }
+
+
+    /**
+     * @brief Verify that Arena's telemetry is not owned by arena if telemetry is passed-in.
+     */
+    TEST(ArenaInitialization, PassedInTelemetry_ArenaDoesNotOwnTelemetry)
+    {
+        constexpr auto size = 512;
+        ArenaTelemetry telemetry{ size };
+        const Arena arena(size, &telemetry);
+
+        EXPECT_FALSE(arena._ownedTelemetry);
+    }
+
+
+    /**
+     * @brief Verify that Aligned Arena's telemetry is owned by arena if telemetry is not passed-in.
+     */
+    TEST(ArenaInitialization, AlignedArena_NoPassedInTelemetry_ArenaOwnsTelemetry)
+    {
+        constexpr auto size = 512;
+        constexpr int alignment = 4;
+        const Arena arena(size, alignment);
+
+        EXPECT_TRUE(arena._ownedTelemetry);
+    }
+
+
+    /**
+     * @brief Verify that Aligned Arena's telemetry is not owned by arena if telemetry is passed-in.
+     */
+    TEST(ArenaInitialization, AlignedArena_PassedInTelemetry_ArenaDoesNotOwnTelemetry)
+    {
+        constexpr auto size = 512;
+        constexpr auto alignment = 4;
+        ArenaTelemetry telemetry{ size };
+        const Arena arena(size, alignment, &telemetry);
+
+        EXPECT_FALSE(arena._ownedTelemetry);
+    }
+
+
+
     /** @brief Verify that the initializer with default alignment creates an offset for alignment. */
     TEST_P(AlignedArenaInitialization, InternalState_AlignBaseOffset)
     {
@@ -307,6 +359,7 @@ namespace pmm
         EXPECT_EQ(0, arena._prevOffset);
         EXPECT_EQ(0, arena._sizeInBytes);
         EXPECT_EQ(0, arena._defaultAlignment);
+        EXPECT_FALSE(arena._ownedTelemetry);
         // Since, we are dereferencing a nullptr internally, it will cause SEH
         // UB
         // EXPECT_DEATH(static_cast<void>(arena.getTelemetry()), "");
@@ -325,6 +378,7 @@ namespace pmm
         const auto initialPrevOffset = arena._prevOffset;
         const auto initialAlignment = arena._defaultAlignment;
         const auto initialTelemetry = arena.getTelemetry();
+        const auto initialTelemetryOwnership = arena._ownedTelemetry;
 
         const Arena arena2 = std::move(arena);
         EXPECT_EQ(initialPointer, arena2._buffer);
@@ -332,6 +386,7 @@ namespace pmm
         EXPECT_EQ(initialPrevOffset, arena2._prevOffset);
         EXPECT_EQ(initialAlignment, arena2._defaultAlignment);
         EXPECT_EQ(size, arena2._sizeInBytes);
+        EXPECT_EQ(initialTelemetryOwnership, arena2._ownedTelemetry);
 
         // Checking for telemetry equality
         EXPECT_EQ(initialTelemetry.getCurrentUsage(), arena2.getTelemetry().getCurrentUsage());
@@ -378,6 +433,7 @@ namespace pmm
         const auto initialPointer = arena._buffer;
         const auto initialOffset = arena._offset;
         const auto initialPrevOffset = arena._prevOffset;
+        const auto initialTelemetryOwnership = arena._ownedTelemetry;
 
 
         const Arena arena2 = std::move(arena);
@@ -386,6 +442,7 @@ namespace pmm
         EXPECT_EQ(initialPrevOffset, arena2._prevOffset);
         EXPECT_EQ(alignment, arena2._defaultAlignment);
         EXPECT_EQ(size, arena2._sizeInBytes);
+        EXPECT_EQ(initialTelemetryOwnership, arena2._ownedTelemetry);
     }
 
 
@@ -423,14 +480,21 @@ namespace pmm
  */
 TEST(ArenaMoveAssignment, CopiesAttributesToNewObject)
 {
+    constexpr auto sampleAllocation = 50;
     constexpr auto size = 512;
     pmm::Arena arena(size);
+    static_cast<void>(arena.allocBytes(sampleAllocation));
     pmm::Arena arena2(256);
 
     arena2 = std::move(arena);
-    EXPECT_EQ(size, arena2.freeSize());
+    EXPECT_EQ(size - sampleAllocation, arena2.freeSize());
     EXPECT_EQ(size, arena2.size());
-    EXPECT_EQ(0, arena2.usedSize());
+    EXPECT_EQ(sampleAllocation, arena2.usedSize());
+
+    EXPECT_EQ(size, arena2.getTelemetry().getArenaSize());
+    EXPECT_EQ(sampleAllocation, arena2.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(sampleAllocation, arena2.getTelemetry().getPeakUsage());
+    EXPECT_EQ(sampleAllocation, arena2.getTelemetry().getMinUsage());
 }
 
 
@@ -1086,7 +1150,8 @@ namespace pmm
         EXPECT_EQ(oldPeakUsage + byteDifference, arena.getTelemetry().getPeakUsage());
     }
 
-    /** @brief Verify that arena resize with larger size of in-between allocation, update telemetry by size difference. */
+    /** @brief Verify that arena resize with larger size of in-between allocation, update telemetry by size difference.
+     */
     TEST(ArenaResize, InBetweenAllocationResize_UpdatesTelemetry)
     {
         constexpr auto arenaSize = 1024;
