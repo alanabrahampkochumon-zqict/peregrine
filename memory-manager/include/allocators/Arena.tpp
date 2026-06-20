@@ -14,6 +14,7 @@
 #include <bit>
 #include <cassert>
 #include <cstring>
+#include <iostream>
 #include <new>
 #include <utility>
 
@@ -253,8 +254,11 @@ namespace pmm
     constexpr std::span<T> Arena::allocV(std::size_t count) noexcept
     {
         // Allocate the raw memory and wrap it in a span
-        if (T* rawPointer = static_cast<T*>(allocBytes(sizeof(T) * count, alignof(T))))
+        const std::size_t bytesToAllocate = sizeof(T) * count;
+        if (T* rawPointer = static_cast<T*>(allocBytes(bytesToAllocate, alignof(T))))
+            // No need to update the telemetry since allocBytes already does that
             return std::span(rawPointer, count);
+
         return std::span<T>();
     }
 
