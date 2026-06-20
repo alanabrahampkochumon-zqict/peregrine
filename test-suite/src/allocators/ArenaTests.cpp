@@ -402,7 +402,7 @@ namespace pmm
     TEST(ArenaMoveConstructor, MovesTelemetry)
     {
         constexpr auto size = 512;
-        ArenaTelemetry telemetry;
+        ArenaTelemetry telemetry{ size };
         telemetry.updateAllocationUsage(512);
         telemetry.updateAllocationUsage(256);
         Arena arena(size, &telemetry);
@@ -453,7 +453,7 @@ namespace pmm
     {
         constexpr auto size = 512;
         constexpr auto alignment = 128;
-        ArenaTelemetry telemetry;
+        ArenaTelemetry telemetry{ size };
         telemetry.updateAllocationUsage(512);
         telemetry.updateAllocationUsage(256);
         Arena arena(size, alignment, &telemetry);

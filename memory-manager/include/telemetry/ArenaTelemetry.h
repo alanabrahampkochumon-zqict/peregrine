@@ -25,15 +25,13 @@ namespace pmm
     struct ArenaTelemetry
     {
 
-        // TODO: Delete the default constructor
         /**
-         * @brief Default construct an arena telemetry with uninitialized parameters.
+         * @brief Default construction of arena telemetry with no size is strictly prohibited.
          *
-         * @warning It is not recommended to use this method.
-         *          Only provided for internal use.
-         *          Use @ref Arena(std::size_t) to construct an ArenaTelemetry with an arena size.
+         * @note Use @ref Arena(std::size_t) to construct an ArenaTelemetry with an arena size.
          */
-        ArenaTelemetry() = default;
+        ArenaTelemetry() = delete;
+
 
         /**
          * @brief Initialize a new Arena telemetry instance with the current arena size.
@@ -52,6 +50,7 @@ namespace pmm
          * @param[in] allocatedByteSize The byte allocated in the current allocation call of the arena.
          */
         constexpr void updateAllocationUsage(std::size_t allocatedByteSize) noexcept;
+
 
         /**
          * @brief Update the current minimum usage with @p usage if it is lower than the recorded minimum.
@@ -113,13 +112,12 @@ namespace pmm
     struct ArenaTelemetry
     {
         /**
-         * @brief Default construct an arena telemetry with uninitialized parameters.
+         * @brief Default construction of arena telemetry with no size is strictly prohibited.
          *
-         * @warning It is not recommended to use this method.
-         *          Only provided for internal use.
-         *          Use @ref Arena(std::size_t) to construct an ArenaTelemetry with an arena size.
+         * @note Use @ref Arena(std::size_t) to construct an ArenaTelemetry with an arena size.
          */
-        ArenaTelemetry() = default;
+        ArenaTelemetry() = delete;
+
 
         /**
          * @brief Initialize a dummy arena telemetry.
