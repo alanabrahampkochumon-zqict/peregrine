@@ -210,6 +210,10 @@ namespace pmm
 
             // Instantiate the object with arguments.
             T* object = new (raw) T(std::forward<Args>(args)...);
+
+            // Update the telemetry usage
+            _telemetry->updateAllocationUsage(objectSize);
+
             return object;
         }
 
