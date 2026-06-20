@@ -102,6 +102,7 @@ namespace pmm
          */
         [[nodiscard]] constexpr std::size_t getPeakUsage() const noexcept;
 
+        bool enabled {true};
     private:
         std::size_t _currentUsage;
         std::size_t _peakUsage;
