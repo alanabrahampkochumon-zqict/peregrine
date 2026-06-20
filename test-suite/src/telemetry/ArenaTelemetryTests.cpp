@@ -26,10 +26,10 @@ TEST(ArenaTelemetry, IntializesWithSizeAndDefaultStats)
     constexpr auto size = 1024;
     pmm::ArenaTelemetry telemetry(size);
 
-    EXPECT_EQ(size, telemetry.size);
-    EXPECT_EQ(0, telemetry.currentUsage);
-    EXPECT_EQ(std::numeric_limits<std::size_t>::max(), telemetry.minUsage);
-    EXPECT_EQ(0, telemetry.peakUsage);
+    EXPECT_EQ(size, telemetry.getArenaSize());
+    EXPECT_EQ(0, telemetry.getCurrentUsage());
+    EXPECT_EQ(std::numeric_limits<std::size_t>::max(), telemetry.getMinUsage());
+    EXPECT_EQ(0, telemetry.getPeakUsage());
 }
 
 
@@ -45,9 +45,9 @@ TEST(ArenaTelemetry, UpdateTelemetry_UpdatesWithCorrectUsage)
     telemetry.updateAllocationUsage(30);
     telemetry.updateAllocationUsage(10);
 
-    EXPECT_EQ(120, telemetry.currentUsage);
-    EXPECT_EQ(10, telemetry.minUsage);
-    EXPECT_EQ(50, telemetry.peakUsage);
+    EXPECT_EQ(120, telemetry.getCurrentUsage());
+    EXPECT_EQ(10, telemetry.getMinUsage());
+    EXPECT_EQ(50, telemetry.getPeakUsage());
 }
 
 
@@ -70,11 +70,11 @@ TEST(ArenaTelemetry, ResetCurrentUsage_OnlyResetsCurrentUsage)
     telemetry.resetCurrentUsage();
 
     // Only reset current usage
-    EXPECT_EQ(0, telemetry.currentUsage);
+    EXPECT_EQ(0, telemetry.getCurrentUsage());
 
     // But preserves the min and peak usage
-    EXPECT_EQ(10, telemetry.minUsage);
-    EXPECT_EQ(50, telemetry.peakUsage);
+    EXPECT_EQ(10, telemetry.getMinUsage());
+    EXPECT_EQ(50, telemetry.getPeakUsage());
 }
 
 /** @brief Verify that arena telemetry reset to default values. */
@@ -90,9 +90,9 @@ TEST(ArenaTelemetry, Reset_ResetsUsages)
     telemetry.updateAllocationUsage(10);
 
     telemetry.resetTelemetry();
-    EXPECT_EQ(0, telemetry.currentUsage);
-    EXPECT_EQ(std::numeric_limits<std::size_t>::max(), telemetry.minUsage);
-    EXPECT_EQ(0, telemetry.peakUsage);
+    EXPECT_EQ(0, telemetry.getCurrentUsage());
+    EXPECT_EQ(std::numeric_limits<std::size_t>::max(), telemetry.getMinUsage());
+    EXPECT_EQ(0, telemetry.getPeakUsage());
 }
 
 

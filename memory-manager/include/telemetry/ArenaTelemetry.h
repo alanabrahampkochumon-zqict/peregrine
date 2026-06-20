@@ -24,9 +24,6 @@ namespace pmm
 #ifdef ENABLE_PMM_TELEMETRY
     struct ArenaTelemetry
     {
-        std::size_t currentUsage, peakUsage, minUsage, size;
-
-        // TODO: Add getters
 
         // TODO: Delete the default constructor
         /**
@@ -67,8 +64,38 @@ namespace pmm
          * @brief Update the telemetry usage statistics to zero.
          */
         constexpr void resetTelemetry() noexcept;
-    };
 
+
+        /**
+         * @brief Get the size of the arena that the telemetry is attached to.
+         * @return Size of the arena.
+         */
+        [[nodiscard]] constexpr std::size_t getArenaSize() const noexcept;
+
+        /**
+         * @brief Get the current memory usage of the arena, the telemetry is attached to.
+         * @return Current memory used in the arena.
+         */
+        [[nodiscard]] constexpr std::size_t getCurrentUsage() const noexcept;
+
+        /**
+         * @brief Get the all-time minimum of memory used in the arena, that the telemetry is attached to.
+         * @return Minimum memory used in the arena.
+         */
+        [[nodiscard]] constexpr std::size_t getMinUsage() const noexcept;
+
+        /**
+         * @brief Get the all-time maximum of memory used in the arena, that the telemetry is attached to.
+         * @return Minimum memory used in the arena.
+         */
+        [[nodiscard]] constexpr std::size_t getPeakUsage() const noexcept;
+
+    private:
+        std::size_t _currentUsage;
+        std::size_t _peakUsage;
+        std::size_t _minUsage;
+        std::size_t _size;
+    };
 #else
     struct ArenaTelemetry
     {
@@ -110,6 +137,39 @@ namespace pmm
          * @note STUB Method. Telemetry is disabled.
          */
         constexpr void resetTelemetry() noexcept {}
+
+
+        /**
+         * @brief Get the size of the arena that the telemetry is attached to.
+         * @note STUB Method. Telemetry is disabled.
+         *
+         * @return 0.
+         */
+        [[nodiscard]] constexpr std::size_t getArenaSize() const noexcept { return 0; }
+
+        /**
+         * @brief Get the current memory usage of the arena, the telemetry is attached to.
+         * @note STUB Method. Telemetry is disabled.
+         *
+         * @return 0.
+         */
+        [[nodiscard]] constexpr std::size_t getCurrentUsage() const noexcept { return 0; }
+
+        /**
+         * @brief Get the all-time minimum of memory used in the arena, that the telemetry is attached to.
+         * @note STUB Method. Telemetry is disabled.
+         *
+         * @return 0.
+         */
+        [[nodiscard]] constexpr std::size_t getMinUsage() const noexcept { return 0; }
+
+        /**
+         * @brief Get the all-time maximum of memory used in the arena, that the telemetry is attached to.
+         * @note STUB Method. Telemetry is disabled.
+         *
+         * @return 0.
+         */
+        [[nodiscard]] constexpr std::size_t getPeakUsage() const noexcept { return 0; }
     };
 
 #endif
