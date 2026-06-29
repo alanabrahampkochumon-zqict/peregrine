@@ -12,7 +12,6 @@
 namespace pmm
 {
 
-
     inline Stack::Stack(const std::size_t sizeInBytes) noexcept
         : _buffer(new uint8_t[sizeInBytes]), _size(sizeInBytes), _offset(0)
     {}

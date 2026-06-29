@@ -46,20 +46,6 @@ namespace pmm
         inline explicit Stack(std::size_t sizeInBytes) noexcept;
 
         /**
-         * @brief Get the free capacity in bytes of the arena.
-         * @return The free capacity of the arena in bytes.
-         */
-        // [[nodiscard]] constexpr std::size_t freeSize() const noexcept;
-        //
-        //
-        // /**
-        //  * @brief Get the used capacity in bytes of the arena.
-        //  * @return The used capacity of the arena in bytes.
-        //  */
-        // [[nodiscard]] constexpr std::size_t usedSize() const noexcept;
-
-
-        /**
          * @brief Get the total capacity in bytes of the stack.
          * @return The total capacity of the stack.
          */
