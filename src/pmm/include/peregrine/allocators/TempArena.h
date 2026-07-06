@@ -30,7 +30,7 @@ namespace pmm
      */
     struct [[nodiscard]] TempArena
     {
-        Arena* arena;
+        Arena* targetArena;
         std::size_t prevOffset, currentOffset;
 
         /**

@@ -58,7 +58,7 @@ TEST_F(TempArenaTest, ArenaStateIsRestoredAfterTempArenaDeallocation)
     // is to allocate some bytes close to the arena capacity and ensuring it doesn't return a nullptr
     {
         auto tArena = pmm::TempArena(this->_arena);
-        static_cast<void>(tArena.arena->allocBytes(tArenaAllocSize));
+        static_cast<void>(tArena.targetArena->allocBytes(tArenaAllocSize));
     }
 
     // Subtracting 8 bytes of alignment just in case alignment results out-of-memory for arena
@@ -79,16 +79,16 @@ TEST_F(TempArenaTest, RewindsStateFreeingMemoryHeldByTempArena)
     // is to allocate some bytes close to the arena capacity and ensuring it doesn't return a nullptr
     {
         auto tArena1 = pmm::TempArena(this->_arena);
-        static_cast<void>(tArena1.arena->allocBytes(firstTArenaAllocSize));
+        static_cast<void>(tArena1.targetArena->allocBytes(firstTArenaAllocSize));
         {
             auto tArena2 = pmm::TempArena(this->_arena);
-            static_cast<void>(tArena2.arena->allocBytes(secondTArenaAllocSize));
+            static_cast<void>(tArena2.targetArena->allocBytes(secondTArenaAllocSize));
         }
 
         // Second arena should be free by now
         // So we could allocate arenaSize - firstArenaAllocSize bytes with a buffer of alignment
         // which shouldn't return a nullptr
-        void* memory = tArena1.arena->allocBytes(this->_arenaSize - firstTArenaAllocSize - alignment);
+        void* memory = tArena1.targetArena->allocBytes(this->_arenaSize - firstTArenaAllocSize - alignment);
         EXPECT_NE(nullptr, memory);
     }
 }

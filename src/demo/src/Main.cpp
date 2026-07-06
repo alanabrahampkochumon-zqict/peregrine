@@ -16,8 +16,7 @@
 #include <peregrine/utils/Constants.h>
 
 
-
-void printArenaTelemetry(const pmm::ArenaTelemetry& telemetry)
+static void printArenaTelemetry(const pmm::ArenaTelemetry& telemetry)
 {
     std::cout << "Arena Telemetry\n";
     std::cout << "Total Memory: " << telemetry.getArenaSize() << " bytes.\n";
@@ -30,8 +29,8 @@ void printArenaTelemetry(const pmm::ArenaTelemetry& telemetry)
 struct alignas(16) Vec4
 {
     float x, y, z, w;
-    Vec4(const float x, const float y, const float z, const float w): x(x), y(y), z(z), w(w) {};
 
+    Vec4(const float v0, const float v1, const float v2, const float v3): x(v0), y(v1), z(v2), w(v3) {}
 
     [[nodiscard]] Vec4 operator+(const Vec4& rhs) const noexcept
     {

@@ -88,7 +88,7 @@ if (ENABLE_STRICT)
     message(STATUS "Configuring Strict Warnings")
     if (MSVC AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         target_compile_options(StrictWarnings INTERFACE
-                $<$<COMPILE_LANGUAGE:CXX>:/WX;/W4;/permissive-;/fp:strict;/wd4723>
+                $<$<COMPILE_LANGUAGE:CXX>:/WX;/W4;/permissive-;/fp:strict;/wd4723;/wd4068>
         )
     elseif (MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
         target_compile_options(StrictWarnings INTERFACE
@@ -153,7 +153,7 @@ add_subdirectory(tests)
 
 if (ENABLE_PMM_BENCHMARK)
     message("Benchmarks are enabled")
-    add_subdirectory(benchmark)
+    add_subdirectory(benchmarks)
     target_compile_features(BenchmarkSuite PRIVATE cxx_std_20)
 endif ()
 
