@@ -21,8 +21,8 @@ namespace pmm::constants
      * @{
      */
 
-    inline constexpr uint64_t BYTE = 1;  ///< Size of a single byte.
-    inline constexpr uint64_t WORD = 2;  ///< Size of a Word (2 bytes).
+    inline constexpr uint64_t BYTE  = 1; ///< Size of a single byte.
+    inline constexpr uint64_t WORD  = 2; ///< Size of a Word (2 bytes).
     inline constexpr uint64_t DWORD = 4; ///< Size of a DoubleWord (4 bytes).
     inline constexpr uint64_t QWORD = 8; ///< Size of a QuadWord (8 bytes).
 
@@ -37,10 +37,7 @@ namespace pmm::constants
      * @param[in] byte The amount of bytes.
      * @return The equivalent size in bytes.
      */
-    constexpr uint64_t operator""_B(const unsigned long long byte) noexcept
-    {
-        return byte;
-    }
+    constexpr uint64_t operator""_B(const unsigned long long byte) noexcept { return byte; }
 
 
     /**
@@ -48,10 +45,7 @@ namespace pmm::constants
      * @param[in] byte The amount of Kilobytes.
      * @return The equivalent size in bytes.
      */
-    constexpr uint64_t operator""_KB(const unsigned long long byte) noexcept
-    {
-        return byte * KB;
-    }
+    constexpr uint64_t operator""_KB(const unsigned long long byte) noexcept { return byte * KB; }
 
 
     /**
@@ -59,10 +53,7 @@ namespace pmm::constants
      * @param[in] byte The amount of Megabytes.
      * @return The equivalent size in bytes.
      */
-    constexpr uint64_t operator""_MB(const unsigned long long byte) noexcept
-    {
-        return byte * MB;
-    }
+    constexpr uint64_t operator""_MB(const unsigned long long byte) noexcept { return byte * MB; }
 
 
     /**
@@ -70,10 +61,7 @@ namespace pmm::constants
      * @param[in] byte The amount of Gigabytes.
      * @return The equivalent size in bytes.
      */
-    constexpr uint64_t operator""_GB(const unsigned long long byte) noexcept
-    {
-        return byte * GB;
-    }
+    constexpr uint64_t operator""_GB(const unsigned long long byte) noexcept { return byte * GB; }
 
 
     /**
@@ -81,10 +69,7 @@ namespace pmm::constants
      * @param[in] byte The amount of Terabytes.
      * @return The equivalent size in bytes.
      */
-    constexpr uint64_t operator""_TB(const unsigned long long byte) noexcept
-    {
-        return byte * TB;
-    }
+    constexpr uint64_t operator""_TB(const unsigned long long byte) noexcept { return byte * TB; }
 
     /** @} */
 

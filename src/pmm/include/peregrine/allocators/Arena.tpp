@@ -86,7 +86,10 @@ namespace pmm
     Arena::~Arena() noexcept
     {
         // Only free the telemetry if it's owned by the arena
-        if (_ownedTelemetry) delete _telemetry;
+        if (_ownedTelemetry)
+        {
+            delete _telemetry;
+        }
         delete[] _buffer;
     }
 
@@ -95,13 +98,13 @@ namespace pmm
     {
         // TODO: Move to value init
         // Move the data members and null-out the moved data members.
-        _buffer = std::exchange(arena._buffer, nullptr);
-        _offset = std::exchange(arena._offset, 0);
-        _prevOffset = std::exchange(arena._prevOffset, 0);
-        _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
+        _buffer           = std::exchange(arena._buffer, nullptr);
+        _offset           = std::exchange(arena._offset, 0);
+        _prevOffset       = std::exchange(arena._prevOffset, 0);
+        _sizeInBytes      = std::exchange(arena._sizeInBytes, 0);
         _defaultAlignment = std::exchange(arena._defaultAlignment, 0);
-        _telemetry = std::exchange(arena._telemetry, nullptr);
-        _ownedTelemetry = std::exchange(arena._ownedTelemetry, false);
+        _telemetry        = std::exchange(arena._telemetry, nullptr);
+        _ownedTelemetry   = std::exchange(arena._ownedTelemetry, false);
     }
 
 
@@ -117,34 +120,25 @@ namespace pmm
         delete[] _buffer; // TODO: Update as we move to HAL
 
         // Move the data members and null-out the moved data members.
-        _buffer = std::exchange(arena._buffer, nullptr);
-        _offset = std::exchange(arena._offset, 0);
-        _prevOffset = std::exchange(arena._prevOffset, 0);
-        _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
+        _buffer           = std::exchange(arena._buffer, nullptr);
+        _offset           = std::exchange(arena._offset, 0);
+        _prevOffset       = std::exchange(arena._prevOffset, 0);
+        _sizeInBytes      = std::exchange(arena._sizeInBytes, 0);
         _defaultAlignment = std::exchange(arena._defaultAlignment, 0);
-        _telemetry = std::exchange(arena._telemetry, nullptr);
-        _ownedTelemetry = std::exchange(arena._ownedTelemetry, false);
+        _telemetry        = std::exchange(arena._telemetry, nullptr);
+        _ownedTelemetry   = std::exchange(arena._ownedTelemetry, false);
 
         return *this;
     }
 
 
-    constexpr std::size_t Arena::freeSize() const noexcept
-    {
-        return _sizeInBytes - _offset;
-    }
+    constexpr std::size_t Arena::freeSize() const noexcept { return _sizeInBytes - _offset; }
 
 
-    constexpr std::size_t Arena::usedSize() const noexcept
-    {
-        return _offset;
-    }
+    constexpr std::size_t Arena::usedSize() const noexcept { return _offset; }
 
 
-    constexpr std::size_t Arena::size() const noexcept
-    {
-        return _sizeInBytes;
-    }
+    constexpr std::size_t Arena::size() const noexcept { return _sizeInBytes; }
 
     /**
      * Align the "base address" of the arena's next allocation to @p alignment.
@@ -160,7 +154,7 @@ namespace pmm
 
         // Current memory address
         const auto absoluteAddress = absoluteBaseAddress + _offset;
-        const auto misalignment = absoluteAddress & (alignment - 1);
+        const auto misalignment    = absoluteAddress & (alignment - 1);
         // & (alignment - 1) skips the need for branching since
         // we are masking-off bits greater than or equal to alignment.
         // So, when we hit a misalignment of 0, and the result of subtraction go to alignment,
@@ -211,7 +205,7 @@ namespace pmm
         if (constexpr auto objectSize = sizeof(T); _sizeInBytes >= _offset + objectSize)
         {
             // Allocate memory in the arena.
-            void* raw = &_buffer[_offset];
+            void* raw   = &_buffer[_offset];
             _prevOffset = _offset;
             _offset += objectSize;
 
@@ -238,7 +232,7 @@ namespace pmm
         if (constexpr auto objectSize = sizeof(T); _sizeInBytes >= _offset + objectSize)
         {
             // Allocate memory in the arena.
-            void* raw = &_buffer[_offset];
+            void* raw   = &_buffer[_offset];
             _prevOffset = _offset;
             _offset += objectSize;
 
@@ -262,8 +256,10 @@ namespace pmm
         // Allocate the raw memory and wrap it in a span
         const std::size_t bytesToAllocate = sizeof(T) * count;
         if (T* rawPointer = static_cast<T*>(allocBytes(bytesToAllocate, alignof(T))))
+        {
             // No need to update the telemetry since allocBytes already does that
             return std::span(rawPointer, count);
+        }
 
         return std::span<T>();
     }
@@ -275,7 +271,9 @@ namespace pmm
 
         // Forward align by default alignment (if specified during construction)
         if (_defaultAlignment > 0)
+        {
             _alignForward(_defaultAlignment);
+        }
 
         _telemetry->resetCurrentUsage();
         _prevOffset = _offset;
@@ -288,17 +286,21 @@ namespace pmm
         // The allocation is new
         // No need to add telemetry since allocBytes does that for us
         if (oldMemory == nullptr || oldSize == 0)
+        {
             return allocBytes(newSize, alignment);
+        }
 
         // If the new size is smaller than the old size
         // No resizing required
         if (oldSize >= newSize)
+        {
             return oldMemory;
+        }
 
         // Check whether the old memory is the last allocation we made
-        const auto allocationAddress = reinterpret_cast<uintptr_t>(oldMemory);
+        const auto allocationAddress    = reinterpret_cast<uintptr_t>(oldMemory);
         const auto lastAllocatedAddress = reinterpret_cast<uintptr_t>(_buffer) + _prevOffset;
-        const auto offsetDiff = newSize - oldSize;
+        const auto offsetDiff           = newSize - oldSize;
 
         // If there is enough memory in the arena to "expand" last allocation
         // expand the offset to the difference between new size and old size
@@ -330,9 +332,6 @@ namespace pmm
     }
 
 
-    constexpr ArenaTelemetry Arena::getTelemetry() const noexcept
-    {
-        return *_telemetry;
-    }
+    constexpr ArenaTelemetry Arena::getTelemetry() const noexcept { return *_telemetry; }
 
 } // namespace pmm

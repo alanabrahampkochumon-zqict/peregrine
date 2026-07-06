@@ -28,7 +28,7 @@ namespace pmm
     constexpr TempArena::~TempArena() noexcept
     {
         arena->_prevOffset = prevOffset;
-        arena->_offset = currentOffset;
+        arena->_offset     = currentOffset;
     }
 
 

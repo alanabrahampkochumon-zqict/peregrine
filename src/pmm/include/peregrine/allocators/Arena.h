@@ -12,10 +12,9 @@
 
 #include "peregrine/telemetry/ArenaTelemetry.h"
 
-
 #include <cstddef>
-#include <memory>
 #include <cstdint>
+#include <memory>
 #include <span>
 
 
@@ -108,7 +107,7 @@ namespace pmm
         /**
          * @brief Transfer the current Arena's memory to a new object.
          *
-         * @param[in/out] arena The arena to move into the new object.
+         * @param[in,out] arena The arena to move into the new object.
          */
         Arena(Arena&& arena) noexcept;
 
@@ -118,7 +117,7 @@ namespace pmm
          *
          * @warning This will delete any buffers held by the LHS object.
          *
-         * @param[in/out] arena The arena to move into the object.
+         * @param[in,out] arena The arena to move into the object.
          *
          * @return The current arena instance.
          */

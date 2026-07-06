@@ -102,7 +102,8 @@ namespace pmm
          */
         [[nodiscard]] constexpr std::size_t getPeakUsage() const noexcept;
 
-        bool enabled {true};
+        bool enabled{ true };
+
     private:
         std::size_t _currentUsage;
         std::size_t _peakUsage;
@@ -174,10 +175,7 @@ namespace pmm
          *
          * @return 0.
          */
-        [[nodiscard]] constexpr std::size_t getArenaSize() const noexcept
-        {
-            return 0;
-        }
+        [[nodiscard]] constexpr std::size_t getArenaSize() const noexcept { return 0; }
 
         /**
          * @brief Get the current memory usage of the arena, the telemetry is attached to.
@@ -185,10 +183,7 @@ namespace pmm
          *
          * @return 0.
          */
-        [[nodiscard]] constexpr std::size_t getCurrentUsage() const noexcept
-        {
-            return 0;
-        }
+        [[nodiscard]] constexpr std::size_t getCurrentUsage() const noexcept { return 0; }
 
         /**
          * @brief Get the all-time minimum of memory used in the arena, that the telemetry is attached to.
@@ -196,10 +191,7 @@ namespace pmm
          *
          * @return 0.
          */
-        [[nodiscard]] constexpr std::size_t getMinUsage() const noexcept
-        {
-            return 0;
-        }
+        [[nodiscard]] constexpr std::size_t getMinUsage() const noexcept { return 0; }
 
         /**
          * @brief Get the all-time maximum of memory used in the arena, that the telemetry is attached to.
@@ -207,10 +199,7 @@ namespace pmm
          *
          * @return 0.
          */
-        [[nodiscard]] constexpr std::size_t getPeakUsage() const noexcept
-        {
-            return 0;
-        }
+        [[nodiscard]] constexpr std::size_t getPeakUsage() const noexcept { return 0; }
     };
 
 #endif

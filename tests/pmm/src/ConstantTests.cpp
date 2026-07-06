@@ -34,37 +34,22 @@ namespace
 
 
 /** @brief Verify that _B user-defined literal prefix returns calling value. */
-TEST(UserDefinedLiteralTest, BReturnsSameByteValue)
-{
-    EXPECT_EQ(316, 316_B);
-}
+TEST(UserDefinedLiteralTest, BReturnsSameByteValue) { EXPECT_EQ(316, 316_B); }
 
 
 /** @brief Verify that _KB user-defined literal prefix returns calling value times 1024. */
-TEST(UserDefinedLiteralTest, KBReturnsKilobyteValueInBytes)
-{
-    EXPECT_EQ(323584, 316_KB);
-}
+TEST(UserDefinedLiteralTest, KBReturnsKilobyteValueInBytes) { EXPECT_EQ(323584, 316_KB); }
 
 
 /** @brief Verify that _MB user-defined literal prefix returns calling value times 1048576. */
-TEST(UserDefinedLiteralTest, MBReturnsMegabyteValueInBytes)
-{
-    EXPECT_EQ(331350016, 316_MB);
-}
+TEST(UserDefinedLiteralTest, MBReturnsMegabyteValueInBytes) { EXPECT_EQ(331350016, 316_MB); }
 
 
 /** @brief Verify that _GB user-defined literal prefix returns calling value times 1073741824. */
-TEST(UserDefinedLiteralTest, GBReturnsGigabyteValueInBytes)
-{
-    EXPECT_EQ(339302416384, 316_GB);
-}
+TEST(UserDefinedLiteralTest, GBReturnsGigabyteValueInBytes) { EXPECT_EQ(339302416384, 316_GB); }
 
 
 /** @brief Verify that _TB user-defined literal prefix returns calling value times 1099511627776. */
-TEST(UserDefinedLiteralTest, TBReturnsGigabyteValueInBytes)
-{
-    EXPECT_EQ(347445674377216, 316_TB);
-}
+TEST(UserDefinedLiteralTest, TBReturnsGigabyteValueInBytes) { EXPECT_EQ(347445674377216, 316_TB); }
 
 /** @} */

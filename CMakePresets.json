@@ -14,6 +14,14 @@
                 "microsoft.com/VisualStudioSettings/CMake/1.0": {
                     "hostOS": ["Windows"]
                 }
+            },
+            "cacheVariables": {
+                "ENABLE_STRICT": "ON",
+                "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
+                "ENABLE_PMM_TEST": "ON",
+                "ENABLE_PMM_BENCHMARK": "ON",
+                "ENABLE_PMM_DEMO": "ON",
+                "ENABLE_PMM_DOCS": "ON"
             }
         },
         {

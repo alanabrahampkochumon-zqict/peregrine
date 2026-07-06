@@ -17,9 +17,6 @@ namespace pmm
     {}
 
 
-    constexpr std::size_t Stack::size() const noexcept
-    {
-        return _size;
-    }
+    constexpr std::size_t Stack::size() const noexcept { return _size; }
 
 } // namespace pmm

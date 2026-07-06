@@ -11,8 +11,8 @@
 
 #include "Utils.h"
 
-#include <peregrine/allocators/Arena.h>
 #include <gtest/gtest.h>
+#include <peregrine/allocators/Arena.h>
 #include <utility>
 
 
@@ -47,7 +47,7 @@ TEST(ArenaInitialization, InitializesArenaWithTheGivenBytes)
 TEST(ArenaInitialization, InitializesArenaWithTheGivenTelemetryInstance)
 {
 
-    constexpr std::size_t arenaSize = 512;
+    constexpr std::size_t arenaSize   = 512;
     constexpr std::size_t markerBytes = 213;
 
     pmm::ArenaTelemetry telemetry{ arenaSize };
@@ -66,9 +66,9 @@ TEST(ArenaInitialization, InitializesArenaWithTheGivenTelemetryInstance)
 TEST(ArenaInitialization, AlignedArena_InitializesArenaWithTheGivenTelemetryInstance)
 {
 
-    constexpr std::size_t arenaSize = 512;
+    constexpr std::size_t arenaSize   = 512;
     constexpr std::size_t markerBytes = 213;
-    constexpr std::size_t alignment = 4;
+    constexpr std::size_t alignment   = 4;
 
     pmm::ArenaTelemetry telemetry{ arenaSize };
     telemetry.updateAllocationUsage(markerBytes);
@@ -85,7 +85,7 @@ TEST(ArenaInitialization, AlignedArena_InitializesArenaWithTheGivenTelemetryInst
  */
 TEST(ArenaInitialization, DoesNotOwnAPassedInTelemetry)
 {
-    constexpr std::size_t arenaSize = 512;
+    constexpr std::size_t arenaSize   = 512;
     constexpr std::size_t markerBytes = 213;
 
     pmm::ArenaTelemetry telemetry{ arenaSize };
@@ -105,9 +105,9 @@ TEST(ArenaInitialization, DoesNotOwnAPassedInTelemetry)
  */
 TEST(ArenaInitialization, AlignedArena_DoesNotOwnAPassedInTelemetry)
 {
-    constexpr std::size_t arenaSize = 512;
+    constexpr std::size_t arenaSize   = 512;
     constexpr std::size_t markerBytes = 213;
-    constexpr std::size_t alignment = 4;
+    constexpr std::size_t alignment   = 4;
 
     pmm::ArenaTelemetry telemetry{ arenaSize };
     telemetry.updateAllocationUsage(markerBytes);
@@ -169,7 +169,7 @@ TEST(ArenaMoveConstructor, CopiesAttributesToNewObject)
  */
 TEST(ArenaAllocV, ReturnsAContinguousBlockOfMemory)
 {
-    constexpr auto size = 1024;
+    constexpr auto size       = 1024;
     constexpr auto blockCount = 10;
     pmm::Arena arena(size);
 
@@ -185,7 +185,7 @@ TEST(ArenaAllocV, ReturnsAContinguousBlockOfMemory)
  */
 TEST(ArenaAllocV, FullArenaReturnsEmptySpan)
 {
-    constexpr auto size = 1024;
+    constexpr auto size       = 1024;
     constexpr auto blockCount = 10;
     pmm::Arena arena(size);
     static_cast<void>(arena.allocBytes(size - 1));
@@ -201,8 +201,8 @@ TEST(ArenaAllocV, FullArenaReturnsEmptySpan)
  */
 TEST(ArenaAllocV, DataIsNotOverriden)
 {
-    constexpr auto size = 1024;
-    constexpr auto blockCount = 5;
+    constexpr auto size          = 1024;
+    constexpr auto blockCount    = 5;
     constexpr float vertexData[] = {
         1.0f,  2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  8.0f,  9.0f,  10.0f,
         11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f, 20.0f,
@@ -215,15 +215,19 @@ TEST(ArenaAllocV, DataIsNotOverriden)
     pmm::Arena arena(size);
 
     auto vertices = arena.allocV<Vec4>(blockCount);
-    auto edges = arena.allocV<Vec4>(blockCount);
+    auto edges    = arena.allocV<Vec4>(blockCount);
 
     // Write into the first allocated span
     for (std::size_t i = 0; i < blockCount; ++i)
+    {
         vertices[i] = Vec4{ vertexData[i * 4], vertexData[(i * 4) + 1], vertexData[i * 4 + 2], vertexData[i * 4 + 3] };
+    }
 
     // Write into the second allocated span
     for (std::size_t i = 0; i < blockCount; ++i)
+    {
         edges[i] = Vec4{ edgeData[i * 4], edgeData[(i * 4) + 1], edgeData[i * 4 + 2], edgeData[i * 4 + 3] };
+    }
 
 
     // Verify data integrity is maintained for both
@@ -258,9 +262,9 @@ TEST(ArenaAllocV, UpdatesTelemetry)
     static_cast<void>(arena.allocV<Vec4>(count2));
     static_cast<void>(arena.allocV<Vec4>(count3));
 
-    constexpr std::size_t expectedMinUsage = count1 * sizeof(Vec4);
+    constexpr std::size_t expectedMinUsage  = count1 * sizeof(Vec4);
     constexpr std::size_t expectedPeakUsage = count3 * sizeof(Vec4);
-    constexpr std::size_t expectedUsage = (count1 + count2 + count3) * sizeof(Vec4);
+    constexpr std::size_t expectedUsage     = (count1 + count2 + count3) * sizeof(Vec4);
 
     EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
     EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
@@ -303,7 +307,7 @@ namespace pmm
      */
     TEST(ArenaInitialization, AlignedArena_NoPassedInTelemetry_ArenaOwnsTelemetry)
     {
-        constexpr auto size = 512;
+        constexpr auto size     = 512;
         constexpr int alignment = 4;
         const Arena arena(size, alignment);
 
@@ -316,7 +320,7 @@ namespace pmm
      */
     TEST(ArenaInitialization, AlignedArena_PassedInTelemetry_ArenaDoesNotOwnTelemetry)
     {
-        constexpr auto size = 512;
+        constexpr auto size      = 512;
         constexpr auto alignment = 4;
         ArenaTelemetry telemetry{ size };
         const Arena arena(size, alignment, &telemetry);
@@ -329,12 +333,12 @@ namespace pmm
     /** @brief Verify that the initializer with default alignment creates an offset for alignment. */
     TEST_P(AlignedArenaInitialization, InternalState_AlignBaseOffset)
     {
-        constexpr auto size = 512;
+        constexpr auto size  = 512;
         const auto alignment = GetParam();
         Arena arena(size, alignment);
 
-        const auto baseAddress = reinterpret_cast<uintptr_t>(arena._buffer);
-        const auto absoluteOffset = baseAddress + arena._offset;
+        const auto baseAddress        = reinterpret_cast<uintptr_t>(arena._buffer);
+        const auto absoluteOffset     = baseAddress + arena._offset;
         const auto absolutePrevOffset = baseAddress + arena._prevOffset;
         // Since the alignment is a power of two, we can extract the lower bits
         // to find out if the memory address is aligned
@@ -373,11 +377,11 @@ namespace pmm
     {
         constexpr auto size = 512;
         Arena arena(size);
-        const auto initialPointer = arena._buffer;
-        const auto initialOffset = arena._offset;
-        const auto initialPrevOffset = arena._prevOffset;
-        const auto initialAlignment = arena._defaultAlignment;
-        const auto initialTelemetry = arena.getTelemetry();
+        const auto initialPointer            = arena._buffer;
+        const auto initialOffset             = arena._offset;
+        const auto initialPrevOffset         = arena._prevOffset;
+        const auto initialAlignment          = arena._defaultAlignment;
+        const auto initialTelemetry          = arena.getTelemetry();
         const auto initialTelemetryOwnership = arena._ownedTelemetry;
 
         const Arena arena2 = std::move(arena);
@@ -427,12 +431,12 @@ namespace pmm
      */
     TEST(ArenaMoveConstructor, AlignedArena_MovesBufferIntoNewObject)
     {
-        constexpr auto size = 512;
+        constexpr auto size      = 512;
         constexpr auto alignment = 128;
         Arena arena(size, alignment);
-        const auto initialPointer = arena._buffer;
-        const auto initialOffset = arena._offset;
-        const auto initialPrevOffset = arena._prevOffset;
+        const auto initialPointer            = arena._buffer;
+        const auto initialOffset             = arena._offset;
+        const auto initialPrevOffset         = arena._prevOffset;
         const auto initialTelemetryOwnership = arena._ownedTelemetry;
 
 
@@ -451,7 +455,7 @@ namespace pmm
      */
     TEST(ArenaMoveConstructor, AlignedArena_MovesTelemetry)
     {
-        constexpr auto size = 512;
+        constexpr auto size      = 512;
         constexpr auto alignment = 128;
         ArenaTelemetry telemetry{ size };
         telemetry.updateAllocationUsage(512);
@@ -481,7 +485,7 @@ namespace pmm
 TEST(ArenaMoveAssignment, CopiesAttributesToNewObject)
 {
     constexpr auto sampleAllocation = 50;
-    constexpr auto size = 512;
+    constexpr auto size             = 512;
     pmm::Arena arena(size);
     static_cast<void>(arena.allocBytes(sampleAllocation));
     pmm::Arena arena2(256);
@@ -550,10 +554,10 @@ namespace pmm
     {
         constexpr auto size = 512;
         Arena arena(size);
-        const auto initialAddress = reinterpret_cast<uintptr_t>(arena._buffer);
-        const auto initialOffset = arena._offset;
+        const auto initialAddress    = reinterpret_cast<uintptr_t>(arena._buffer);
+        const auto initialOffset     = arena._offset;
         const auto initialPrevOffset = arena._prevOffset;
-        const auto initialAlignment = arena._defaultAlignment;
+        const auto initialAlignment  = arena._defaultAlignment;
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wself-move"
@@ -628,7 +632,7 @@ namespace pmm
      */
     TEST(ArenaAllocBytes, ReturnsProvidedByteAlignedAddress)
     {
-        constexpr auto size = 512;
+        constexpr auto size          = 512;
         constexpr auto byteAlignment = 32;
         Arena arena(size);
 
@@ -692,11 +696,15 @@ namespace pmm
         // Given two contiguous block of memory allocated back to back
         const auto firstAlloc = static_cast<int*>(arena.allocBytes(bufferLength * sizeof(int)));
         for (std::size_t i = 0; i < bufferLength; ++i)
+        {
             firstAlloc[i] = static_cast<int>(i + 5);
+        }
 
         const auto secondAlloc = static_cast<int*>(arena.allocBytes(bufferLength * sizeof(int)));
         for (std::size_t i = 0; i < bufferLength; ++i)
+        {
             secondAlloc[i] = static_cast<int>(i + 7);
+        }
 
         // When read back there is no corruption
         for (std::size_t i = 0; i < bufferLength; ++i)
@@ -719,8 +727,8 @@ namespace pmm
         static_cast<void>(arena.allocBytes(2, 2));
 
         // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
-        constexpr auto alignment = 128;
-        constexpr auto bufferSize = 64;
+        constexpr auto alignment           = 128;
+        constexpr auto bufferSize          = 64;
         [[maybe_unused]] const auto buffer = arena.allocBytes(bufferSize, alignment);
 
         EXPECT_EQ(bufferSize, arena._offset - arena._prevOffset);
@@ -733,7 +741,7 @@ namespace pmm
      */
     TEST(ArenaAllocBytes, UpdatesTelemetry)
     {
-        constexpr auto size = 512;
+        constexpr auto size         = 512;
         constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
         Arena arena(size);
 
@@ -742,9 +750,9 @@ namespace pmm
         static_cast<void>(arena.allocBytes(byte2));
         static_cast<void>(arena.allocBytes(byte3));
 
-        constexpr std::size_t expectedMinUsage = byte1;
+        constexpr std::size_t expectedMinUsage  = byte1;
         constexpr std::size_t expectedPeakUsage = byte3;
-        constexpr std::size_t expectedUsage = byte1 + byte2 + byte3;
+        constexpr std::size_t expectedUsage     = byte1 + byte2 + byte3;
 
         EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
         EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
@@ -796,7 +804,7 @@ namespace pmm
         static_cast<void>(arena.allocBytes(2, 2));
 
         constexpr auto expectedAlignment = alignof(Vec4);
-        [[maybe_unused]] const auto vec = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+        [[maybe_unused]] const auto vec  = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
         // Arena is aligned to alignment of vec4 which is 16 bytes.
         // Checking previous offset is required since current offset is will not be aligned to the boundary
@@ -837,9 +845,9 @@ namespace pmm
         static_cast<void>(arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
         static_cast<void>(arena.alloc<int>(1));
 
-        constexpr std::size_t expectedMinUsage = sizeof(int);
+        constexpr std::size_t expectedMinUsage  = sizeof(int);
         constexpr std::size_t expectedPeakUsage = sizeof(Vec4);
-        constexpr std::size_t expectedUsage = sizeof(Vec4) * 3 + sizeof(int);
+        constexpr std::size_t expectedUsage     = sizeof(Vec4) * 3 + sizeof(int);
 
         EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
         EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
@@ -892,7 +900,7 @@ namespace pmm
 
         // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
         constexpr auto expectedAlignment = 128;
-        [[maybe_unused]] const auto vec = arena.allocAs<Vec4>(expectedAlignment, 1.0f, 2.0f, 3.0f, 4.0f);
+        [[maybe_unused]] const auto vec  = arena.allocAs<Vec4>(expectedAlignment, 1.0f, 2.0f, 3.0f, 4.0f);
 
         // Arena is aligned to alignment of 128 bytes.
         // Checking previous offset is required since current offset is will not be aligned to the boundary
@@ -914,7 +922,7 @@ namespace pmm
 
         // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
         constexpr auto expectedAlignment = 128;
-        [[maybe_unused]] const auto vec = arena.allocAs<Vec4>(expectedAlignment, 1.0f, 2.0f, 3.0f, 4.0f);
+        [[maybe_unused]] const auto vec  = arena.allocAs<Vec4>(expectedAlignment, 1.0f, 2.0f, 3.0f, 4.0f);
 
         EXPECT_EQ(sizeof(Vec4), arena._offset - arena._prevOffset);
     }
@@ -933,9 +941,9 @@ namespace pmm
         static_cast<void>(arena.allocAs<Vec4>(4, 1.0f, 2.0f, 3.0f, 4.0f));
         static_cast<void>(arena.allocAs<int>(4, 1));
 
-        constexpr std::size_t expectedMinUsage = sizeof(int);
+        constexpr std::size_t expectedMinUsage  = sizeof(int);
         constexpr std::size_t expectedPeakUsage = sizeof(Vec4);
-        constexpr std::size_t expectedUsage = sizeof(Vec4) * 3 + sizeof(int);
+        constexpr std::size_t expectedUsage     = sizeof(Vec4) * 3 + sizeof(int);
 
         EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
         EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
@@ -974,7 +982,7 @@ namespace pmm
     /** @brief Verify that freeing an aligned arena resets the offsets to an aligned address. */
     TEST(ArenaFreeAll, AlignedArena_ResetsOffsetToAlignedAddress)
     {
-        constexpr auto size = 512;
+        constexpr auto size      = 512;
         constexpr auto alignment = 128;
         Arena arena(size, alignment);
 
@@ -990,7 +998,7 @@ namespace pmm
 
         // Offsets are reset to zero
         // Modulo arithmetic.
-        const auto offsetBuffer = reinterpret_cast<uintptr_t>(arena._buffer) + arena._offset;
+        const auto offsetBuffer     = reinterpret_cast<uintptr_t>(arena._buffer) + arena._offset;
         const auto prevOffsetBuffer = reinterpret_cast<uintptr_t>(arena._buffer) + arena._prevOffset;
         EXPECT_EQ(0, offsetBuffer & (alignment - 1));
         EXPECT_EQ(0, prevOffsetBuffer & (alignment - 1));
@@ -1003,7 +1011,7 @@ namespace pmm
      */
     TEST(ArenaFreeAll, OnlyResetsCurrentTelemetryUsage)
     {
-        constexpr auto size = 512;
+        constexpr auto size         = 512;
         constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
         Arena arena(size);
 
@@ -1012,7 +1020,7 @@ namespace pmm
         static_cast<void>(arena.allocBytes(byte2));
         static_cast<void>(arena.allocBytes(byte3));
 
-        constexpr std::size_t expectedMinUsage = byte1;
+        constexpr std::size_t expectedMinUsage  = byte1;
         constexpr std::size_t expectedPeakUsage = byte3;
 
         arena.freeAll();
@@ -1034,12 +1042,12 @@ namespace pmm
     {
         constexpr auto arenaSize = 1024;
         Arena arena(arenaSize);
-        constexpr auto byteSize = 128;
+        constexpr auto byteSize    = 128;
         constexpr auto newByteSize = byteSize * 2;
 
         [[maybe_unused]] const auto firstByteChunk = arena.allocBytes(byteSize);
-        auto secondByteChunk = arena.allocBytes(byteSize);
-        const auto offsetBeforeResize = arena._offset;
+        auto secondByteChunk                       = arena.allocBytes(byteSize);
+        const auto offsetBeforeResize              = arena._offset;
 
         [[maybe_unused]] const auto data = arena.resize(secondByteChunk, byteSize, newByteSize, alignof(void*));
 
@@ -1053,13 +1061,13 @@ namespace pmm
     {
         constexpr auto arenaSize = 1024;
         Arena arena(arenaSize);
-        constexpr auto byteSize = 128;
+        constexpr auto byteSize    = 128;
         constexpr auto newByteSize = byteSize * 2;
 
         [[maybe_unused]] const auto firstByteChunk = arena.allocBytes(byteSize);
-        const auto secondByteChunk = arena.allocBytes(byteSize);
-        const auto offsetBeforeResize = arena._offset;
-        const auto expectedOffset = offsetBeforeResize + (newByteSize - byteSize);
+        const auto secondByteChunk                 = arena.allocBytes(byteSize);
+        const auto offsetBeforeResize              = arena._offset;
+        const auto expectedOffset                  = offsetBeforeResize + (newByteSize - byteSize);
 
         [[maybe_unused]] const auto data = arena.resize(secondByteChunk, byteSize, newByteSize, alignof(void*));
 
@@ -1091,8 +1099,8 @@ namespace pmm
 
         const auto allocatedBytes = arena.allocBytes(byteSize);
 
-        const auto oldUsage = arena.getTelemetry().getCurrentUsage();
-        const auto oldMinUsage = arena.getTelemetry().getMinUsage();
+        const auto oldUsage     = arena.getTelemetry().getCurrentUsage();
+        const auto oldMinUsage  = arena.getTelemetry().getMinUsage();
         const auto oldPeakUsage = arena.getTelemetry().getPeakUsage();
 
 
@@ -1109,13 +1117,13 @@ namespace pmm
     {
         constexpr auto arenaSize = 1024;
         Arena arena(arenaSize);
-        constexpr auto byteSize = 128;
+        constexpr auto byteSize    = 128;
         constexpr auto newByteSize = byteSize - 10;
 
         const auto allocatedBytes = arena.allocBytes(byteSize);
 
-        const auto oldUsage = arena.getTelemetry().getCurrentUsage();
-        const auto oldMinUsage = arena.getTelemetry().getMinUsage();
+        const auto oldUsage     = arena.getTelemetry().getCurrentUsage();
+        const auto oldMinUsage  = arena.getTelemetry().getMinUsage();
         const auto oldPeakUsage = arena.getTelemetry().getPeakUsage();
 
 
@@ -1131,15 +1139,15 @@ namespace pmm
     {
         constexpr auto arenaSize = 1024;
         Arena arena(arenaSize);
-        constexpr auto byteSize = 128;
+        constexpr auto byteSize       = 128;
         constexpr auto byteDifference = 100;
-        constexpr auto newByteSize = byteSize + byteDifference;
+        constexpr auto newByteSize    = byteSize + byteDifference;
 
         [[maybe_unused]] const auto unusedBytes = arena.allocBytes(50);
-        const auto allocatedBytes = arena.allocBytes(byteSize);
+        const auto allocatedBytes               = arena.allocBytes(byteSize);
 
-        const auto oldUsage = arena.getTelemetry().getCurrentUsage();
-        const auto oldMinUsage = arena.getTelemetry().getMinUsage();
+        const auto oldUsage                      = arena.getTelemetry().getCurrentUsage();
+        const auto oldMinUsage                   = arena.getTelemetry().getMinUsage();
         [[maybe_unused]] const auto oldPeakUsage = arena.getTelemetry().getPeakUsage();
 
 
@@ -1156,14 +1164,14 @@ namespace pmm
     {
         constexpr auto arenaSize = 1024;
         Arena arena(arenaSize);
-        constexpr auto byteSize = 128;
+        constexpr auto byteSize       = 128;
         constexpr auto byteDifference = 100;
-        constexpr auto newByteSize = byteSize + byteDifference;
+        constexpr auto newByteSize    = byteSize + byteDifference;
 
-        const auto allocatedBytes = arena.allocBytes(byteSize);
+        const auto allocatedBytes               = arena.allocBytes(byteSize);
         [[maybe_unused]] const auto unusedBytes = arena.allocBytes(50);
 
-        const auto oldUsage = arena.getTelemetry().getCurrentUsage();
+        const auto oldUsage    = arena.getTelemetry().getCurrentUsage();
         const auto oldMinUsage = arena.getTelemetry().getMinUsage();
 
 
@@ -1190,7 +1198,7 @@ TEST(ArenaResize, NullptrReturnsNewLocation)
     pmm::Arena arena(arenaSize);
 
     constexpr auto byteSize = 128;
-    const auto data = arena.resize(nullptr, 0, byteSize, alignof(void*));
+    const auto data         = arena.resize(nullptr, 0, byteSize, alignof(void*));
 
     EXPECT_NE(nullptr, data);
 }
@@ -1203,7 +1211,7 @@ TEST(ArenaResize, NullptrResizeBeyondArenaSizeReturnsNullptr)
     pmm::Arena arena(arenaSize);
 
     constexpr auto byteSize = arenaSize + 1;
-    const auto data = arena.resize(nullptr, 0, byteSize, alignof(void*));
+    const auto data         = arena.resize(nullptr, 0, byteSize, alignof(void*));
 
     EXPECT_EQ(nullptr, data);
 }
@@ -1216,7 +1224,7 @@ TEST(ArenaResize, ZeroSizeReturnsNewLocation)
     pmm::Arena arena(arenaSize);
 
     constexpr auto byteSize = 128;
-    const auto data = arena.resize(nullptr, 0, byteSize, alignof(void*));
+    const auto data         = arena.resize(nullptr, 0, byteSize, alignof(void*));
 
     EXPECT_NE(nullptr, data);
 }
@@ -1228,14 +1236,18 @@ TEST(ArenaResize, NullptrAllocatesMemoryWithReadWrite)
     constexpr auto arenaSize = 1024;
     pmm::Arena arena(arenaSize);
 
-    constexpr auto byteSize = 128;
+    constexpr auto byteSize  = 128;
     constexpr auto arraySize = 128 / sizeof(int);
-    const auto data = static_cast<int*>(arena.resize(nullptr, 0, byteSize, alignof(int)));
+    const auto data          = static_cast<int*>(arena.resize(nullptr, 0, byteSize, alignof(int)));
 
     for (std::size_t i = 0; i < arraySize; ++i)
+    {
         data[i] = static_cast<int>(i + 100);
+    }
     for (std::size_t i = 0; i < arraySize; ++i)
+    {
         EXPECT_EQ(i + 100, data[i]);
+    }
 }
 
 
@@ -1261,7 +1273,7 @@ TEST(ArenaResize, LatestAllocationOnlyResizeByOffsetDifference)
 {
     constexpr auto arenaSize = 1024;
     pmm::Arena arena(arenaSize);
-    constexpr auto byteSize = 128;
+    constexpr auto byteSize    = 128;
     constexpr auto newByteSize = byteSize * 2;
 
     // Allocate the chunk
@@ -1273,14 +1285,18 @@ TEST(ArenaResize, LatestAllocationOnlyResizeByOffsetDifference)
 
     // Write some data
     for (std::size_t i = 0; i < firstArraySize; ++i)
+    {
         data[i] = static_cast<int>(i + 100);
+    }
 
     // Allocate some more memory
     [[maybe_unused]] auto vec = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
     // Verify data is not overwritten
     for (std::size_t i = 0; i < firstArraySize; ++i)
+    {
         EXPECT_EQ(i + 100, data[i]);
+    }
 }
 
 
@@ -1289,11 +1305,11 @@ TEST(ArenaResize, AllocationBeforePriorAllocationReturnNewBuffer)
 {
     constexpr auto arenaSize = 1024;
     pmm::Arena arena(arenaSize);
-    constexpr auto byteSize = 128;
+    constexpr auto byteSize    = 128;
     constexpr auto newByteSize = byteSize * 2;
 
 
-    const auto firstByteChunk = arena.allocBytes(byteSize);
+    const auto firstByteChunk                   = arena.allocBytes(byteSize);
     [[maybe_unused]] const auto secondByteChunk = arena.allocBytes(byteSize);
 
     [[maybe_unused]] const auto data = arena.resize(firstByteChunk, byteSize, newByteSize, alignof(void*));
@@ -1307,16 +1323,18 @@ TEST(ArenaResize, AllocationBeforePriorAllocationCopiesOldData)
 {
     constexpr auto arenaSize = 1024;
     pmm::Arena arena(arenaSize);
-    constexpr auto byteSize = 128;
+    constexpr auto byteSize    = 128;
     constexpr auto newByteSize = byteSize * 2;
 
     // Allocate memory
     const auto firstByteChunk = static_cast<int*>(arena.allocBytes(byteSize));
-    constexpr auto arraySize = byteSize / sizeof(int);
+    constexpr auto arraySize  = byteSize / sizeof(int);
 
     // Write some data to the allocated memory
     for (std::size_t i = 0; i < arraySize; ++i)
+    {
         firstByteChunk[i] = static_cast<int>(i + 100);
+    }
 
     // Allocate some more memory
     [[maybe_unused]] const auto secondByteChunk = arena.allocBytes(byteSize);
@@ -1326,7 +1344,9 @@ TEST(ArenaResize, AllocationBeforePriorAllocationCopiesOldData)
 
     // Verify data is copied
     for (std::size_t i = 0; i < arraySize; ++i)
+    {
         EXPECT_EQ(i + 100, data[i]);
+    }
 }
 
 

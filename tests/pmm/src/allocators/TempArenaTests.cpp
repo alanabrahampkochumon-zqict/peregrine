@@ -10,21 +10,18 @@
 
 #include "Utils.h"
 
+#include <gtest/gtest.h>
 #include <peregrine/allocators/Arena.h>
 #include <peregrine/allocators/TempArena.h>
-#include <gtest/gtest.h>
 
 
 class TempArenaTest: public testing::Test
 {
 protected:
     std::size_t _arenaSize = 2048;
-    pmm::Arena* _arena = nullptr;
+    pmm::Arena* _arena     = nullptr;
 
-    void SetUp() override
-    {
-        _arena = new pmm::Arena(_arenaSize);
-    }
+    void SetUp() override { _arena = new pmm::Arena(_arenaSize); }
 };
 
 
@@ -102,7 +99,7 @@ TEST_F(TempArenaTest, RewindsStateFreeingMemoryHeldByTempArena)
  */
 TEST_F(TempArenaTest, AllocBytes_ReturnsNonNullValue)
 {
-    auto tArena1 = pmm::TempArena(this->_arena);
+    auto tArena1      = pmm::TempArena(this->_arena);
     const auto memory = tArena1.allocBytes(512);
 
     EXPECT_NE(nullptr, memory);
@@ -114,7 +111,7 @@ TEST_F(TempArenaTest, AllocBytes_ReturnsNonNullValue)
  */
 TEST_F(TempArenaTest, Alloc_ReturnsNonNullValue)
 {
-    auto tArena1 = pmm::TempArena(this->_arena);
+    auto tArena1      = pmm::TempArena(this->_arena);
     const auto memory = tArena1.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
     EXPECT_NE(nullptr, memory);
@@ -130,7 +127,7 @@ TEST_F(TempArenaTest, Alloc_ReturnsNonNullValue)
  */
 TEST_F(TempArenaTest, AllocAs_ReturnsNonNullValue)
 {
-    auto tArena1 = pmm::TempArena(this->_arena);
+    auto tArena1      = pmm::TempArena(this->_arena);
     const auto memory = tArena1.allocAs<Vec4>(32, 1.0f, 2.0f, 3.0f, 4.0f);
 
     EXPECT_NE(nullptr, memory);
@@ -145,7 +142,7 @@ TEST_F(TempArenaTest, AllocAs_ReturnsNonNullValue)
  */
 TEST_F(TempArenaTest, AllocV_ReturnsNonNullValue)
 {
-    auto tArena1 = pmm::TempArena(this->_arena);
+    auto tArena1      = pmm::TempArena(this->_arena);
     const auto memory = tArena1.allocV<Vec4>(10);
 
     EXPECT_EQ(10, memory.size());
