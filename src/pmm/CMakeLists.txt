@@ -1,24 +1,29 @@
+# Directories
+set(IncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/include/")
+set(AllocatorDir "${IncludeDir}peregrine/allocators/")
+set(TelemetryDir "${IncludeDir}peregrine/telemetry/")
+set(UtilDir "${IncludeDir}peregrine/utils/")
+
+
 # Files
-set(AllocatorDir "include/peregrine/allocators/")
 set(AllocatorHeaderFiles "Arena.h;TempArena.h;Stack.h")
-set(AllocatorTemplateFiles "Arena.tpp;TempArena.tpp;Stack.tpp")
 list(TRANSFORM AllocatorHeaderFiles PREPEND ${AllocatorDir})
+
+set(AllocatorTemplateFiles "Arena.tpp;TempArena.tpp;Stack.tpp")
 list(TRANSFORM AllocatorTemplateFiles PREPEND ${AllocatorDir})
 
 # Telemetry Files
-set(TelemetryDir "include/peregrine/telemetry/")
 set(TelemetryHeaderFiles "ArenaTelemetry.h;")
-set(TelemetryTemplateFiles "ArenaTelemetry.tpp;")
 list(TRANSFORM TelemetryHeaderFiles PREPEND ${TelemetryDir})
+
+set(TelemetryTemplateFiles "ArenaTelemetry.tpp;")
 list(TRANSFORM TelemetryTemplateFiles PREPEND ${TelemetryDir})
 
-set(UtilDir "include/peregrine/utils/")
 set(UtilFiles "Constants.h;Utilities.h")
 list(TRANSFORM UtilFiles PREPEND ${UtilDir})
 
-set(IncludeDir "include/")
-set(IncludeFiles "DoxygenGroups.h")
-list(TRANSFORM IncludeFiles PREPEND ${IncludeDir})
+#set(IncludeFiles "DoxygenGroups.h")
+#list(TRANSFORM IncludeFiles PREPEND ${IncludeDir})
 
 add_library(MemoryManager INTERFACE ${AllocatorHeaderFiles} ${AllocatorTemplateFiles} ${UtilFiles})
 
@@ -29,7 +34,7 @@ target_sources(
         MemoryManager
         INTERFACE
         FILE_SET HEADERS
-        BASE_DIRS include/
+        BASE_DIRS include
         FILES
         ${AllocatorHeaderFiles}
         ${AllocatorTemplateFiles}
@@ -48,13 +53,13 @@ target_include_directories(
 
 target_link_libraries(MemoryManager INTERFACE StrictWarnings)
 
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/include" PREFIX "Header Files" FILES
+source_group(TREE ${IncludeDir} PREFIX "Header Files" FILES
         ${AllocatorHeaderFiles}
         ${TelemetryHeaderFiles}
         ${UtilFiles}
 )
 
-source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}/include" PREFIX "Template Files" FILES
+source_group(TREE ${IncludeDir} PREFIX "Template Files" FILES
         ${AllocatorTemplateFiles}
         ${TelemetryTemplateFiles}
 )

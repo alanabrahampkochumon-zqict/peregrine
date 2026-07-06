@@ -11,11 +11,9 @@
 
 #define ENABLE_PMM_TELEMETRY // Must be defined about all includes to enabled telemetry
 
-#include <execution>
 #include <iostream>
 #include <peregrine/allocators/Arena.h>
 #include <peregrine/utils/Constants.h>
-#include <stdexcept>
 
 
 

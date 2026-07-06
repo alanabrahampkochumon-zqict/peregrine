@@ -102,10 +102,7 @@ endif()
 
 include(dependencies.cmake)
 
-add_subdirectory(memory-manager)
-add_subdirectory(test-suite)
-add_subdirectory(benchmark-suite)
-add_subdirectory(demo)
+add_subdirectory(benchmark)
+add_subdirectory(src)
+add_subdirectory(tests)
 
-
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT TestSuite)
