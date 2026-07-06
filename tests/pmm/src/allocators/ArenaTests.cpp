@@ -559,13 +559,21 @@ namespace pmm
         const auto initialPrevOffset = arena._prevOffset;
         const auto initialAlignment  = arena._defaultAlignment;
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wself-move"
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wself-move"
+#ifdef __clang__
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wself-move"
+#endif
+#ifdef __GNUC__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wself-move"
+#endif
         arena = std::move(arena);
-#pragma GCC diagnostic pop
-#pragma clang diagnostic pop
+#ifdef __GNUC__
+    #pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
 
         EXPECT_EQ(initialAddress, reinterpret_cast<uintptr_t>(arena._buffer));
         EXPECT_EQ(initialOffset, arena._offset);
