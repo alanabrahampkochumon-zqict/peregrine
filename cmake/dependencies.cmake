@@ -6,7 +6,6 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/google/googletest.git
     GIT_TAG 52eb8108c5bdec04579160ae17225d66034bd723 # release-1.17.0
     SYSTEM
-#    SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/vendors/googletest"/
 )
 
 FetchContent_Declare(
@@ -14,10 +13,9 @@ FetchContent_Declare(
     GIT_REPOSITORY https://github.com/google/benchmark.git
     GIT_TAG v1.9.5
     SYSTEM
-#    SOURCE_DIR "${CMAKE_CURRENT_LIST_DIR}/vendors/googlebenchmark"
 )
 
-set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE) # Disbles google benchmark from creating its own test suite
+set(BENCHMARK_ENABLE_TESTING OFF CACHE BOOL "" FORCE) # Disables google benchmark from creating its own test suite
 
 FetchContent_MakeAvailable(googletest)
 FetchContent_MakeAvailable(googlebenchmark)

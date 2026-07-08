@@ -1,21 +1,18 @@
 add_executable(TestSuite)
 
-# Directories
-set(TestDir "${CMAKE_CURRENT_SOURCE_DIR}/src/")
-set(IncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/include/")
-set(AllocatorDir "${TestDir}allocators/")
-set(TelemetryDir "${TestDir}telemetry/")
+set(ROOT_TEST_DIR ${CMAKE_CURRENT_SOURCE_DIR})
 
+# Directories
+set(RootDir "${CMAKE_CURRENT_SOURCE_DIR}/src/")
+set(IncludeDir "${CMAKE_CURRENT_SOURCE_DIR}/include/")
+
+# Subdirectories
+add_subdirectory(${RootDir}/allocators)
+add_subdirectory(${RootDir}/telemetry)
 
 # Files
 set(CommonFiles "ConstantTests.cpp")
-list(TRANSFORM CommonFiles PREPEND ${TestDir})
-
-set(AllocatorFiles "ArenaTests.cpp;TempArenaTests.cpp;StackTests.cpp")
-list(TRANSFORM AllocatorFiles PREPEND ${AllocatorDir})
-
-set(TelemetryFiles "ArenaTelemetryTests.cpp;")
-list(TRANSFORM TelemetryFiles PREPEND ${TelemetryDir})
+list(TRANSFORM CommonFiles PREPEND ${RootDir})
 
 set(IncludeFiles "Utils.h;DoxygenGroups.h")
 list(TRANSFORM IncludeFiles PREPEND ${IncludeDir})
@@ -24,7 +21,7 @@ list(TRANSFORM IncludeFiles PREPEND ${IncludeDir})
 target_sources(
         TestSuite
         PRIVATE
-        ${CommonFiles} ${AllocatorFiles} ${TelemetryFiles}
+        ${CommonFiles}
 
         PRIVATE
         FILE_SET HEADERS
@@ -42,14 +39,17 @@ target_link_libraries(
         GTest::gtest_main
         StrictWarnings
         MemoryManager
+
+        # Subdirectory Objects
+        AllocatorTests
+        TelemetryTests
 )
 
 # Preprocessor Macros
 # ENABLE_PMM_TELEMETRY -> Enable telemetry testing
 target_compile_definitions(TestSuite PRIVATE ENABLE_PMM_TELEMETRY)
-# Enables GTest's Friend tests
-# Unless the consuming application has GTest imported, DON'T enable this!!
-target_compile_definitions(TestSuite PRIVATE ENABLE_PMM_TESTS)
+target_compile_definitions(AllocatorTests PRIVATE ENABLE_PMM_TELEMETRY)
+target_compile_definitions(TelemetryTests PRIVATE ENABLE_PMM_TELEMETRY)
 
 include(GoogleTest)
 gtest_discover_tests(TestSuite)
