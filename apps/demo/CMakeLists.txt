@@ -8,6 +8,6 @@ target_sources(
 
 target_link_libraries(
     Demo PRIVATE
-    MemoryManager
+    Peregrine
     StrictWarnings
 )

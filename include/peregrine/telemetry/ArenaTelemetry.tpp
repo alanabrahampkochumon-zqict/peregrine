@@ -13,7 +13,6 @@
 #include <algorithm>
 #include <limits>
 
-
 namespace pmm
 {
 

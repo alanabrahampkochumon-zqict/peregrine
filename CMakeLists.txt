@@ -12,8 +12,9 @@ set(DevToolsDir "Dev Tools")
 
 
 # Flags for keeping the library lightweight when a consumer imports it
-option(ENABLE_PMM_BENCHMARK "Enables PMM Benchmark Suite")
-option(ENABLE_PMM_DOCS "Enables PMM Documentation Generation")
+option(ENABLE_PMM_BENCHMARK "Enables Peregrine Benchmark Suite")
+option(ENABLE_PMM_DEMO "Enables Peregrine Demo Application")
+option(ENABLE_PMM_DOCS "Enables Peregrine Documentation Generation")
 
 
 # Clang Formatter
@@ -147,12 +148,18 @@ endif ()
 
 include(cmake/dependencies.cmake)
 
+
 add_subdirectory(include)
 add_subdirectory(tests)
 
+if (ENABLE_PMM_DEMO)
+    message(STATUS "Demo application is enabled")
+    add_subdirectory(apps/demo)
+    target_compile_features(Demo PRIVATE cxx_std_20)
+endif ()
 
 if (ENABLE_PMM_BENCHMARK)
-    message("Benchmarks are enabled")
+    message(STATUS "Benchmarks are enabled")
     add_subdirectory(benchmarks)
     target_compile_features(BenchmarkSuite PRIVATE cxx_std_20)
 endif ()
