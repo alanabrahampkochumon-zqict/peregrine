@@ -16,12 +16,12 @@
                 }
             },
             "cacheVariables": {
-                "ENABLE_STRICT": "ON",
                 "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
-                "ENABLE_PMM_TEST": "ON",
-                "ENABLE_PMM_BENCHMARK": "ON",
-                "ENABLE_PMM_DEMO": "ON",
-                "ENABLE_PMM_DOCS": "ON"
+                "PMM_TESTS": "ON",
+                "PMM_BENCHMARK": "ON",
+                "PMM_DEMO": "ON",
+                "PMM_DOCS": "ON",
+                "PMM_STRICT_MODE": "ON"
             }
         },
         {

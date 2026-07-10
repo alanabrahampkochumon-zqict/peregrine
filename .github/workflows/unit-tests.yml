@@ -73,11 +73,11 @@ jobs:
           -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
           -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
           -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-          -D ENABLE_STRICT=ON
-          -D ENABLE_PMM_TEST=ON
-          -D ENABLE_PMM_BENCHMARK=ON
-          -D ENABLE_PMM_DEMO=ON
-          -D ENABLE_PMM_DOCS=ON
+          -D PMM_STRICT_MODE=ON
+          -D PMM_DEMO=ON
+          -D PMM_DOCS=ON
+          -D PMM_BENCHMARK=ON
+          -D PMM_TESTS=ON
           -S ${{ github.workspace }}
 
       - name: Build
