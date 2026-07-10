@@ -2,7 +2,9 @@
 
 # Peregrine Memory Manager
 
-High Performance Memory allocation toolkit with modern C++ implementation of common memory allocation strategies used in games.
+High Performance Memory allocation toolkit with modern C++ implementation of common memory allocation strategies used in
+games.
+
 * Arena Allocator
 * Stack Allocator (WIP)
 * Pool Allocator (WIP)
@@ -15,13 +17,27 @@ Ensure the following tools are installed and available in your system PATH:
 
 - <a href="https://cmake.org/download/" target="_blank">CMake</a> (3.25+): Build system generator.
 
-- <a href="https://git-scm.com/install/windows" target="_blank">Git</a>: Required for FetchContent dependency management.
+- <a href="https://git-scm.com/install/windows" target="_blank">Git</a>: Required for FetchContent dependency
+  management.
 
-- <a href="https://git-scm.com/install/windows" target="_blank">Doxygen(Doxywizard)</a> (Optional): Required to generate HTML/PDF documentation.
+- <a href="https://git-scm.com/install/windows" target="_blank">Doxygen(Doxywizard)</a> (Optional): Required to generate
+  HTML/PDF documentation.
 
-- <a href="https://releases.llvm.org/download.html" target="_blank">Clang-Format</a> : Required for automated code style enforcement.
+- <a href="https://releases.llvm.org/download.html" target="_blank">Clang-Format</a> : Required for automated code style
+  enforcement.
 
 ## Getting Started
+
+### CMake Flags
+
+- **PMM_ASAN**: Enables Address Sanitizer, in Debug Mode.
+- **PMM_STRICT_MODE** Enables Strict Mode, treating warnings as errors.
+
+
+- **PMM_DEMO**: Enables Peregrine Demo Application.
+- **PMM_DOCS**: Enables Peregrine Doxygen Generation.
+- **PMM_BENCHMARK**: Enables Peregrine Benchmarks.
+- **PMM_TESTS**: Enables Peregrine Tests.
 
 ### Configuration
 

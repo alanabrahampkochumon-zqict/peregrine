@@ -1,1 +1,1 @@
-cmake -D ENABLE_STRICT=OFF -B build
+cmake -DPMM_STRICT_MODE=OFF -B build --fresh

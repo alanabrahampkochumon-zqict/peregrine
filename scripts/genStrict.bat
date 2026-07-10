@@ -1,2 +1,2 @@
-cmake -D ENABLE_STRICT=ON -D ASAN=ON -B build
+cmake -DPMM_STRICT_MODE=ON -D ASAN=ON -B build --fresh
 
