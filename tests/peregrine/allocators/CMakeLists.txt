@@ -1,25 +1,24 @@
-add_library(
-        TelemetryTests OBJECT
-)
+add_library(AllocatorTests OBJECT)
 
 target_sources(
-        TelemetryTests PRIVATE
-        ArenaTelemetryTests.cpp
+        AllocatorTests
+        PRIVATE
+        ArenaTests.cpp
+        StackTests.cpp
+        TempArenaTests.cpp
 )
 
 target_include_directories(
-        TelemetryTests PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        AllocatorTests PRIVATE
+        ${ROOT_TEST_DIR}/include
 )
-
 
 target_link_libraries(
-        TelemetryTests PRIVATE
+        AllocatorTests PRIVATE
         GTest::gtest_main
         StrictWarnings
-        MemoryManager
+        Peregrine
 )
-
 
 # Enables GTest's Friend tests
 # Unless the consuming application has GTest imported, DON'T enable this!!

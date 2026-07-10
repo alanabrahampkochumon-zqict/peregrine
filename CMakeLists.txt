@@ -155,12 +155,10 @@ add_subdirectory(tests)
 if (ENABLE_PMM_DEMO)
     message(STATUS "Demo application is enabled")
     add_subdirectory(apps/demo)
-    target_compile_features(Demo PRIVATE cxx_std_20)
 endif ()
 
 if (ENABLE_PMM_BENCHMARK)
     message(STATUS "Benchmarks are enabled")
     add_subdirectory(benchmarks)
-    target_compile_features(BenchmarkSuite PRIVATE cxx_std_20)
 endif ()
 
