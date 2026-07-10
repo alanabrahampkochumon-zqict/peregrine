@@ -22,5 +22,5 @@ if (CLANG_FORMATTER)
     endif ()
 
 else ()
-    message(WARNING "clang-format not found")
+    message(WARNING "clang-format not found.")
 endif ()

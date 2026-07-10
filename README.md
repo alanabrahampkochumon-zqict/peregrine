@@ -31,7 +31,7 @@ Ensure the following tools are installed and available in your system PATH:
 ### CMake Flags
 
 - **PMM_ASAN**: Enables Address Sanitizer, in Debug Mode.
-- **PMM_STRICT_MODE** Enables Strict Mode, treating warnings as errors.
+- **PMM_STRICT_MODE**: Enables Strict Mode, treating warnings as errors.
 
 
 - **PMM_DEMO**: Enables Peregrine Demo Application.
