@@ -35,4 +35,4 @@ target_compile_definitions(TelemetryTests PRIVATE ENABLE_PMM_TELEMETRY)
 include(GoogleTest)
 gtest_discover_tests(PeregrineTests)
 
-set_target_properties(AllocatorTests TelemetryTests PROPERTIES FOLDER "Peregrine Tests")
+set_target_properties(AllocatorTests TelemetryTests PROPERTIES FOLDER "Test Intermediates/Peregrine")

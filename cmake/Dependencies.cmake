@@ -26,5 +26,5 @@ if (PMM_BENCHMARK)
 endif ()
 
 # Group the projects into a single folder
-set_target_properties(gtest gtest_main gmock gmock_main PROPERTIES FOLDER "Google Test")
-set_target_properties(benchmark benchmark_main PROPERTIES FOLDER "Google Benchmark")
+set_target_properties(gtest gtest_main gmock gmock_main PROPERTIES FOLDER "Vendors/Google/GTest")
+set_target_properties(benchmark benchmark_main PROPERTIES FOLDER "Vendors/Google/Benchmark")
