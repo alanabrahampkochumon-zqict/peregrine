@@ -1,5 +1,5 @@
 
-add_subdirectory(pmm)
+add_subdirectory(peregrine)
 
 
 if (ENABLE_PMM_DEMO)
