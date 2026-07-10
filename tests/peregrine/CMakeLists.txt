@@ -1,4 +1,4 @@
-add_executable(PeregrineTests)
+add_executable(PeregrineTests $<TARGET_OBJECTS:AllocatorTests> $<TARGET_OBJECTS:TelemetryTests>)
 
 add_subdirectory(allocators)
 add_subdirectory(telemetry)
@@ -34,3 +34,5 @@ target_compile_definitions(TelemetryTests PRIVATE ENABLE_PMM_TELEMETRY)
 
 include(GoogleTest)
 gtest_discover_tests(PeregrineTests)
+
+set_target_properties(AllocatorTests TelemetryTests PROPERTIES FOLDER "Peregrine Tests")
