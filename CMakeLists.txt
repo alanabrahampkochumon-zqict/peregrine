@@ -30,6 +30,15 @@ if (PMM_DOCS)
     include(cmake/Doxygen.cmake)
 endif ()
 
+# Interprocedural Optimization
+include(CheckIPOSupported)
+check_ipo_supported(RESULT IPO_SUPPORTED)
+if(IPO_SUPPORTED)
+    message(STATUS "Enabling Interprocedural Optimization")
+    set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ${IPO_SUPPORTED})
+endif ()
+
+
 include(cmake/ClangFormat.cmake)
 include(cmake/ClangTidy.cmake)
 include(cmake/Dependencies.cmake)
