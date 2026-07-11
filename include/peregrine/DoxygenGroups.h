@@ -48,7 +48,13 @@
      * @brief Telemetry statistics for Allocators.
      * @ingroup PMM_Lib
      */
+
+    /**
+     * @defgroup PMM_Macro Macro Definitions
+     * @brief Preprocessor macro definitions.
+     * @ingroup PMM_Lib
+     */
     
-/** @} */ // End of FGM_Math
+/** @} */ // End of PMM_Lib
 
 // clang-format on
