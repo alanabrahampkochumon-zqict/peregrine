@@ -21,12 +21,34 @@ namespace pmm
      * @{
      */
 
+    // TODO: Use policy based allocation
+    // TODO: Add a custom sizer that resizes footprint based on user preference. PAllocSize16?
     /**
-     * @brief Header that stores information about each entry in the stack.
+     * @brief Header for storing *minimal* information about a stack entry.
+     *
+     * @details
+     * Minimizes footprint only allocating space for padding.
+     *
+     * @relatedalso SafeStackHeader
      */
-    struct StackHeader
+    struct MinStackHeader
     {
         uint8_t padding;
+    };
+
+
+    /**
+     * @brief Header for storing information about a stack entry.
+     *
+     * @details
+     * Prioritizes stack behavior over memory footprint, consuming around 16-bytes(on a 64-bit system) per allocation.
+     *
+     * @relatedalso MinStackHeader
+     */
+    struct SafeStackHeader
+    {
+        std::size_t previousOffset{}; /// Offset of previous allocated block.
+        std::size_t blockSize{};      /// Target allocation's block size.
     };
 
 
@@ -51,6 +73,31 @@ namespace pmm
          */
         [[nodiscard]] constexpr std::size_t size() const noexcept;
 
+
+        /**
+         * @brief Allocate @p size bytes of memory on the stack.
+         *
+         * @param[in] size: Number of bytes to allocate.
+         * @param[in] alignment: Base alignment of the allocation.
+         *                       Default: 8-bytes on 64-bit machine.
+         *
+         * @return A `void pointer` to starting memory address of the allocation.
+         */
+        [[nodiscard]] constexpr void* alloc(std::size_t size, std::size_t alignment = sizeof(void*));
+
+
+        // TODO: Implementation (SPLIT OUT to Deque)
+        /**
+         * @brief Allocate @p size bytes of memory at the back of the stack.
+         *
+         * @param[in] size: Number of bytes to allocate.
+         * @param[in] alignment: Base alignment of the allocation.
+         *
+         * @return A `void pointer` to starting memory address of the allocation.
+         */
+        // [[nodiscard]] constexpr void* allocBack(std::size_t size, std::size_t alignment = sizeof(void*));
+
+
     private:
         uint8_t* _buffer;
         std::size_t _size, _offset;
@@ -61,7 +108,11 @@ namespace pmm
     // FRIEND TEST macros for verifying internal states
     #include <gtest/gtest_prod.h>
 
+
+
+
         FRIEND_TEST(StackInitialization, InitializesDefaultStateAndBuffer);
+        FRIEND_TEST(StackAllocation, MovesOffsetAtleastByAllocationSize);
 #endif
     };
 

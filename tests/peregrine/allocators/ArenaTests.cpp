@@ -358,6 +358,7 @@ namespace pmm
         Arena arena(size);
 
         const Arena arena2 = std::move(arena);
+        // NOLINT(bugprone-use-after-move)
         EXPECT_EQ(nullptr, arena._buffer);
         EXPECT_EQ(0, arena._offset);
         EXPECT_EQ(0, arena._prevOffset);

@@ -11,12 +11,20 @@
 
 namespace pmm
 {
-
     inline Stack::Stack(const std::size_t sizeInBytes) noexcept
-        : _buffer(new uint8_t[sizeInBytes]), _size(sizeInBytes), _offset(0)
+        : _buffer{ new uint8_t[sizeInBytes] }, _size{ sizeInBytes }, _offset{ 0 }
     {}
 
-
     constexpr std::size_t Stack::size() const noexcept { return _size; }
+
+
+    /**************************************
+     *                                    *
+     *            ALLOCATIONS             *
+     *                                    *
+     **************************************/
+
+    constexpr void* Stack::alloc([[maybe_unused]] std::size_t size, [[maybe_unused]] std::size_t alignment)
+    { return nullptr; }
 
 } // namespace pmm
