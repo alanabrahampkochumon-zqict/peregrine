@@ -139,7 +139,7 @@ TEST_P(StackAllocationAlignment, AlwaysReturnAnAlignedMemoryAddress)
     const void* dataAddress = stack.alloc(blockSize, alignment);
 
     // Verify returned address is 0 by using 2^n module trick
-    ASSERT_EQ(0, reinterpret_cast<uintptr_t>(dataAddress) & alignment - 1);
+    ASSERT_EQ(0, reinterpret_cast<uintptr_t>(dataAddress) & (alignment - 1));
 }
 
 
