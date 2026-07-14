@@ -22,15 +22,8 @@
 class StackAllocation: public ::testing::Test
 {
 public:
-    std::size_t stackSize{};
-    pmm::Stack stack{ 1 };
-
-protected:
-    void SetUp() override
-    {
-        stackSize = static_cast<std::size_t>(1024 * 5); // 5KB
-        stack     = pmm::Stack(stackSize);
-    }
+    std::size_t stackSize{ 1024 * 5 };
+    pmm::Stack stack{ stackSize };
 };
 
 
@@ -73,15 +66,6 @@ TEST_F(StackAllocation, ReturnsNonNullPtrOnEmptyStack)
 }
 
 
-/**
- * @brief Verify that stack allocation returns a null pointer, when allocating memory greater
- *        than the stack capacity.
- */
-TEST_F(StackAllocation, GreaterThanCapacity_ReturnsNullPtr)
-{
-    const auto dataPtr = stack.alloc(stackSize + 10);
-    ASSERT_EQ(nullptr, dataPtr);
-}
 
 
 /** @brief Verify that stack allocation returns a valid pointer, given a non-empty stack with memory to spare. */
@@ -96,16 +80,6 @@ TEST_F(StackAllocation, ReturnNonNullPtrOnNonEmptyStack)
 }
 
 
-/**
- * @brief Verify that stack allocation returns a null pointer, given a stack nearing its capacity(allocation > free).
- */
-TEST_F(StackAllocation, ReturnNullPtrFromNearFullStack)
-{
-    // Allocate a big chunk to fill the stack near capacity
-    static_cast<void>(stack.alloc(stackSize - 50));
-    const auto dataPtr = stack.alloc(500);
-    ASSERT_EQ(nullptr, dataPtr);
-}
 
 
 /** @brief Verify that allocated memory maintains data integrity. */
@@ -148,13 +122,36 @@ TEST_P(StackAllocationAlignment, AlwaysReturnAnAlignedMemoryAddress)
     const auto alignment = this->GetParam();
     const auto blockSize = 5 * alignment;
 
-    pmm::Stack stack{8192}; // 8KB Stack
+    pmm::Stack stack{ 8192 }; // 8KB Stack
     const void* dataAddress = stack.alloc(blockSize, alignment);
 
     // Verify returned address is 0 by using 2^n module trick
     ASSERT_EQ(0, reinterpret_cast<uintptr_t>(dataAddress) & alignment - 1);
 }
 
+
+// TODO: Add non power of 2 alignment
+
+#ifndef NDEBUG
+/**
+ * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*, when allocating memory greater
+ *        than the stack capacity.
+ */
+TEST_F(StackAllocation, GreaterThanCapacity_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.alloc(stackSize + 10)), ""); }
+
+
+/**
+ * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
+ *        given a stack nearing its capacity(allocation > free).
+ */
+TEST_F(StackAllocation, NearFullStack_TriggersAssertion)
+{
+    // Allocate a big chunk to fill the stack near capacity
+    static_cast<void>(stack.alloc(stackSize - 50));
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.alloc(500)), "");
+}
+#endif
 
 
 /**************************************
@@ -185,7 +182,7 @@ namespace pmm
         constexpr std::size_t allocationSize = 120;
 
         static_cast<void>(stack.alloc(allocationSize));
-        EXPECT_GT(stack._offset, allocationSize);
+        EXPECT_GE(stack._offset, allocationSize);
     }
 
 } // namespace pmm

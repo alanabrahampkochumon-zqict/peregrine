@@ -2,7 +2,7 @@ add_executable(PeregrineBenchmarks)
 target_compile_features(PeregrineBenchmarks PRIVATE cxx_std_20)
 
 target_sources(PeregrineBenchmarks PRIVATE
-    SampleBenchmark.cpp
+        SnapTo.cpp
 )
 
 target_precompile_headers(

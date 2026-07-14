@@ -1080,7 +1080,7 @@ namespace pmm
 
         [[maybe_unused]] const auto data = arena.resize(secondByteChunk, byteSize, newByteSize, alignof(void*));
 
-        EXPECT_EQ(expectedOffset, arena._offset);
+        EXPECT_EQ(expectedOffset, arena._offset) << "Offset Mismatch";
     }
 
 

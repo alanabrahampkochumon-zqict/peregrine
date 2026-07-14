@@ -77,26 +77,35 @@ namespace pmm
         /**
          * @brief Allocate @p size bytes of memory on the stack.
          *
-         * @param[in] size: Number of bytes to allocate.
-         * @param[in] alignment: Base alignment of the allocation.
+         * @param[in] size Number of bytes to allocate.
+         * @param[in] alignment Base alignment of the allocation.
          *                       Default: 8-bytes on 64-bit machine.
          *
          * @return A `void pointer` to starting memory address of the allocation.
          */
-        [[nodiscard]] constexpr void* alloc(std::size_t size, std::size_t alignment = sizeof(void*));
+        [[nodiscard]] void* alloc(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept;
 
 
         // TODO: Implementation (SPLIT OUT to Deque)
-        /**
-         * @brief Allocate @p size bytes of memory at the back of the stack.
-         *
-         * @param[in] size: Number of bytes to allocate.
-         * @param[in] alignment: Base alignment of the allocation.
-         *
-         * @return A `void pointer` to starting memory address of the allocation.
-         */
+        // /**
+        //  * @brief Allocate @p size bytes of memory at the back of the stack.
+        //  *
+        //  * @param[in] size: Number of bytes to allocate.
+        //  * @param[in] alignment: Base alignment of the allocation.
+        //  *
+        //  * @return A `void pointer` to starting memory address of the allocation.
+        //  */
         // [[nodiscard]] constexpr void* allocBack(std::size_t size, std::size_t alignment = sizeof(void*));
 
+    private:
+        /**
+         * @brief Constrain the stack to the given alignment by rebasing the offset.
+         *
+         * @param alignment The alignment to rebase the current offset around.
+         *
+         * @return The padding required for alignment.
+         */
+        inline std::size_t _alignAddress(std::size_t alignment) noexcept;
 
     private:
         uint8_t* _buffer;

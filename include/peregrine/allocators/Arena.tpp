@@ -26,7 +26,7 @@ namespace pmm
      *                                    *
      **************************************/
 
-    Arena::Arena(const std::size_t bytes) noexcept
+    inline Arena::Arena(const std::size_t bytes) noexcept
         : _buffer(new uint8_t[bytes]),
           _sizeInBytes(bytes),
           _offset(0),
@@ -47,7 +47,7 @@ namespace pmm
     {}
 
 
-    Arena::Arena(const std::size_t bytes, const std::size_t alignment) noexcept
+    inline Arena::Arena(const std::size_t bytes, const std::size_t alignment) noexcept
         : _buffer(new uint8_t[bytes]),
           _sizeInBytes(bytes),
           _offset(0),
@@ -83,7 +83,7 @@ namespace pmm
     }
 
 
-    Arena::~Arena() noexcept
+    inline Arena::~Arena() noexcept
     {
         // Only free the telemetry if it's owned by the arena
         if (_ownedTelemetry)

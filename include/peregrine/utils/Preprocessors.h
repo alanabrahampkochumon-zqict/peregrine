@@ -41,7 +41,7 @@ namespace pmm::internal
      *        a no-compile error.
      */
     inline void compileTimeErrorTrap() {}
-    
+
 } // namespace pmm::internal
 
 
@@ -81,7 +81,7 @@ inline void logAssertion(const char* condition, const char* message, const char*
             if (std::is_constant_evaluated())                                                                          \
             {                                                                                                          \
                 if (!(condition))                                                                                      \
-                    pmm::internal::compile_time_error_trap();                                                          \
+                    pmm::internal::compileTimeErrorTrap();                                                             \
             }                                                                                                          \
             else                                                                                                       \
             {                                                                                                          \
@@ -114,7 +114,7 @@ inline void logAssertion(const char* condition, const char* message, const char*
             if (std::is_constant_evaluated())                                                                          \
             {                                                                                                          \
                 if (!(condition))                                                                                      \
-                    pmm::internal::compile_time_error_trap();                                                          \
+                    pmm::internal::compileTimeErrorTrap();                                                             \
             }                                                                                                          \
             else                                                                                                       \
             {                                                                                                          \

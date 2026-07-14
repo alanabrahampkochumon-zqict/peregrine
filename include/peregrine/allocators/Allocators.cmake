@@ -6,6 +6,7 @@ set(AllocatorHeaders
         Arena.tpp
         Stack.h
         Stack.tpp
+        StoragePolicy.h
         TempArena.h
         TempArena.tpp
 )

@@ -54,6 +54,12 @@
      * @brief Preprocessor macro definitions.
      * @ingroup PMM_Lib
      */
+
+    /**
+     * @defgroup PMM_Storage_Policy Storage Policy
+     * @brief Storage policies used by allocators for changing internal behavior.
+     * @ingroup PMM_Lib
+     */
     
 /** @} */ // End of PMM_Lib
 
