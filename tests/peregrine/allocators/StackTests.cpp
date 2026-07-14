@@ -120,11 +120,10 @@ TEST_F(StackAllocation, RepeatedAllocationAndWritesDoNotCorruptData)
 TEST_F(StackAllocation, HeaderIsStoredBehindReturnedAddress)
 {
     constexpr auto alignment = 8;
-    auto memoryStart         = stack.alloc(500, alignment);
+    auto memoryStart         = static_cast<char*>(stack.alloc(500, alignment));
 
     const auto header =
-        reinterpret_cast<pmm::MinStackHeader*>(reinterpret_cast<uintptr_t>(memoryStart) - sizeof(pmm::MinStackHeader));
-
+        reinterpret_cast<pmm::MinStackHeader*>(memoryStart - sizeof(pmm::MinStackHeader));
     EXPECT_GE(alignment, header->padding);
 }
 
