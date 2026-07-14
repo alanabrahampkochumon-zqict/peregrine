@@ -105,7 +105,7 @@ namespace pmm
          *
          * @return The padding required for alignment.
          */
-        inline std::size_t _alignAddress(std::size_t alignment) noexcept;
+        inline std::size_t _calcAlignment(std::size_t alignment) noexcept;
 
     private:
         uint8_t* _buffer;

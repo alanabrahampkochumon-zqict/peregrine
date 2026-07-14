@@ -30,10 +30,13 @@ public:
 class StackAllocationAlignment: public ::testing::TestWithParam<std::size_t>
 {};
 INSTANTIATE_TEST_SUITE_P(
-    StackTests, StackAllocationAlignment,
+    StackAlignmentTests, StackAllocationAlignment,
     ::testing::Values(4, 8, 16, 32, 64)); // TODO: Add more alignment and with different types of arena padding type
 
 
+class StackAllocationAlignmentNonBinaryPowers: public ::testing::TestWithParam<std::size_t>
+{};
+INSTANTIATE_TEST_SUITE_P(NonPowersOfTwo, StackAllocationAlignmentNonBinaryPowers, ::testing::Values(0, 1, 3, 5, 111));
 
 /**
  * @addtogroup T_PMM_Stack
@@ -66,8 +69,6 @@ TEST_F(StackAllocation, ReturnsNonNullPtrOnEmptyStack)
 }
 
 
-
-
 /** @brief Verify that stack allocation returns a valid pointer, given a non-empty stack with memory to spare. */
 TEST_F(StackAllocation, ReturnNonNullPtrOnNonEmptyStack)
 {
@@ -78,7 +79,6 @@ TEST_F(StackAllocation, ReturnNonNullPtrOnNonEmptyStack)
     ASSERT_NE(nullptr, dataPtr2);
     ASSERT_NE(dataPtr1, dataPtr2);
 }
-
 
 
 
@@ -117,6 +117,19 @@ TEST_F(StackAllocation, RepeatedAllocationAndWritesDoNotCorruptData)
 
 
 /** @brief Verify that allocate always return an address aligned to the specified boundary. */
+TEST_F(StackAllocation, HeaderIsStoredBehindReturnedAddress)
+{
+    constexpr auto alignment = 8;
+    auto memoryStart         = stack.alloc(500, alignment);
+
+    const auto header =
+        reinterpret_cast<pmm::MinStackHeader*>(reinterpret_cast<uintptr_t>(memoryStart) - sizeof(pmm::MinStackHeader));
+
+    EXPECT_GE(alignment, header->padding);
+}
+
+
+/** @brief Verify that allocate always return an address aligned to the specified boundary. */
 TEST_P(StackAllocationAlignment, AlwaysReturnAnAlignedMemoryAddress)
 {
     const auto alignment = this->GetParam();
@@ -130,7 +143,6 @@ TEST_P(StackAllocationAlignment, AlwaysReturnAnAlignedMemoryAddress)
 }
 
 
-// TODO: Add non power of 2 alignment
 
 #ifndef NDEBUG
 /**
@@ -150,6 +162,27 @@ TEST_F(StackAllocation, NearFullStack_TriggersAssertion)
     // Allocate a big chunk to fill the stack near capacity
     static_cast<void>(stack.alloc(stackSize - 50));
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.alloc(500)), "");
+}
+
+/**
+ * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
+ *        given an uneven alignment(non-powers of 2).
+ */
+TEST_P(StackAllocationAlignmentNonBinaryPowers, TriggersAssertion)
+{
+    // Allocate a big chunk to fill the stack near capacity
+    pmm::Stack stack(5120);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.alloc(500, GetParam())), "");
+}
+
+/**
+ * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
+ *        given alignment greater than 128.
+ */
+TEST_F(StackAllocation, TriggersAssertion)
+{
+    pmm::Stack stack(5120);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.alloc(500, 255)), "");
 }
 #endif
 

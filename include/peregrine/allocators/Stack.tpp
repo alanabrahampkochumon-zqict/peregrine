@@ -14,6 +14,7 @@
 #include "peregrine/utils/Preprocessors.h"
 
 #include <bit>
+#include <limits>
 
 
 namespace pmm
@@ -31,21 +32,23 @@ namespace pmm
      *                                    *
      **************************************/
 
-    // TODO: Update tests to include assertions
-    // TODO: Out of range
-    // TODO: non 2^n alignment
     inline void* Stack::alloc(const std::size_t size, const std::size_t alignment) noexcept
     {
-        // TODO: Change from MinStackHeader to appropriate header when using policy
-        PMM_ASSERT_MSG(std::has_single_bit(alignment), "Alignment must be a power of 2");
-        PMM_ASSERT_MSG(_offset + size + std::max(alignment, sizeof(MinStackHeader)) <= _size,
-                       "Stack near capacity. Cannot assign memory!");
-        // Align the address
-        const auto padding = _alignAddress(alignment);
+        PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment != 1, "Alignment must be a power of 2");
 
+        const auto padding = _calcAlignment(alignment);
+        // TODO: Change from MinStackHeader to appropriate header when using policy
+        PMM_ASSERT_MSG(_offset + size + padding <= _size, "Stack capacity exceeded. Cannot assign memory!");
+        PMM_ASSERT_MSG(padding <= std::numeric_limits<decltype(MinStackHeader::padding)>::max(),
+                       "Alignment exceeded maximum permissible size of padding.");
+
+        // Move the offset to aligned address
+        _offset += padding;
+
+        // Store the header behind the allocated address
         const auto currentAddress = _buffer + _offset;
-        auto* header = reinterpret_cast<MinStackHeader*>(currentAddress - sizeof(MinStackHeader));
-        header->padding = static_cast<uint8_t>(padding);
+        auto* header              = reinterpret_cast<MinStackHeader*>(currentAddress - sizeof(MinStackHeader));
+        header->padding           = static_cast<uint8_t>(padding);
 
         _offset += size;
         memset(currentAddress, 0, size); // Zero out memory(TODO: Remove when using HAL)
@@ -60,8 +63,9 @@ namespace pmm
      *                                    *
      **************************************/
     // Note: Offset is incremented internally, so don't add additional padding.
-    inline std::size_t Stack::_alignAddress(const std::size_t alignment) noexcept {
-        const auto baseAddress = reinterpret_cast<uintptr_t>(_buffer);
+    inline std::size_t Stack::_calcAlignment(const std::size_t alignment) noexcept
+    {
+        const auto baseAddress    = reinterpret_cast<uintptr_t>(_buffer);
         const auto currentAddress = baseAddress + _offset;
 
         // Alignment - (Address % alignment)
@@ -76,14 +80,15 @@ namespace pmm
         // TODO: Try to eliminate conditionals
         if (requiredPadding < requiredStorage)
         {
-            requiredStorage -= requiredPadding; // Calculate the rest of storage needed that is not covered by the padding from alignment
+            requiredStorage -= requiredPadding; // Calculate the rest of storage needed that is not covered by the
+                                                // padding from alignment
             // Rounding factor is applied to ensure no additional allocation when the storage is a multiple of alignment
             // Like for 8 bytes, we need to round up if storage is less than 8, i.e, 1-7 bytes
-            // If the factor is multiple of alignment say, requiredStorage = n * alignment, we can just add it to the padding
+            // If the factor is multiple of alignment say, requiredStorage = n * alignment, we can just add it to the
+            // padding
             const auto roundingFactor = static_cast<std::size_t>((requiredStorage & (alignment - 1)) != 0);
             requiredPadding += alignment * (roundingFactor + requiredStorage / alignment);
         }
-        _offset += requiredPadding;
         return requiredPadding;
     }
 
