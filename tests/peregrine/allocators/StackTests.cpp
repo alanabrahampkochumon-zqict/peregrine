@@ -180,7 +180,6 @@ TEST_P(StackAllocationAlignmentNonBinaryPowers, TriggersAssertion)
  */
 TEST_F(StackAllocation, TriggersAssertion)
 {
-    pmm::Stack stack(5120);
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.alloc(500, 255)), "");
 }
 #endif
