@@ -33,10 +33,11 @@ INSTANTIATE_TEST_SUITE_P(
     StackAlignmentTests, StackAllocationAlignment,
     ::testing::Values(4, 8, 16, 32, 64)); // TODO: Add more alignment and with different types of arena padding type
 
-
+#ifndef NDEBUG
 class StackAllocationAlignmentNonBinaryPowers: public ::testing::TestWithParam<std::size_t>
 {};
 INSTANTIATE_TEST_SUITE_P(NonPowersOfTwo, StackAllocationAlignmentNonBinaryPowers, ::testing::Values(0, 1, 3, 5, 111));
+#endif
 
 /**
  * @addtogroup T_PMM_Stack
@@ -122,8 +123,7 @@ TEST_F(StackAllocation, HeaderIsStoredBehindReturnedAddress)
     constexpr auto alignment = 8;
     auto memoryStart         = static_cast<char*>(stack.alloc(500, alignment));
 
-    const auto header =
-        reinterpret_cast<pmm::MinStackHeader*>(memoryStart - sizeof(pmm::MinStackHeader));
+    const auto header = reinterpret_cast<pmm::MinStackHeader*>(memoryStart - sizeof(pmm::MinStackHeader));
     EXPECT_GE(alignment, header->padding);
 }
 
