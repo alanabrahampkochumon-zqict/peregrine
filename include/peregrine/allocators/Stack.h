@@ -11,6 +11,7 @@
 
 
 #include "StoragePolicy.h"
+#include "peregrine/utils/Preprocessors.h"
 
 #include <cstddef>
 #include <cstdint>
@@ -54,7 +55,7 @@ namespace pmm
         std::size_t blockSize{};      /// Target allocation's block size.
     };
 
-    template<StoragePolicy Policy = MinimalStackPolicy>
+    template <StoragePolicy Policy = MinimalStackPolicy>
     struct Stack
     {
 
@@ -68,13 +69,13 @@ namespace pmm
          * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        [[nodiscard]] inline explicit Stack(std::size_t sizeInBytes) noexcept;
+        [[nodiscard]] PMM_INLINE explicit Stack(std::size_t sizeInBytes) noexcept;
 
         /**
          * @brief Get the total capacity in bytes of the stack.
          * @return The total capacity of the stack.
          */
-        [[nodiscard]] constexpr std::size_t size() const noexcept;
+        [[nodiscard]] PMM_INLINE constexpr std::size_t size() const noexcept;
 
 
         /**
@@ -86,7 +87,7 @@ namespace pmm
          *
          * @return A `void pointer` to starting memory address of the allocation.
          */
-        [[nodiscard]] void* alloc(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept;
+        [[nodiscard]] PMM_INLINE void* alloc(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept;
 
 
         // TODO: Implementation (SPLIT OUT to Deque)
@@ -105,7 +106,7 @@ namespace pmm
          *
          * @note For clearing the Arena, use @ref freeAll, or to move free individual frames use @ref free.
          */
-        ~Stack() noexcept;
+        PMM_INLINE ~Stack() noexcept;
 
     private:
         /**
@@ -115,7 +116,7 @@ namespace pmm
          *
          * @return The padding required for alignment.
          */
-        inline std::size_t _calcAlignment(std::size_t alignment) noexcept;
+        PMM_INLINE std::size_t _calcAlignment(std::size_t alignment) noexcept;
 
     private:
         uint8_t* _buffer;
