@@ -19,11 +19,15 @@
 
 namespace pmm
 {
-    inline Stack::Stack(const std::size_t sizeInBytes) noexcept
+
+    template <StoragePolicy Policy>
+    inline Stack<Policy>::Stack(const std::size_t sizeInBytes) noexcept
         : _buffer{ new uint8_t[sizeInBytes] }, _size{ sizeInBytes }, _offset{ 0 }
     {}
 
-    constexpr std::size_t Stack::size() const noexcept { return _size; }
+    template <StoragePolicy Policy>
+    constexpr std::size_t Stack<Policy>::size() const noexcept { return _size; }
+
 
 
     /**************************************
@@ -32,7 +36,8 @@ namespace pmm
      *                                    *
      **************************************/
 
-    inline void* Stack::alloc(const std::size_t size, const std::size_t alignment) noexcept
+    template <StoragePolicy Policy>
+    inline void* Stack<Policy>::alloc(const std::size_t size, const std::size_t alignment) noexcept
     {
         PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment != 1, "Alignment must be a power of 2");
 
@@ -56,8 +61,8 @@ namespace pmm
         return currentAddress; // TODO: Remove
     }
 
-
-    inline Stack::~Stack() noexcept
+    template <StoragePolicy Policy>
+    inline Stack<Policy>::~Stack() noexcept
     {
         delete[] _buffer;
     }
@@ -69,7 +74,8 @@ namespace pmm
      *                                    *
      **************************************/
     // Note: Offset is incremented internally, so don't add additional padding.
-    inline std::size_t Stack::_calcAlignment(const std::size_t alignment) noexcept
+    template <StoragePolicy Policy>
+    inline std::size_t Stack<Policy>::_calcAlignment(const std::size_t alignment) noexcept
     {
         const auto baseAddress    = reinterpret_cast<uintptr_t>(_buffer);
         const auto currentAddress = baseAddress + _offset;

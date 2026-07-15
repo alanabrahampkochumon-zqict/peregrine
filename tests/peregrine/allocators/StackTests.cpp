@@ -23,7 +23,7 @@ class StackAllocation: public ::testing::Test
 {
 public:
     std::size_t stackSize{ 1024 * 5 };
-    pmm::Stack stack{ stackSize };
+    pmm::Stack<> stack{ stackSize };
 };
 
 

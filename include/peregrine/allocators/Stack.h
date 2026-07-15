@@ -10,6 +10,8 @@
  */
 
 
+#include "StoragePolicy.h"
+
 #include <cstddef>
 #include <cstdint>
 
@@ -52,7 +54,7 @@ namespace pmm
         std::size_t blockSize{};      /// Target allocation's block size.
     };
 
-
+    template<StoragePolicy Policy = MinimalStackPolicy>
     struct Stack
     {
 
@@ -66,7 +68,7 @@ namespace pmm
          * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        inline explicit Stack(std::size_t sizeInBytes) noexcept;
+        [[nodiscard]] inline explicit Stack(std::size_t sizeInBytes) noexcept;
 
         /**
          * @brief Get the total capacity in bytes of the stack.
