@@ -26,14 +26,15 @@ namespace pmm
     /**
      * @brief Header for storing *minimal* information about a stack entry.
      *
-     * @details
-     * Minimizes footprint only allocating space for padding.
+     * @details Minimizes footprint only allocating space for padding.
+     * Uses std::size_t on the premise that default alignment is 8-bytes(enough padding to hold the header)
+     * on a 64-bit system and SIMD uses at least 16-byte padding(SSE).
      *
      * @relatedalso SafeStackHeader
      */
     struct MinStackHeader
     {
-        uint8_t padding;
+        std::size_t padding;
     };
 
 
