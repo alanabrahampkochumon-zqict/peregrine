@@ -69,13 +69,13 @@ namespace pmm
          * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        [[nodiscard]] PMM_INLINE explicit Stack(std::size_t sizeInBytes) noexcept;
+        [[nodiscard]] explicit Stack(std::size_t sizeInBytes) noexcept;
 
         /**
          * @brief Get the total capacity in bytes of the stack.
          * @return The total capacity of the stack.
          */
-        [[nodiscard]] PMM_INLINE constexpr std::size_t size() const noexcept;
+        [[nodiscard]] constexpr std::size_t size() const noexcept;
 
 
         /**
@@ -87,7 +87,22 @@ namespace pmm
          *
          * @return A `void pointer` to starting memory address of the allocation.
          */
-        [[nodiscard]] PMM_INLINE void* alloc(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept;
+        [[nodiscard]] void* alloc(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept;
+
+        // TODO: Add test
+        // TODO: Add implementation
+        // TODO: Add warning to alloc
+        /**
+         * @brief Free memory from the stack to the @p ptr marker.
+         *
+         * @note The function will mark the passed-in pointer as `nullptr`,
+         *       but will not mark any intermediate pointers as `nullptr`.
+         *
+         * @warning Does not check for invalid states including out-of-bounds and `nullptr` free in *Release Mode*.
+         *
+         * @param[in,out] ptr The pointer to free upto.
+         */
+        void free(void* ptr) noexcept;
 
 
         // TODO: Implementation (SPLIT OUT to Deque)
@@ -106,7 +121,7 @@ namespace pmm
          *
          * @note For clearing the Arena, use @ref freeAll, or to move free individual frames use @ref free.
          */
-        PMM_INLINE ~Stack() noexcept;
+        ~Stack() noexcept;
 
     private:
         /**
@@ -116,7 +131,7 @@ namespace pmm
          *
          * @return The padding required for alignment.
          */
-        PMM_INLINE std::size_t _calcAlignment(std::size_t alignment) noexcept;
+        std::size_t _calcAlignment(std::size_t alignment) noexcept;
 
     private:
         uint8_t* _buffer;

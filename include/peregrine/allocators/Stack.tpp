@@ -26,7 +26,8 @@ namespace pmm
     {}
 
     template <StoragePolicy Policy>
-    PMM_INLINE constexpr std::size_t Stack<Policy>::size() const noexcept { return _size; }
+    PMM_INLINE constexpr std::size_t Stack<Policy>::size() const noexcept
+    { return _size; }
 
 
 
@@ -61,11 +62,26 @@ namespace pmm
         return currentAddress; // TODO: Remove
     }
 
+
+    // TODO: Add tests
+    template <StoragePolicy Policy>
+    PMM_INLINE void Stack<Policy>::free(void* ptr) noexcept
+    {
+        PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
+        PMM_ASSERT_MSG(ptr >= _buffer && ptr <= _buffer + _offset, "Out-of-bounds free!");
+
+        // TODO: Disable warning
+        const auto header = reinterpret_cast<MinStackHeader*>(static_cast<char*>(ptr) - sizeof(MinStackHeader));
+        const auto prevOffset = reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(_buffer);
+        // Move the pointer back to the previous offset, and then by the header size.
+        _offset -= prevOffset + header->padding;
+
+        ptr = nullptr;
+    }
+
     template <StoragePolicy Policy>
     PMM_INLINE Stack<Policy>::~Stack() noexcept
-    {
-        delete[] _buffer;
-    }
+    { delete[] _buffer; }
 
 
     /**************************************
