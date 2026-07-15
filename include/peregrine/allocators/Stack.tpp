@@ -20,13 +20,13 @@
 namespace pmm
 {
 
-    template <StoragePolicy Policy>
-    PMM_INLINE Stack<Policy>::Stack(const std::size_t sizeInBytes) noexcept
-        : _buffer{ new uint8_t[sizeInBytes] }, _size{ sizeInBytes }, _offset{ 0 }
+    template <stack::StackType Type>
+    PMM_INLINE Stack<Type>::Stack(const std::size_t sizeInBytes) noexcept
+        : _buffer{ new uint8_t[sizeInBytes] }, _size{ sizeInBytes }
     {}
 
-    template <StoragePolicy Policy>
-    PMM_INLINE constexpr std::size_t Stack<Policy>::size() const noexcept
+    template <stack::StackType Type>
+    PMM_INLINE constexpr std::size_t Stack<Type>::size() const noexcept
     { return _size; }
 
 
@@ -37,16 +37,16 @@ namespace pmm
      *                                    *
      **************************************/
 
-    template <StoragePolicy Policy>
-    PMM_INLINE void* Stack<Policy>::alloc(const std::size_t size, const std::size_t alignment) noexcept
-        requires std::same_as<Policy, MinimalStackPolicy>
+    template <stack::StackType Type>
+    PMM_INLINE void* Stack<Type>::alloc(const std::size_t size, const std::size_t alignment) noexcept
+        requires std::same_as<Type, stack::Loose>
     {
         PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment != 1, "Alignment must be a power of 2");
 
         const auto padding = _calcAlignment(alignment);
         // TODO: Change from MinStackHeader to appropriate header when using policy
         PMM_ASSERT_MSG(_offset + size + padding <= _size, "Stack capacity exceeded. Cannot assign memory!");
-        PMM_ASSERT_MSG(padding <= std::numeric_limits<decltype(MinStackHeader::padding)>::max(),
+        PMM_ASSERT_MSG(padding <= std::numeric_limits<decltype(LooseStackHeader::padding)>::max(),
                        "Alignment exceeded maximum permissible size of padding.");
 
         // Move the offset to aligned address
@@ -54,7 +54,7 @@ namespace pmm
 
         // Store the header behind the allocated address
         const auto currentAddress = _buffer + _offset;
-        auto* header              = reinterpret_cast<MinStackHeader*>(currentAddress - sizeof(MinStackHeader));
+        auto* header              = reinterpret_cast<LooseStackHeader*>(currentAddress - sizeof(LooseStackHeader));
         header->padding           = static_cast<uint8_t>(padding);
 
         _offset += size;
@@ -65,15 +65,15 @@ namespace pmm
 
 
     // TODO: Add tests
-    template <StoragePolicy Policy>
-    PMM_INLINE void Stack<Policy>::free(void* ptr) noexcept
-        requires std::same_as<Policy, MinimalStackPolicy>
+    template <stack::StackType Type>
+    PMM_INLINE void Stack<Type>::free(void* ptr) noexcept
+        requires std::same_as<Type, stack::Loose>
     {
         PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
         PMM_ASSERT_MSG(ptr >= _buffer && ptr <= _buffer + _offset, "Out-of-bounds free!");
 
         // TODO: Disable warning
-        const auto header     = reinterpret_cast<MinStackHeader*>(static_cast<char*>(ptr) - sizeof(MinStackHeader));
+        const auto header     = reinterpret_cast<LooseStackHeader*>(static_cast<char*>(ptr) - sizeof(LooseStackHeader));
         const auto prevOffset = reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(_buffer);
         // Move the pointer back to the previous offset, and then by the header size.
         _offset -= prevOffset + header->padding;
@@ -81,9 +81,10 @@ namespace pmm
         ptr = nullptr;
     }
 
-    template <StoragePolicy Policy>
-    PMM_INLINE Stack<Policy>::~Stack() noexcept
+    template <stack::StackType Type>
+    PMM_INLINE Stack<Type>::~Stack() noexcept
     { delete[] _buffer; }
+
 
 
     /**************************************
@@ -91,9 +92,10 @@ namespace pmm
      *         PRIVATE HELPERS            *
      *                                    *
      **************************************/
+
     // Note: Offset is incremented internally, so don't add additional padding.
-    template <StoragePolicy Policy>
-    PMM_INLINE std::size_t Stack<Policy>::_calcAlignment(const std::size_t alignment) noexcept
+    template <stack::StackType Type>
+    PMM_INLINE std::size_t Stack<Type>::_calcAlignment(const std::size_t alignment) noexcept
     {
         const auto baseAddress    = reinterpret_cast<uintptr_t>(_buffer);
         const auto currentAddress = baseAddress + _offset;
@@ -104,7 +106,12 @@ namespace pmm
         // Since we need at least alignment amount of storage for header or more
         // We don't need to check for making modulo == 0
         auto requiredPadding = alignment - (currentAddress & (alignment - 1));
-        auto requiredStorage = sizeof(MinStackHeader); // TODO: Update when reimplementing for Different Header
+        auto requiredStorage = sizeof(LooseStackHeader);
+        // Change required storage based on header type
+        if constexpr (std::same_as<Type, stack::Strict>)
+        {
+            requiredStorage = sizeof(StrictStackHeader);
+        }
 
         // TODO: Add tests
         // TODO: Try to eliminate conditionals

@@ -10,10 +10,8 @@
  */
 
 
-#include "StoragePolicy.h"
-#include "peregrine/utils/Preprocessors.h"
+#include "StackType.h"
 
-#include <cstddef>
 #include <cstdint>
 
 
@@ -30,12 +28,12 @@ namespace pmm
      * @brief Header for storing *minimal* information about a stack entry.
      *
      * @details Minimizes footprint only allocating space for padding.
-     * Uses std::size_t on the premise that default alignment is 8-bytes(enough padding to hold the header)
-     * on a 64-bit system and SIMD uses at least 16-byte padding(SSE).
+     *          Uses std::size_t on the premise that default alignment is 8-bytes(enough padding to hold the header)
+     *          on a 64-bit system and SIMD uses at least 16-byte padding(SSE).
      *
-     * @relatedalso SafeStackHeader
+     * @relatedalso StrictStackHeader
      */
-    struct MinStackHeader
+    struct LooseStackHeader
     {
         std::size_t padding;
     };
@@ -47,15 +45,15 @@ namespace pmm
      * @details
      * Prioritizes stack behavior over memory footprint, consuming around 16-bytes(on a 64-bit system) per allocation.
      *
-     * @relatedalso MinStackHeader
+     * @relatedalso LooseStackHeader
      */
-    struct SafeStackHeader
+    struct StrictStackHeader
     {
         std::size_t previousOffset{}; /// Offset of previous allocated block.
         std::size_t blockSize{};      /// Target allocation's block size.
     };
 
-    template <StoragePolicy Policy = MinimalStackPolicy>
+    template <stack::StackType Type = stack::Loose>
     class Stack
     {
     public:
@@ -88,7 +86,7 @@ namespace pmm
          * @return A `void pointer` to starting memory address of the allocation.
          */
         [[nodiscard]] void* alloc(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept
-            requires std::same_as<Policy, MinimalStackPolicy>;
+            requires std::same_as<Type, stack::Loose>;
 
         // TODO: Add test
         // TODO: Add implementation
@@ -104,7 +102,7 @@ namespace pmm
          * @param[in,out] ptr The pointer to free upto.
          */
         void free(void* ptr) noexcept
-            requires std::same_as<Policy, MinimalStackPolicy>;
+            requires std::same_as<Type, stack::Loose>;
 
 
         // TODO: Implementation (SPLIT OUT to Deque)
@@ -136,9 +134,9 @@ namespace pmm
          */
         std::size_t _calcAlignment(std::size_t alignment) noexcept;
 
-    private:
+        /// Member Variables
         uint8_t* _buffer;
-        std::size_t _size, _offset;
+        std::size_t _size, _offset{ 0 };
 
 
 

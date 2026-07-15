@@ -126,7 +126,7 @@ TEST_F(StackAllocation, HeaderIsStoredBehindReturnedAddress)
     constexpr auto alignment = 8;
     auto memoryStart         = static_cast<char*>(stack.alloc(500, alignment));
 
-    const auto header = reinterpret_cast<pmm::MinStackHeader*>(memoryStart - sizeof(pmm::MinStackHeader));
+    const auto header = reinterpret_cast<pmm::LooseStackHeader*>(memoryStart - sizeof(pmm::LooseStackHeader));
     EXPECT_GE(alignment, header->padding);
 }
 
