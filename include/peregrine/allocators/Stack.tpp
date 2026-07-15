@@ -39,6 +39,7 @@ namespace pmm
 
     template <StoragePolicy Policy>
     PMM_INLINE void* Stack<Policy>::alloc(const std::size_t size, const std::size_t alignment) noexcept
+        requires std::same_as<Policy, MinimalStackPolicy>
     {
         PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment != 1, "Alignment must be a power of 2");
 
@@ -66,12 +67,13 @@ namespace pmm
     // TODO: Add tests
     template <StoragePolicy Policy>
     PMM_INLINE void Stack<Policy>::free(void* ptr) noexcept
+        requires std::same_as<Policy, MinimalStackPolicy>
     {
         PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
         PMM_ASSERT_MSG(ptr >= _buffer && ptr <= _buffer + _offset, "Out-of-bounds free!");
 
         // TODO: Disable warning
-        const auto header = reinterpret_cast<MinStackHeader*>(static_cast<char*>(ptr) - sizeof(MinStackHeader));
+        const auto header     = reinterpret_cast<MinStackHeader*>(static_cast<char*>(ptr) - sizeof(MinStackHeader));
         const auto prevOffset = reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(_buffer);
         // Move the pointer back to the previous offset, and then by the header size.
         _offset -= prevOffset + header->padding;

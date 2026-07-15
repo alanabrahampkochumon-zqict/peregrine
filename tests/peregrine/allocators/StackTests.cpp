@@ -11,6 +11,7 @@
 
 #include <gtest/gtest.h>
 #include <peregrine/allocators/Stack.h>
+#include <peregrine/utils/Constants.h>
 
 
 /**************************************
@@ -19,10 +20,12 @@
  *                                    *
  **************************************/
 
+using namespace pmm::constants;
 class StackAllocation: public ::testing::Test
 {
+
 public:
-    std::size_t stackSize{ 1024 * 5 };
+    std::size_t stackSize{ 5_KB };
     pmm::Stack<> stack{ stackSize };
 };
 
@@ -178,10 +181,7 @@ TEST_P(StackAllocationAlignmentNonBinaryPowers, TriggersAssertion)
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
  *        given alignment greater than 128.
  */
-TEST_F(StackAllocation, TriggersAssertion)
-{
-    EXPECT_DEBUG_DEATH(static_cast<void>(stack.alloc(500, 255)), "");
-}
+TEST_F(StackAllocation, TriggersAssertion) { EXPECT_DEBUG_DEATH(static_cast<void>(stack.alloc(500, 255)), ""); }
 #endif
 
 

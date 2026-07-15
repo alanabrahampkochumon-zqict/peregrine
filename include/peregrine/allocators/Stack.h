@@ -56,9 +56,9 @@ namespace pmm
     };
 
     template <StoragePolicy Policy = MinimalStackPolicy>
-    struct Stack
+    class Stack
     {
-
+    public:
         /**
          * @brief Allocate a new physical memory vault from the Operating System.
          *
@@ -81,13 +81,14 @@ namespace pmm
         /**
          * @brief Allocate @p size bytes of memory on the stack.
          *
-         * @param[in] size Number of bytes to allocate.
+         * @param[in] size      Number of bytes to allocate.
          * @param[in] alignment Base alignment of the allocation.
          *                       Default: 8-bytes on 64-bit machine.
          *
          * @return A `void pointer` to starting memory address of the allocation.
          */
-        [[nodiscard]] void* alloc(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept;
+        [[nodiscard]] void* alloc(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept
+            requires std::same_as<Policy, MinimalStackPolicy>;
 
         // TODO: Add test
         // TODO: Add implementation
@@ -102,7 +103,8 @@ namespace pmm
          *
          * @param[in,out] ptr The pointer to free upto.
          */
-        void free(void* ptr) noexcept;
+        void free(void* ptr) noexcept
+            requires std::same_as<Policy, MinimalStackPolicy>;
 
 
         // TODO: Implementation (SPLIT OUT to Deque)
@@ -123,11 +125,12 @@ namespace pmm
          */
         ~Stack() noexcept;
 
+
     private:
         /**
-         * @brief Constrain the stack to the given alignment by rebasing the offset.
+         * @brief Calculate the padding required for a given alignment for rebasing the offset.
          *
-         * @param alignment The alignment to rebase the current offset around.
+         * @param alignment The alignment to snap the ptr to.
          *
          * @return The padding required for alignment.
          */
