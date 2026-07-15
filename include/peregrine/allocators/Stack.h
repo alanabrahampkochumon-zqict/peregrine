@@ -97,6 +97,13 @@ namespace pmm
         //  */
         // [[nodiscard]] constexpr void* allocBack(std::size_t size, std::size_t alignment = sizeof(void*));
 
+        /**
+         * @brief Stack Destructor. Frees all memory held.
+         *
+         * @note For clearing the Arena, use @ref freeAll, or to move free individual frames use @ref free.
+         */
+        ~Stack() noexcept;
+
     private:
         /**
          * @brief Constrain the stack to the given alignment by rebasing the offset.

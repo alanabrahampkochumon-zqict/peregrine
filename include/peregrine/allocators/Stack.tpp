@@ -57,6 +57,12 @@ namespace pmm
     }
 
 
+    inline Stack::~Stack() noexcept
+    {
+        delete[] _buffer;
+    }
+
+
     /**************************************
      *                                    *
      *         PRIVATE HELPERS            *
