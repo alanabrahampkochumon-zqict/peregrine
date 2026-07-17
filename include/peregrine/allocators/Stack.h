@@ -87,7 +87,24 @@ namespace pmm
          *
          * @return A `void pointer` to starting memory address of the allocation.
          */
-        [[nodiscard]] void* alloc(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept
+        [[nodiscard]] void* allocBytes(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept
+            requires std::same_as<Type, stack::Loose>;
+
+
+        /**
+         * @brief Allocate an object of type @p T in the stack.
+         *
+         * @note The object will be aligned to the default alignment of @p T.
+         *
+         * @tparam T    The type of object to allocate.
+         * @tparam Args The type of arguments to instantiate the object.
+         *
+         * @param args      The arguments to instantiate the object.
+         *
+         * @return A reference to the allocated memory.
+         */
+        template<typename T, typename... Args>
+        [[nodiscard]] T* alloc(Args... args) noexcept
             requires std::same_as<Type, stack::Loose>;
 
 

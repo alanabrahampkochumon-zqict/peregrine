@@ -15,6 +15,7 @@
 
 #include <bit>
 #include <limits>
+#include <new>
 
 
 namespace pmm
@@ -38,7 +39,7 @@ namespace pmm
      **************************************/
 
     template <stack::StackType Type>
-    PMM_INLINE void* Stack<Type>::alloc(const std::size_t size, const std::size_t alignment) noexcept
+    PMM_INLINE void* Stack<Type>::allocBytes(const std::size_t size, const std::size_t alignment) noexcept
         requires std::same_as<Type, stack::Loose>
     {
         PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment != 1, "Alignment must be a power of 2");
@@ -61,6 +62,17 @@ namespace pmm
         memset(currentAddress, 0, size); // Zero out memory(TODO: Remove when using HAL)
 
         return currentAddress; // TODO: Remove
+    }
+
+
+    template <stack::StackType Type>
+    template <typename T, typename... Args>
+    T* Stack<Type>::alloc(Args... args) noexcept
+        requires std::same_as<Type, stack::Loose>
+    {
+        auto rawMemory = allocBytes(sizeof(T), alignof(T));
+
+        return new (rawMemory) T(std::forward<Args>(args)...);
     }
 
 
@@ -99,7 +111,6 @@ namespace pmm
      *                                    *
      **************************************/
 
-    // Note: Offset is incremented internally, so don't add additional padding.
     template <stack::StackType Type>
     PMM_INLINE std::size_t Stack<Type>::_calcAlignment(const std::size_t alignment) noexcept
     {
