@@ -133,7 +133,7 @@ TEST_F(StackTests, AllocBytes_HeaderIsStoredBehindReturnedAddress)
     const auto memoryStart   = static_cast<char*>(stack.allocBytes(500, alignment));
 
     const auto header = reinterpret_cast<pmm::LooseStackHeader*>(memoryStart - sizeof(pmm::LooseStackHeader));
-    EXPECT_GE(alignment, header->padding);
+    EXPECT_GE(header->padding, alignment);
 }
 
 
