@@ -76,7 +76,45 @@ namespace pmm
     }
 
 
-    // TODO: Add tests
+    template <stack::StackType Type>
+    void* Stack<Type>::resize(void* oldMemory, const std::size_t oldSize, const std::size_t newSize,
+                              const std::size_t alignment)
+    {
+        PMM_ASSERT_MSG(
+            oldMemory != nullptr,
+            "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
+        PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
+
+        // Compare the two offset and if they are equal then this the latest allocation in which case
+        const auto targetOffset = _offset - oldSize;
+        const auto currentOffset = reinterpret_cast<uintptr_t>(oldMemory) - reinterpret_cast<uintptr_t>(_buffer);
+
+        // If the current allocation requires a resize to a smaller buffer
+        if (oldSize >= newSize)
+        {
+            if (targetOffset == currentOffset)
+            {
+                // Move the offset by the difference
+                _offset -= oldSize - newSize;
+            }
+            return oldMemory; // Return the old address
+        }
+
+        // Larger allocation can either be added to (in case of lastest allocation)
+        // or provided with a new memory address
+        if (targetOffset == currentOffset)
+        {
+            _offset += newSize - oldSize; // Size difference
+            return oldMemory;
+        }
+
+        auto newPtr = allocBytes(newSize, alignment);
+        memmove(newPtr, oldMemory, oldSize);
+
+        return newPtr;
+    }
+
+
     template <stack::StackType Type>
     PMM_INLINE void Stack<Type>::free(void* ptr) noexcept
         requires std::same_as<Type, stack::Loose>

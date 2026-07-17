@@ -249,7 +249,7 @@ namespace pmm
          *
          * @param oldMemory The pointer to the memory to resize.
          * @param oldSize   The current size of the @p oldMemory.
-         * @param newSize   The size of resize @p oldMemory to.
+         * @param newSize   The size to resize @p oldMemory to.
          * @param alignment The byte alignment of the @p oldMemory.
          *
          * @return A reference to the new memory location in arena or nullptr if allocation fails.

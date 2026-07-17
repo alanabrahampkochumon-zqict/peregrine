@@ -83,16 +83,18 @@ namespace pmm
          *
          * @param[in] size      Number of bytes to allocate.
          * @param[in] alignment Base alignment of the allocation.
-         *                       Default: 8-bytes on 64-bit machine.
+         *                      Default: 8-bytes on 64-bit machine.
          *
          * @return A `void pointer` to starting memory address of the allocation.
+         *
+         * @relatedalso alloc
          */
         [[nodiscard]] void* allocBytes(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept
             requires std::same_as<Type, stack::Loose>;
 
 
         /**
-         * @brief Allocate an object of type @p T in the stack.
+         * @brief Allocate an object of type @p T in the stack and initialize it with @p args.
          *
          * @note The object will be aligned to the default alignment of @p T.
          *
@@ -102,10 +104,32 @@ namespace pmm
          * @param args      The arguments to instantiate the object.
          *
          * @return A reference to the allocated memory.
+         *
+         * @relatedalso allocBytes
          */
-        template<typename T, typename... Args>
+        template <typename T, typename... Args>
         [[nodiscard]] T* alloc(Args... args) noexcept
             requires std::same_as<Type, stack::Loose>;
+
+        /**
+         * @brief Resize @p oldMemory block from @p oldSize to @p newSize while minimizing fragmentation.
+         *
+         * @note This does not resize the stack.
+         * @note Passing `0` as @p newSize will not deallocate memory, and is undefined behavior in release mode.
+         * @note Slower compared to @ref resizeFast, which doesn't optimize memory footprint.
+         *
+         * @warning In **Release Builds** safety checks for nullptr, and 0 sizes are disabled.
+         *
+         * @param oldMemory The pointer to the memory to resize.
+         * @param oldSize   The current size of @p oldMemory.
+         * @param newSize   The size to resize @p oldMemory to.
+         * @param alignment The required alignment.
+         *                  Default: 8-bytes on 64-bit machine.
+         *
+         * @return A reference to the new memory location in stack.
+         */
+        [[nodiscard]] void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
+                                   std::size_t alignment = sizeof(void*));
 
 
         /**
@@ -167,6 +191,8 @@ namespace pmm
 #ifdef ENABLE_PMM_TESTS
     // FRIEND TEST macros for verifying internal states
     #include <gtest/gtest_prod.h>
+
+
 
 
         FRIEND_TEST(StackInitialization, InitializesDefaultStateAndBuffer);

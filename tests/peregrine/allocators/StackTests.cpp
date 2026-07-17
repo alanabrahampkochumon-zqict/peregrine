@@ -72,7 +72,7 @@ TEST_F(StackTests, Size_ReturnsTheSizeOfTheStack) { EXPECT_EQ(stackSize, stack.s
 TEST_F(StackTests, AllocBytes_ReturnsNonNullPtrOnEmptyStack)
 {
     const auto dataPtr = stack.allocBytes(120);
-    ASSERT_NE(nullptr, dataPtr);
+    EXPECT_NE(nullptr, dataPtr);
 }
 
 
@@ -85,9 +85,9 @@ TEST_F(StackTests, AllocBytes_ReturnNonNullPtrOnNonEmptyStack)
     const auto dataPtr1 = stack.allocBytes(500);
     const auto dataPtr2 = stack.allocBytes(500);
 
-    ASSERT_NE(nullptr, dataPtr1);
-    ASSERT_NE(nullptr, dataPtr2);
-    ASSERT_NE(dataPtr1, dataPtr2);
+    EXPECT_NE(nullptr, dataPtr1);
+    EXPECT_NE(nullptr, dataPtr2);
+    EXPECT_NE(dataPtr1, dataPtr2);
 }
 
 
@@ -150,7 +150,7 @@ TEST_P(StackAllocationAlignment, AllocBytes_AlwaysReturnAnAlignedMemoryAddress)
     const void* dataAddress = stack.allocBytes(blockSize, alignment);
 
     // Verify returned address is 0 by using 2^n module trick
-    ASSERT_EQ(0, reinterpret_cast<uintptr_t>(dataAddress) & (alignment - 1));
+    EXPECT_EQ(0, reinterpret_cast<uintptr_t>(dataAddress) & (alignment - 1));
 }
 
 
@@ -165,11 +165,11 @@ TEST_P(StackAllocationAlignment, AllocBytes_AlwaysReturnAnAlignedMemoryAddress)
 TEST_F(StackTests, Alloc_ReturnsNonNullPtrOnEmptyStack)
 {
     const auto vector = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
-    ASSERT_NE(nullptr, vector);
-    ASSERT_FLOAT_EQ(1.0f, vector->x);
-    ASSERT_FLOAT_EQ(2.0f, vector->y);
-    ASSERT_FLOAT_EQ(3.0f, vector->z);
-    ASSERT_FLOAT_EQ(4.0f, vector->w);
+    EXPECT_NE(nullptr, vector);
+    EXPECT_FLOAT_EQ(1.0f, vector->x);
+    EXPECT_FLOAT_EQ(2.0f, vector->y);
+    EXPECT_FLOAT_EQ(3.0f, vector->z);
+    EXPECT_FLOAT_EQ(4.0f, vector->w);
 }
 
 
@@ -182,9 +182,9 @@ TEST_F(StackTests, Alloc_ReturnNonNullPtrOnNonEmptyStack)
     const auto dataPtr1 = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
     const auto dataPtr2 = stack.alloc<Vec4>(5.0f, 1.0f, 31.0f, 3.0f);
 
-    ASSERT_NE(nullptr, dataPtr1);
-    ASSERT_NE(nullptr, dataPtr2);
-    ASSERT_NE(dataPtr1, dataPtr2);
+    EXPECT_NE(nullptr, dataPtr1);
+    EXPECT_NE(nullptr, dataPtr2);
+    EXPECT_NE(dataPtr1, dataPtr2);
 }
 
 
@@ -195,15 +195,15 @@ TEST_F(StackTests, Alloc_RepeatedAllocationAndWritesDoNotCorruptData)
     const auto dataPtr1 = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
     const auto dataPtr2 = stack.alloc<Vec4>(5.0f, 1.0f, 31.0f, 3.0f);
 
-    ASSERT_FLOAT_EQ(1.0f, dataPtr1->x);
-    ASSERT_FLOAT_EQ(2.0f, dataPtr1->y);
-    ASSERT_FLOAT_EQ(3.0f, dataPtr1->z);
-    ASSERT_FLOAT_EQ(4.0f, dataPtr1->w);
+    EXPECT_FLOAT_EQ(1.0f, dataPtr1->x);
+    EXPECT_FLOAT_EQ(2.0f, dataPtr1->y);
+    EXPECT_FLOAT_EQ(3.0f, dataPtr1->z);
+    EXPECT_FLOAT_EQ(4.0f, dataPtr1->w);
 
-    ASSERT_FLOAT_EQ(5.0f, dataPtr2->x);
-    ASSERT_FLOAT_EQ(1.0f, dataPtr2->y);
-    ASSERT_FLOAT_EQ(31.0f, dataPtr2->z);
-    ASSERT_FLOAT_EQ(3.0f, dataPtr2->w);
+    EXPECT_FLOAT_EQ(5.0f, dataPtr2->x);
+    EXPECT_FLOAT_EQ(1.0f, dataPtr2->y);
+    EXPECT_FLOAT_EQ(31.0f, dataPtr2->z);
+    EXPECT_FLOAT_EQ(3.0f, dataPtr2->w);
 }
 
 
@@ -224,7 +224,150 @@ TEST_P(StackAllocationAlignment, Alloc_AlwaysReturnAnAlignedMemoryAddress)
     const auto vector = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
     // Verify returned address is 0 by using 2^n module trick
-    ASSERT_EQ(0, reinterpret_cast<uintptr_t>(vector) & (alignof(Vec4) - 1));
+    EXPECT_EQ(0, reinterpret_cast<uintptr_t>(vector) & (alignof(Vec4) - 1));
+}
+
+
+/**************************************
+ *                                    *
+ *            RESIZE TESTS            *
+ *                                    *
+ **************************************/
+
+/** @brief Verify that resizing the latest allocation to a smaller size, returns the same address. */
+TEST_F(StackTests, Resize_LatestAllocationSmallerSize_ReturnsSameAddress)
+{
+    constexpr auto oldSize = 128, newSize = 64;
+    const auto oldMemory = stack.allocBytes(oldSize);
+    const auto newMemory = stack.resize(oldMemory, oldSize, newSize);
+
+    EXPECT_EQ(oldMemory, newMemory);
+}
+
+/** @brief Verify that resizing the latest allocation to a smaller size, leaves memory for new allocations. */
+TEST_F(StackTests, Resize_LatestAllocationSmallerSize_LeavesMemoryForNewAllocations)
+{
+    constexpr auto padding    = 128;
+    constexpr auto count      = 1024;
+    const std::size_t oldSize = stackSize - padding, newSize = 128;
+    const auto oldMemory = stack.allocBytes(oldSize);
+    // Resize
+    static_cast<void>(stack.resize(oldMemory, oldSize, newSize));
+
+    // Near limit memory allocation, but there is a lot of leeway. 4_KB out of ~5_KB
+    constexpr auto newAllocationSize = sizeof(int) * count;
+    const auto newMemory             = static_cast<int*>(stack.allocBytes(newAllocationSize));
+
+    // NOTE: While the read write cycles are unnecessary in debug mode due to asserts,
+    //       we need them to verify in release mode.
+    // Write into memory
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        newMemory[i] = static_cast<int>(2813 + i);
+    }
+    // Allocate a new vector
+    const auto vector = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+    // Confirm neither of the latest allocations are corrupted
+    EXPECT_FLOAT_EQ(1.0f, vector->x);
+    EXPECT_FLOAT_EQ(2.0f, vector->y);
+    EXPECT_FLOAT_EQ(3.0f, vector->z);
+    EXPECT_FLOAT_EQ(4.0f, vector->w);
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+}
+
+
+/** @brief Verify that resizing the latest allocation to a larger size, returns the same address. */
+TEST_F(StackTests, Resize_LatestAllocationLargerSize_ReturnsSameAddress)
+{
+    constexpr auto oldSize = 128, newSize = 256;
+    const auto oldMemory = stack.allocBytes(oldSize);
+    const auto newMemory = stack.resize(oldMemory, oldSize, newSize);
+
+    EXPECT_EQ(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing the latest allocation to a larger size, resizes the memory. */
+TEST_F(StackTests, Resize_LatestAllocationLargerSize_ResizesMemory)
+{
+    constexpr auto count          = 128;
+    constexpr std::size_t oldSize = 128, newSize = sizeof(int) * count;
+    const auto oldMemory = stack.allocBytes(oldSize);
+    const auto newMemory = static_cast<int*>(stack.resize(oldMemory, oldSize, newSize));
+
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        newMemory[i] = static_cast<int>(2813 + i);
+    }
+
+    // Allocate a new vector
+    static_cast<void>(stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+}
+
+
+/** @brief Verify that resizing any allocation to a smaller size, returns the same address. */
+TEST_F(StackTests, Resize_SmallerSize_ReturnsSameAddress)
+{
+    constexpr auto oldSize = 128, newSize = 64;
+    const auto oldMemory = stack.allocBytes(oldSize);
+
+    static_cast<void>(stack.allocBytes(oldSize)); // Second allocation
+
+    const auto newMemory = stack.resize(oldMemory, oldSize, newSize);
+
+    EXPECT_EQ(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing any allocation to a larger size, returns the new address. */
+TEST_F(StackTests, Resize_LargerSize_ReturnsNewAddress)
+{
+    constexpr auto oldSize = 128, newSize = 256;
+    const auto oldMemory = stack.allocBytes(oldSize);
+
+    static_cast<void>(stack.allocBytes(oldSize)); // Second allocation
+
+    const auto newMemory = stack.resize(oldMemory, oldSize, newSize);
+
+    EXPECT_NE(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing any allocation to a larger size, resizes the memory. */
+TEST_F(StackTests, Resize_LargerSize_ResizesMemory)
+{
+    constexpr auto count          = 128;
+    constexpr std::size_t oldSize = 128, newSize = sizeof(int) * count;
+    const auto oldMemory = stack.allocBytes(oldSize);
+
+    static_cast<void>(stack.allocBytes(oldSize)); // Second allocation
+
+    const auto newMemory = static_cast<int*>(stack.resize(oldMemory, oldSize, newSize));
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        newMemory[i] = static_cast<int>(2813 + i);
+    }
+
+
+    // Allocate a new vector
+    static_cast<void>(stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
 }
 
 
@@ -376,14 +519,14 @@ TEST_F(StackTests, Allocation_GreaterThanSize_TriggersAssertion)
 
 
 /**
- * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
+ * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing nullptr.
  */
 TEST_F(StackTests, Free_Nullptr_TriggersAssertion) { EXPECT_DEBUG_DEATH(stack.free(nullptr), ""); }
 
 
 /**
- * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
+ * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing unallocated valid memory space.
  */
 TEST_F(StackTests, Free_UnallocatedMemoryAddress_TriggersAssertion)
@@ -395,7 +538,7 @@ TEST_F(StackTests, Free_UnallocatedMemoryAddress_TriggersAssertion)
 
 
 /**
- * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
+ * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing memory space below the base memory address.
  */
 TEST_F(StackTests, Free_BelowBufferMemoryAddress_TriggersAssertion)
@@ -412,7 +555,7 @@ TEST_F(StackTests, Free_BelowBufferMemoryAddress_TriggersAssertion)
 
 
 /**
- * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
+ * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing memory above maximum memory address.
  */
 TEST_F(StackTests, Free_BeyondCapacity_TriggersAssertion)
@@ -422,6 +565,25 @@ TEST_F(StackTests, Free_BeyondCapacity_TriggersAssertion)
     // Move 1 below assume header size
     EXPECT_DEBUG_DEATH(stack.free(memory + stackSize), "");
 }
+
+
+/**
+ * @brief Verify that stack resize triggers assertion in *DEBUG MODE*,
+ *        when trying to resize a nullptr.
+ */
+TEST_F(StackTests, Resize_Nullptr_TriggersAssertion)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(nullptr, 120, 256)), ""); }
+
+/**
+ * @brief Verify that stack resize triggers assertion in *DEBUG MODE*,
+ *        when trying to resize to 0.
+ */
+TEST_F(StackTests, Resize_ToZero_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(address, 128, 0)), "");
+}
+
 
 #endif
 
