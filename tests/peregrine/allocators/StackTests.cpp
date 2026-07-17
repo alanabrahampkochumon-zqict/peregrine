@@ -213,7 +213,7 @@ TEST_F(StackTests, Alloc_HeaderIsStoredBehindReturnedAddress)
     const auto vector = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
     const auto header = reinterpret_cast<pmm::LooseStackHeader*>(vector - sizeof(pmm::LooseStackHeader));
-    EXPECT_GE(alignof(Vec4), header->padding);
+    EXPECT_GE(header->padding, alignof(Vec4));
 }
 
 
