@@ -237,7 +237,7 @@ TEST_F(StackTests, NearFullStack_TriggersAssertion)
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
  *        given an uneven alignment(non-powers of 2).
  */
-TEST_P(StackAllocationAlignmentNonBinaryPowers, TriggersAssertion)
+TEST_P(StackAllocationAlignmentNonBinaryPowers, AllocationInFullStack_TriggersAssertion)
 {
     // Allocate a big chunk to fill the stack near capacity
     pmm::Stack stack(5120);
@@ -248,7 +248,58 @@ TEST_P(StackAllocationAlignmentNonBinaryPowers, TriggersAssertion)
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
  *        given alignment greater than 128.
  */
-TEST_F(StackTests, TriggersAssertion) { EXPECT_DEBUG_DEATH(static_cast<void>(stack.alloc(500, 255)), ""); }
+TEST_F(StackTests, AllocationGreaterThanSize_TriggersAssertion)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.alloc(500, 255)), ""); }
+
+
+/**
+ * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
+ *        when freeing nullptr.
+ */
+TEST_F(StackTests, FreeWithNullptr_TriggersAssertion)
+{ EXPECT_DEBUG_DEATH(stack.free(nullptr), ""); }
+
+
+/**
+ * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
+ *        when freeing unallocated valid memory space.
+ */
+TEST_F(StackTests, FreeingUnallocatedMemory_TriggersAssertion)
+{
+    constexpr auto size = 512;
+    const auto memory   = static_cast<char*>(stack.alloc(size));
+    EXPECT_DEBUG_DEATH(stack.free(memory + size + 1), "");
+}
+
+
+/**
+ * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
+ *        when freeing memory space below the base memory address.
+ */
+TEST_F(StackTests, FreeingBelowBufferMemory_TriggersAssertion)
+{
+    constexpr auto size      = 512;
+    constexpr auto alignment = 8;
+    // We are assuming worst case padding of 7 for alignment
+    constexpr auto assumedHeaderSize = sizeof(pmm::LooseStackHeader) + alignment - 1;
+
+    const auto memory = static_cast<char*>(stack.alloc(size, alignment));
+    // Move 1 below assume header size
+    EXPECT_DEBUG_DEATH(stack.free(memory - assumedHeaderSize - 1), "");
+}
+
+/**
+ * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
+ *        when freeing memory above maximum memory address.
+ */
+TEST_F(StackTests, FreeingMemoryBeyondCapacity_TriggersAssertion)
+{
+    constexpr auto size      = 512;
+    const auto memory = static_cast<char*>(stack.alloc(size, 8));
+    // Move 1 below assume header size
+    EXPECT_DEBUG_DEATH(stack.free(memory + stackSize), "");
+}
+
 #endif
 
 
