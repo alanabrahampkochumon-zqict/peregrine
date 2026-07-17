@@ -9,6 +9,7 @@
  */
 
 
+#include <array>
 #include <gtest/gtest.h>
 #include <peregrine/allocators/Stack.h>
 #include <peregrine/utils/Constants.h>
@@ -21,7 +22,7 @@
  **************************************/
 
 using namespace pmm::constants;
-class StackAllocation: public ::testing::Test
+class StackTests: public ::testing::Test
 {
 
 public:
@@ -66,7 +67,7 @@ TEST(StackGetters, SizeReturnsTheSizeOfTheStack)
 
 
 /** @brief Verify that stack allocation returns a valid pointer, given an empty stack. */
-TEST_F(StackAllocation, ReturnsNonNullPtrOnEmptyStack)
+TEST_F(StackTests, ReturnsNonNullPtrOnEmptyStack)
 {
     const auto dataPtr = stack.alloc(120);
     ASSERT_NE(nullptr, dataPtr);
@@ -74,7 +75,7 @@ TEST_F(StackAllocation, ReturnsNonNullPtrOnEmptyStack)
 
 
 /** @brief Verify that stack allocation returns a valid pointer, given a non-empty stack with memory to spare. */
-TEST_F(StackAllocation, ReturnNonNullPtrOnNonEmptyStack)
+TEST_F(StackTests, ReturnNonNullPtrOnNonEmptyStack)
 {
     const auto dataPtr1 = stack.alloc(500);
     const auto dataPtr2 = stack.alloc(500);
@@ -87,7 +88,7 @@ TEST_F(StackAllocation, ReturnNonNullPtrOnNonEmptyStack)
 
 
 /** @brief Verify that allocated memory maintains data integrity. */
-TEST_F(StackAllocation, RepeatedAllocationAndWritesDoNotCorruptData)
+TEST_F(StackTests, RepeatedAllocationAndWritesDoNotCorruptData)
 {
     const std::size_t array1Len = 50;
     const std::size_t array2Len = 25;
@@ -121,10 +122,10 @@ TEST_F(StackAllocation, RepeatedAllocationAndWritesDoNotCorruptData)
 
 
 /** @brief Verify that allocate always return an address aligned to the specified boundary. */
-TEST_F(StackAllocation, HeaderIsStoredBehindReturnedAddress)
+TEST_F(StackTests, HeaderIsStoredBehindReturnedAddress)
 {
     constexpr auto alignment = 8;
-    auto memoryStart         = static_cast<char*>(stack.alloc(500, alignment));
+    const auto memoryStart   = static_cast<char*>(stack.alloc(500, alignment));
 
     const auto header = reinterpret_cast<pmm::LooseStackHeader*>(memoryStart - sizeof(pmm::LooseStackHeader));
     EXPECT_GE(alignment, header->padding);
@@ -145,13 +146,79 @@ TEST_P(StackAllocationAlignment, AlwaysReturnAnAlignedMemoryAddress)
 }
 
 
+/** @brief Verify that stack free, frees up memory for subsequent allocations. */
+TEST_F(StackTests, Free_FreesMemoryForSubsequentAllocations)
+{
+    constexpr std::size_t alignment = 8;
+    const auto usableSize = stackSize - 128; // A big offset is used since we need to make room for header + alignment
+    const auto freeMemory = static_cast<char*>(stack.alloc(usableSize, alignment));
+    // Free the memory
+    stack.free(freeMemory);
+
+    // Allocation another buffer
+    const auto elementCount  = (stackSize - alignment - 1) / sizeof(int);
+    const auto newAllocation = static_cast<int*>(stack.alloc(elementCount * sizeof(int)));
+
+    // Write to new allocation
+    for (std::size_t i = 0; i < elementCount; ++i)
+    {
+        newAllocation[i] = static_cast<int>(i + 3812);
+    }
+
+    // Verify the allocation is successful with data writes
+    for (std::size_t i = 0; i < elementCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(i + 3812), newAllocation[i]);
+    }
+}
+
+/** @brief Verify that stack free, makes the passed-in pointer a nullptr. */
+TEST_F(StackTests, Free_MultipleTimesMakesRoomInTheStack)
+{
+    constexpr std::size_t alignment = 8;
+    // Last 128 is the offset used to make room for header + alignment
+    const std::array<std::size_t, 4> allocationSizes{ 128, 256, 1024, stackSize - 128 - 256 - 1024 - 128 };
+    std::array<void*, 4> memory;
+
+    // Allocate Memory
+    for (std::size_t i = 0; i < 4; ++i)
+    {
+        memory[i] = stack.alloc(allocationSizes[i], alignment);
+    }
+
+    // Free the memory
+    // Due to rotation of unsigned types, we need to start from sizeof(array) and inside the loop use -1 to
+    // properly index into the array
+    // Data must be freed in the reverse order of allocation
+    for (std::size_t i = 4; i > 0; --i)
+    {
+        stack.free(memory[i - 1]);
+    }
+
+    // Allocation another buffer with a large enough size that proper allocation will not happen without proper frees
+    const auto elementCount  = (stackSize - alignment - 1) / sizeof(int);
+    const auto newAllocation = static_cast<int*>(stack.alloc(elementCount * sizeof(int)));
+
+    // Write to new allocation
+    for (std::size_t i = 0; i < elementCount; ++i)
+    {
+        newAllocation[i] = static_cast<int>(i + 3812);
+    }
+
+    // Verify the allocation is successful with data writes
+    for (std::size_t i = 0; i < elementCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(i + 3812), newAllocation[i]);
+    }
+}
+
 
 #ifndef NDEBUG
 /**
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*, when allocating memory greater
  *        than the stack capacity.
  */
-TEST_F(StackAllocation, GreaterThanCapacity_TriggersAssertionInDebugMode)
+TEST_F(StackTests, GreaterThanCapacity_TriggersAssertionInDebugMode)
 { EXPECT_DEBUG_DEATH(static_cast<void>(stack.alloc(stackSize + 10)), ""); }
 
 
@@ -159,7 +226,7 @@ TEST_F(StackAllocation, GreaterThanCapacity_TriggersAssertionInDebugMode)
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
  *        given a stack nearing its capacity(allocation > free).
  */
-TEST_F(StackAllocation, NearFullStack_TriggersAssertion)
+TEST_F(StackTests, NearFullStack_TriggersAssertion)
 {
     // Allocate a big chunk to fill the stack near capacity
     static_cast<void>(stack.alloc(stackSize - 50));
@@ -181,7 +248,7 @@ TEST_P(StackAllocationAlignmentNonBinaryPowers, TriggersAssertion)
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
  *        given alignment greater than 128.
  */
-TEST_F(StackAllocation, TriggersAssertion) { EXPECT_DEBUG_DEATH(static_cast<void>(stack.alloc(500, 255)), ""); }
+TEST_F(StackTests, TriggersAssertion) { EXPECT_DEBUG_DEATH(static_cast<void>(stack.alloc(500, 255)), ""); }
 #endif
 
 
@@ -206,7 +273,7 @@ namespace pmm
     }
 
     /** @brief Verify that allocation moves the stack offset by at least the request size. */
-    TEST_F(StackAllocation, MovesOffsetAtleastByAllocationSize)
+    TEST_F(StackTests, Initialization_MovesOffsetAtleastByAllocationSize)
     {
         // Note: Due to alignment and header storage we cannot guarantee
         // that the allocation will be exactly the size

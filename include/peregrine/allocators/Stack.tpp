@@ -74,11 +74,10 @@ namespace pmm
 
         // TODO: Disable warning
         const auto header     = reinterpret_cast<LooseStackHeader*>(static_cast<char*>(ptr) - sizeof(LooseStackHeader));
-        const auto prevOffset = reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(_buffer);
+        // Previous offset is the current ptr's position - whatever space we assigned for padding
+        const auto prevOffset = reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(_buffer) - header->padding;
         // Move the pointer back to the previous offset, and then by the header size.
-        _offset -= prevOffset + header->padding;
-
-        ptr = nullptr;
+        _offset = prevOffset;
     }
 
     template <stack::StackType Type>

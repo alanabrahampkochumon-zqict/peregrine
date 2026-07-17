@@ -88,14 +88,9 @@ namespace pmm
         [[nodiscard]] void* alloc(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept
             requires std::same_as<Type, stack::Loose>;
 
-        // TODO: Add test
-        // TODO: Add implementation
         // TODO: Add warning to alloc
         /**
          * @brief Free memory from the stack to the @p ptr marker.
-         *
-         * @note The function will mark the passed-in pointer as `nullptr`,
-         *       but will not mark any intermediate pointers as `nullptr`.
          *
          * @warning Does not check for invalid states including out-of-bounds and `nullptr` free in *Release Mode*.
          *
@@ -145,10 +140,8 @@ namespace pmm
     #include <gtest/gtest_prod.h>
 
 
-
-
         FRIEND_TEST(StackInitialization, InitializesDefaultStateAndBuffer);
-        FRIEND_TEST(StackAllocation, MovesOffsetAtleastByAllocationSize);
+        FRIEND_TEST(StackTests, Initialization_MovesOffsetAtleastByAllocationSize);
 #endif
     };
 
