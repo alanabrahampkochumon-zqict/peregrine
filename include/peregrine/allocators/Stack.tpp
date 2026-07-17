@@ -73,12 +73,19 @@ namespace pmm
         PMM_ASSERT_MSG(ptr >= _buffer && ptr <= _buffer + _offset, "Out-of-bounds free!");
 
         // TODO: Disable warning
-        const auto header     = reinterpret_cast<LooseStackHeader*>(static_cast<char*>(ptr) - sizeof(LooseStackHeader));
+        const auto header = reinterpret_cast<LooseStackHeader*>(static_cast<char*>(ptr) - sizeof(LooseStackHeader));
         // Previous offset is the current ptr's position - whatever space we assigned for padding
-        const auto prevOffset = reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(_buffer) - header->padding;
+        const auto prevOffset =
+            reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(_buffer) - header->padding;
         // Move the pointer back to the previous offset, and then by the header size.
         _offset = prevOffset;
     }
+
+
+    template <stack::StackType Type>
+    void Stack<Type>::freeAll()
+    { _offset = 0; }
+
 
     template <stack::StackType Type>
     PMM_INLINE Stack<Type>::~Stack() noexcept

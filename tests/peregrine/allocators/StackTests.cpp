@@ -172,7 +172,7 @@ TEST_F(StackTests, Free_FreesMemoryForSubsequentAllocations)
     }
 }
 
-/** @brief Verify that stack free, makes the passed-in pointer a nullptr. */
+/** @brief Verify that stack free, when called multiple times, free the allocated buffer. */
 TEST_F(StackTests, Free_MultipleTimesMakesRoomInTheStack)
 {
     constexpr std::size_t alignment = 8;
@@ -194,6 +194,40 @@ TEST_F(StackTests, Free_MultipleTimesMakesRoomInTheStack)
     {
         stack.free(memory[i - 1]);
     }
+
+    // Allocation another buffer with a large enough size that proper allocation will not happen without proper frees
+    const auto elementCount  = (stackSize - alignment - 1) / sizeof(int);
+    const auto newAllocation = static_cast<int*>(stack.alloc(elementCount * sizeof(int)));
+
+    // Write to new allocation
+    for (std::size_t i = 0; i < elementCount; ++i)
+    {
+        newAllocation[i] = static_cast<int>(i + 3812);
+    }
+
+    // Verify the allocation is successful with data writes
+    for (std::size_t i = 0; i < elementCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(i + 3812), newAllocation[i]);
+    }
+}
+
+
+/** @brief Verify that stack freeAll, frees the entire stack. */
+TEST_F(StackTests, FreeAll_FreesTheEntireStack)
+{
+    constexpr std::size_t alignment = 8;
+    // Last 128 is the offset used to make room for header + alignment
+    const std::array<std::size_t, 4> allocationSizes{ 128, 256, 1024, stackSize - 128 - 256 - 1024 - 128 };
+
+    // Allocate Memory
+    for (std::size_t i = 0; i < 4; ++i)
+    {
+        static_cast<void>(stack.alloc(allocationSizes[i], alignment));
+    }
+
+    // Free the entire memory
+    stack.freeAll();
 
     // Allocation another buffer with a large enough size that proper allocation will not happen without proper frees
     const auto elementCount  = (stackSize - alignment - 1) / sizeof(int);
@@ -256,8 +290,7 @@ TEST_F(StackTests, AllocationGreaterThanSize_TriggersAssertion)
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
  *        when freeing nullptr.
  */
-TEST_F(StackTests, FreeWithNullptr_TriggersAssertion)
-{ EXPECT_DEBUG_DEATH(stack.free(nullptr), ""); }
+TEST_F(StackTests, FreeWithNullptr_TriggersAssertion) { EXPECT_DEBUG_DEATH(stack.free(nullptr), ""); }
 
 
 /**
@@ -288,14 +321,15 @@ TEST_F(StackTests, FreeingBelowBufferMemory_TriggersAssertion)
     EXPECT_DEBUG_DEATH(stack.free(memory - assumedHeaderSize - 1), "");
 }
 
+
 /**
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
  *        when freeing memory above maximum memory address.
  */
 TEST_F(StackTests, FreeingMemoryBeyondCapacity_TriggersAssertion)
 {
-    constexpr auto size      = 512;
-    const auto memory = static_cast<char*>(stack.alloc(size, 8));
+    constexpr auto size = 512;
+    const auto memory   = static_cast<char*>(stack.alloc(size, 8));
     // Move 1 below assume header size
     EXPECT_DEBUG_DEATH(stack.free(memory + stackSize), "");
 }
@@ -332,6 +366,22 @@ namespace pmm
 
         static_cast<void>(stack.alloc(allocationSize));
         EXPECT_GE(stack._offset, allocationSize);
+    }
+
+    /** @brief Verify that freeAll moves the offset back to zero. */
+    TEST_F(StackTests, FreeAll_MovesOffsetToZero)
+    {
+        constexpr auto size = 512;
+        // Initially allocate some memory
+        static_cast<void>(stack.alloc(size));
+        // Assert initial offset state is greater than size
+        EXPECT_GT(stack._offset, size);
+
+        // Free the entire stack
+        stack.freeAll();
+
+        // Offset is reset to 0
+        EXPECT_EQ(0, stack._offset);
     }
 
 } // namespace pmm

@@ -79,6 +79,8 @@ namespace pmm
         /**
          * @brief Allocate @p size bytes of memory on the stack.
          *
+         * @warning Does not check for invalid states in *Release Mode*.
+         *
          * @param[in] size      Number of bytes to allocate.
          * @param[in] alignment Base alignment of the allocation.
          *                       Default: 8-bytes on 64-bit machine.
@@ -88,16 +90,26 @@ namespace pmm
         [[nodiscard]] void* alloc(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept
             requires std::same_as<Type, stack::Loose>;
 
-        // TODO: Add warning to alloc
+
         /**
          * @brief Free memory from the stack to the @p ptr marker.
          *
          * @warning Does not check for invalid states including out-of-bounds and `nullptr` free in *Release Mode*.
          *
          * @param[in,out] ptr The pointer to free upto.
+         *
+         * @relatedalso freeAll
          */
         void free(void* ptr) noexcept
             requires std::same_as<Type, stack::Loose>;
+
+
+        /**
+         * @brief Free the entire stack, resetting to a fresh state.
+         *
+         * @relatedalso  free
+         */
+        void freeAll();
 
 
         // TODO: Implementation (SPLIT OUT to Deque)
@@ -142,6 +154,7 @@ namespace pmm
 
         FRIEND_TEST(StackInitialization, InitializesDefaultStateAndBuffer);
         FRIEND_TEST(StackTests, Initialization_MovesOffsetAtleastByAllocationSize);
+        FRIEND_TEST(StackTests, FreeAll_MovesOffsetToZero);
 #endif
     };
 
