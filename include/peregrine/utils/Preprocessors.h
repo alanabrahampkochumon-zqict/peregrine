@@ -133,7 +133,7 @@ inline void logAssertion(const char* condition, const char* message, const char*
 /**
  * @brief Compiler specific inlining syntax.
  */
-#ifdef _MSC_VER
+#if defined(_MSC_VER) && !defined(__clang__)
     #define PMM_INLINE __forceinline inline
 #elif defined(__GNUC__) || defined(__clang__)
     #define PMM_INLINE inline __attribute__((always_inline))

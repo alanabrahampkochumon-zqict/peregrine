@@ -132,7 +132,7 @@ TEST_F(StackTests, AllocBytes_HeaderIsStoredBehindReturnedAddress)
     constexpr auto alignment = 8;
     const auto memoryStart   = static_cast<char*>(stack.allocBytes(500, alignment));
 
-    const auto header = reinterpret_cast<pmm::LooseStackHeader*>(memoryStart - sizeof(pmm::LooseStackHeader));
+    const auto header = reinterpret_cast<pmm::LooseStackHeader*>(reinterpret_cast<char*>(memoryStart) - sizeof(pmm::LooseStackHeader));
     EXPECT_GE(header->padding, alignment);
 }
 
@@ -146,7 +146,7 @@ TEST_P(StackAllocationAlignment, AllocBytes_AlwaysReturnAnAlignedMemoryAddress)
     const auto alignment = this->GetParam();
     const auto blockSize = 5 * alignment;
 
-    pmm::Stack stack{ 8192 }; // 8KB Stack
+    pmm::Stack<> stack{ 8192 }; // 8KB Stack
     const void* dataAddress = stack.allocBytes(blockSize, alignment);
 
     // Verify returned address is 0 by using 2^n module trick
@@ -212,7 +212,7 @@ TEST_F(StackTests, Alloc_HeaderIsStoredBehindReturnedAddress)
 {
     const auto vector = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
-    const auto header = reinterpret_cast<pmm::LooseStackHeader*>(vector - sizeof(pmm::LooseStackHeader));
+    const auto header = reinterpret_cast<pmm::LooseStackHeader*>(reinterpret_cast<char*>(vector) - sizeof(pmm::LooseStackHeader));
     EXPECT_GE(header->padding, alignof(Vec4));
 }
 
@@ -220,7 +220,7 @@ TEST_F(StackTests, Alloc_HeaderIsStoredBehindReturnedAddress)
 /** @brief Verify that allocation using alloc always return an address aligned to the alignment of the type. */
 TEST_P(StackAllocationAlignment, Alloc_AlwaysReturnAnAlignedMemoryAddress)
 {
-    pmm::Stack stack{ 512 };
+    pmm::Stack<> stack{ 512 };
     const auto vector = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
     // Verify returned address is 0 by using 2^n module trick
@@ -601,7 +601,7 @@ namespace pmm
     TEST(StackInitialization, InitializesDefaultStateAndBuffer)
     {
         constexpr std::size_t sizeInBytes = 512;
-        const Stack stack{ sizeInBytes };
+        const Stack<> stack{ sizeInBytes };
 
         EXPECT_EQ(sizeInBytes, stack._size);
         EXPECT_EQ(0, stack._offset);

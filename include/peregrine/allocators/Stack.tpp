@@ -56,7 +56,7 @@ namespace pmm
         // Store the header behind the allocated address
         const auto currentAddress = _buffer + _offset;
         auto* header              = reinterpret_cast<LooseStackHeader*>(currentAddress - sizeof(LooseStackHeader));
-        header->padding           = static_cast<uint8_t>(padding);
+        header->padding           = padding;
 
         _offset += size;
         memset(currentAddress, 0, size); // Zero out memory(TODO: Remove when using HAL)
