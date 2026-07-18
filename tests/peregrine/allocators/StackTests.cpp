@@ -540,7 +540,7 @@ TEST_F(StackTests, FreeAll_FreesTheEntireStack)
 
 
 
-/** @brief Verify that stack free, frees the entire stack. */
+/** @brief Verify that stack free, frees the buffer for future allocations. */
 TEST_F(StackTests, Free_FreesMemoryForSubsequentAllocations)
 {
 
@@ -577,6 +577,50 @@ TEST_F(StackTests, Free_CallsClassDestructorForNonTrivialTypes)
     stack.free(nonTrivial);
 
     EXPECT_EQ(1, numDestructorCalls);
+}
+
+
+/** @brief Verify that stack free, frees the buffer for future allocations. */
+TEST_F(StackTests, FreeV_FreesMemoryForSubsequentAllocations)
+{
+
+    // NOTE: 64 bytes is some leeway for buffer header and alignment
+    constexpr auto leeway = 64;
+    // Should saturate the buffer as 4 * 1200 = 4800, near buffer size of 5_KB
+    // Allocate some test data
+    const auto listData = stack.allocV<int>(1200);
+    // Free it
+    stack.freeV(listData);
+
+    const auto intV = stack.allocV<int>(STACK_SIZE / sizeof(int) - leeway);
+
+    // Allocate Memory
+    for (std::size_t i = 0; i < intV.size(); ++i)
+    {
+        intV[i] = static_cast<int>(i + 316);
+    }
+
+    // Verify the allocation is successful with data writes
+    for (std::size_t i = 0; i < intV.size(); ++i)
+    {
+        EXPECT_EQ(static_cast<int>(i + 316), intV[i]);
+    }
+}
+
+
+/** @brief Verify that stack freeV, calls class destructor for each data member. */
+TEST_F(StackTests, FreeV_CallsClassDestructorForNonTrivialTypes)
+{
+    // @Warning Not thread safe
+    int numDestructorCalls = 0;
+    const auto numAllocation = 500;
+    auto nonTrivial  = stack.allocV<DestructionTracker>(numAllocation);
+    for (auto& item: nonTrivial)
+        item.destructorCalledCount = &numDestructorCalls;
+
+    stack.freeV(nonTrivial);
+
+    EXPECT_EQ(numAllocation, numDestructorCalls);
 }
 
 

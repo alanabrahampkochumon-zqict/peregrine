@@ -169,6 +169,7 @@ namespace pmm
          * @param[in] ptr The pointer to free upto.
          *
          * @relatedalso free
+         * @relatedalso freeV
          * @relatedalso freeAll
          */
         void freeBytes(void* ptr) noexcept
@@ -181,13 +182,32 @@ namespace pmm
          * @note Destructor is called for non-trivially destructible types.
          *
          * @tparam T  The data type of the memory pointer.
+         *
          * @param ptr The object pointer to free.
          *
+         * @relatedalso freeV
          * @relatedalso freeBytes
          * @relatedalso freeAll
          */
         template <typename T>
         void free(T* ptr) noexcept;
+
+
+        /**
+         * @brief Safely free memory allocated with @ref allocV<T>.
+         *
+         * @note Destructor is called for non-trivially destructible types.
+         *
+         * @tparam T  The data type of the memory pointer.
+         *
+         * @param vector The collection of objects to free.
+         *
+         * @relatedalso free
+         * @relatedalso freeBytes
+         * @relatedalso freeAll
+         */
+        template <typename T>
+        void freeV(std::span<T> vector) noexcept;
 
 
         /**

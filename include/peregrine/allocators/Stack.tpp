@@ -156,6 +156,21 @@ namespace pmm
 
 
     template <stack::StackType Type>
+    template <typename T>
+    void Stack<Type>::freeV(std::span<T> vector) noexcept
+    {
+        if constexpr (!std::is_trivially_destructible_v<T>)
+        {
+            for (auto& item : vector)
+            {
+                item.~T();
+            }
+        }
+        freeBytes(vector.data());
+    }
+
+
+    template <stack::StackType Type>
     void Stack<Type>::freeAll()
     { _offset = 0; }
 
