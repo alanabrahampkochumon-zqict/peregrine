@@ -9,6 +9,7 @@
  */
 
 
+#include "Mocks.h"
 #include "Utils.h"
 
 #include <array>
@@ -24,11 +25,12 @@
  **************************************/
 
 using namespace pmm::constants;
+constexpr static auto STACK_SIZE = 5_KB;
 class StackTests: public ::testing::Test
 {
 
 public:
-    std::size_t stackSize{ 5_KB };
+    std::size_t stackSize{ STACK_SIZE };
     pmm::Stack<> stack{ stackSize };
 };
 
@@ -95,9 +97,9 @@ TEST_F(StackTests, AllocBytes_ReturnNonNullPtrOnNonEmptyStack)
 /** @brief Verify that memory allocated using allocBytes maintains data integrity. */
 TEST_F(StackTests, AllocBytes_RepeatedAllocationAndWritesDoNotCorruptData)
 {
-    const std::size_t array1Len = 50;
-    const std::size_t array2Len = 25;
-    const auto array1           = static_cast<int*>(stack.allocBytes(array1Len * sizeof(int)));
+    constexpr std::size_t array1Len = 50;
+    constexpr std::size_t array2Len = 25;
+    const auto array1               = static_cast<int*>(stack.allocBytes(array1Len * sizeof(int)));
 
     // Write into first array
     for (std::size_t i = 0; i < array1Len; ++i)
@@ -437,13 +439,13 @@ TEST_F(StackTests, Resize_LargerSize_ResizesMemory)
  **************************************/
 
 /** @brief Verify that stack free, frees up memory for subsequent allocations. */
-TEST_F(StackTests, Free_FreesMemoryForSubsequentAllocations)
+TEST_F(StackTests, FreeBytes_FreesMemoryForSubsequentAllocations)
 {
     constexpr std::size_t alignment = 8;
     const auto usableSize = stackSize - 128; // A big offset is used since we need to make room for header + alignment
     const auto freeMemory = static_cast<char*>(stack.allocBytes(usableSize, alignment));
     // Free the memory
-    stack.free(freeMemory);
+    stack.freeBytes(freeMemory);
 
     // Allocation another buffer
     const auto elementCount  = (stackSize - alignment - 1) / sizeof(int);
@@ -463,7 +465,7 @@ TEST_F(StackTests, Free_FreesMemoryForSubsequentAllocations)
 }
 
 /** @brief Verify that stack free, when called multiple times, free the allocated buffer. */
-TEST_F(StackTests, Free_MultipleTimesMakesRoomInTheStack)
+TEST_F(StackTests, FreeBytes_MultipleTimesMakesRoomInTheStack)
 {
     constexpr std::size_t alignment = 8;
     // Last 128 is the offset used to make room for header + alignment
@@ -482,7 +484,7 @@ TEST_F(StackTests, Free_MultipleTimesMakesRoomInTheStack)
     // Data must be freed in the reverse order of allocation
     for (std::size_t i = 4; i > 0; --i)
     {
-        stack.free(memory[i - 1]);
+        stack.freeBytes(memory[i - 1]);
     }
 
     // Allocation another buffer with a large enough size that proper allocation will not happen without proper frees
@@ -537,6 +539,47 @@ TEST_F(StackTests, FreeAll_FreesTheEntireStack)
 }
 
 
+
+/** @brief Verify that stack free, frees the entire stack. */
+TEST_F(StackTests, Free_FreesMemoryForSubsequentAllocations)
+{
+
+    // NOTE: 64 bytes is some leeway for buffer header and alignment
+    constexpr auto leeway = 64;
+    // Allocate some test data
+    const auto largeData = stack.alloc<LargeData<STACK_SIZE - leeway>>();
+
+    // Free it
+    stack.free(largeData);
+
+    const auto intV = stack.allocV<int>(STACK_SIZE / sizeof(int) - leeway);
+
+    // Allocate Memory
+    for (std::size_t i = 0; i < intV.size(); ++i)
+    {
+        intV[i] = static_cast<int>(i + 316);
+    }
+
+    // Verify the allocation is successful with data writes
+    for (std::size_t i = 0; i < intV.size(); ++i)
+    {
+        EXPECT_EQ(static_cast<int>(i + 316), intV[i]);
+    }
+}
+
+
+/** @brief Verify that stack free, calls class destructor. */
+TEST_F(StackTests, Free_CallsClassDestructorForNonTrivialTypes)
+{
+    int numDestructorCalls = 0;
+    const auto nonTrivial  = stack.alloc<DestructionTracker>(&numDestructorCalls);
+
+    stack.free(nonTrivial);
+
+    EXPECT_EQ(1, numDestructorCalls);
+}
+
+
 #ifndef NDEBUG
 /**
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*, when allocating memory greater
@@ -588,18 +631,18 @@ TEST_F(StackTests, AllocV_SizeZero_TriggersAssertion)
  * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing nullptr.
  */
-TEST_F(StackTests, Free_Nullptr_TriggersAssertion) { EXPECT_DEBUG_DEATH(stack.free(nullptr), ""); }
+TEST_F(StackTests, FreeBytes_Nullptr_TriggersAssertion) { EXPECT_DEBUG_DEATH(stack.freeBytes(nullptr), ""); }
 
 
 /**
  * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing unallocated valid memory space.
  */
-TEST_F(StackTests, Free_UnallocatedMemoryAddress_TriggersAssertion)
+TEST_F(StackTests, FreeBytes_UnallocatedMemoryAddress_TriggersAssertion)
 {
     constexpr auto size = 512;
     const auto memory   = static_cast<char*>(stack.allocBytes(size));
-    EXPECT_DEBUG_DEATH(stack.free(memory + size + 1), "");
+    EXPECT_DEBUG_DEATH(stack.freeBytes(memory + size + 1), "");
 }
 
 
@@ -607,7 +650,7 @@ TEST_F(StackTests, Free_UnallocatedMemoryAddress_TriggersAssertion)
  * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing memory space below the base memory address.
  */
-TEST_F(StackTests, Free_BelowBufferMemoryAddress_TriggersAssertion)
+TEST_F(StackTests, FreeBytes_BelowBufferMemoryAddress_TriggersAssertion)
 {
     constexpr auto size      = 512;
     constexpr auto alignment = 8;
@@ -616,7 +659,7 @@ TEST_F(StackTests, Free_BelowBufferMemoryAddress_TriggersAssertion)
 
     const auto memory = static_cast<char*>(stack.allocBytes(size, alignment));
     // Move 1 below assume header size
-    EXPECT_DEBUG_DEATH(stack.free(memory - assumedHeaderSize - 1), "");
+    EXPECT_DEBUG_DEATH(stack.freeBytes(memory - assumedHeaderSize - 1), "");
 }
 
 
@@ -624,12 +667,12 @@ TEST_F(StackTests, Free_BelowBufferMemoryAddress_TriggersAssertion)
  * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing memory above maximum memory address.
  */
-TEST_F(StackTests, Free_BeyondCapacity_TriggersAssertion)
+TEST_F(StackTests, FreeBytes_BeyondCapacity_TriggersAssertion)
 {
     constexpr auto size = 512;
     const auto memory   = static_cast<char*>(stack.allocBytes(size, 8));
     // Move 1 below assume header size
-    EXPECT_DEBUG_DEATH(stack.free(memory + stackSize), "");
+    EXPECT_DEBUG_DEATH(stack.freeBytes(memory + stackSize), "");
 }
 
 

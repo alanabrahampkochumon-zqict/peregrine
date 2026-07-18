@@ -129,6 +129,7 @@ namespace pmm
         template <typename T>
         [[nodiscard]] constexpr std::span<T> allocV(std::size_t count) noexcept;
 
+
         /**
          * @brief Resize @p oldMemory block from @p oldSize to @p newSize while minimizing fragmentation.
          *
@@ -155,17 +156,31 @@ namespace pmm
          *
          * @warning Does not check for invalid states including out-of-bounds and `nullptr` free in *Release Mode*.
          *
-         * @param[in,out] ptr The pointer to free upto.
+         * @param[in] ptr The pointer to free upto.
          *
          * @relatedalso freeAll
+         * @relatedalso free
          */
-        void free(void* ptr) noexcept
+        void freeBytes(void* ptr) noexcept
             requires std::same_as<Type, stack::Loose>;
+
+
+        /**
+         * @brief Safely free memory allocated with @ref alloc<T>.
+         *
+         * @note Destructor is called for non-trivially destructible types.
+         *
+         * @tparam T  The data type of the memory pointer.
+         * @param ptr The object pointer to free.
+         */
+        template <typename T>
+        void free(T* ptr) noexcept;
 
 
         /**
          * @brief Free the entire stack, resetting to a fresh state.
          *
+         * @relatedalso  freeBytes
          * @relatedalso  free
          */
         void freeAll();

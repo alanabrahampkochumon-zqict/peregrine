@@ -16,6 +16,7 @@
 #include <bit>
 #include <limits>
 #include <new>
+#include <type_traits>
 
 
 namespace pmm
@@ -126,7 +127,7 @@ namespace pmm
 
 
     template <stack::StackType Type>
-    PMM_INLINE void Stack<Type>::free(void* ptr) noexcept
+    PMM_INLINE void Stack<Type>::freeBytes(void* ptr) noexcept
         requires std::same_as<Type, stack::Loose>
     {
         PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
@@ -139,6 +140,18 @@ namespace pmm
             reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(_buffer) - header->padding;
         // Move the pointer back to the previous offset, and then by the header size.
         _offset = prevOffset;
+    }
+
+
+    template <stack::StackType Type>
+    template <typename T>
+    void Stack<Type>::free(T* ptr) noexcept
+    {
+        if constexpr (!std::is_trivially_destructible_v<T>)
+        {
+            ptr->~T();
+        }
+        freeBytes(ptr);
     }
 
 
