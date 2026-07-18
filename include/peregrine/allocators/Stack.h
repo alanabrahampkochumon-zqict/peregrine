@@ -69,6 +69,7 @@ namespace pmm
          */
         [[nodiscard]] explicit Stack(std::size_t sizeInBytes) noexcept;
 
+
         /**
          * @brief Get the total capacity in bytes of the stack.
          * @return The total capacity of the stack.
@@ -97,6 +98,7 @@ namespace pmm
          * @brief Allocate an object of type @p T in the stack and initialize it with @p args.
          *
          * @note The object will be aligned to the default alignment of @p T.
+         * @note T must be aligned to a power of 2.
          *
          * @tparam T    The type of object to allocate.
          * @tparam Args The type of arguments to instantiate the object.
@@ -106,6 +108,7 @@ namespace pmm
          * @return A reference to the allocated memory.
          *
          * @relatedalso allocBytes
+         * @relatedalso allocV
          */
         template <typename T, typename... Args>
         [[nodiscard]] T* alloc(Args... args) noexcept
@@ -118,6 +121,7 @@ namespace pmm
          * @note This function allocates raw, uninitialized memory aligned to type @p T.
          *       Object constructors are NOT called automatically. You must manually construct
          *       the objects in the returned memory (e.g., using placement-new or `std::uninitialized_fill`).
+         * @note T must be aligned to a power of 2.
          *
          * @tparam T The type of object to allocate.
          *
@@ -125,6 +129,9 @@ namespace pmm
          *
          * @return A `std::span<T>` viewing the allocated memory block.
          *         Returns an empty span (`.empty() == true`) if the Arena lacks sufficient capacity.
+         *
+         * @relatedalso allocBytes
+         * @relatedalso alloc
          */
         template <typename T>
         [[nodiscard]] constexpr std::span<T> allocV(std::size_t count) noexcept;
@@ -154,12 +161,15 @@ namespace pmm
         /**
          * @brief Free memory from the stack to the @p ptr marker.
          *
+         * @note If you are freeing data allocated using @ref alloc or @ref allocV, use @ref alloc and @ref allocV
+         *       respectively, as they will call the class destructor for non-trivial types.
+         *
          * @warning Does not check for invalid states including out-of-bounds and `nullptr` free in *Release Mode*.
          *
          * @param[in] ptr The pointer to free upto.
          *
-         * @relatedalso freeAll
          * @relatedalso free
+         * @relatedalso freeAll
          */
         void freeBytes(void* ptr) noexcept
             requires std::same_as<Type, stack::Loose>;
@@ -172,6 +182,9 @@ namespace pmm
          *
          * @tparam T  The data type of the memory pointer.
          * @param ptr The object pointer to free.
+         *
+         * @relatedalso freeBytes
+         * @relatedalso freeAll
          */
         template <typename T>
         void free(T* ptr) noexcept;
@@ -180,8 +193,8 @@ namespace pmm
         /**
          * @brief Free the entire stack, resetting to a fresh state.
          *
-         * @relatedalso  freeBytes
          * @relatedalso  free
+         * @relatedalso  freeBytes
          */
         void freeAll();
 
