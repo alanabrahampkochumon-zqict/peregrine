@@ -111,6 +111,24 @@ namespace pmm
         [[nodiscard]] T* alloc(Args... args) noexcept
             requires std::same_as<Type, stack::Loose>;
 
+
+        /**
+         * @brief Allocate a contiguous memory block for an array of @p count objects.
+         *
+         * @note This function allocates raw, uninitialized memory aligned to type @p T.
+         *       Object constructors are NOT called automatically. You must manually construct
+         *       the objects in the returned memory (e.g., using placement-new or `std::uninitialized_fill`).
+         *
+         * @tparam T The type of object to allocate.
+         *
+         * @param count The total number of contiguous elements requested.
+         *
+         * @return A `std::span<T>` viewing the allocated memory block.
+         *         Returns an empty span (`.empty() == true`) if the Arena lacks sufficient capacity.
+         */
+        template <typename T>
+        [[nodiscard]] constexpr std::span<T> allocV(std::size_t count) noexcept;
+
         /**
          * @brief Resize @p oldMemory block from @p oldSize to @p newSize while minimizing fragmentation.
          *

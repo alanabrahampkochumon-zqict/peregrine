@@ -132,7 +132,8 @@ TEST_F(StackTests, AllocBytes_HeaderIsStoredBehindReturnedAddress)
     constexpr auto alignment = 8;
     const auto memoryStart   = static_cast<char*>(stack.allocBytes(500, alignment));
 
-    const auto header = reinterpret_cast<pmm::LooseStackHeader*>(reinterpret_cast<char*>(memoryStart) - sizeof(pmm::LooseStackHeader));
+    const auto header =
+        reinterpret_cast<pmm::LooseStackHeader*>(reinterpret_cast<char*>(memoryStart) - sizeof(pmm::LooseStackHeader));
     EXPECT_GE(header->padding, alignment);
 }
 
@@ -212,7 +213,8 @@ TEST_F(StackTests, Alloc_HeaderIsStoredBehindReturnedAddress)
 {
     const auto vector = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
-    const auto header = reinterpret_cast<pmm::LooseStackHeader*>(reinterpret_cast<char*>(vector) - sizeof(pmm::LooseStackHeader));
+    const auto header =
+        reinterpret_cast<pmm::LooseStackHeader*>(reinterpret_cast<char*>(vector) - sizeof(pmm::LooseStackHeader));
     EXPECT_GE(header->padding, alignof(Vec4));
 }
 
@@ -225,6 +227,62 @@ TEST_P(StackAllocationAlignment, Alloc_AlwaysReturnAnAlignedMemoryAddress)
 
     // Verify returned address is 0 by using 2^n module trick
     EXPECT_EQ(0, reinterpret_cast<uintptr_t>(vector) & (alignof(Vec4) - 1));
+}
+
+
+/** @brief Verify that allocV can allocate a span of primitives. */
+TEST_F(StackTests, AllocV_AllocatesWriteablePrimitiveArray)
+{
+    auto vectors = stack.allocV<int>(10);
+
+    // Write to buffer
+    for (std::size_t i = 0; i < vectors.size(); ++i)
+    {
+        vectors[i] = static_cast<int>(i + 5);
+    }
+
+
+    // Read from buffer
+    for (std::size_t i = 0; i < vectors.size(); ++i)
+    {
+        EXPECT_EQ(static_cast<int>(i + 5), vectors[i]);
+    }
+}
+
+
+/** @brief Verify that allocV can allocate a span of user defined types. */
+TEST_F(StackTests, AllocV_AllocatesWriteTypeArray)
+{
+    auto vectors = stack.allocV<Vec4>(10);
+
+    // Write to buffer
+    for (std::size_t i = 0; i < vectors.size(); ++i)
+    {
+        const auto mul = static_cast<float>(i);
+        vectors[i]     = { 1.0f * mul, 5.0f * mul, 3.0f * mul, 2.0f * mul };
+    }
+
+
+    // Read from buffer
+    for (std::size_t i = 0; i < vectors.size(); ++i)
+    {
+        const auto mul = static_cast<float>(i);
+        EXPECT_FLOAT_EQ(1.0f * mul, vectors[i].x);
+        EXPECT_FLOAT_EQ(5.0f * mul, vectors[i].y);
+        EXPECT_FLOAT_EQ(3.0f * mul, vectors[i].z);
+        EXPECT_FLOAT_EQ(2.0f * mul, vectors[i].w);
+    }
+}
+
+/** @brief Verify that allocation using allocV aligns to the type's alignment. */
+TEST_F(StackTests, AllocV_BaseAddressAlignedToAlignmentOfType)
+{
+    // Allocate some memory to throw off alignment
+    static_cast<void>(stack.allocBytes(2, 2));
+
+    const auto vector = stack.allocV<Vec4>(10);
+    // Base address % alignment == 0
+    EXPECT_EQ(0, reinterpret_cast<uintptr_t>(vector.data()) & (alignof(Vec4) - 1));
 }
 
 
@@ -506,7 +564,7 @@ TEST_F(StackTests, Allocation_NearFullStack_TriggersAssertion)
 TEST_P(StackAllocationAlignmentNonBinaryPowers, Allocation_InFullStack_TriggersAssertion)
 {
     // Allocate a big chunk to fill the stack near capacity
-    pmm::Stack stack(5120);
+    pmm::Stack<> stack(5120);
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocBytes(500, GetParam())), "");
 }
 
@@ -516,6 +574,14 @@ TEST_P(StackAllocationAlignmentNonBinaryPowers, Allocation_InFullStack_TriggersA
  */
 TEST_F(StackTests, Allocation_GreaterThanSize_TriggersAssertion)
 { EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocBytes(500, 255)), ""); }
+
+
+/**
+ * @brief Verify that stack allocV triggers assertion in *DEBUG MODE*,
+ *        when trying to allocate a zero size buffer.
+ */
+TEST_F(StackTests, AllocV_SizeZero_TriggersAssertion)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocV<int>(0)), ""); }
 
 
 /**
@@ -583,6 +649,8 @@ TEST_F(StackTests, Resize_ToZero_TriggersAssertion)
     const auto address = stack.allocBytes(128);
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(address, 128, 0)), "");
 }
+
+
 
 
 #endif

@@ -26,9 +26,19 @@ namespace pmm
         : _buffer{ new uint8_t[sizeInBytes] }, _size{ sizeInBytes }
     {}
 
+
     template <stack::StackType Type>
     PMM_INLINE constexpr std::size_t Stack<Type>::size() const noexcept
     { return _size; }
+    template <stack::StackType Type>
+    template <typename T>
+    constexpr std::span<T> Stack<Type>::allocV(std::size_t count) noexcept
+    {
+        PMM_ASSERT_MSG(count > 0, "[Stack]: Cannot allocate an array of size 0");
+
+        auto bytes = static_cast<T*>(allocBytes(sizeof(T) * count, alignof(T)));
+        return std::span(bytes, count);
+    }
 
 
 
@@ -86,7 +96,7 @@ namespace pmm
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
 
         // Compare the two offset and if they are equal then this the latest allocation in which case
-        const auto targetOffset = _offset - oldSize;
+        const auto targetOffset  = _offset - oldSize;
         const auto currentOffset = reinterpret_cast<uintptr_t>(oldMemory) - reinterpret_cast<uintptr_t>(_buffer);
 
         // If the current allocation requires a resize to a smaller buffer
