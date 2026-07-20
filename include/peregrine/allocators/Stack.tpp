@@ -31,6 +31,18 @@ namespace pmm
     template <stack::StackType Type>
     PMM_INLINE constexpr std::size_t Stack<Type>::size() const noexcept
     { return _size; }
+
+
+    template <stack::StackType Type>
+    constexpr std::size_t Stack<Type>::freeSize() const noexcept
+    { return _size - _offset; }
+
+
+    template <stack::StackType Type>
+    constexpr std::size_t Stack<Type>::usedSize() const noexcept
+    { return _offset; }
+
+
     template <stack::StackType Type>
     template <typename T>
     constexpr std::span<T> Stack<Type>::allocV(std::size_t count) noexcept

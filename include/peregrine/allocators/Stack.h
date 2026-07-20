@@ -78,6 +78,21 @@ namespace pmm
 
 
         /**
+         * @brief Get the free capacity in bytes of the stack.
+         * @return The free capacity of the stack in bytes.
+         */
+        [[nodiscard]] constexpr std::size_t freeSize() const noexcept;
+
+
+        /**
+         * @brief Get the used capacity in bytes of the stack.
+         * @return The used capacity of the stack in bytes.
+         */
+        [[nodiscard]] constexpr std::size_t usedSize() const noexcept;
+
+
+
+        /**
          * @brief Allocate @p size bytes of memory on the stack.
          *
          * @warning Does not check for invalid states in *Release Mode*.

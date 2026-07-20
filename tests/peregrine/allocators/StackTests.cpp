@@ -74,10 +74,69 @@ INSTANTIATE_TEST_SUITE_P(StackResize, StackResizeLast,
  **************************************/
 
 /**
- * @brief Verify that size() of stack allocator returns to the total size of the stack.
+ * @brief Verify that size() returns the total size of the stack.
  */
 TEST_F(StackTests, Size_ReturnsTheSizeOfTheStack) { EXPECT_EQ(stackSize, stack.size()); }
 
+
+
+/**
+ * @brief Verify that freeSize() returns the total size of the stack, when no allocation is made.
+ */
+TEST_F(StackTests, FreeSize_NoAllocations_ReturnsTheSizeOfTheStack) { EXPECT_EQ(stackSize, stack.freeSize()); }
+
+
+/**
+ * @brief Verify that freeSize() returns the size - (allocated size + padding),
+ *        after an allocation is made.
+ */
+TEST_F(StackTests, FreeSize_ReturnsStackSizeMinusPaddingAndAllocationSize)
+{
+    constexpr std::size_t allocatedSize = 512;
+    const auto memory                   = static_cast<char*>(stack.allocBytes(allocatedSize));
+    const auto header       = reinterpret_cast<pmm::LooseStackHeader*>(memory - sizeof(pmm::LooseStackHeader));
+    const auto expectedSize = stackSize - (allocatedSize + header->padding);
+
+    EXPECT_EQ(expectedSize, stack.freeSize());
+}
+
+
+/**
+ * @brief Verify that freeSize() returns stack size, after allocation is freed.
+ */
+TEST_F(StackTests, FreeSize_FreeAllocation_ReturnsStackSize)
+{
+    constexpr std::size_t allocatedSize = 512;
+    const auto memory                   = static_cast<char*>(stack.allocBytes(allocatedSize));
+    stack.freeBytes(memory);
+    EXPECT_EQ(stackSize, stack.freeSize());
+}
+
+
+/**
+ * @brief Verify that freeSize() returns stack size, after all allocations are freed.
+ */
+TEST_F(StackTests, FreeSize_FreeAllAllocation_ReturnsStackSize)
+{
+    constexpr std::size_t allocatedSize = 512;
+    static_cast<void>(stack.allocBytes(allocatedSize));
+    stack.freeAll();
+    EXPECT_EQ(stackSize, stack.freeSize());
+}
+
+// /**
+//  * @brief Verify that freeSize() returns the sum of allocated size, and padding,
+//  *        after an allocation is made.
+//  */
+// TEST_F(StackTests, FreeSize_ReturnsPaddingPlusAllocatedSize)
+// {
+//     constexpr std::size_t allocatedSize = 512;
+//     const auto memory                   = static_cast<char*>(stack.allocBytes(allocatedSize));
+//     const auto header       = reinterpret_cast<pmm::LooseStackHeader*>(memory - sizeof(pmm::LooseStackHeader));
+//     const auto expectedSize = allocatedSize + header->padding;
+//
+//     EXPECT_EQ(expectedSize, stack.freeSize());
+// }
 
 /**************************************
  *                                    *
@@ -455,8 +514,8 @@ TEST_F(StackTests, Resize_LargerSize_ResizesMemory)
 /** @brief Verify that resizing any allocation to a larger size, copies over old memory contents. */
 TEST_F(StackTests, Resize_CopiesOverOldMemory)
 {
-    constexpr auto oldCount          = 48;
-    constexpr auto newCount          = 128;
+    constexpr auto oldCount       = 48;
+    constexpr auto newCount       = 128;
     constexpr std::size_t oldSize = sizeof(int) * oldCount, newSize = sizeof(int) * newCount;
     const auto oldMemory = static_cast<int*>(stack.allocBytes(oldSize));
 
@@ -477,7 +536,6 @@ TEST_F(StackTests, Resize_CopiesOverOldMemory)
     {
         EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
     }
-
 }
 
 
@@ -567,8 +625,8 @@ TEST_F(StackTests, ResizeFast_ResizesMemory)
 /** @brief Verify that resizing any allocation to a larger size using resizeFast, copies over old memory contents. */
 TEST_F(StackTests, ResizeFast_CopiesOverOldMemory)
 {
-    constexpr auto oldCount          = 48;
-    constexpr auto newCount          = 128;
+    constexpr auto oldCount       = 48;
+    constexpr auto newCount       = 128;
     constexpr std::size_t oldSize = sizeof(int) * oldCount, newSize = sizeof(int) * newCount;
     const auto oldMemory = static_cast<int*>(stack.allocBytes(oldSize));
 
@@ -585,7 +643,6 @@ TEST_F(StackTests, ResizeFast_CopiesOverOldMemory)
     {
         EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
     }
-
 }
 
 
