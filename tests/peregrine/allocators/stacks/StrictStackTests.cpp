@@ -63,7 +63,7 @@ INSTANTIATE_TEST_SUITE_P(
 
 
 /**
- * @addtogroup T_PMM_STACK
+ * @addtogroup T_PMM_Strict_Stack
  * @{
  */
 
@@ -259,6 +259,137 @@ TEST_P(StrictStackAllocationAlignment, AllocBytes_AlwaysReturnAnAlignedMemoryAdd
 
     // Verify returned address is 0 by using 2^n modulo trick
     EXPECT_EQ(0, reinterpret_cast<uintptr_t>(dataAddress) & (alignment - 1));
+}
+
+
+
+/**************************************
+ *                                    *
+ *            ALLOC (OBJ)             *
+ *                                    *
+ **************************************/
+
+/** @brief Verify that stack allocation returns a valid pointer, given an empty stack. */
+TEST_F(StrictStackTests, Alloc_ReturnsNonNullPtrOnEmptyStack)
+{
+    const auto vector = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+    EXPECT_NE(nullptr, vector);
+    EXPECT_FLOAT_EQ(1.0f, vector->x);
+    EXPECT_FLOAT_EQ(2.0f, vector->y);
+    EXPECT_FLOAT_EQ(3.0f, vector->z);
+    EXPECT_FLOAT_EQ(4.0f, vector->w);
+}
+
+
+/**
+ * @brief Verify that stack allocation using alloc returns a valid pointer,
+ *        given a non-empty stack with memory to spare.
+ */
+TEST_F(StrictStackTests, Alloc_ReturnNonNullPtrOnNonEmptyStack)
+{
+    const auto dataPtr1 = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+    const auto dataPtr2 = stack.alloc<Vec4>(5.0f, 1.0f, 31.0f, 3.0f);
+
+    EXPECT_NE(nullptr, dataPtr1);
+    EXPECT_NE(nullptr, dataPtr2);
+    EXPECT_NE(dataPtr1, dataPtr2);
+}
+
+
+
+/** @brief Verify that allocated using alloc memory maintains data integrity. */
+TEST_F(StrictStackTests, Alloc_RepeatedAllocationAndWritesDoNotCorruptData)
+{
+    const auto dataPtr1 = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+    const auto dataPtr2 = stack.alloc<Vec4>(5.0f, 1.0f, 31.0f, 3.0f);
+
+    EXPECT_FLOAT_EQ(1.0f, dataPtr1->x);
+    EXPECT_FLOAT_EQ(2.0f, dataPtr1->y);
+    EXPECT_FLOAT_EQ(3.0f, dataPtr1->z);
+    EXPECT_FLOAT_EQ(4.0f, dataPtr1->w);
+
+    EXPECT_FLOAT_EQ(5.0f, dataPtr2->x);
+    EXPECT_FLOAT_EQ(1.0f, dataPtr2->y);
+    EXPECT_FLOAT_EQ(31.0f, dataPtr2->z);
+    EXPECT_FLOAT_EQ(3.0f, dataPtr2->w);
+}
+
+
+/** @brief Verify that allocation using alloc stores header before returned address. */
+TEST_F(StrictStackTests, Alloc_HeaderIsStoredBehindReturnedAddress)
+{
+    const auto vector = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+    const auto header =
+        reinterpret_cast<pmm::StrictStackHeader*>(reinterpret_cast<char*>(vector) - sizeof(pmm::StrictStackHeader));
+    EXPECT_GE(header->padding, alignof(Vec4));
+}
+
+
+/** @brief Verify that allocation using alloc always return an address aligned to the alignment of the type. */
+TEST_P(StrictStackAllocationAlignment, Alloc_AlwaysReturnAnAlignedMemoryAddress)
+{
+    pmm::Stack<pmm::stack::Strict> stack{ 512 };
+    const auto vector = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+    // Verify returned address is 0 by using 2^n module trick
+    EXPECT_EQ(0, reinterpret_cast<uintptr_t>(vector) & (alignof(Vec4) - 1));
+}
+
+
+/** @brief Verify that allocV can allocate a span of primitives. */
+TEST_F(StrictStackTests, AllocV_AllocatesWriteablePrimitiveArray)
+{
+    auto vectors = stack.allocV<int>(10);
+
+    // Write to buffer
+    for (std::size_t i = 0; i < vectors.size(); ++i)
+    {
+        vectors[i] = static_cast<int>(i + 5);
+    }
+
+
+    // Read from buffer
+    for (std::size_t i = 0; i < vectors.size(); ++i)
+    {
+        EXPECT_EQ(static_cast<int>(i + 5), vectors[i]);
+    }
+}
+
+
+/** @brief Verify that allocV can allocate a span of user defined types. */
+TEST_F(StrictStackTests, AllocV_AllocatesWriteTypeArray)
+{
+    auto vectors = stack.allocV<Vec4>(10);
+
+    // Write to buffer
+    for (std::size_t i = 0; i < vectors.size(); ++i)
+    {
+        const auto mul = static_cast<float>(i);
+        vectors[i]     = { 1.0f * mul, 5.0f * mul, 3.0f * mul, 2.0f * mul };
+    }
+
+
+    // Read from buffer
+    for (std::size_t i = 0; i < vectors.size(); ++i)
+    {
+        const auto mul = static_cast<float>(i);
+        EXPECT_FLOAT_EQ(1.0f * mul, vectors[i].x);
+        EXPECT_FLOAT_EQ(5.0f * mul, vectors[i].y);
+        EXPECT_FLOAT_EQ(3.0f * mul, vectors[i].z);
+        EXPECT_FLOAT_EQ(2.0f * mul, vectors[i].w);
+    }
+}
+
+/** @brief Verify that allocation using allocV aligns to the type's alignment. */
+TEST_F(StrictStackTests, AllocV_BaseAddressAlignedToAlignmentOfType)
+{
+    // Allocate some memory to throw off alignment
+    static_cast<void>(stack.allocBytes(2, 2));
+
+    const auto vector = stack.allocV<Vec4>(10);
+    // Base address % alignment == 0
+    EXPECT_EQ(0, reinterpret_cast<uintptr_t>(vector.data()) & (alignof(Vec4) - 1));
 }
 
 

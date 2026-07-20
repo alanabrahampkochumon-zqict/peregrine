@@ -63,7 +63,7 @@ INSTANTIATE_TEST_SUITE_P(StackResize, LooseStackResizeLast,
 
 
 /**
- * @addtogroup T_PMM_Stack
+ * @addtogroup T_PMM_Loose_Stack
  * @{
  */
 

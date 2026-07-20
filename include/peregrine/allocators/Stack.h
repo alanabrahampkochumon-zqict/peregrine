@@ -151,8 +151,7 @@ namespace pmm
          * @relatedalso allocV
          */
         template <typename T, typename... Args>
-        [[nodiscard]] T* alloc(Args... args) noexcept
-            requires std::same_as<Type, stack::Loose>;
+        [[nodiscard]] T* alloc(Args... args) noexcept;
 
 
         /**

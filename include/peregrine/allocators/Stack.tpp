@@ -116,10 +116,8 @@ namespace pmm
     template <stack::StackType Type>
     template <typename T, typename... Args>
     T* Stack<Type>::alloc(Args... args) noexcept
-        requires std::same_as<Type, stack::Loose>
     {
         auto rawMemory = allocBytes(sizeof(T), alignof(T));
-
         return new (rawMemory) T(std::forward<Args>(args)...);
     }
 

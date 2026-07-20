@@ -36,8 +36,14 @@
     */
 
     /**
-    * @defgroup T_PMM_Stack Stack Allocator
-    * @brief Verify Stack Allocator Logic.
+    * @defgroup T_PMM_Loose_Stack Loose Stack Allocator
+    * @brief Verify Stack<pmm::stack::Loose> Allocator Logic.
+    * @ingroup T_PMM_Lib
+    */
+
+    /**
+    * @defgroup T_PMM_Strict_Stack Strict Stack Allocator
+    * @brief Verify Stack<pmm::stack::Loose> Allocator Logic.
     * @ingroup T_PMM_Lib
     */
 
