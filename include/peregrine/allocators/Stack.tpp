@@ -24,7 +24,7 @@ namespace pmm
 
     template <stack::StackType Type>
     PMM_INLINE Stack<Type>::Stack(const std::size_t sizeInBytes) noexcept
-        : _buffer{ new uint8_t[sizeInBytes] }, _size{ sizeInBytes }
+        : _buffer{ new uint8_t[sizeInBytes] }, _size{ sizeInBytes }, _prevOffset{}
     {}
 
 
@@ -68,7 +68,6 @@ namespace pmm
         PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment != 1, "Alignment must be a power of 2");
 
         const auto padding = _calcAlignment(alignment);
-        // TODO: Change from MinStackHeader to appropriate header when using policy
         PMM_ASSERT_MSG(_offset + size + padding <= _size, "Stack capacity exceeded. Cannot assign memory!");
         PMM_ASSERT_MSG(padding <= std::numeric_limits<decltype(LooseStackHeader::padding)>::max(),
                        "Alignment exceeded maximum permissible size of padding.");
@@ -80,6 +79,33 @@ namespace pmm
         const auto currentAddress = _buffer + _offset;
         auto* header              = reinterpret_cast<LooseStackHeader*>(currentAddress - sizeof(LooseStackHeader));
         header->padding           = padding;
+
+        _offset += size;
+        memset(currentAddress, 0, size); // Zero out memory(TODO: Remove when using HAL)
+        return currentAddress;
+    }
+
+
+    template <stack::StackType Type>
+    void* Stack<Type>::allocBytes(const std::size_t size, const std::size_t alignment) noexcept
+        requires std::same_as<Type, stack::Strict>
+    {
+        PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment != 1, "Alignment must be a power of 2");
+
+        const auto padding = _calcAlignment(alignment);
+        PMM_ASSERT_MSG(_offset + size + padding <= _size, "Stack capacity exceeded. Cannot assign memory!");
+        PMM_ASSERT_MSG(padding <= std::numeric_limits<decltype(StrictStackHeader::padding)>::max(),
+                       "Alignment exceeded maximum permissible size of padding.");
+
+        // Move the offset to aligned address
+        _prevOffset = _offset;
+        _offset += padding;
+
+        // Store the header behind the allocated address
+        const auto currentAddress = _buffer + _offset;
+        auto* header              = reinterpret_cast<StrictStackHeader*>(currentAddress - sizeof(StrictStackHeader));
+        header->padding           = padding;
+        header->previousOffset    = _prevOffset;
 
         _offset += size;
         memset(currentAddress, 0, size); // Zero out memory(TODO: Remove when using HAL)
@@ -246,13 +272,13 @@ namespace pmm
         // We don't need to check for making modulo == 0
         auto requiredPadding = alignment - (currentAddress & (alignment - 1));
         auto requiredStorage = sizeof(LooseStackHeader);
+
         // Change required storage based on header type
         if constexpr (std::same_as<Type, stack::Strict>)
         {
             requiredStorage = sizeof(StrictStackHeader);
         }
 
-        // TODO: Add tests
         // TODO: Try to eliminate conditionals
         if (requiredPadding < requiredStorage)
         {

@@ -10,4 +10,11 @@
  */
 
 namespace pmm
-{}
+{
+    // TODO: Add group
+    /**
+     * @brief Empty struct to enable optimizing away conditional variables.
+     */
+    struct EmptyMember
+    {};
+} // namespace pmm

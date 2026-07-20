@@ -141,4 +141,11 @@ inline void logAssertion(const char* condition, const char* message, const char*
     #define PMM_INLINE inline
 #endif
 
+#if defined(_MSC_VER)
+    #define PMM_NO_UNIQUE_ADDR [[msvc::no_unique_address]]
+#else
+    #define PMM_NO_UNIQUE_ADDR [[no_unique_address]]
+#endif
+
+
 /** @} */

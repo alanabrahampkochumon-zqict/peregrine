@@ -253,7 +253,7 @@ TEST_P(LooseStackAllocationAlignment, AllocBytes_AlwaysReturnAnAlignedMemoryAddr
     const auto alignment = this->GetParam();
     const auto blockSize = 5 * alignment;
     const auto stackSize = 10 * alignment;
-
+    // pmm::Stack<> stack(stackSize);
     pmm::Stack<pmm::stack::Loose> stack{ stackSize };
     const void* dataAddress = stack.allocBytes(blockSize, alignment);
 

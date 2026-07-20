@@ -11,6 +11,8 @@
 
 
 #include "StackType.h"
+#include "peregrine/utils/Utilities.h"
+#include "peregrine/utils/Preprocessors.h"
 
 #include <cstdint>
 
@@ -50,8 +52,9 @@ namespace pmm
     struct StrictStackHeader
     {
         std::size_t previousOffset{}; /// Offset of previous allocated block.
-        std::size_t blockSize{};      /// Target allocation's block size.
+        std::size_t padding{};        /// Target allocation's block size.
     };
+
 
     template <stack::StackType Type = stack::Loose>
     class Stack
@@ -103,10 +106,32 @@ namespace pmm
          *
          * @return A `void pointer` to starting memory address of the allocation.
          *
+         * @remarks API specialized for @ref pmm::stack::Loose.
+         *
          * @relatedalso alloc
+         * @relatedalso allocV
          */
         [[nodiscard]] void* allocBytes(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept
             requires std::same_as<Type, stack::Loose>;
+
+        /**
+         * @brief Allocate @p size bytes of memory on the stack.
+         *
+         * @warning Does not check for invalid states in *Release Mode*.
+         *
+         * @param[in] size      Number of bytes to allocate.
+         * @param[in] alignment Base alignment of the allocation.
+         *                      Default: 8-bytes on 64-bit machine.
+         *
+         * @return A `void pointer` to starting memory address of the allocation.
+         *
+         * @remarks API specialized for @ref pmm::stack::Strict.
+         *
+         * @relatedalso alloc
+         * @relatedalso allocV
+         */
+        [[nodiscard]] void* allocBytes(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept
+            requires std::same_as<Type, stack::Strict>;
 
 
         /**
@@ -320,11 +345,16 @@ namespace pmm
         uint8_t* _buffer;
         std::size_t _size, _offset{ 0 };
 
+        using PreviousOffsetType = std::conditional_t<std::is_same_v<Type, stack::Strict>, std::size_t, EmptyMember>;
+        PMM_NO_UNIQUE_ADDR PreviousOffsetType _prevOffset{ 0 };
+
 
 
 #ifdef ENABLE_PMM_TESTS
     // FRIEND TEST macros for verifying internal states
     #include <gtest/gtest_prod.h>
+
+
 
 
         FRIEND_TEST(LooseStackInitialization, InitializesDefaultStateAndBuffer);
