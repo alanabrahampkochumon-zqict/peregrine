@@ -140,7 +140,7 @@ namespace pmm
         /**
          * @brief Resize @p oldMemory block from @p oldSize to @p newSize while minimizing fragmentation.
          *
-         * @note This does not resize the stack.
+         * @note Stack will not be resized.
          * @note Passing `0` as @p newSize will not deallocate memory, and is undefined behavior in release mode.
          * @note Slower compared to @ref resizeFast, which doesn't optimize memory footprint.
          *
@@ -153,9 +153,38 @@ namespace pmm
          *                  Default: 8-bytes on 64-bit machine.
          *
          * @return A reference to the new memory location in stack.
+         *
+         * @relatedalso resizeFast
          */
         [[nodiscard]] void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
                                    std::size_t alignment = sizeof(void*));
+
+
+        /**
+         * @brief Resize @p oldMemory block from @p oldSize to @p newSize while minimizing fragmentation.
+         *
+         * @note Stack will not be resized.
+         * @note Passing `0` as @p newSize will not deallocate memory, and is undefined behavior in release mode.
+         * @note Doesn't optimize memory footprint, as allocation always reserves new memory.
+         *       If you want optimal memory usage use @ref resize, or for resizing lastest allocations
+         *       without overheads use @ref resizeLast
+         *
+         * @warning In **Release Builds** safety checks for `nullptr`, and 0 sizes are disabled.
+         * @warning Never use this for the latest allocations, as this method bypasses all checks and
+         *          allocate a new buffer.
+         *
+         * @param oldMemory The pointer to the memory to resize.
+         * @param oldSize   The current size of @p oldMemory.
+         * @param newSize   The size to resize @p oldMemory to.
+         * @param alignment The required alignment.
+         *                  Default: 8-bytes on 64-bit machine.
+         *
+         * @return A reference to the new memory location in stack.
+         *
+         * @relatedalso resize
+         */
+        [[nodiscard]] void* resizeFast(const void* oldMemory, std::size_t oldSize, std::size_t newSize,
+                                       std::size_t alignment = sizeof(void*));
 
 
         /**

@@ -431,6 +431,82 @@ TEST_F(StackTests, Resize_LargerSize_ResizesMemory)
 }
 
 
+/** @brief Verify that resizing the latest allocation using resizeFast to a smaller size, returns new address. */
+TEST_F(StackTests, ResizeFast_LatestAllocationSmallerSize_ReturnsNewAddress)
+{
+    constexpr auto oldSize = 128, newSize = 64;
+    const auto oldMemory = stack.allocBytes(oldSize);
+    const auto newMemory = stack.resizeFast(oldMemory, oldSize, newSize);
+
+    EXPECT_NE(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing the latest allocation to a larger size using resizeFast, returns new address. */
+TEST_F(StackTests, ResizeFast_LatestAllocationLargerSize_ReturnsNewAddress)
+{
+    constexpr auto oldSize = 128, newSize = 256;
+    const auto oldMemory = stack.allocBytes(oldSize);
+    const auto newMemory = stack.resizeFast(oldMemory, oldSize, newSize);
+
+    EXPECT_NE(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing any allocation to a smaller size using resizeFast, returns new address. */
+TEST_F(StackTests, ResizeFast_SmallerSize_ReturnsNewAddress)
+{
+    constexpr auto oldSize = 128, newSize = 64;
+    const auto oldMemory = stack.allocBytes(oldSize);
+
+    static_cast<void>(stack.allocBytes(oldSize)); // Second allocation
+
+    const auto newMemory = stack.resizeFast(oldMemory, oldSize, newSize);
+
+    EXPECT_NE(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing any allocation to a larger size using resizeFast, returns the new address. */
+TEST_F(StackTests, ResizeFast_LargerSize_ReturnsNewAddress)
+{
+    constexpr auto oldSize = 128, newSize = 256;
+    const auto oldMemory = stack.allocBytes(oldSize);
+
+    static_cast<void>(stack.allocBytes(oldSize)); // Second allocation
+
+    const auto newMemory = stack.resizeFast(oldMemory, oldSize, newSize);
+
+    EXPECT_NE(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing any allocation using resizeFast, resizes the memory. */
+TEST_F(StackTests, ResizeFast_ResizesMemory)
+{
+    constexpr auto count          = 128;
+    constexpr std::size_t oldSize = 128, newSize = sizeof(int) * count;
+    const auto oldMemory = stack.allocBytes(oldSize);
+
+    static_cast<void>(stack.allocBytes(oldSize)); // Second allocation
+
+    const auto newMemory = static_cast<int*>(stack.resizeFast(oldMemory, oldSize, newSize));
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        newMemory[i] = static_cast<int>(2813 + i);
+    }
+
+
+    // Allocate a new vector
+    static_cast<void>(stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+}
+
 
 /**************************************
  *                                    *
@@ -613,7 +689,7 @@ TEST_F(StackTests, FreeV_CallsClassDestructorForNonTrivialTypes)
 {
     // @Warning Not thread safe
     int numDestructorCalls = 0;
-    const auto numAllocation = 500;
+    constexpr auto numAllocation = 500;
     auto nonTrivial  = stack.allocV<DestructionTracker>(numAllocation);
     for (auto& item: nonTrivial)
         item.destructorCalledCount = &numDestructorCalls;
@@ -727,6 +803,7 @@ TEST_F(StackTests, FreeBytes_BeyondCapacity_TriggersAssertion)
 TEST_F(StackTests, Resize_Nullptr_TriggersAssertion)
 { EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(nullptr, 120, 256)), ""); }
 
+
 /**
  * @brief Verify that stack resize triggers assertion in *DEBUG MODE*,
  *        when trying to resize to 0.
@@ -735,6 +812,25 @@ TEST_F(StackTests, Resize_ToZero_TriggersAssertion)
 {
     const auto address = stack.allocBytes(128);
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(address, 128, 0)), "");
+}
+
+
+/**
+ * @brief Verify that stack resize using resizeFast triggers assertion in *DEBUG MODE*,
+ *        when trying to resize a nullptr.
+ */
+TEST_F(StackTests, ResizeFast_Nullptr_TriggersAssertion)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(nullptr, 120, 256)), ""); }
+
+
+/**
+ * @brief Verify that stack resize using resizeFast triggers assertion in *DEBUG MODE*,
+ *        when trying to resize to 0.
+ */
+TEST_F(StackTests, ResizeFast_ToZero_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(address, 128, 0)), "");
 }
 
 
