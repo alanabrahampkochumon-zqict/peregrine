@@ -143,6 +143,23 @@ namespace pmm
 
 
     template <stack::StackType Type>
+    void* Stack<Type>::resizeLast(void* oldMemory, const std::size_t oldSize, const std::size_t newSize)
+    {
+        PMM_ASSERT_MSG(
+            oldMemory != nullptr,
+            "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
+        PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
+
+        // Move the forward or backward depending on the new size.
+        _offset += (newSize - oldSize);
+
+        return oldMemory;
+
+        // TODO: In strict stack type add checks to ensure that the latest allocation is called.
+    }
+
+
+    template <stack::StackType Type>
     PMM_INLINE void Stack<Type>::freeBytes(void* ptr) noexcept
         requires std::same_as<Type, stack::Loose>
     {

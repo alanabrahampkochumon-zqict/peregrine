@@ -403,6 +403,7 @@ TEST_F(StackTests, Resize_LargerSize_ReturnsNewAddress)
     EXPECT_NE(oldMemory, newMemory);
 }
 
+// TODO: Add tests to verify that resize copies the old buffer over for resize, resizefast and resize last
 
 /** @brief Verify that resizing any allocation to a larger size, resizes the memory. */
 TEST_F(StackTests, Resize_LargerSize_ResizesMemory)
@@ -422,16 +423,21 @@ TEST_F(StackTests, Resize_LargerSize_ResizesMemory)
 
 
     // Allocate a new vector
-    static_cast<void>(stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+    const auto vec = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
     for (std::size_t i = 0; i < count; ++i)
     {
         EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
     }
+
+    EXPECT_FLOAT_EQ(1.0f, vec->x);
+    EXPECT_FLOAT_EQ(2.0f, vec->y);
+    EXPECT_FLOAT_EQ(3.0f, vec->z);
+    EXPECT_FLOAT_EQ(4.0f, vec->w);
 }
 
 
-/** @brief Verify that resizing the latest allocation using resizeFast to a smaller size, returns new address. */
+/** @brief Verify that resizing the latest allocation using to a smaller size resizeFast, returns new address. */
 TEST_F(StackTests, ResizeFast_LatestAllocationSmallerSize_ReturnsNewAddress)
 {
     constexpr auto oldSize = 128, newSize = 64;
@@ -499,14 +505,71 @@ TEST_F(StackTests, ResizeFast_ResizesMemory)
 
 
     // Allocate a new vector
-    static_cast<void>(stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+    const auto vec = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
     for (std::size_t i = 0; i < count; ++i)
     {
         EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
     }
+
+    EXPECT_FLOAT_EQ(1.0f, vec->x);
+    EXPECT_FLOAT_EQ(2.0f, vec->y);
+    EXPECT_FLOAT_EQ(3.0f, vec->z);
+    EXPECT_FLOAT_EQ(4.0f, vec->w);
 }
 
+
+
+/** @brief Verify that resizing the latest allocation to a smaller size using resizeLast, returns the same address. */
+TEST_F(StackTests, ResizeLast_LatestAllocationSmallerSize_ReturnsSameAddress)
+{
+    constexpr auto oldSize = 128, newSize = 64;
+    const auto oldMemory = stack.allocBytes(oldSize);
+    const auto newMemory = stack.resizeLast(oldMemory, oldSize, newSize);
+
+    EXPECT_EQ(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing the latest allocation to a larger size using resizeLast, returns the same address. */
+TEST_F(StackTests, ResizeLast_LatestAllocationLargerSize_ReturnsSameAddress)
+{
+    constexpr auto oldSize = 128, newSize = 256;
+    const auto oldMemory = stack.allocBytes(oldSize);
+    const auto newMemory = stack.resizeLast(oldMemory, oldSize, newSize);
+
+    EXPECT_EQ(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing any allocation using resizeLast, resizes the memory. */
+TEST_F(StackTests, ResizeLast_ResizesMemory)
+{
+    constexpr auto count          = 128;
+    constexpr std::size_t oldSize = 128, newSize = sizeof(int) * count;
+    const auto oldMemory = stack.allocBytes(oldSize);
+
+    const auto newMemory = static_cast<int*>(stack.resizeLast(oldMemory, oldSize, newSize));
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        newMemory[i] = static_cast<int>(2813 + i);
+    }
+
+
+    // Allocate a new vector
+    const auto vec = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+
+    EXPECT_FLOAT_EQ(1.0f, vec->x);
+    EXPECT_FLOAT_EQ(2.0f, vec->y);
+    EXPECT_FLOAT_EQ(3.0f, vec->z);
+    EXPECT_FLOAT_EQ(4.0f, vec->w);
+}
 
 /**************************************
  *                                    *
@@ -688,11 +751,13 @@ TEST_F(StackTests, FreeV_FreesMemoryForSubsequentAllocations)
 TEST_F(StackTests, FreeV_CallsClassDestructorForNonTrivialTypes)
 {
     // @Warning Not thread safe
-    int numDestructorCalls = 0;
+    int numDestructorCalls       = 0;
     constexpr auto numAllocation = 500;
-    auto nonTrivial  = stack.allocV<DestructionTracker>(numAllocation);
-    for (auto& item: nonTrivial)
+    auto nonTrivial              = stack.allocV<DestructionTracker>(numAllocation);
+    for (auto& item : nonTrivial)
+    {
         item.destructorCalledCount = &numDestructorCalls;
+    }
 
     stack.freeV(nonTrivial);
 

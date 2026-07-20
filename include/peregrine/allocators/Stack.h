@@ -103,7 +103,7 @@ namespace pmm
          * @tparam T    The type of object to allocate.
          * @tparam Args The type of arguments to instantiate the object.
          *
-         * @param args      The arguments to instantiate the object.
+         * @param[in] args      The arguments to instantiate the object.
          *
          * @return A reference to the allocated memory.
          *
@@ -125,7 +125,7 @@ namespace pmm
          *
          * @tparam T The type of object to allocate.
          *
-         * @param count The total number of contiguous elements requested.
+         * @param[in] count The total number of contiguous elements requested.
          *
          * @return A `std::span<T>` viewing the allocated memory block.
          *         Returns an empty span (`.empty() == true`) if the Arena lacks sufficient capacity.
@@ -142,26 +142,28 @@ namespace pmm
          *
          * @note Stack will not be resized.
          * @note Passing `0` as @p newSize will not deallocate memory, and is undefined behavior in release mode.
-         * @note Slower compared to @ref resizeFast, which doesn't optimize memory footprint.
+         * @note Slower compared to @ref resizeFast(which doesn't optimize memory footprint) and @ref resizeLast,
+         *       which should only be used for latest allocations.
          *
-         * @warning In **Release Builds** safety checks for nullptr, and 0 sizes are disabled.
+         * @warning In **Release Mode** safety checks for nullptr, and 0 sizes are disabled.
          *
-         * @param oldMemory The pointer to the memory to resize.
-         * @param oldSize   The current size of @p oldMemory.
-         * @param newSize   The size to resize @p oldMemory to.
-         * @param alignment The required alignment.
+         * @param[in] oldMemory The pointer to the memory to resize.
+         * @param[in] oldSize   The current size of @p oldMemory.
+         * @param[in] newSize   The size to resize @p oldMemory to.
+         * @param[in] alignment The required alignment.
          *                  Default: 8-bytes on 64-bit machine.
          *
          * @return A reference to the new memory location in stack.
          *
          * @relatedalso resizeFast
+         * @relatedalso resizeLast
          */
         [[nodiscard]] void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
                                    std::size_t alignment = sizeof(void*));
 
 
         /**
-         * @brief Resize @p oldMemory block from @p oldSize to @p newSize while minimizing fragmentation.
+         * @brief Resize @p oldMemory block from @p oldSize to @p newSize.
          *
          * @note Stack will not be resized.
          * @note Passing `0` as @p newSize will not deallocate memory, and is undefined behavior in release mode.
@@ -169,22 +171,44 @@ namespace pmm
          *       If you want optimal memory usage use @ref resize, or for resizing lastest allocations
          *       without overheads use @ref resizeLast
          *
-         * @warning In **Release Builds** safety checks for `nullptr`, and 0 sizes are disabled.
+         * @warning In **Release Mode** safety checks for `nullptr`, and 0 sizes are disabled.
          * @warning Never use this for the latest allocations, as this method bypasses all checks and
          *          allocate a new buffer.
          *
-         * @param oldMemory The pointer to the memory to resize.
-         * @param oldSize   The current size of @p oldMemory.
-         * @param newSize   The size to resize @p oldMemory to.
-         * @param alignment The required alignment.
-         *                  Default: 8-bytes on 64-bit machine.
+         * @param[in] oldMemory The pointer to the memory to resize.
+         * @param[in] oldSize   The current size of @p oldMemory.
+         * @param[in] newSize   The size to resize @p oldMemory to.
+         * @param[in] alignment The required alignment.
+         *                      Default: 8-bytes on 64-bit machine.
          *
          * @return A reference to the new memory location in stack.
          *
          * @relatedalso resize
+         * @relatedalso resizeLast
          */
         [[nodiscard]] void* resizeFast(const void* oldMemory, std::size_t oldSize, std::size_t newSize,
                                        std::size_t alignment = sizeof(void*));
+
+
+        /**
+         * @brief Resize the latest allocation, @p oldMemory from @p oldSize to @p newSize.
+         *
+         * @note Stack will not be resized.
+         * @note Passing `0` as @p newSize will not deallocate memory, and is undefined behavior in release mode.
+         *
+         * @warning In **Release Mode** safety checks for `nullptr`, and 0 sizes are disabled.
+         * @warning Recommended to use for latest allocations, otherwise memory corruption can occur.
+         *
+         * @param[in] oldMemory The pointer to the memory to resize.
+         * @param[in] oldSize   The current size of @p oldMemory.
+         * @param[in] newSize   The size to resize @p oldMemory to.
+         *
+         * @return A reference to the new memory location in stack.
+         *
+         * @relatedalso resize
+         * @relatedalso resizeFast
+         */
+        [[nodiscard]] void* resizeLast(void* oldMemory, std::size_t oldSize, std::size_t newSize);
 
 
         /**
@@ -212,7 +236,7 @@ namespace pmm
          *
          * @tparam T  The data type of the memory pointer.
          *
-         * @param ptr The object pointer to free.
+         * @param[in] ptr The object pointer to free.
          *
          * @relatedalso freeV
          * @relatedalso freeBytes
@@ -229,7 +253,7 @@ namespace pmm
          *
          * @tparam T  The data type of the memory pointer.
          *
-         * @param vector The collection of objects to free.
+         * @param[in] vector The collection of objects to free.
          *
          * @relatedalso free
          * @relatedalso freeBytes
