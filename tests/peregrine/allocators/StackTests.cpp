@@ -79,7 +79,6 @@ INSTANTIATE_TEST_SUITE_P(StackResize, StackResizeLast,
 TEST_F(StackTests, Size_ReturnsTheSizeOfTheStack) { EXPECT_EQ(stackSize, stack.size()); }
 
 
-
 /**
  * @brief Verify that freeSize() returns the total size of the stack, when no allocation is made.
  */
@@ -102,9 +101,9 @@ TEST_F(StackTests, FreeSize_ReturnsStackSizeMinusPaddingAndAllocationSize)
 
 
 /**
- * @brief Verify that freeSize() returns stack size, after allocation is freed.
+ * @brief Verify that freeSize() returns stack size, after an allocation is freed.
  */
-TEST_F(StackTests, FreeSize_FreeAllocation_ReturnsStackSize)
+TEST_F(StackTests, FreeSize_AfterFreeingAllocation_ReturnsStackSize)
 {
     constexpr std::size_t allocatedSize = 512;
     const auto memory                   = static_cast<char*>(stack.allocBytes(allocatedSize));
@@ -116,7 +115,7 @@ TEST_F(StackTests, FreeSize_FreeAllocation_ReturnsStackSize)
 /**
  * @brief Verify that freeSize() returns stack size, after all allocations are freed.
  */
-TEST_F(StackTests, FreeSize_FreeAllAllocation_ReturnsStackSize)
+TEST_F(StackTests, FreeSize_AfterFreeingAllAllocations_ReturnsStackSize)
 {
     constexpr std::size_t allocatedSize = 512;
     static_cast<void>(stack.allocBytes(allocatedSize));
@@ -124,19 +123,50 @@ TEST_F(StackTests, FreeSize_FreeAllAllocation_ReturnsStackSize)
     EXPECT_EQ(stackSize, stack.freeSize());
 }
 
-// /**
-//  * @brief Verify that freeSize() returns the sum of allocated size, and padding,
-//  *        after an allocation is made.
-//  */
-// TEST_F(StackTests, FreeSize_ReturnsPaddingPlusAllocatedSize)
-// {
-//     constexpr std::size_t allocatedSize = 512;
-//     const auto memory                   = static_cast<char*>(stack.allocBytes(allocatedSize));
-//     const auto header       = reinterpret_cast<pmm::LooseStackHeader*>(memory - sizeof(pmm::LooseStackHeader));
-//     const auto expectedSize = allocatedSize + header->padding;
-//
-//     EXPECT_EQ(expectedSize, stack.freeSize());
-// }
+
+/**
+ * @brief Verify that usedSize() returns 0, when no allocation is made.
+ */
+TEST_F(StackTests, UsedSize_NoAllocations_ReturnsZero) { EXPECT_EQ(0, stack.usedSize()); }
+
+
+/**
+ * @brief Verify that usedSize() returns (allocated size + padding), after an allocation is made.
+ */
+TEST_F(StackTests, UsedSize_ReturnsStackSizeMinusPaddingAndAllocationSize)
+{
+    constexpr std::size_t allocatedSize = 512;
+    const auto memory                   = static_cast<char*>(stack.allocBytes(allocatedSize));
+    const auto header       = reinterpret_cast<pmm::LooseStackHeader*>(memory - sizeof(pmm::LooseStackHeader));
+    const auto expectedSize = allocatedSize + header->padding;
+
+    EXPECT_EQ(expectedSize, stack.usedSize());
+}
+
+
+/**
+ * @brief Verify that usedSize() returns zero, after an allocation is freed.
+ */
+TEST_F(StackTests, UsedSize_AfterFreeingAllocation_ReturnsZero)
+{
+    constexpr std::size_t allocatedSize = 512;
+    const auto memory                   = static_cast<char*>(stack.allocBytes(allocatedSize));
+    stack.freeBytes(memory);
+    EXPECT_EQ(0, stack.usedSize());
+}
+
+
+/**
+ * @brief Verify that usedSize() returns zero, after all allocations are freed.
+ */
+TEST_F(StackTests, UsedSize_FreeAllAllocation_ReturnsStackSize)
+{
+    constexpr std::size_t allocatedSize = 512;
+    static_cast<void>(stack.allocBytes(allocatedSize));
+    stack.freeAll();
+    EXPECT_EQ(0, stack.usedSize());
+}
+
 
 /**************************************
  *                                    *
