@@ -312,11 +312,10 @@ namespace pmm
     #include <gtest/gtest_prod.h>
 
 
-
-
         FRIEND_TEST(StackInitialization, InitializesDefaultStateAndBuffer);
         FRIEND_TEST(StackTests, Initialization_MovesOffsetAtleastByAllocationSize);
         FRIEND_TEST(StackTests, FreeAll_MovesOffsetToZero);
+        FRIEND_TEST(StackResizeLast, ResizeLast_MovesOffsetInCorrectDirection);
 #endif
     };
 

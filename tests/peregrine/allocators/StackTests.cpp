@@ -47,6 +47,21 @@ class StackAllocationAlignmentNonBinaryPowers: public ::testing::TestWithParam<s
 INSTANTIATE_TEST_SUITE_P(NonPowersOfTwo, StackAllocationAlignmentNonBinaryPowers, ::testing::Values(0, 1, 3, 5, 111));
 #endif
 
+
+
+struct StackResizeLastParams
+{
+    std::size_t oldSize, newSize;
+};
+class StackResizeLast: public ::testing::TestWithParam<StackResizeLastParams>
+{};
+INSTANTIATE_TEST_SUITE_P(StackResize, StackResizeLast,
+                         ::testing::Values(StackResizeLastParams{ .oldSize = 256, .newSize = 128 },
+                                           StackResizeLastParams{ .oldSize = 128, .newSize = 512 },
+                                           StackResizeLastParams{ .oldSize = 2048, .newSize = 4096 },
+                                           StackResizeLastParams{ .oldSize = 4096, .newSize = 2048 }));
+
+
 /**
  * @addtogroup T_PMM_Stack
  * @{
@@ -571,6 +586,8 @@ TEST_F(StackTests, ResizeLast_ResizesMemory)
     EXPECT_FLOAT_EQ(4.0f, vec->w);
 }
 
+
+
 /**************************************
  *                                    *
  *            FREE TESTS              *
@@ -676,7 +693,6 @@ TEST_F(StackTests, FreeAll_FreesTheEntireStack)
         EXPECT_EQ(static_cast<int>(i + 3812), newAllocation[i]);
     }
 }
-
 
 
 /** @brief Verify that stack free, frees the buffer for future allocations. */
@@ -899,6 +915,23 @@ TEST_F(StackTests, ResizeFast_ToZero_TriggersAssertion)
 }
 
 
+/**
+ * @brief Verify that stack resize using resizeLast triggers assertion in *DEBUG MODE*,
+ *        when trying to resize a nullptr.
+ */
+TEST_F(StackTests, ResizeLast_Nullptr_TriggersAssertion)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(nullptr, 120, 256)), ""); }
+
+
+/**
+ * @brief Verify that stack resize using resizeLast triggers assertion in *DEBUG MODE*,
+ *        when trying to resize to 0.
+ */
+TEST_F(StackTests, ResizeLast_ToZero_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(address, 128, 0)), "");
+}
 
 
 #endif
@@ -950,6 +983,24 @@ namespace pmm
         // Offset is reset to 0
         EXPECT_EQ(0, stack._offset);
     }
+
+    /** @brief Verify that stack.resizeLast, moves the offset in the correct direction. */
+    TEST_P(StackResizeLast, ResizeLast_MovesOffsetInCorrectDirection)
+    {
+        Stack<> stack(20_KB);
+        const auto [oldSize, newSize] = GetParam();
+        auto oldMemory                = stack.allocBytes(oldSize);
+        const auto oldOffset          = stack._offset;
+
+        oldMemory = stack.resizeLast(oldMemory, oldSize, newSize);
+
+        // If not cast to long long or any signed type, the difference will rotate to a large unsigned number
+        const auto expectedOffsetDiff = static_cast<long long>(newSize - oldSize);
+        const auto actualOffsetDiff   = static_cast<long long>(stack._offset - oldOffset);
+
+        EXPECT_EQ(expectedOffsetDiff, actualOffsetDiff);
+    }
+
 
 } // namespace pmm
 /** @} */
