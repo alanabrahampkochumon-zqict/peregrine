@@ -25,7 +25,7 @@
  **************************************/
 
 using namespace pmm::constants;
-constexpr static auto STACK_SIZE = 20_KB;
+constexpr static auto STACK_SIZE = 5_KB;
 class LooseStackTests: public ::testing::Test
 {
 
@@ -252,11 +252,12 @@ TEST_P(LooseStackAllocationAlignment, AllocBytes_AlwaysReturnAnAlignedMemoryAddr
 {
     const auto alignment = this->GetParam();
     const auto blockSize = 5 * alignment;
+    const auto stackSize = 10 * alignment;
 
-    pmm::Stack<pmm::stack::Loose> stack{ 8192 }; // 8KB Stack
+    pmm::Stack<pmm::stack::Loose> stack{ stackSize };
     const void* dataAddress = stack.allocBytes(blockSize, alignment);
 
-    // Verify returned address is 0 by using 2^n module trick
+    // Verify returned address is 0 by using 2^n modulo trick
     EXPECT_EQ(0, reinterpret_cast<uintptr_t>(dataAddress) & (alignment - 1));
 }
 

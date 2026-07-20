@@ -69,7 +69,6 @@ namespace pmm
 
         const auto padding = _calcAlignment(alignment);
         // TODO: Change from MinStackHeader to appropriate header when using policy
-        std::cout << std::numeric_limits<decltype(LooseStackHeader::padding)>::max() << '\n';
         PMM_ASSERT_MSG(_offset + size + padding <= _size, "Stack capacity exceeded. Cannot assign memory!");
         PMM_ASSERT_MSG(padding <= std::numeric_limits<decltype(LooseStackHeader::padding)>::max(),
                        "Alignment exceeded maximum permissible size of padding.");
