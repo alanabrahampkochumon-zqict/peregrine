@@ -151,7 +151,9 @@ namespace pmm
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
 
         // Move the forward or backward depending on the new size.
-        _offset += (newSize - oldSize);
+        // Although all the operands are unsigned, even if oldSize is larger(result in negative result)
+        // offset will move backward or forward, in the correct direction. (TESTED)
+        _offset += newSize - oldSize;
 
         return oldMemory;
 

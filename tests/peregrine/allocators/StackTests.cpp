@@ -452,6 +452,36 @@ TEST_F(StackTests, Resize_LargerSize_ResizesMemory)
 }
 
 
+/** @brief Verify that resizing any allocation to a larger size, copies over old memory contents. */
+TEST_F(StackTests, Resize_CopiesOverOldMemory)
+{
+    constexpr auto oldCount          = 48;
+    constexpr auto newCount          = 128;
+    constexpr std::size_t oldSize = sizeof(int) * oldCount, newSize = sizeof(int) * newCount;
+    const auto oldMemory = static_cast<int*>(stack.allocBytes(oldSize));
+
+    // Since the copy is logically triggered only for allocations that are "moved"
+    // We need a second allocation to trigger it
+    static_cast<void>(stack.allocBytes(oldSize));
+
+    // Store some random value in memory
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        oldMemory[i] = static_cast<int>(2813 + i);
+    }
+
+    const auto newMemory = static_cast<int*>(stack.resize(oldMemory, oldSize, newSize));
+
+    // Verify that memory is copied.
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+
+}
+
+
+
 /** @brief Verify that resizing the latest allocation using to a smaller size resizeFast, returns new address. */
 TEST_F(StackTests, ResizeFast_LatestAllocationSmallerSize_ReturnsNewAddress)
 {
@@ -533,6 +563,30 @@ TEST_F(StackTests, ResizeFast_ResizesMemory)
     EXPECT_FLOAT_EQ(4.0f, vec->w);
 }
 
+
+/** @brief Verify that resizing any allocation to a larger size using resizeFast, copies over old memory contents. */
+TEST_F(StackTests, ResizeFast_CopiesOverOldMemory)
+{
+    constexpr auto oldCount          = 48;
+    constexpr auto newCount          = 128;
+    constexpr std::size_t oldSize = sizeof(int) * oldCount, newSize = sizeof(int) * newCount;
+    const auto oldMemory = static_cast<int*>(stack.allocBytes(oldSize));
+
+    // Store some random value in memory
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        oldMemory[i] = static_cast<int>(2813 + i);
+    }
+
+    const auto newMemory = static_cast<int*>(stack.resizeFast(oldMemory, oldSize, newSize));
+
+    // Verify that memory is copied.
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+
+}
 
 
 /** @brief Verify that resizing the latest allocation to a smaller size using resizeLast, returns the same address. */
@@ -954,7 +1008,7 @@ namespace pmm
 
         EXPECT_EQ(sizeInBytes, stack._size);
         EXPECT_EQ(0, stack._offset);
-        EXPECT_NE(nullptr, stack._buffer); // TODO: Investigate leak-> Add Destructor
+        EXPECT_NE(nullptr, stack._buffer);
     }
 
     /** @brief Verify that allocation moves the stack offset by at least the request size. */
