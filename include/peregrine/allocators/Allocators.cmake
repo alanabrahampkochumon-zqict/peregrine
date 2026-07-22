@@ -6,7 +6,7 @@ set(AllocatorHeaders
         Arena.tpp
         Stack.h
         Stack.tpp
-        StackType.h
+        Policy.h
         TempArena.h
         TempArena.tpp
 )

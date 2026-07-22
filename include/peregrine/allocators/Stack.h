@@ -10,9 +10,9 @@
  */
 
 
-#include "StackType.h"
-#include "peregrine/utils/Utilities.h"
+#include "Policy.h"
 #include "peregrine/utils/Preprocessors.h"
+#include "peregrine/utils/Utilities.h"
 
 #include <cstdint>
 

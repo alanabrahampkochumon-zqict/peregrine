@@ -56,8 +56,8 @@
      */
 
     /**
-     * @defgroup PMM_Storage_Policy Storage Policy
-     * @brief Storage policies used by allocators for changing internal behavior.
+     * @defgroup PMM_Policy Memory Ownership Policy and Strategies
+     * @brief Ownership policies and strategies used by allocators for changing internal behavior.
      * @ingroup PMM_Lib
      */
     

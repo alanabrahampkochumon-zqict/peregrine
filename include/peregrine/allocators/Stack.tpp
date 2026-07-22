@@ -97,8 +97,10 @@ namespace pmm
         PMM_ASSERT_MSG(padding <= std::numeric_limits<decltype(StrictStackHeader::padding)>::max(),
                        "Alignment exceeded maximum permissible size of padding.");
 
-        // Move the offset to aligned address
+        // Store the current allocation's previous offset
         auto prevAllocOffset = _prevOffset;
+
+        // Move the offsets
         _prevOffset          = _offset;
         _offset += padding;
 
