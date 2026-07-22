@@ -81,7 +81,7 @@ namespace pmm
         header->padding           = padding;
 
         _offset += size;
-        memset(currentAddress, 0, size); // Zero out memory(TODO: Remove when using HAL)
+        memset(currentAddress, 0, size); // Zero out memory (TODO: Remove when using HAL)
         return currentAddress;
     }
 
@@ -98,17 +98,18 @@ namespace pmm
                        "Alignment exceeded maximum permissible size of padding.");
 
         // Move the offset to aligned address
-        _prevOffset = _offset;
+        auto prevAllocOffset = _prevOffset;
+        _prevOffset          = _offset;
         _offset += padding;
 
         // Store the header behind the allocated address
         const auto currentAddress = _buffer + _offset;
         auto* header              = reinterpret_cast<StrictStackHeader*>(currentAddress - sizeof(StrictStackHeader));
         header->padding           = padding;
-        header->previousOffset    = _prevOffset;
+        header->prevOffset        = prevAllocOffset;
 
         _offset += size;
-        memset(currentAddress, 0, size); // Zero out memory(TODO: Remove when using HAL)
+        memset(currentAddress, 0, size); // Zero out memory (TODO: Remove when using HAL)
         return currentAddress;
     }
 
@@ -208,8 +209,30 @@ namespace pmm
         // Previous offset is the current ptr's position - whatever space we assigned for padding
         const auto prevOffset =
             reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(_buffer) - header->padding;
-        // Move the pointer back to the previous offset, and then by the header size.
+
+        // Move the pointer back to the previous offset.
         _offset = prevOffset;
+    }
+
+
+    template <stack::StackType Type>
+    PMM_INLINE void Stack<Type>::freeBytes(void* ptr) noexcept
+        requires std::same_as<Type, stack::Strict>
+    {
+        PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
+        PMM_ASSERT_MSG(ptr >= _buffer && ptr <= _buffer + _offset, "Out-of-bounds free!");
+
+        // TODO: Disable warning
+        // TODO: FIX
+        const auto header = reinterpret_cast<StrictStackHeader*>(static_cast<char*>(ptr) - sizeof(StrictStackHeader));
+        // Previous offset is the current ptr's position - whatever space we assigned for padding
+        const auto currentBlockStart =
+            reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(_buffer) - header->padding;
+
+        // Move the pointer back to the previous offset, and then by the header size.
+        PMM_ASSERT_MSG(_prevOffset == currentBlockStart, "Out of order stack free!");
+        _offset     = currentBlockStart;
+        _prevOffset = header->prevOffset;
     }
 
 
@@ -242,7 +265,13 @@ namespace pmm
 
     template <stack::StackType Type>
     void Stack<Type>::freeAll()
-    { _offset = 0; }
+    {
+        _offset = 0;
+        if constexpr (std::is_same_v<Type, stack::Strict>)
+        {
+            _prevOffset = 0;
+        }
+    }
 
 
     template <stack::StackType Type>

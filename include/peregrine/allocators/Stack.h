@@ -51,7 +51,7 @@ namespace pmm
      */
     struct StrictStackHeader
     {
-        std::size_t previousOffset{}; /// Offset of previous allocated block.
+        std::size_t prevOffset{}; /// Offset of previous allocated block.
         std::size_t padding{};        /// Target allocation's block size.
     };
 
@@ -260,12 +260,34 @@ namespace pmm
          *
          * @param[in] ptr The pointer to free upto.
          *
+         * @remarks API specialized for @ref pmm::stack::Loose.
+         *
          * @relatedalso free
          * @relatedalso freeV
          * @relatedalso freeAll
          */
         void freeBytes(void* ptr) noexcept
             requires std::same_as<Type, stack::Loose>;
+
+
+        /**
+         * @brief Free memory from the stack to the @p ptr marker.
+         *
+         * @note If you are freeing data allocated using @ref alloc or @ref allocV, use @ref alloc and @ref allocV
+         *       respectively, as they will call the class destructor for non-trivial types.
+         *
+         * @warning Does not check for invalid states including out-of-bounds and `nullptr` free in *Release Mode*.
+         *
+         * @param[in] ptr The pointer to free upto.
+         *
+         * @remarks API specialized for @ref pmm::stack::Strict.
+         *
+         * @relatedalso free
+         * @relatedalso freeV
+         * @relatedalso freeAll
+         */
+        void freeBytes(void* ptr) noexcept
+            requires std::same_as<Type, stack::Strict>;
 
 
         /**
@@ -354,6 +376,10 @@ namespace pmm
     #include <gtest/gtest_prod.h>
 
 
+        FRIEND_TEST(StrictStackInitialization, InitializesDefaultStateAndBuffer);
+        FRIEND_TEST(StrictStackTests, Initialization_MovesOffsetAtleastByAllocationSize);
+        FRIEND_TEST(StrictStackTests, FreeAll_MovesOffsetAndPreviousOffsetToZero);
+        FRIEND_TEST(StrictStackResizeLast, ResizeLast_MovesOffsetInCorrectDirection);
 
 
         FRIEND_TEST(LooseStackInitialization, InitializesDefaultStateAndBuffer);
