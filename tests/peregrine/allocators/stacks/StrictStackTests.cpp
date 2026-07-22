@@ -755,7 +755,18 @@ TEST_F(StrictStackTests, ResizeLast_ToZero_TriggersAssertion)
     const auto address = stack.allocBytes(128);
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(address, 128, 0)), "");
 }
-// TODO: Resize last tests
+
+
+/**
+ * @brief Verify that stack resize using resizeLast triggers assertion in *DEBUG MODE*,
+ *        when resizing allocation in out of order.
+ */
+TEST_F(StrictStackTests, ResizeLast_OutOfOrder_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    static_cast<void>(stack.allocBytes(20)); // Second allocation to trigger out of order
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(address, 128, 0)), "");
+}
 
 #endif
 
@@ -811,7 +822,7 @@ namespace pmm
     /** @brief Verify that stack.resizeLast, moves the offset in the correct direction. */
     TEST_P(StrictStackResizeLast, ResizeLast_MovesOffsetInCorrectDirection)
     {
-        Stack<pmm::stack::Strict> stack(20_KB);
+        Stack<stack::Strict> stack(20_KB);
         const auto [oldSize, newSize] = GetParam();
         auto oldMemory                = stack.allocBytes(oldSize);
         const auto oldOffset          = stack._offset;

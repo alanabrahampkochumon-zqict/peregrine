@@ -101,7 +101,7 @@ namespace pmm
         auto prevAllocOffset = _prevOffset;
 
         // Move the offsets
-        _prevOffset          = _offset;
+        _prevOffset = _offset;
         _offset += padding;
 
         // Store the header behind the allocated address
@@ -127,14 +127,15 @@ namespace pmm
 
     template <stack::StackType Type>
     PMM_INLINE void* Stack<Type>::resize(void* oldMemory, const std::size_t oldSize, const std::size_t newSize,
-                              const std::size_t alignment)
+                                         const std::size_t alignment)
     {
         PMM_ASSERT_MSG(
             oldMemory != nullptr,
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
 
-        // Compare the two offset and if they are equal then this the latest allocation in which case
+        // Used for comparing if two offsets are matching giving us whether or not the resize is of the latest allocation
+        // TODO: Fix overwrites the memory -> Move to separate function when prevOffset is available.
         const auto targetOffset  = _offset - oldSize;
         const auto currentOffset = reinterpret_cast<uintptr_t>(oldMemory) - reinterpret_cast<uintptr_t>(_buffer);
 
@@ -165,8 +166,8 @@ namespace pmm
 
 
     template <stack::StackType Type>
-    PMM_INLINE void* Stack<Type>::resizeFast(const void* oldMemory, const std::size_t oldSize, const std::size_t newSize,
-                                  const std::size_t alignment)
+    PMM_INLINE void* Stack<Type>::resizeFast(const void* oldMemory, const std::size_t oldSize,
+                                             const std::size_t newSize, const std::size_t alignment)
     {
         PMM_ASSERT_MSG(
             oldMemory != nullptr,
@@ -182,6 +183,7 @@ namespace pmm
 
     template <stack::StackType Type>
     PMM_INLINE void* Stack<Type>::resizeLast(void* oldMemory, const std::size_t oldSize, const std::size_t newSize)
+        requires std::same_as<Type, stack::Loose>
     {
         PMM_ASSERT_MSG(
             oldMemory != nullptr,
@@ -194,8 +196,27 @@ namespace pmm
         _offset += newSize - oldSize;
 
         return oldMemory;
+    }
 
-        // TODO: In strict stack type add checks to ensure that the latest allocation is called.
+
+    template <stack::StackType Type>
+    PMM_INLINE void* Stack<Type>::resizeLast(void* oldMemory, const std::size_t oldSize, const std::size_t newSize)
+        requires std::same_as<Type, stack::Strict>
+    {
+        PMM_ASSERT_MSG(
+            oldMemory != nullptr,
+            "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
+        PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
+        PMM_ASSERT_MSG(reinterpret_cast<uintptr_t>(oldMemory) ==
+                           reinterpret_cast<uintptr_t>(_buffer) + _prevOffset + sizeof(StrictStackHeader),
+                       "Out-of-order resize. resizeLast will only allow resizing the latest allocation.");
+
+        // Move the forward or backward depending on the new size.
+        // Although all the operands are unsigned, even if oldSize is larger(result in negative result)
+        // offset will move backward or forward, in the correct direction. (TESTED)
+        _offset += newSize - oldSize;
+
+        return oldMemory;
     }
 
 
@@ -225,7 +246,6 @@ namespace pmm
         PMM_ASSERT_MSG(ptr >= _buffer && ptr <= _buffer + _offset, "Out-of-bounds free!");
 
         // TODO: Disable warning
-        // TODO: FIX
         const auto header = reinterpret_cast<StrictStackHeader*>(static_cast<char*>(ptr) - sizeof(StrictStackHeader));
         // Previous offset is the current ptr's position - whatever space we assigned for padding
         const auto currentBlockStart =

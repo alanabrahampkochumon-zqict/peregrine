@@ -52,7 +52,7 @@ namespace pmm
     struct StrictStackHeader
     {
         std::size_t prevOffset{}; /// Offset of previous allocated block.
-        std::size_t padding{};        /// Target allocation's block size.
+        std::size_t padding{};    /// Target allocation's block size.
     };
 
 
@@ -236,6 +236,31 @@ namespace pmm
          * @note Passing `0` as @p newSize will not deallocate memory, and is undefined behavior in release mode.
          *
          * @warning In **Release Mode** safety checks for `nullptr`, and 0 sizes are disabled.
+         * @warning Recommended to use for latest allocations.
+         *
+         * @param[in] oldMemory The pointer to the memory to resize.
+         * @param[in] oldSize   The current size of @p oldMemory.
+         * @param[in] newSize   The size to resize @p oldMemory to.
+         *
+         * @return A reference to the new memory location in stack.
+         *
+         * @remarks API specialized for @ref pmm::stack::Loose.
+         *
+         * @relatedalso resize
+         * @relatedalso resizeFast
+         */
+        [[nodiscard]] void* resizeLast(void* oldMemory, std::size_t oldSize, std::size_t newSize)
+            requires std::same_as<Type, stack::Loose>;
+
+
+        /**
+         * @brief Resize the latest allocation, @p oldMemory from @p oldSize to @p newSize.
+         *
+         * @note Stack will not be resized.
+         * @note Passing `0` as @p newSize will not deallocate memory, and is undefined behavior in release mode.
+         * @note Performs assertion in *Debug Mode* to ensure that the latest allocation is being resized.
+         *
+         * @warning In **Release Mode** safety checks for `nullptr`, and 0 sizes are disabled.
          * @warning Recommended to use for latest allocations, otherwise memory corruption can occur.
          *
          * @param[in] oldMemory The pointer to the memory to resize.
@@ -244,10 +269,13 @@ namespace pmm
          *
          * @return A reference to the new memory location in stack.
          *
+         * @remarks API specialized for @ref pmm::stack::Strict.
+         *
          * @relatedalso resize
          * @relatedalso resizeFast
          */
-        [[nodiscard]] void* resizeLast(void* oldMemory, std::size_t oldSize, std::size_t newSize);
+        [[nodiscard]] void* resizeLast(void* oldMemory, std::size_t oldSize, std::size_t newSize)
+            requires std::same_as<Type, stack::Strict>;
 
 
         /**
@@ -374,6 +402,8 @@ namespace pmm
 #ifdef ENABLE_PMM_TESTS
     // FRIEND TEST macros for verifying internal states
     #include <gtest/gtest_prod.h>
+
+
 
 
         FRIEND_TEST(StrictStackInitialization, InitializesDefaultStateAndBuffer);
