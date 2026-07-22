@@ -6,6 +6,7 @@ target_sources(
         ArenaTests.cpp
         stacks/LooseStackTests.cpp
         stacks/StrictStackTests.cpp
+        stacks/StackMemoryManagementTests.cpp
         TempArenaTests.cpp
 )
 

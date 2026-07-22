@@ -34,18 +34,18 @@ namespace pmm
 
 
     template <stack::StackType Type>
-    constexpr std::size_t Stack<Type>::freeSize() const noexcept
+    PMM_INLINE constexpr std::size_t Stack<Type>::freeSize() const noexcept
     { return _size - _offset; }
 
 
     template <stack::StackType Type>
-    constexpr std::size_t Stack<Type>::usedSize() const noexcept
+    PMM_INLINE constexpr std::size_t Stack<Type>::usedSize() const noexcept
     { return _offset; }
 
 
     template <stack::StackType Type>
     template <typename T>
-    constexpr std::span<T> Stack<Type>::allocV(std::size_t count) noexcept
+    PMM_INLINE constexpr std::span<T> Stack<Type>::allocV(std::size_t count) noexcept
     {
         PMM_ASSERT_MSG(count > 0, "[Stack]: Cannot allocate an array of size 0");
 
@@ -87,7 +87,7 @@ namespace pmm
 
 
     template <stack::StackType Type>
-    void* Stack<Type>::allocBytes(const std::size_t size, const std::size_t alignment) noexcept
+    PMM_INLINE void* Stack<Type>::allocBytes(const std::size_t size, const std::size_t alignment) noexcept
         requires std::same_as<Type, stack::Strict>
     {
         PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment != 1, "Alignment must be a power of 2");
@@ -118,7 +118,7 @@ namespace pmm
 
     template <stack::StackType Type>
     template <typename T, typename... Args>
-    T* Stack<Type>::alloc(Args... args) noexcept
+    PMM_INLINE T* Stack<Type>::alloc(Args... args) noexcept
     {
         auto rawMemory = allocBytes(sizeof(T), alignof(T));
         return new (rawMemory) T(std::forward<Args>(args)...);
@@ -126,7 +126,7 @@ namespace pmm
 
 
     template <stack::StackType Type>
-    void* Stack<Type>::resize(void* oldMemory, const std::size_t oldSize, const std::size_t newSize,
+    PMM_INLINE void* Stack<Type>::resize(void* oldMemory, const std::size_t oldSize, const std::size_t newSize,
                               const std::size_t alignment)
     {
         PMM_ASSERT_MSG(
@@ -165,7 +165,7 @@ namespace pmm
 
 
     template <stack::StackType Type>
-    void* Stack<Type>::resizeFast(const void* oldMemory, const std::size_t oldSize, const std::size_t newSize,
+    PMM_INLINE void* Stack<Type>::resizeFast(const void* oldMemory, const std::size_t oldSize, const std::size_t newSize,
                                   const std::size_t alignment)
     {
         PMM_ASSERT_MSG(
@@ -181,7 +181,7 @@ namespace pmm
 
 
     template <stack::StackType Type>
-    void* Stack<Type>::resizeLast(void* oldMemory, const std::size_t oldSize, const std::size_t newSize)
+    PMM_INLINE void* Stack<Type>::resizeLast(void* oldMemory, const std::size_t oldSize, const std::size_t newSize)
     {
         PMM_ASSERT_MSG(
             oldMemory != nullptr,
@@ -240,7 +240,7 @@ namespace pmm
 
     template <stack::StackType Type>
     template <typename T>
-    void Stack<Type>::free(T* ptr) noexcept
+    PMM_INLINE void Stack<Type>::free(T* ptr) noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
@@ -252,7 +252,7 @@ namespace pmm
 
     template <stack::StackType Type>
     template <typename T>
-    void Stack<Type>::freeV(std::span<T> vector) noexcept
+    PMM_INLINE void Stack<Type>::freeV(std::span<T> vector) noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
@@ -266,7 +266,7 @@ namespace pmm
 
 
     template <stack::StackType Type>
-    void Stack<Type>::freeAll()
+    PMM_INLINE void Stack<Type>::freeAll()
     {
         _offset = 0;
         if constexpr (std::is_same_v<Type, stack::Strict>)
