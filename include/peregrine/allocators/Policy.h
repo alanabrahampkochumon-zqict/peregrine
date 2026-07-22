@@ -77,7 +77,6 @@ namespace pmm
     /**
      * @brief Concept defining the requirements for a memory ownership strategy.
      *
-     * @tparam Strategy The type being checked against the concept.
      * @relatedalso ManagedMemory
      * @relatedalso UnmanagedMemory
      */
