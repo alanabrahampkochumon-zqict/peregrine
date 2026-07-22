@@ -110,6 +110,16 @@ namespace pmm
     };
 
 
+
+    /**************************************
+     *                                    *
+     *             TELEMETRY              *
+     *                                    *
+     **************************************/
+
+    // TODO: Three strategies -> ManagedTelemetry, UnmanagedTelemetry, NoTelemetry
+
+
     /** @} */
 
 } // namespace pmm

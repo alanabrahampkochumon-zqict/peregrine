@@ -127,7 +127,30 @@ namespace pmm
 
     template <stack::StackType Type>
     PMM_INLINE void* Stack<Type>::resize(void* oldMemory, const std::size_t oldSize, const std::size_t newSize,
-                                         const std::size_t alignment)
+                                         const std::size_t alignment) requires std::same_as<Type, stack::Loose>
+    {
+        PMM_ASSERT_MSG(
+            oldMemory != nullptr,
+            "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
+        PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
+
+        // If the current allocation requires a resize to a smaller buffer
+        if (oldSize >= newSize)
+        {
+            return oldMemory; // Return the old address
+        }
+
+        // Else make new allocations
+        auto newPtr = allocBytes(newSize, alignment);
+        memmove(newPtr, oldMemory, oldSize);
+
+        return newPtr;
+    }
+
+
+    template <stack::StackType Type>
+    PMM_INLINE void* Stack<Type>::resize(void* oldMemory, const std::size_t oldSize, const std::size_t newSize,
+                                         const std::size_t alignment) requires std::same_as<Type, stack::Strict>
     {
         PMM_ASSERT_MSG(
             oldMemory != nullptr,
@@ -135,14 +158,12 @@ namespace pmm
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
 
         // Used for comparing if two offsets are matching giving us whether or not the resize is of the latest allocation
-        // TODO: Fix overwrites the memory -> Move to separate function when prevOffset is available.
-        const auto targetOffset  = _offset - oldSize;
         const auto currentOffset = reinterpret_cast<uintptr_t>(oldMemory) - reinterpret_cast<uintptr_t>(_buffer);
 
         // If the current allocation requires a resize to a smaller buffer
         if (oldSize >= newSize)
         {
-            if (targetOffset == currentOffset)
+            if (_prevOffset == currentOffset)
             {
                 // Move the offset by the difference
                 _offset -= oldSize - newSize;
@@ -152,7 +173,7 @@ namespace pmm
 
         // Larger allocation can either be added to (in case of lastest allocation)
         // or provided with a new memory address
-        if (targetOffset == currentOffset)
+        if (_prevOffset == currentOffset)
         {
             _offset += newSize - oldSize; // Size difference
             return oldMemory;

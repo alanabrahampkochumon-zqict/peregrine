@@ -409,51 +409,15 @@ TEST_F(LooseStackTests, Resize_LatestAllocationSmallerSize_ReturnsSameAddress)
     EXPECT_EQ(oldMemory, newMemory);
 }
 
-/** @brief Verify that resizing the latest allocation to a smaller size, leaves memory for new allocations. */
-TEST_F(LooseStackTests, Resize_LatestAllocationSmallerSize_LeavesMemoryForNewAllocations)
-{
-    constexpr auto padding    = 128;
-    constexpr auto count      = 1024;
-    const std::size_t oldSize = stackSize - padding, newSize = 128;
-    const auto oldMemory = stack.allocBytes(oldSize);
-    // Resize
-    static_cast<void>(stack.resize(oldMemory, oldSize, newSize));
-
-    // Near limit memory allocation, but there is a lot of leeway. 4_KB out of ~5_KB
-    constexpr auto newAllocationSize = sizeof(int) * count;
-    const auto newMemory             = static_cast<int*>(stack.allocBytes(newAllocationSize));
-
-    // NOTE: While the read write cycles are unnecessary in debug mode due to asserts,
-    //       we need them to verify in release mode.
-    // Write into memory
-    for (std::size_t i = 0; i < count; ++i)
-    {
-        newMemory[i] = static_cast<int>(2813 + i);
-    }
-    // Allocate a new vector
-    const auto vector = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
-
-    // Confirm neither of the latest allocations are corrupted
-    EXPECT_FLOAT_EQ(1.0f, vector->x);
-    EXPECT_FLOAT_EQ(2.0f, vector->y);
-    EXPECT_FLOAT_EQ(3.0f, vector->z);
-    EXPECT_FLOAT_EQ(4.0f, vector->w);
-
-    for (std::size_t i = 0; i < count; ++i)
-    {
-        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
-    }
-}
-
 
 /** @brief Verify that resizing the latest allocation to a larger size, returns the same address. */
-TEST_F(LooseStackTests, Resize_LatestAllocationLargerSize_ReturnsSameAddress)
+TEST_F(LooseStackTests, Resize_LatestAllocationLargerSize_ReturnsNewAddress)
 {
     constexpr auto oldSize = 128, newSize = 256;
     const auto oldMemory = stack.allocBytes(oldSize);
     const auto newMemory = stack.resize(oldMemory, oldSize, newSize);
 
-    EXPECT_EQ(oldMemory, newMemory);
+    EXPECT_NE(oldMemory, newMemory);
 }
 
 

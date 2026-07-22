@@ -190,15 +190,46 @@ namespace pmm
          * @param[in] oldSize   The current size of @p oldMemory.
          * @param[in] newSize   The size to resize @p oldMemory to.
          * @param[in] alignment The required alignment.
-         *                  Default: 8-bytes on 64-bit machine.
+         *                      Default: 8-bytes on 64-bit machine.
          *
          * @return A reference to the new memory location in stack.
+         *
+         * @remarks API specialized for @ref pmm::stack::Strict.
          *
          * @relatedalso resizeFast
          * @relatedalso resizeLast
          */
         [[nodiscard]] void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
-                                   std::size_t alignment = sizeof(void*));
+                                   std::size_t alignment = sizeof(void*))
+            requires std::same_as<Type, stack::Loose>;
+
+
+        /**
+         * @brief Resize @p oldMemory block from @p oldSize to @p newSize while minimizing fragmentation.
+         *
+         * @note Stack will not be resized.
+         * @note Passing `0` as @p newSize will not deallocate memory, and is undefined behavior in release mode.
+         * @note Allocations are categorized(Latest, Resizing to smaller size, etc.) to minimize internal fragmentation
+         *       but can result in slower resizes.
+         *
+         * @warning In **Release Mode** safety checks for nullptr, and 0 sizes are disabled.
+         *
+         * @param[in] oldMemory The pointer to the memory to resize.
+         * @param[in] oldSize   The current size of @p oldMemory.
+         * @param[in] newSize   The size to resize @p oldMemory to.
+         * @param[in] alignment The required alignment.
+         *                      Default: 8-bytes on 64-bit machine.
+         *
+         * @return A reference to the new memory location in stack.
+         *
+         * @remarks API specialized for @ref pmm::stack::Strict.
+         *
+         * @relatedalso resizeFast
+         * @relatedalso resizeLast
+         */
+        [[nodiscard]] void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
+                                   std::size_t alignment = sizeof(void*))
+            requires std::same_as<Type, stack::Strict>;
 
 
         /**
