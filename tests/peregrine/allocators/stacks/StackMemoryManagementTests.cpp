@@ -67,7 +67,7 @@ namespace pmm
     {
         constexpr auto size = 4096;
         auto* buffer        = new uint8_t[size];
-        const Stack<stack::Loose, UnmanagedMemory> stack{ size, buffer };
+        const Stack<stack::Strict, UnmanagedMemory> stack{ size, buffer };
 
         EXPECT_EQ(buffer, stack._buffer);
     }
