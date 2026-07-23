@@ -410,7 +410,7 @@ TEST_F(LooseStackTests, Resize_LatestAllocationSmallerSize_ReturnsSameAddress)
 }
 
 
-/** @brief Verify that resizing the latest allocation to a larger size, returns the same address. */
+/** @brief Verify that resizing the latest allocation to a larger size, returns new address. */
 TEST_F(LooseStackTests, Resize_LatestAllocationLargerSize_ReturnsNewAddress)
 {
     constexpr auto oldSize = 128, newSize = 256;
@@ -504,7 +504,34 @@ TEST_F(LooseStackTests, Resize_LargerSize_ResizesMemory)
     EXPECT_FLOAT_EQ(4.0f, vec->w);
 }
 
-// TODO: Add tests to verify that resize copies the old buffer over for resize, resizefast and resize last
+
+/** @brief Verify that resizing any allocation to a larger size, copies over old memory contents. */
+TEST_F(LooseStackTests, Resize_CopiesOverOldMemory)
+{
+    constexpr auto oldCount       = 48;
+    constexpr auto newCount       = 128;
+    constexpr std::size_t oldSize = sizeof(int) * oldCount, newSize = sizeof(int) * newCount;
+    const auto oldMemory = static_cast<int*>(stack.allocBytes(oldSize));
+
+    // Since the copy is logically triggered only for allocations that are "moved"
+    // We need a second allocation to trigger it
+    static_cast<void>(stack.allocBytes(oldSize));
+
+    // Store some random value in memory
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        oldMemory[i] = static_cast<int>(2813 + i);
+    }
+
+    const auto newMemory = static_cast<int*>(stack.resize(oldMemory, oldSize, newSize));
+
+    // Verify that memory is copied.
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+}
+
 
 /** @brief Verify that resizing a allocation allocated prior to latest allocation to smaller size, does not corrupt memory. */
 TEST_F(LooseStackTests, Resize_NonLatestAllocShrinking_CorruptsNoMemory)
@@ -669,35 +696,6 @@ TEST_F(LooseStackTests, Resize_LatestAllocationExpansion_CorruptsNoMemory)
         EXPECT_EQ(static_cast<int>(5123 + i), secondAlloc[i]);
     }
 }
-
-
-/** @brief Verify that resizing any allocation to a larger size, copies over old memory contents. */
-TEST_F(LooseStackTests, Resize_CopiesOverOldMemory)
-{
-    constexpr auto oldCount       = 48;
-    constexpr auto newCount       = 128;
-    constexpr std::size_t oldSize = sizeof(int) * oldCount, newSize = sizeof(int) * newCount;
-    const auto oldMemory = static_cast<int*>(stack.allocBytes(oldSize));
-
-    // Since the copy is logically triggered only for allocations that are "moved"
-    // We need a second allocation to trigger it
-    static_cast<void>(stack.allocBytes(oldSize));
-
-    // Store some random value in memory
-    for (std::size_t i = 0; i < oldCount; ++i)
-    {
-        oldMemory[i] = static_cast<int>(2813 + i);
-    }
-
-    const auto newMemory = static_cast<int*>(stack.resize(oldMemory, oldSize, newSize));
-
-    // Verify that memory is copied.
-    for (std::size_t i = 0; i < oldCount; ++i)
-    {
-        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
-    }
-}
-
 
 
 /** @brief Verify that resizing the latest allocation using to a smaller size resizeFast, returns new address. */

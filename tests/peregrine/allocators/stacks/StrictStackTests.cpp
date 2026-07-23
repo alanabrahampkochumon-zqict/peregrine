@@ -396,6 +396,469 @@ TEST_F(StrictStackTests, AllocV_BaseAddressAlignedToAlignmentOfType)
 
 /**************************************
  *                                    *
+ *           RESIZE TESTS             *
+ *                                    *
+ **************************************/
+
+
+/** @brief Verify that resizing the latest allocation to a smaller size, returns the same address. */
+TEST_F(StrictStackTests, Resize_LatestAllocationSmallerSize_ReturnsSameAddress)
+{
+    constexpr auto oldSize = 128, newSize = 64;
+    const auto oldMemory = stack.allocBytes(oldSize);
+    const auto newMemory = stack.resize(oldMemory, oldSize, newSize);
+
+    EXPECT_EQ(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing the latest allocation to a larger size, returns the same address. */
+TEST_F(StrictStackTests, Resize_LatestAllocationLargerSize_ReturnsSameAddress)
+{
+    constexpr auto oldSize = 128, newSize = 256;
+    const auto oldMemory = stack.allocBytes(oldSize);
+    const auto newMemory = stack.resize(oldMemory, oldSize, newSize);
+
+    EXPECT_EQ(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing the latest allocation to a larger size, resizes the memory. */
+TEST_F(StrictStackTests, Resize_LatestAllocationLargerSize_ResizesMemory)
+{
+    constexpr auto count          = 128;
+    constexpr std::size_t oldSize = 128, newSize = sizeof(int) * count;
+    const auto oldMemory = stack.allocBytes(oldSize);
+    const auto newMemory = static_cast<int*>(stack.resize(oldMemory, oldSize, newSize));
+
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        newMemory[i] = static_cast<int>(2813 + i);
+    }
+
+    // Allocate a new vector
+    static_cast<void>(stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+}
+
+
+/** @brief Verify that resizing any allocation to a smaller size, returns the same address. */
+TEST_F(StrictStackTests, Resize_SmallerSize_ReturnsSameAddress)
+{
+    constexpr auto oldSize = 128, newSize = 64;
+    const auto oldMemory = stack.allocBytes(oldSize);
+
+    static_cast<void>(stack.allocBytes(oldSize)); // Second allocation
+
+    const auto newMemory = stack.resize(oldMemory, oldSize, newSize);
+
+    EXPECT_EQ(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing any allocation to a larger size, returns the new address. */
+TEST_F(StrictStackTests, Resize_LargerSize_ReturnsNewAddress)
+{
+    constexpr auto oldSize = 128, newSize = 256;
+    const auto oldMemory = stack.allocBytes(oldSize);
+
+    static_cast<void>(stack.allocBytes(oldSize)); // Second allocation
+
+    const auto newMemory = stack.resize(oldMemory, oldSize, newSize);
+
+    EXPECT_NE(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing any allocation to a larger size, resizes the memory. */
+TEST_F(StrictStackTests, Resize_LargerSize_ResizesMemory)
+{
+    constexpr auto count          = 128;
+    constexpr std::size_t oldSize = 128, newSize = sizeof(int) * count;
+    const auto oldMemory = stack.allocBytes(oldSize);
+
+    static_cast<void>(stack.allocBytes(oldSize)); // Second allocation
+
+    const auto newMemory = static_cast<int*>(stack.resize(oldMemory, oldSize, newSize));
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        newMemory[i] = static_cast<int>(2813 + i);
+    }
+
+
+    // Allocate a new vector
+    const auto vec = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+
+    EXPECT_FLOAT_EQ(1.0f, vec->x);
+    EXPECT_FLOAT_EQ(2.0f, vec->y);
+    EXPECT_FLOAT_EQ(3.0f, vec->z);
+    EXPECT_FLOAT_EQ(4.0f, vec->w);
+}
+
+
+/** @brief Verify that resizing any allocation to a larger size, copies over old memory contents. */
+TEST_F(StrictStackTests, Resize_CopiesOverOldMemory)
+{
+    constexpr auto oldCount       = 48;
+    constexpr auto newCount       = 128;
+    constexpr std::size_t oldSize = sizeof(int) * oldCount, newSize = sizeof(int) * newCount;
+    const auto oldMemory = static_cast<int*>(stack.allocBytes(oldSize));
+
+    // Since the copy is logically triggered only for allocations that are "moved"
+    // We need a second allocation to trigger it
+    static_cast<void>(stack.allocBytes(oldSize));
+
+    // Store some random value in memory
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        oldMemory[i] = static_cast<int>(2813 + i);
+    }
+
+    const auto newMemory = static_cast<int*>(stack.resize(oldMemory, oldSize, newSize));
+
+    // Verify that memory is copied.
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+}
+
+
+/** @brief Verify that resizing a allocation allocated prior to latest allocation to smaller size, does not corrupt memory. */
+TEST_F(StrictStackTests, Resize_NonLatestAllocShrinking_CorruptsNoMemory)
+{
+    constexpr auto oldCount       = 64;
+    constexpr auto newCount       = 32;
+    constexpr std::size_t oldSize = sizeof(int) * oldCount, newSize = sizeof(int) * newCount;
+
+    // Allocate the memory
+    const auto firstAlloc = static_cast<int*>(stack.allocBytes(oldSize));
+    // Fill the first allocation with data
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        firstAlloc[i] = static_cast<int>(2813 + i);
+    }
+    // Allocate another memory
+    const auto secondAlloc = static_cast<int*>(stack.allocBytes(oldSize));
+    // Fill the buffer
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        secondAlloc[i] = static_cast<int>(5123 + i);
+    }
+    // Resize first buffer to be of smaller size
+    const auto newMemory = static_cast<int*>(stack.resize(firstAlloc, oldSize, newSize));
+
+    // Verify both memory are uncorrupted
+    for (std::size_t i = 0; i < newCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+
+    // Since second buffer is not resized, it must be uncorrupted till `oldCount`
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(5123 + i), secondAlloc[i]);
+    }
+}
+
+
+/** @brief Verify that resizing a allocation allocated prior to latest allocation to smaller size, does not corrupt memory. */
+TEST_F(StrictStackTests, Resize_NonLatestAllocExpansion_CorruptsNoMemory)
+{
+    constexpr auto oldCount       = 16;
+    constexpr auto newCount       = 32;
+    constexpr std::size_t oldSize = sizeof(int) * oldCount, newSize = sizeof(int) * newCount;
+
+    // Allocate the memory
+    const auto firstAlloc = static_cast<int*>(stack.allocBytes(oldSize));
+    // Fill the first allocation with data
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        firstAlloc[i] = static_cast<int>(2813 + i);
+    }
+    // Allocate another memory
+    const auto secondAlloc = static_cast<int*>(stack.allocBytes(oldSize));
+    // Fill the buffer
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        secondAlloc[i] = static_cast<int>(5123 + i);
+    }
+    // Resize first buffer to be of smaller size
+    const auto newMemory = static_cast<int*>(stack.resize(firstAlloc, oldSize, newSize));
+
+    // Write the pattern into expanded region
+    for (std::size_t i = oldCount; i < newCount; ++i)
+    {
+        newMemory[i] = static_cast<int>(2813 + i);
+    }
+
+    // Verify both memory are uncorrupted
+    for (std::size_t i = 0; i < newCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(5123 + i), secondAlloc[i]);
+    }
+}
+
+
+/** @brief Verify that resizing the latest allocation to smaller size, does not corrupt memory. */
+TEST_F(StrictStackTests, Resize_LatestAllocationShrinking_CorruptsNoMemory)
+{
+    constexpr auto oldCount       = 64;
+    constexpr auto newCount       = 32;
+    constexpr std::size_t oldSize = sizeof(int) * oldCount, newSize = sizeof(int) * newCount;
+
+    // Allocate the memory
+    const auto firstAlloc = static_cast<int*>(stack.allocBytes(oldSize));
+    // Fill the first allocation with data
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        firstAlloc[i] = static_cast<int>(2813 + i);
+    }
+    // Buffer is resized here to ensure that we have the latest allocated resized
+    // Resize first buffer to be of smaller size
+    const auto newMemory = static_cast<int*>(stack.resize(firstAlloc, oldSize, newSize));
+
+    // Allocate another memory
+    const auto secondAlloc = static_cast<int*>(stack.allocBytes(oldSize));
+    // Fill the buffer
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        secondAlloc[i] = static_cast<int>(5123 + i);
+    }
+
+    // Verify both memory are uncorrupted
+    for (std::size_t i = 0; i < newCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(5123 + i), secondAlloc[i]);
+    }
+}
+
+
+/** @brief Verify that resizing the latest allocation to larger size, does not corrupt memory. */
+TEST_F(StrictStackTests, Resize_LatestAllocationExpansion_CorruptsNoMemory)
+{
+    constexpr auto oldCount       = 16;
+    constexpr auto newCount       = 32;
+    constexpr std::size_t oldSize = sizeof(int) * oldCount, newSize = sizeof(int) * newCount;
+
+    // Allocate the memory
+    const auto firstAlloc = static_cast<int*>(stack.allocBytes(oldSize));
+    // Fill the first allocation with data
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        firstAlloc[i] = static_cast<int>(2813 + i);
+    }
+
+    // Buffer is resized here to ensure that we have the latest allocated resized
+    // Resize first buffer to be of smaller size
+    const auto newMemory = static_cast<int*>(stack.resize(firstAlloc, oldSize, newSize));
+    // Write the pattern into expanded region
+    for (std::size_t i = oldCount; i < newCount; ++i)
+    {
+        newMemory[i] = static_cast<int>(2813 + i);
+    }
+
+    // Allocate another memory
+    const auto secondAlloc = static_cast<int*>(stack.allocBytes(oldSize));
+    // Fill the buffer
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        secondAlloc[i] = static_cast<int>(5123 + i);
+    }
+
+    // Verify both memory are uncorrupted
+    for (std::size_t i = 0; i < newCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(5123 + i), secondAlloc[i]);
+    }
+}
+
+
+/** @brief Verify that resizing the latest allocation using to a smaller size resizeFast, returns new address. */
+TEST_F(StrictStackTests, ResizeFast_LatestAllocationSmallerSize_ReturnsNewAddress)
+{
+    constexpr auto oldSize = 128, newSize = 64;
+    const auto oldMemory = stack.allocBytes(oldSize);
+    const auto newMemory = stack.resizeFast(oldMemory, oldSize, newSize);
+
+    EXPECT_NE(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing the latest allocation to a larger size using resizeFast, returns new address. */
+TEST_F(StrictStackTests, ResizeFast_LatestAllocationLargerSize_ReturnsNewAddress)
+{
+    constexpr auto oldSize = 128, newSize = 256;
+    const auto oldMemory = stack.allocBytes(oldSize);
+    const auto newMemory = stack.resizeFast(oldMemory, oldSize, newSize);
+
+    EXPECT_NE(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing any allocation to a smaller size using resizeFast, returns new address. */
+TEST_F(StrictStackTests, ResizeFast_SmallerSize_ReturnsNewAddress)
+{
+    constexpr auto oldSize = 128, newSize = 64;
+    const auto oldMemory = stack.allocBytes(oldSize);
+
+    static_cast<void>(stack.allocBytes(oldSize)); // Second allocation
+
+    const auto newMemory = stack.resizeFast(oldMemory, oldSize, newSize);
+
+    EXPECT_NE(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing any allocation to a larger size using resizeFast, returns the new address. */
+TEST_F(StrictStackTests, ResizeFast_LargerSize_ReturnsNewAddress)
+{
+    constexpr auto oldSize = 128, newSize = 256;
+    const auto oldMemory = stack.allocBytes(oldSize);
+
+    static_cast<void>(stack.allocBytes(oldSize)); // Second allocation
+
+    const auto newMemory = stack.resizeFast(oldMemory, oldSize, newSize);
+
+    EXPECT_NE(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing any allocation using resizeFast, resizes the memory. */
+TEST_F(StrictStackTests, ResizeFast_ResizesMemory)
+{
+    constexpr auto count          = 128;
+    constexpr std::size_t oldSize = 128, newSize = sizeof(int) * count;
+    const auto oldMemory = stack.allocBytes(oldSize);
+
+    static_cast<void>(stack.allocBytes(oldSize)); // Second allocation
+
+    const auto newMemory = static_cast<int*>(stack.resizeFast(oldMemory, oldSize, newSize));
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        newMemory[i] = static_cast<int>(2813 + i);
+    }
+
+
+    // Allocate a new vector
+    const auto vec = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+
+    EXPECT_FLOAT_EQ(1.0f, vec->x);
+    EXPECT_FLOAT_EQ(2.0f, vec->y);
+    EXPECT_FLOAT_EQ(3.0f, vec->z);
+    EXPECT_FLOAT_EQ(4.0f, vec->w);
+}
+
+
+/** @brief Verify that resizing any allocation to a larger size using resizeFast, copies over old memory contents. */
+TEST_F(StrictStackTests, ResizeFast_CopiesOverOldMemory)
+{
+    constexpr auto oldCount       = 48;
+    constexpr auto newCount       = 128;
+    constexpr std::size_t oldSize = sizeof(int) * oldCount, newSize = sizeof(int) * newCount;
+    const auto oldMemory = static_cast<int*>(stack.allocBytes(oldSize));
+
+    // Store some random value in memory
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        oldMemory[i] = static_cast<int>(2813 + i);
+    }
+
+    const auto newMemory = static_cast<int*>(stack.resizeFast(oldMemory, oldSize, newSize));
+
+    // Verify that memory is copied.
+    for (std::size_t i = 0; i < oldCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+}
+
+
+/** @brief Verify that resizing the latest allocation to a smaller size using resizeLast, returns the same address. */
+TEST_F(StrictStackTests, ResizeLast_LatestAllocationSmallerSize_ReturnsSameAddress)
+{
+    constexpr auto oldSize = 128, newSize = 64;
+    const auto oldMemory = stack.allocBytes(oldSize);
+    const auto newMemory = stack.resizeLast(oldMemory, oldSize, newSize);
+
+    EXPECT_EQ(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing the latest allocation to a larger size using resizeLast, returns the same address. */
+TEST_F(StrictStackTests, ResizeLast_LatestAllocationLargerSize_ReturnsSameAddress)
+{
+    constexpr auto oldSize = 128, newSize = 256;
+    const auto oldMemory = stack.allocBytes(oldSize);
+    const auto newMemory = stack.resizeLast(oldMemory, oldSize, newSize);
+
+    EXPECT_EQ(oldMemory, newMemory);
+}
+
+
+/** @brief Verify that resizing any allocation using resizeLast, resizes the memory. */
+TEST_F(StrictStackTests, ResizeLast_ResizesMemory)
+{
+    constexpr auto count          = 128;
+    constexpr std::size_t oldSize = 128, newSize = sizeof(int) * count;
+    const auto oldMemory = stack.allocBytes(oldSize);
+
+    const auto newMemory = static_cast<int*>(stack.resizeLast(oldMemory, oldSize, newSize));
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        newMemory[i] = static_cast<int>(2813 + i);
+    }
+
+
+    // Allocate a new vector
+    const auto vec = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(2813 + i), newMemory[i]);
+    }
+
+    EXPECT_FLOAT_EQ(1.0f, vec->x);
+    EXPECT_FLOAT_EQ(2.0f, vec->y);
+    EXPECT_FLOAT_EQ(3.0f, vec->z);
+    EXPECT_FLOAT_EQ(4.0f, vec->w);
+}
+
+/**************************************
+ *                                    *
  *            FREE TESTS              *
  *                                    *
  **************************************/

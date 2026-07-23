@@ -164,7 +164,9 @@ namespace pmm
         const auto currentOffset = reinterpret_cast<uintptr_t>(oldMemory) - reinterpret_cast<uintptr_t>(_buffer);
 
         // If the current allocation requires a resize to a smaller buffer
-        const std::size_t isLatestAllocation = _prevOffset == currentOffset;
+        // Since current offset retrieve the top of the start address exclusive of header size
+        // We need to account for that.
+        const std::size_t isLatestAllocation = _prevOffset == currentOffset - sizeof(StrictStackHeader);
         if (oldSize >= newSize)
         {
             // Move the offset by the difference
