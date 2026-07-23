@@ -22,30 +22,38 @@
 namespace pmm
 {
 
-    template <stack::StackType Type>
-    PMM_INLINE Stack<Type>::Stack(const std::size_t sizeInBytes) noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE Stack<Type, MemStrategy>::Stack(const std::size_t sizeInBytes) noexcept
+        requires std::same_as<MemStrategy, ManagedMemory>
         : _buffer{ new uint8_t[sizeInBytes] }, _size{ sizeInBytes }, _prevOffset{}
     {}
 
 
-    template <stack::StackType Type>
-    PMM_INLINE constexpr std::size_t Stack<Type>::size() const noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    Stack<Type, MemStrategy>::Stack(const std::size_t sizeInBytes, uint8_t* buffer) noexcept
+        requires std::same_as<MemStrategy, UnmanagedMemory>
+        : _buffer{ buffer }, _size{ sizeInBytes }, _prevOffset{}
+    {}
+
+
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE constexpr std::size_t Stack<Type, MemStrategy>::size() const noexcept
     { return _size; }
 
 
-    template <stack::StackType Type>
-    PMM_INLINE constexpr std::size_t Stack<Type>::freeSize() const noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE constexpr std::size_t Stack<Type, MemStrategy>::freeSize() const noexcept
     { return _size - _offset; }
 
 
-    template <stack::StackType Type>
-    PMM_INLINE constexpr std::size_t Stack<Type>::usedSize() const noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE constexpr std::size_t Stack<Type, MemStrategy>::usedSize() const noexcept
     { return _offset; }
 
 
-    template <stack::StackType Type>
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
     template <typename T>
-    PMM_INLINE constexpr std::span<T> Stack<Type>::allocV(std::size_t count) noexcept
+    PMM_INLINE constexpr std::span<T> Stack<Type, MemStrategy>::allocV(std::size_t count) noexcept
     {
         PMM_ASSERT_MSG(count > 0, "[Stack]: Cannot allocate an array of size 0");
 
@@ -61,8 +69,8 @@ namespace pmm
      *                                    *
      **************************************/
 
-    template <stack::StackType Type>
-    PMM_INLINE void* Stack<Type>::allocBytes(const std::size_t size, const std::size_t alignment) noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE void* Stack<Type, MemStrategy>::allocBytes(const std::size_t size, const std::size_t alignment) noexcept
         requires std::same_as<Type, stack::Loose>
     {
         PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment != 1, "Alignment must be a power of 2");
@@ -86,8 +94,8 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type>
-    PMM_INLINE void* Stack<Type>::allocBytes(const std::size_t size, const std::size_t alignment) noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE void* Stack<Type, MemStrategy>::allocBytes(const std::size_t size, const std::size_t alignment) noexcept
         requires std::same_as<Type, stack::Strict>
     {
         PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment != 1, "Alignment must be a power of 2");
@@ -116,18 +124,18 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type>
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
     template <typename T, typename... Args>
-    PMM_INLINE T* Stack<Type>::alloc(Args... args) noexcept
+    PMM_INLINE T* Stack<Type, MemStrategy>::alloc(Args... args) noexcept
     {
         auto rawMemory = allocBytes(sizeof(T), alignof(T));
         return new (rawMemory) T(std::forward<Args>(args)...);
     }
 
 
-    template <stack::StackType Type>
-    PMM_INLINE void* Stack<Type>::resize(void* oldMemory, const std::size_t oldSize, const std::size_t newSize,
-                                         const std::size_t alignment)
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE void* Stack<Type, MemStrategy>::resize(void* oldMemory, const std::size_t oldSize,
+                                                      const std::size_t newSize, const std::size_t alignment)
         requires std::same_as<Type, stack::Loose>
     {
         PMM_ASSERT_MSG(
@@ -149,9 +157,9 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type>
-    PMM_INLINE void* Stack<Type>::resize(void* oldMemory, const std::size_t oldSize, const std::size_t newSize,
-                                         const std::size_t alignment)
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE void* Stack<Type, MemStrategy>::resize(void* oldMemory, const std::size_t oldSize,
+                                                      const std::size_t newSize, const std::size_t alignment)
         requires std::same_as<Type, stack::Strict>
     {
         PMM_ASSERT_MSG(
@@ -190,9 +198,9 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type>
-    PMM_INLINE void* Stack<Type>::resizeFast(const void* oldMemory, const std::size_t oldSize,
-                                             const std::size_t newSize, const std::size_t alignment)
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE void* Stack<Type, MemStrategy>::resizeFast(const void* oldMemory, const std::size_t oldSize,
+                                                          const std::size_t newSize, const std::size_t alignment)
     {
         PMM_ASSERT_MSG(
             oldMemory != nullptr,
@@ -206,8 +214,9 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type>
-    PMM_INLINE void* Stack<Type>::resizeLast(void* oldMemory, const std::size_t oldSize, const std::size_t newSize)
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE void* Stack<Type, MemStrategy>::resizeLast(void* oldMemory, const std::size_t oldSize,
+                                                          const std::size_t newSize)
         requires std::same_as<Type, stack::Loose>
     {
         PMM_ASSERT_MSG(
@@ -224,8 +233,9 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type>
-    PMM_INLINE void* Stack<Type>::resizeLast(void* oldMemory, const std::size_t oldSize, const std::size_t newSize)
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE void* Stack<Type, MemStrategy>::resizeLast(void* oldMemory, const std::size_t oldSize,
+                                                          const std::size_t newSize)
         requires std::same_as<Type, stack::Strict>
     {
         PMM_ASSERT_MSG(
@@ -245,8 +255,8 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type>
-    PMM_INLINE void Stack<Type>::freeBytes(void* ptr) noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE void Stack<Type, MemStrategy>::freeBytes(void* ptr) noexcept
         requires std::same_as<Type, stack::Loose>
     {
         PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
@@ -263,8 +273,8 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type>
-    PMM_INLINE void Stack<Type>::freeBytes(void* ptr) noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE void Stack<Type, MemStrategy>::freeBytes(void* ptr) noexcept
         requires std::same_as<Type, stack::Strict>
     {
         PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
@@ -283,9 +293,9 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type>
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
     template <typename T>
-    PMM_INLINE void Stack<Type>::free(T* ptr) noexcept
+    PMM_INLINE void Stack<Type, MemStrategy>::free(T* ptr) noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
@@ -295,9 +305,9 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type>
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
     template <typename T>
-    PMM_INLINE void Stack<Type>::freeV(std::span<T> vector) noexcept
+    PMM_INLINE void Stack<Type, MemStrategy>::freeV(std::span<T> vector) noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
@@ -310,8 +320,8 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type>
-    PMM_INLINE void Stack<Type>::freeAll()
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE void Stack<Type, MemStrategy>::freeAll()
     {
         _offset = 0;
         if constexpr (std::is_same_v<Type, stack::Strict>)
@@ -321,8 +331,9 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type>
-    PMM_INLINE Stack<Type>::~Stack() noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE Stack<Type, MemStrategy>::~Stack() noexcept
+        requires std::same_as<MemStrategy, ManagedMemory>
     { delete[] _buffer; }
 
 
@@ -333,8 +344,8 @@ namespace pmm
      *                                    *
      **************************************/
 
-    template <stack::StackType Type>
-    PMM_INLINE std::size_t Stack<Type>::_calcAlignment(const std::size_t alignment) noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy>
+    PMM_INLINE std::size_t Stack<Type, MemStrategy>::_calcAlignment(const std::size_t alignment) noexcept
     {
         const auto baseAddress    = reinterpret_cast<uintptr_t>(_buffer);
         const auto currentAddress = baseAddress + _offset;

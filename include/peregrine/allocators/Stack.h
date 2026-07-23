@@ -56,7 +56,7 @@ namespace pmm
     };
 
 
-    template <stack::StackType Type = stack::Loose>
+    template <stack::StackType Type = stack::Loose, MemoryStrategy MemStrategy = ManagedMemory>
     class Stack
     {
     public:
@@ -67,11 +67,31 @@ namespace pmm
          *
          * @param[in] sizeInBytes The total capacity of the stack in bytes.
          *
+         * @remarks API specialized for @ref pmm::ManagedMemory.
+         *
          * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        [[nodiscard]] explicit Stack(std::size_t sizeInBytes) noexcept;
+        [[nodiscard]] explicit Stack(std::size_t sizeInBytes) noexcept
+            requires std::same_as<MemStrategy, ManagedMemory>;
 
+
+
+        /**
+         * @brief Allocate a new physical memory vault from the Operating System.
+         *
+         * @note TODO: When telemetry is enabled, allocates a Telemetry instance on the **Heap**.
+         *
+         * @param[in] sizeInBytes The total capacity of the stack in bytes.
+         * @param[in] buffer      The starting address to the backing buffer.
+         *
+         * @remarks API specialized for @ref pmm::UnmanagedMemory.
+         *
+         * @warning The memory block is NOT zero-initialized.
+         * @warning This allocator is Linear and is NOT thread-safe by default.
+         */
+        [[nodiscard]] explicit Stack(std::size_t sizeInBytes, uint8_t* buffer) noexcept
+            requires std::same_as<MemStrategy, UnmanagedMemory>;
 
         /**
          * @brief Get the total capacity in bytes of the stack.
@@ -404,11 +424,28 @@ namespace pmm
         // [[nodiscard]] constexpr void* allocBack(std::size_t size, std::size_t alignment = sizeof(void*));
 
         /**
-         * @brief Stack Destructor. Frees all memory held.
+         * @brief Stack Destructor. Free the internal buffer.
          *
          * @note For clearing the Arena, use @ref freeAll, or to move free individual frames use @ref free.
+         *
+         * @remarks API specialized for @ref pmm::ManagedMemory.
          */
-        ~Stack() noexcept;
+        ~Stack() noexcept
+            requires std::same_as<MemStrategy, ManagedMemory>;
+
+
+        /**
+         * @brief Stack Destructor.
+         *
+         * @note For clearing the Arena, use @ref freeAll, or to move free individual frames use @ref free.
+         *
+         * @warning Will not clear free the backing buffer since its managed by the user.
+         *
+         * @remarks API specialized for @ref pmm::ManagedMemory.
+         */
+        ~Stack() noexcept
+            requires std::same_as<MemStrategy, UnmanagedMemory>
+        = default;
 
 
     private:
@@ -436,6 +473,8 @@ namespace pmm
 
 
 
+        FRIEND_TEST(StackMemoryManagement, LooseUnmanagedStack_UsesExternalBuffer);
+        FRIEND_TEST(StackMemoryManagement, StrictUnmanagedStack_UsesExternalBuffer);
 
         FRIEND_TEST(StrictStackInitialization, InitializesDefaultStateAndBuffer);
         FRIEND_TEST(StrictStackTests, Initialization_MovesOffsetAtleastByAllocationSize);
@@ -447,6 +486,8 @@ namespace pmm
         FRIEND_TEST(LooseStackTests, Initialization_MovesOffsetAtleastByAllocationSize);
         FRIEND_TEST(LooseStackTests, FreeAll_MovesOffsetToZero);
         FRIEND_TEST(LooseStackResizeLast, ResizeLast_MovesOffsetInCorrectDirection);
+
+
 #endif
     };
 
