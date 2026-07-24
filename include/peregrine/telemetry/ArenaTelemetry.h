@@ -15,7 +15,7 @@
 
 namespace pmm
 {
-
+    // TODO: Update to be a single interface regardless of telemetry usage
     /**
      * @addtogroup PMM_Telemetry
      * @{
@@ -42,7 +42,7 @@ namespace pmm
 
 
         /**
-         * @brief Update the current arena usage by updating with the current allocation byte size.
+         * @brief Update the current arena usage.
          *
          * @note The function expects the size of current allocation, not the size of the arena's buffer,
          *       or the current offset.
@@ -79,26 +79,22 @@ namespace pmm
 
 
         /**
-         * @brief Get the size of the arena that the telemetry is attached to.
-         * @return Size of the arena.
+         * @brief Get the size of the arena.
          */
         [[nodiscard]] constexpr std::size_t getArenaSize() const noexcept;
 
         /**
-         * @brief Get the current memory usage of the arena, the telemetry is attached to.
-         * @return Current memory used in the arena.
+         * @brief Get the current memory usage of the arena.
          */
         [[nodiscard]] constexpr std::size_t getCurrentUsage() const noexcept;
 
         /**
-         * @brief Get the all-time minimum of memory used in the arena, that the telemetry is attached to.
-         * @return Minimum memory used in the arena.
+         * @brief Get the all-time minimum memory usage of the arena.
          */
         [[nodiscard]] constexpr std::size_t getMinUsage() const noexcept;
 
         /**
-         * @brief Get the all-time maximum of memory used in the arena, that the telemetry is attached to.
-         * @return Minimum memory used in the arena.
+         * @brief Get the all-time maximum memory usage of the arena.
          */
         [[nodiscard]] constexpr std::size_t getPeakUsage() const noexcept;
 
