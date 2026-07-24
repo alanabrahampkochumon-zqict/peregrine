@@ -40,6 +40,8 @@ namespace pmm
          *
          * @param[in] size    The size of the allocated memory (exclusive of padding) in bytes.
          * @param[in] padding The padding used the by the allocation in bytes.
+         *
+         * @relatedalso decStackUsage()
          */
         constexpr void incStackUsage(std::size_t size, std::size_t padding) noexcept;
 
@@ -53,30 +55,45 @@ namespace pmm
          *
          * @param[in] size    The size of the freed memory (exclusive of padding) in bytes.
          * @param[in] padding The padding used the by the allocation in bytes.
+         *
+         * @relatedalso incStackUsage()
          */
         constexpr void decStackUsage(std::size_t size, std::size_t padding) noexcept;
 
 
         /**
-         * @brief Update the current minimum memory usage with @p usage if it is lower than the recorded minimum.
+         * @brief Update the current minimum memory usage(non-padded) with @p usage
+         *        if it is lower than the recorded minimum.
          *
-         * @param[in] usage The new memory allocation size.
+        * @param[in] usage The new memory allocation size.
+        *
+         * @relatedalso updatePeakPaddingUsage()
+         * @relatedalso updateMinPaddingUsage()
+         * @relatedalso updatePeakMemoryUsage()
          */
-        constexpr void updateMinUsage(std::size_t usage) noexcept;
+        constexpr void updateMinMemoryUsage(std::size_t usage) noexcept;
 
 
         /**
-         * @brief Update the current peak usage memory with @p usage if it is higher than the recorded peak.
+         * @brief Update the current peak memory usage(non-padded) with @p usage if it is higher than the recorded peak.
          *
          * @param[in] usage The new memory allocation size.
+        *
+         * @relatedalso updatePeakPaddingUsage()
+         * @relatedalso updateMinPaddingUsage()
+         * @relatedalso updateMinMemoryUsage()
          */
-        constexpr void updatePeakUsage(std::size_t usage) noexcept;
+        constexpr void updatePeakMemoryUsage(std::size_t usage) noexcept;
 
 
         /**
          * @brief Update the current minimum padding usage with @p usage if it is lower than the recorded minimum.
          *
          * @param[in] usage The new padding.
+         *
+         * @relatedalso updatePeakPaddingUsage()
+         * @relatedalso updatePeakMemoryUsage()
+         * @relatedalso updateMinMemoryUsage()
          */
         constexpr void updateMinPaddingUsage(std::size_t usage) noexcept;
 
@@ -85,18 +102,26 @@ namespace pmm
          * @brief Update the current peak usage with @p usage if it is higher than the recorded peak.
          *
          * @param[in] usage The new padding.
+         *
+         * @relatedalso updateMinPaddingUsage()
+         * @relatedalso updatePeakMemoryUsage()
+         * @relatedalso updateMinMemoryUsage()
          */
         constexpr void updatePeakPaddingUsage(std::size_t usage) noexcept;
 
 
         /**
-         * @brief Reset the currentUsage, while preserving the peak and minimum usage.
+         * @brief Reset the current memory usage (including padding), while preserving the peak and minimum usage.
+         *
+         * @relatedalso resetTelemetry()
          */
         constexpr void resetCurrentUsage() noexcept;
 
 
         /**
          * @brief Update the telemetry usage statistics to zero.
+         *
+         * @relatedalso resetCurrentUsage()
          */
         constexpr void resetTelemetry() noexcept;
 
@@ -106,27 +131,59 @@ namespace pmm
          */
         [[nodiscard]] constexpr std::size_t getStackSize() const noexcept;
 
-        /**
-         * @brief Get the current memory usage of the stack.
-         */
-        [[nodiscard]] constexpr std::size_t getCurrentUsage() const noexcept;
 
         /**
-         * @brief Get the all-time minimum memory usage of the stack.
+         * @brief Get the current memory usage (excluding padding) of the stack.
+         *
+         * @relatedalso getMinPadding()
+         * @relatedalso getPeakPadding()
+         * @relatedalso getTotalPadding()
+         *
+         * @relatedalso getMinMemoryUsage()
+         * @relatedalso getPeakMemoryUsage()
+         * @relatedalso getTotalUsage()
          */
-        [[nodiscard]] constexpr std::size_t getMinUsage() const noexcept;
+        [[nodiscard]] constexpr std::size_t getCurrentMemoryUsage() const noexcept;
+
 
         /**
-         * @brief Get the all-time peak memory usage of the stack.
+         * @brief Get the all-time minimum memory usage (excluding padding) of the stack.
+         *
+         * @relatedalso getMinPadding()
+         * @relatedalso getPeakPadding()
+         * @relatedalso getTotalPadding()
+         *
+         * @relatedalso getCurrentMemoryUsage()
+         * @relatedalso getPeakMemoryUsage()
+         * @relatedalso getTotalUsage()
          */
-        [[nodiscard]] constexpr std::size_t getPeakUsage() const noexcept;
+        [[nodiscard]] constexpr std::size_t getMinMemoryUsage() const noexcept;
+
+
+        /**
+         * @brief Get the all-time peak memory usage (excluding padding) of the stack.
+         *
+         * @relatedalso getMinPadding()
+         * @relatedalso getPeakPadding()
+         * @relatedalso getTotalPadding()
+         *
+         * @relatedalso getCurrentMemoryUsage()
+         * @relatedalso getMinMemoryUsage()
+         * @relatedalso getTotalUsage()
+         */
+        [[nodiscard]] constexpr std::size_t getPeakMemoryUsage() const noexcept;
 
 
         /**
          * @brief Get the padding used the by the stack across all allocations.
          *
-         * @relatedalso getMinPaddingUsage()
-         * @relatedalso getPeakPaddingUsage()
+         * @relatedalso getMinPadding()
+         * @relatedalso getPeakPadding()
+         *
+         * @relatedalso getCurrentMemoryUsage()
+         * @relatedalso getPeakMemoryUsage()
+         * @relatedalso getMinMemoryUsage()
+         * @relatedalso getTotalUsage()
          */
         [[nodiscard]] constexpr std::size_t getTotalPadding() const noexcept;
 
@@ -135,20 +192,24 @@ namespace pmm
          * @brief Get the maximum padding used across all allocations.
          *
          * @relatedalso getTotalPadding()
-         * @relatedalso getMinPaddingUsage()
+         * @relatedalso getMinPadding()
          */
-        [[nodiscard]] constexpr std::size_t getPeakPaddingUsage() const noexcept;
+        [[nodiscard]] constexpr std::size_t getPeakPadding() const noexcept;
 
 
         /**
          * @brief Get the maximum padding used across all allocations.
          *
          * @relatedalso getTotalPadding()
-         * @relatedalso getPeakPaddingUsage()
+         * @relatedalso getPeakPadding()
          */
-        [[nodiscard]] constexpr std::size_t getMinPaddingUsage() const noexcept;
+        [[nodiscard]] constexpr std::size_t getMinPadding() const noexcept;
 
-        bool enabled{ true };
+
+        /**
+         * @brief Get the total buffer usage inclusive of padding.
+         */
+        [[nodiscard]] constexpr std::size_t getTotalUsage() const noexcept;
 
     private:
         std::size_t _currentUsage;

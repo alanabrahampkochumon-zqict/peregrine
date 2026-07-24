@@ -5,6 +5,7 @@ add_library(
 target_sources(
         TelemetryTests PRIVATE
         ArenaTelemetryTests.cpp
+        StackTelemetryTests.cpp
 )
 
 target_include_directories(
