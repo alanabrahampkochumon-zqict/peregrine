@@ -117,8 +117,58 @@ namespace pmm
      *                                    *
      **************************************/
 
-    // TODO: Three strategies -> ManagedTelemetry, UnmanagedTelemetry, NoTelemetry
+    namespace telemetry
+    {
 
+        /**
+         * @brief Concept defining the requirements for telemetry.
+         *
+         * @relatedalso Managed
+         * @relatedalso Unmanaged
+         * @relatedalso Disabled
+         */
+        template <typename T>
+        concept TelemetryPolicy = requires(T) {
+            { T::getPolicyName() } -> std::same_as<std::string>;
+        };
+
+
+        /**
+         * @brief Telemetry policy indicating that the telemetry is managed by the allocator.
+         *
+         * @relatedalso Unmanaged
+         * @relatedalso Disabled
+         */
+        struct Managed
+        {
+            static constexpr std::string getPolicyName() noexcept { return "Managed Telemetry"; }
+        };
+
+        /**
+         * @brief Telemetry policy indicating that the telemetry is managed by the user.
+         *        The user must provide a telemetry instance to the allocator.
+         *
+         * @relatedalso Managed
+         * @relatedalso Disabled
+         */
+        struct Unmanaged
+        {
+            static constexpr std::string getPolicyName() noexcept { return "Unmanaged Telemetry"; }
+        };
+
+
+        /**
+         * @brief Telemetry policy indicating that telemetry is disabled.
+         *
+         * @relatedalso Managed
+         * @relatedalso Unmanaged
+         */
+        struct Disabled
+        {
+            static constexpr std::string getPolicyName() noexcept { return "No Telemetry"; }
+        };
+
+    } // namespace telemetry
 
     /** @} */
 

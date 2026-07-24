@@ -1,9 +1,9 @@
 /**
- * @file StackTelemetryTestsTests.cpp
+ * @file StackTelemetryTests.cpp
  * @author Alan Abraham P Kochumon
  * @date Created on: July 24, 2026
  *
- * @brief Verify @ref pmm::StackTelemetryTests creation and update logic.
+ * @brief Verify @ref pmm::StackTelemetry creation and update logic.
  *
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
