@@ -20,12 +20,11 @@ namespace pmm
 
     PMM_INLINE constexpr StackTelemetry::StackTelemetry(const std::size_t size) noexcept
         : _currentUsage(0),
-          _peakUsage(0),
-          _padding(0),
+          _minMemoryUsage(std::numeric_limits<std::size_t>::max()),
+          _peakMemoryUsage(0),
           _totalPadding(0),
-          _peakPaddingUsage(0),
           _minPaddingUsage(std::numeric_limits<std::size_t>::max()),
-          _minUsage(std::numeric_limits<std::size_t>::max()),
+          _peakPaddingUsage(0),
           _size(size)
     {}
 
@@ -33,10 +32,10 @@ namespace pmm
     PMM_INLINE constexpr void StackTelemetry::incStackUsage(const std::size_t size, const std::size_t padding) noexcept
     {
         _currentUsage += size;
-        updateMinUsage(size);
-        updatePeakUsage(size);
+        updateMinMemoryUsage(size);
+        updatePeakMemoryUsage(size);
 
-        _padding += padding;
+        _totalPadding += padding;
         updateMinPaddingUsage(padding);
         updatePeakPaddingUsage(padding);
     }
@@ -44,15 +43,15 @@ namespace pmm
     PMM_INLINE constexpr void StackTelemetry::decStackUsage(const std::size_t size, const std::size_t padding) noexcept
     {
         _currentUsage -= size;
-        _padding -= padding;
+        _totalPadding -= padding;
     }
 
     PMM_INLINE constexpr void StackTelemetry::updateMinMemoryUsage(const std::size_t usage) noexcept
-    { _minUsage = std::min(_minUsage, usage); }
+    { _minMemoryUsage = std::min(_minMemoryUsage, usage); }
 
 
     PMM_INLINE constexpr void StackTelemetry::updatePeakMemoryUsage(const std::size_t usage) noexcept
-    { _peakUsage = std::max(_peakUsage, usage); }
+    { _peakMemoryUsage = std::max(_peakMemoryUsage, usage); }
 
 
     PMM_INLINE constexpr void StackTelemetry::updateMinPaddingUsage(const std::size_t usage) noexcept
@@ -66,17 +65,17 @@ namespace pmm
     PMM_INLINE constexpr void StackTelemetry::resetCurrentUsage() noexcept
     {
         _currentUsage = 0;
-        _padding      = 0;
+        _totalPadding      = 0;
     }
 
 
     PMM_INLINE constexpr void StackTelemetry::resetTelemetry() noexcept
     {
         _currentUsage = 0;
-        _minUsage     = std::numeric_limits<std::size_t>::max();
-        _peakUsage    = 0;
+        _minMemoryUsage     = std::numeric_limits<std::size_t>::max();
+        _peakMemoryUsage    = 0;
 
-        _padding          = 0;
+        _totalPadding          = 0;
         _minPaddingUsage  = std::numeric_limits<std::size_t>::max();
         _peakPaddingUsage = 0;
     }
@@ -93,15 +92,15 @@ namespace pmm
 
     PMM_INLINE constexpr std::size_t StackTelemetry::getCurrentMemoryUsage() const noexcept { return _currentUsage; }
 
-    PMM_INLINE constexpr std::size_t StackTelemetry::getMinMemoryUsage() const noexcept { return _minUsage; }
+    PMM_INLINE constexpr std::size_t StackTelemetry::getMinMemoryUsage() const noexcept { return _minMemoryUsage; }
 
-    PMM_INLINE constexpr std::size_t StackTelemetry::getPeakMemoryUsage() const noexcept { return _peakUsage; }
+    PMM_INLINE constexpr std::size_t StackTelemetry::getPeakMemoryUsage() const noexcept { return _peakMemoryUsage; }
 
-    PMM_INLINE constexpr std::size_t StackTelemetry::getTotalPadding() const noexcept { return _padding; }
+    PMM_INLINE constexpr std::size_t StackTelemetry::getCurrentPadding() const noexcept { return _totalPadding; }
 
-    PMM_INLINE constexpr std::size_t StackTelemetry::getPeakPadding() const noexcept { return _minPaddingUsage; }
+    PMM_INLINE constexpr std::size_t StackTelemetry::getPeakPadding() const noexcept { return _peakPaddingUsage; }
 
-    PMM_INLINE constexpr std::size_t StackTelemetry::getMinPadding() const noexcept { return _peakPaddingUsage; }
+    PMM_INLINE constexpr std::size_t StackTelemetry::getMinPadding() const noexcept { return _minPaddingUsage; }
 
     PMM_INLINE constexpr std::size_t StackTelemetry::getTotalUsage() const noexcept { return _totalPadding + _currentUsage; }
 

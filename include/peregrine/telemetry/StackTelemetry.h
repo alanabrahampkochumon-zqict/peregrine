@@ -65,8 +65,8 @@ namespace pmm
          * @brief Update the current minimum memory usage(non-padded) with @p usage
          *        if it is lower than the recorded minimum.
          *
-        * @param[in] usage The new memory allocation size.
-        *
+         * @param[in] usage The new memory allocation size.
+         *
          * @relatedalso updatePeakPaddingUsage()
          * @relatedalso updateMinPaddingUsage()
          * @relatedalso updatePeakMemoryUsage()
@@ -78,7 +78,7 @@ namespace pmm
          * @brief Update the current peak memory usage(non-padded) with @p usage if it is higher than the recorded peak.
          *
          * @param[in] usage The new memory allocation size.
-        *
+         *
          * @relatedalso updatePeakPaddingUsage()
          * @relatedalso updateMinPaddingUsage()
          * @relatedalso updateMinMemoryUsage()
@@ -137,7 +137,7 @@ namespace pmm
          *
          * @relatedalso getMinPadding()
          * @relatedalso getPeakPadding()
-         * @relatedalso getTotalPadding()
+         * @relatedalso getCurrentPadding()
          *
          * @relatedalso getMinMemoryUsage()
          * @relatedalso getPeakMemoryUsage()
@@ -151,7 +151,7 @@ namespace pmm
          *
          * @relatedalso getMinPadding()
          * @relatedalso getPeakPadding()
-         * @relatedalso getTotalPadding()
+         * @relatedalso getCurrentPadding()
          *
          * @relatedalso getCurrentMemoryUsage()
          * @relatedalso getPeakMemoryUsage()
@@ -165,7 +165,7 @@ namespace pmm
          *
          * @relatedalso getMinPadding()
          * @relatedalso getPeakPadding()
-         * @relatedalso getTotalPadding()
+         * @relatedalso getCurrentPadding()
          *
          * @relatedalso getCurrentMemoryUsage()
          * @relatedalso getMinMemoryUsage()
@@ -177,6 +177,8 @@ namespace pmm
         /**
          * @brief Get the padding used the by the stack across all allocations.
          *
+         * @note The value is not preserved if the stack is reset.
+         *
          * @relatedalso getMinPadding()
          * @relatedalso getPeakPadding()
          *
@@ -185,13 +187,13 @@ namespace pmm
          * @relatedalso getMinMemoryUsage()
          * @relatedalso getTotalUsage()
          */
-        [[nodiscard]] constexpr std::size_t getTotalPadding() const noexcept;
+        [[nodiscard]] constexpr std::size_t getCurrentPadding() const noexcept;
 
 
         /**
          * @brief Get the maximum padding used across all allocations.
          *
-         * @relatedalso getTotalPadding()
+         * @relatedalso getCurrentPadding()
          * @relatedalso getMinPadding()
          */
         [[nodiscard]] constexpr std::size_t getPeakPadding() const noexcept;
@@ -200,7 +202,7 @@ namespace pmm
         /**
          * @brief Get the maximum padding used across all allocations.
          *
-         * @relatedalso getTotalPadding()
+         * @relatedalso getCurrentPadding()
          * @relatedalso getPeakPadding()
          */
         [[nodiscard]] constexpr std::size_t getMinPadding() const noexcept;
@@ -212,11 +214,8 @@ namespace pmm
         [[nodiscard]] constexpr std::size_t getTotalUsage() const noexcept;
 
     private:
-        std::size_t _currentUsage;
-        std::size_t _peakUsage;
-        std::size_t _padding;
-        std::size_t _totalPadding, _peakPaddingUsage, _minPaddingUsage;
-        std::size_t _minUsage;
+        std::size_t _currentUsage, _minMemoryUsage, _peakMemoryUsage;
+        std::size_t _totalPadding, _minPaddingUsage, _peakPaddingUsage;
         std::size_t _size;
     };
 
