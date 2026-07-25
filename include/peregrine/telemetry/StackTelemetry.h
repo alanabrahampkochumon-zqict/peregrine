@@ -223,10 +223,10 @@ namespace pmm
     /**
      * @brief Dummy telemetry used when telemetry policy is set to @p pmm::telemetry::Disabled.
      */
-    struct StackTelemetryStub
+    struct DummyStackTelemetry
     {
 
-        [[nodiscard]] explicit constexpr StackTelemetryStub(std::size_t) noexcept {}
+        [[nodiscard]] explicit constexpr DummyStackTelemetry(std::size_t) noexcept {}
 
         constexpr void incStackUsage(std::size_t, std::size_t) noexcept {}
 
@@ -260,6 +260,15 @@ namespace pmm
 
         [[nodiscard]] constexpr std::size_t getTotalUsage() const noexcept { return 0; }
     };
+
+    /**
+     * @brief Define the type of stack telemetry based on the current telemetry policy.
+     *
+     * @tparam Policy Telemetry Policy used by the stack.
+     */
+    template <telemetry::TelemetryPolicy Policy>
+    using StackTelemetryType =
+        std::conditional_t<std::is_same_v<Policy, telemetry::Disabled>, DummyStackTelemetry, StackTelemetry>;
 
     /** @} */
 
