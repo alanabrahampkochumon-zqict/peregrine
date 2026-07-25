@@ -48,6 +48,12 @@
     */
 
     /**
+    * @defgroup T_PMM_Stack_Tel_Int Stack Telemetry Integration
+    * @brief Verifies stack telemetry integration across different policies.
+    * @ingroup T_PMM_Lib
+    */
+
+    /**
     * @defgroup T_PMM_Telemetry Telemetry
     * @brief Verify Memory Allocator's Telemetry Logic.
     * @ingroup T_PMM_Lib

@@ -11,6 +11,7 @@
 
 
 #include "Policy.h"
+#include "peregrine/telemetry/StackTelemetry.h"
 #include "peregrine/utils/Preprocessors.h"
 #include "peregrine/utils/Utilities.h"
 
@@ -24,7 +25,6 @@ namespace pmm
      * @{
      */
 
-    // TODO: Use policy based allocation
     // TODO: Add a custom sizer that resizes footprint based on user preference. PAllocSize16?
     /**
      * @brief Header for storing *minimal* information about a stack entry.
@@ -56,10 +56,17 @@ namespace pmm
     };
 
 
-    template <stack::StackType Type = stack::Loose, MemoryStrategy MemStrategy = ManagedMemory>
+    template <stack::StackType Type = stack::Loose, MemoryStrategy MemStrategy = ManagedMemory,
+              telemetry::TelemetryPolicy TelemetryPolicy = telemetry::Managed>
     class Stack
     {
     public:
+        /// Custom Types
+        using PreviousOffsetType = std::conditional_t<std::is_same_v<Type, stack::Strict>, std::size_t, EmptyMember>;
+        using TelemetryType =
+            std::conditional_t<std::is_same_v<TelemetryPolicy, telemetry::Disabled>, EmptyMember, StackTelemetry>;
+
+
         /**
          * @brief Allocate a new physical memory vault from the Operating System.
          *
@@ -114,6 +121,13 @@ namespace pmm
         [[nodiscard]] constexpr std::size_t usedSize() const noexcept;
 
 
+        /**
+         * @brief Get the telemetry instance.
+         *
+         * @return A telemetry instance if telemetry policy is not Disabled, else an empty struct.
+         */
+        [[nodiscard]] constexpr TelemetryType getTelemetry() const noexcept;
+
 
         /**
          * @brief Allocate @p size bytes of memory on the stack.
@@ -133,6 +147,7 @@ namespace pmm
          */
         [[nodiscard]] void* allocBytes(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept
             requires std::same_as<Type, stack::Loose>;
+
 
         /**
          * @brief Allocate @p size bytes of memory on the stack.
@@ -458,18 +473,22 @@ namespace pmm
          */
         std::size_t _calcAlignment(std::size_t alignment) noexcept;
 
+
         /// Member Variables
         uint8_t* _buffer;
         std::size_t _size, _offset{ 0 };
 
-        using PreviousOffsetType = std::conditional_t<std::is_same_v<Type, stack::Strict>, std::size_t, EmptyMember>;
+
         PMM_NO_UNIQUE_ADDR PreviousOffsetType _prevOffset{ 0 };
+
+        PMM_NO_UNIQUE_ADDR TelemetryType _telemetry{};
 
 
 
 #ifdef ENABLE_PMM_TESTS
     // FRIEND TEST macros for verifying internal states
     #include <gtest/gtest_prod.h>
+
 
 
 

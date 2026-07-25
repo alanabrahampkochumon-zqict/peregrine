@@ -7,6 +7,7 @@ target_sources(
         stack/LooseStackTests.cpp
         stack/StrictStackTests.cpp
         stack/StackMemoryManagementTests.cpp
+        stack/TelemetryIntegrationTests.cpp
         TempArenaTests.cpp
 )
 

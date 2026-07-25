@@ -219,6 +219,48 @@ namespace pmm
         std::size_t _size;
     };
 
+
+    /**
+     * @brief Dummy telemetry used when telemetry policy is set to @p pmm::telemetry::Disabled.
+     */
+    struct StackTelemetryStub
+    {
+
+        [[nodiscard]] explicit constexpr StackTelemetryStub(std::size_t) noexcept {}
+
+        constexpr void incStackUsage(std::size_t, std::size_t) noexcept {}
+
+        constexpr void decStackUsage(std::size_t, std::size_t) noexcept {}
+
+        constexpr void updateMinMemoryUsage(std::size_t) noexcept {}
+
+        constexpr void updatePeakMemoryUsage(std::size_t) noexcept {}
+
+        constexpr void updateMinPaddingUsage(std::size_t) noexcept {}
+
+        constexpr void updatePeakPaddingUsage(std::size_t) noexcept {}
+
+        constexpr void resetCurrentUsage() noexcept {}
+
+        constexpr void resetTelemetry() noexcept {}
+
+        [[nodiscard]] constexpr std::size_t getStackSize() const noexcept { return 0; }
+
+        [[nodiscard]] constexpr std::size_t getCurrentMemoryUsage() const noexcept { return 0; }
+
+        [[nodiscard]] constexpr std::size_t getMinMemoryUsage() const noexcept { return 0; }
+
+        [[nodiscard]] constexpr std::size_t getPeakMemoryUsage() const noexcept { return 0; }
+
+        [[nodiscard]] constexpr std::size_t getCurrentPadding() const noexcept { return 0; }
+
+        [[nodiscard]] constexpr std::size_t getPeakPadding() const noexcept { return 0; }
+
+        [[nodiscard]] constexpr std::size_t getMinPadding() const noexcept { return 0; }
+
+        [[nodiscard]] constexpr std::size_t getTotalUsage() const noexcept { return 0; }
+    };
+
     /** @} */
 
 } // namespace pmm
