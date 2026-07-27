@@ -16,17 +16,34 @@
 #include <utility>
 
 
-class AlignedArenaInitialization: public testing::TestWithParam<std::size_t>
-{};
-/** @brief Test fixture for @ref pmm::Arena initialization with an initial alignment. */
-INSTANTIATE_TEST_SUITE_P(ArenaInitialization, AlignedArenaInitialization, testing::Values(2, 4, 8, 16, 32, 64, 128));
-
-
 
 /**
  * @addtogroup T_PMM_Arena
  * @{
  */
+
+namespace
+{
+    /**************************************
+     *                                    *
+     *            TEST SETUP              *
+     *                                    *
+     **************************************/
+
+    class AlignedArenaInitialization: public testing::TestWithParam<std::size_t>
+    {};
+    /** @brief Test fixture for @ref pmm::Arena initialization with an initial alignment. */
+    INSTANTIATE_TEST_SUITE_P(ArenaInitialization, AlignedArenaInitialization,
+                             testing::Values(2, 4, 8, 16, 32, 64, 128));
+} // namespace
+
+
+
+/**************************************
+ *                                    *
+ *           RUNTIME TESTS            *
+ *                                    *
+ **************************************/
 
 /**
  * @brief Verify that Arena gets initialized with the correct size.

@@ -4,8 +4,8 @@ target_sources(
         AllocatorTests
         PRIVATE
         ArenaTests.cpp
-        stack/LooseStackTests.cpp
-        stack/StrictStackTests.cpp
+        stack/LooseStack.cpp
+        stack/StrictStack.cpp
         stack/StackMemoryManagementTests.cpp
         stack/TelemetryIntegrationTests.cpp
         TempArenaTests.cpp

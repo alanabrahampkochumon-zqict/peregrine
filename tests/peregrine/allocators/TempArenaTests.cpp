@@ -15,25 +15,41 @@
 #include <peregrine/allocators/TempArena.h>
 
 
-class TempArenaTest: public testing::Test
-{
-protected:
-    std::size_t _arenaSize = 2048;
-    pmm::Arena* _arena     = nullptr;
-
-    void SetUp() override { _arena = new pmm::Arena(_arenaSize); }
-};
-
 
 /**
  * @addtogroup T_PMM_TArena
  * @{
  */
 
+namespace
+{
+    /**************************************
+     *                                    *
+     *            TEST SETUP              *
+     *                                    *
+     **************************************/
+    class TempArena: public testing::Test
+    {
+    protected:
+        std::size_t _arenaSize = 2048;
+        pmm::Arena* _arena     = nullptr;
+
+        void SetUp() override { _arena = new pmm::Arena(_arenaSize); }
+    };
+} // namespace
+
+
+
+/**************************************
+ *                                    *
+ *           RUNTIME TESTS            *
+ *                                    *
+ **************************************/
+
 /**
  * @brief Verify that temporary arena stores the internal state of the arena.
  */
-TEST_F(TempArenaTest, SnapshotsArenaStateOnConstructor)
+TEST_F(TempArena, SnapshotsArenaStateOnConstructor)
 {
     constexpr auto firstAllocSize = 256, secondAllocSize = 128;
 
@@ -50,7 +66,7 @@ TEST_F(TempArenaTest, SnapshotsArenaStateOnConstructor)
 /**
  * @brief Verify that when a temporary arena goes out of scope, it "releases" any memory held.
  */
-TEST_F(TempArenaTest, ArenaStateIsRestoredAfterTempArenaDeallocation)
+TEST_F(TempArena, ArenaStateIsRestoredAfterTempArenaDeallocation)
 {
     constexpr auto tArenaAllocSize = 256, alignment = 8;
 
@@ -71,7 +87,7 @@ TEST_F(TempArenaTest, ArenaStateIsRestoredAfterTempArenaDeallocation)
 /**
  * @brief Verify that freeing one temporary arena among multiple one restored the arena state.
  */
-TEST_F(TempArenaTest, RewindsStateFreeingMemoryHeldByTempArena)
+TEST_F(TempArena, RewindsStateFreeingMemoryHeldByTempArena)
 {
     constexpr auto firstTArenaAllocSize = 256, secondTArenaAllocSize = 512, alignment = 8;
 
@@ -97,7 +113,7 @@ TEST_F(TempArenaTest, RewindsStateFreeingMemoryHeldByTempArena)
 /**
  * @brief Verify that @ref TempArena::allocBytes returns a non-nullptr in an arena with free space.
  */
-TEST_F(TempArenaTest, AllocBytes_ReturnsNonNullValue)
+TEST_F(TempArena, AllocBytes_ReturnsNonNullValue)
 {
     auto tArena1      = pmm::TempArena(this->_arena);
     const auto memory = tArena1.allocBytes(512);
@@ -109,7 +125,7 @@ TEST_F(TempArenaTest, AllocBytes_ReturnsNonNullValue)
 /**
  * @brief Verify that @ref TempArena::alloc returns a non-nullptr in an arena with free space.
  */
-TEST_F(TempArenaTest, Alloc_ReturnsNonNullValue)
+TEST_F(TempArena, Alloc_ReturnsNonNullValue)
 {
     auto tArena1      = pmm::TempArena(this->_arena);
     const auto memory = tArena1.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
@@ -125,7 +141,7 @@ TEST_F(TempArenaTest, Alloc_ReturnsNonNullValue)
 /**
  * @brief Verify that @ref TempArena::allocAs returns a non-nullptr in an arena with free space.
  */
-TEST_F(TempArenaTest, AllocAs_ReturnsNonNullValue)
+TEST_F(TempArena, AllocAs_ReturnsNonNullValue)
 {
     auto tArena1      = pmm::TempArena(this->_arena);
     const auto memory = tArena1.allocAs<Vec4>(32, 1.0f, 2.0f, 3.0f, 4.0f);
@@ -140,7 +156,7 @@ TEST_F(TempArenaTest, AllocAs_ReturnsNonNullValue)
 /**
  * @brief Verify that @ref TempArena::allocV returns a non-empty span in an arena with free space.
  */
-TEST_F(TempArenaTest, AllocV_ReturnsNonNullValue)
+TEST_F(TempArena, AllocV_ReturnsNonNullValue)
 {
     auto tArena1      = pmm::TempArena(this->_arena);
     const auto memory = tArena1.allocV<Vec4>(10);

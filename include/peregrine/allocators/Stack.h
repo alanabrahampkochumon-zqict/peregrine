@@ -17,7 +17,7 @@
 
 #include <cstdint>
 
-
+// TODO: Add stack safe mode
 namespace pmm
 {
     /**
@@ -486,14 +486,14 @@ namespace pmm
         FRIEND_TEST(StackMemoryManagement, StrictUnmanagedStack_UsesExternalBuffer);
 
         FRIEND_TEST(StrictStackInitialization, InitializesDefaultStateAndBuffer);
-        FRIEND_TEST(StrictStackTests, Initialization_MovesOffsetAtleastByAllocationSize);
-        FRIEND_TEST(StrictStackTests, Clear_MovesOffsetAndPreviousOffsetToZero);
+        FRIEND_TEST(StrictStack, Initialization_MovesOffsetAtleastByAllocationSize);
+        FRIEND_TEST(StrictStack, Clear_MovesOffsetAndPreviousOffsetToZero);
         FRIEND_TEST(StrictStackResizeLast, ResizeLast_MovesOffsetInCorrectDirection);
 
 
         FRIEND_TEST(LooseStackInitialization, InitializesDefaultStateAndBuffer);
-        FRIEND_TEST(LooseStackTests, Initialization_MovesOffsetAtleastByAllocationSize);
-        FRIEND_TEST(LooseStackTests, Clear_MovesOffsetToZero);
+        FRIEND_TEST(LooseStack, Initialization_MovesOffsetAtleastByAllocationSize);
+        FRIEND_TEST(LooseStack, Clear_MovesOffsetToZero);
         FRIEND_TEST(LooseStackResizeLast, ResizeLast_MovesOffsetInCorrectDirection);
 
 

@@ -26,7 +26,7 @@ namespace
      *                                    *
      **************************************/
 
-    class StackTelemetryTests: public ::testing::Test
+    class StackTelemetry: public ::testing::Test
     {
     public:
         std::size_t size{ 10240 };
@@ -56,7 +56,6 @@ namespace
         } // namespace telemetry_type
 
 
-
         namespace telemetry_helpers
         {
             /// @test Verify that getTelemetryInstance returns a real stack when the telemetry policy is Managed.
@@ -70,10 +69,9 @@ namespace
             static_assert(std::is_same_v<decltype(STACK_TEL_DISABLED), const pmm::DummyStackTelemetry> == true);
 
         } // namespace telemetry_helpers
-
     } // namespace static_tests
-
 } // namespace
+
 
 
 
@@ -84,7 +82,7 @@ namespace
  **************************************/
 
 /** @test Verify that stack telemetry is initialized with size and usage defaults. */
-TEST_F(StackTelemetryTests, IntializesWithSizeAndDefaultStats)
+TEST_F(StackTelemetry, IntializesWithSizeAndDefaultStats)
 {
     EXPECT_EQ(size, telemetry.getStackSize());
     EXPECT_EQ(0, telemetry.getTotalUsage());
@@ -100,7 +98,7 @@ TEST_F(StackTelemetryTests, IntializesWithSizeAndDefaultStats)
 
 
 /** @test Verify that stack telemetry is incremented with correct usage values. */
-TEST_F(StackTelemetryTests, IncTelemetryUsage_UpdatesWithCorrectUsage)
+TEST_F(StackTelemetry, IncTelemetryUsage_UpdatesWithCorrectUsage)
 {
 
     telemetry.incStackUsage(100, 8);
@@ -125,7 +123,7 @@ TEST(StackTelemetryHelpers, ManagedPolicy_ReturnRealStackTelemetry) {}
 
 
 /** @test Verify that stack telemetry is decrement with correct usage values. */
-TEST_F(StackTelemetryTests, DecTelemetryUsage_UpdatesWithCorrectUsage)
+TEST_F(StackTelemetry, DecTelemetryUsage_UpdatesWithCorrectUsage)
 {
 
     telemetry.incStackUsage(5000, 120);
@@ -144,7 +142,7 @@ TEST_F(StackTelemetryTests, DecTelemetryUsage_UpdatesWithCorrectUsage)
  * @test Verify that stack telemetry updateMinMemoryUsage updates the minimum memory usage
  *       when passing in a smaller value.
  */
-TEST_F(StackTelemetryTests, UpdateMinMemoryUsage_UpdateMinimumWhenPassingInASmallValue)
+TEST_F(StackTelemetry, UpdateMinMemoryUsage_UpdateMinimumWhenPassingInASmallValue)
 {
     constexpr std::size_t newMin = 5;
 
@@ -160,7 +158,7 @@ TEST_F(StackTelemetryTests, UpdateMinMemoryUsage_UpdateMinimumWhenPassingInASmal
  * @test Verify that stack telemetry updateMinMemoryUsage does not update the minimum memory usage
  *       when passing in a larger value.
  */
-TEST_F(StackTelemetryTests, UpdateMinMemoryUsage_DoesNotUpdateMinimumWhenPassingInALargerValue)
+TEST_F(StackTelemetry, UpdateMinMemoryUsage_DoesNotUpdateMinimumWhenPassingInALargerValue)
 {
     constexpr std::size_t newMin = 50;
 
@@ -178,7 +176,7 @@ TEST_F(StackTelemetryTests, UpdateMinMemoryUsage_DoesNotUpdateMinimumWhenPassing
  * @test Verify that stack telemetry updatePeakMemoryUsage updates the peak memory usage
  *       when passing in a larger value.
  */
-TEST_F(StackTelemetryTests, UpdatePeakMemoryUsage_UpdatePeakUsageWhenPassingInALargerValue)
+TEST_F(StackTelemetry, UpdatePeakMemoryUsage_UpdatePeakUsageWhenPassingInALargerValue)
 {
     constexpr std::size_t newPeak = 500;
 
@@ -194,7 +192,7 @@ TEST_F(StackTelemetryTests, UpdatePeakMemoryUsage_UpdatePeakUsageWhenPassingInAL
  * @test Verify that stack telemetry updatePeakMemoryUsage does not update the peak memory usage
  *       when passing in a smaller value.
  */
-TEST_F(StackTelemetryTests, UpdatePeakMemoryUsage_DoesNotUpdatePeakUsageWhenPassingInASmallerValue)
+TEST_F(StackTelemetry, UpdatePeakMemoryUsage_DoesNotUpdatePeakUsageWhenPassingInASmallerValue)
 {
     constexpr std::size_t newPeak = 15;
 
@@ -212,7 +210,7 @@ TEST_F(StackTelemetryTests, UpdatePeakMemoryUsage_DoesNotUpdatePeakUsageWhenPass
  * @test Verify that stack telemetry updateMinPaddingUsage updates the minimum padding
  *       when passing in a smaller value.
  */
-TEST_F(StackTelemetryTests, UpdateMinUsage_UpdateMinimumPaddingWhenPassingInASmallValue)
+TEST_F(StackTelemetry, UpdateMinUsage_UpdateMinimumPaddingWhenPassingInASmallValue)
 {
     constexpr std::size_t newMin = 5;
 
@@ -228,7 +226,7 @@ TEST_F(StackTelemetryTests, UpdateMinUsage_UpdateMinimumPaddingWhenPassingInASma
  * @test Verify that stack telemetry updateMinPaddingUsage does not update the minimum padding
  *       when passing in a larger value.
  */
-TEST_F(StackTelemetryTests, UpdateMinUsage_DoesNotUpdateMinimumPaddingWhenPassingInALargerValue)
+TEST_F(StackTelemetry, UpdateMinUsage_DoesNotUpdateMinimumPaddingWhenPassingInALargerValue)
 {
     constexpr std::size_t newMin = 50;
 
@@ -246,7 +244,7 @@ TEST_F(StackTelemetryTests, UpdateMinUsage_DoesNotUpdateMinimumPaddingWhenPassin
  * @test Verify that stack telemetry updatePeakPaddingUsage updates the peak padding
  *       when passing in a larger value.
  */
-TEST_F(StackTelemetryTests, UpdatePeakUsage_UpdatePeakPaddingUsageWhenPassingInALargerValue)
+TEST_F(StackTelemetry, UpdatePeakUsage_UpdatePeakPaddingUsageWhenPassingInALargerValue)
 {
     constexpr std::size_t newPeak = 500;
 
@@ -262,7 +260,7 @@ TEST_F(StackTelemetryTests, UpdatePeakUsage_UpdatePeakPaddingUsageWhenPassingInA
  * @test Verify that stack telemetry updatePeakPaddingUsage does not update the peak padding
  *        when passing in a smaller value.
  */
-TEST_F(StackTelemetryTests, UpdatePeakUsage_DoesNotUpdatePeakPaddingUsageWhenPassingInASmallerValue)
+TEST_F(StackTelemetry, UpdatePeakUsage_DoesNotUpdatePeakPaddingUsageWhenPassingInASmallerValue)
 {
     constexpr std::size_t newPeak = 12;
 
@@ -280,7 +278,7 @@ TEST_F(StackTelemetryTests, UpdatePeakUsage_DoesNotUpdatePeakPaddingUsageWhenPas
  * @test Verify that resetting the current usage resets current usage
  *       but preserves peak and minimum usage for both memory and padding.
  */
-TEST_F(StackTelemetryTests, ResetCurrentUsage_OnlyResetsCurrentUsage)
+TEST_F(StackTelemetry, ResetCurrentUsage_OnlyResetsCurrentUsage)
 {
 
     telemetry.incStackUsage(10, 4);
@@ -306,7 +304,7 @@ TEST_F(StackTelemetryTests, ResetCurrentUsage_OnlyResetsCurrentUsage)
 
 
 /** @test Verify that stack telemetry reset resets all values to default. */
-TEST_F(StackTelemetryTests, Reset_ResetsUsages)
+TEST_F(StackTelemetry, Reset_ResetsUsages)
 {
 
     telemetry.incStackUsage(10, 4);

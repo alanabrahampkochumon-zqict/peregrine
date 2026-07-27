@@ -17,14 +17,25 @@
 /** @brief Verify that managed stack does not free any memory. */
 namespace
 {
-    // Since we cant really confirm is a buffer is freed
-    // And we only delete[] buffer in the dtor of Stack, we can check if its trivially destructible
-    // to ensure memory is freed in the stack in unmanaged mode and opposite otherwise
-    static_assert(std::is_trivially_destructible_v<pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory>> == true);
-    static_assert(std::is_trivially_destructible_v<pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory>> == true);
+    /**************************************
+     *                                    *
+     *           STATIC TESTS             *
+     *                                    *
+     **************************************/
+    namespace static_tests
+    {
+        /** @test Verify that unmanaged stack does not free memory.
+         *  @note Since we cant really confirm is a buffer is freed. And we only delete[] buffer in the dtor of Stack,
+         *        we can check if its trivially destructible to ensure memory is freed in the stack in unmanaged mode
+         *        and opposite otherwise.
+         */
+        static_assert(std::is_trivially_destructible_v<pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory>> == true);
+        static_assert(std::is_trivially_destructible_v<pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory>> == true);
 
-    static_assert(std::is_trivially_destructible_v<pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory>> == false);
-    static_assert(std::is_trivially_destructible_v<pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory>> == false);
+        /// @test Verify that manged stack frees buffer it allocates.
+        static_assert(std::is_trivially_destructible_v<pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory>> == false);
+        static_assert(std::is_trivially_destructible_v<pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory>> == false);
+    } // namespace static_tests
 
 } // namespace
 
