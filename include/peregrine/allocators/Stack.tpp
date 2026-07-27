@@ -200,6 +200,10 @@ namespace pmm
             // Move the offset by the difference
             // If the allocation is not the latest don't move the offset.
             _offset -= isLatestAllocation * (oldSize - newSize);
+            if constexpr (std::same_as<TelemetryPolicy, telemetry::Enabled>)
+            {
+                _telemetry.decStackUsage(isLatestAllocation * (oldSize - newSize), 0);
+            }
             return oldMemory; // Return the old address
         }
 
@@ -208,6 +212,10 @@ namespace pmm
         if (isLatestAllocation)
         {
             _offset += newSize - oldSize; // Size difference
+            if constexpr (std::same_as<TelemetryPolicy, telemetry::Enabled>)
+            {
+                _telemetry.incStackUsage(newSize - oldSize, 0);
+            }
             return oldMemory;
         }
 
