@@ -111,7 +111,6 @@ namespace pmm
         [[nodiscard]] constexpr std::size_t usedSize() const noexcept;
 
 
-        // TODO: Add tests
         /**
          * @brief Get the telemetry instance.
          *

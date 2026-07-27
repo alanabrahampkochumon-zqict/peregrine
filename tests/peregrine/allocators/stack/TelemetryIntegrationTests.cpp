@@ -9,6 +9,7 @@
  */
 
 
+#include "Mocks.h"
 #include "peregrine/utils/Constants.h"
 
 #include <gtest/gtest.h>
@@ -40,20 +41,79 @@ namespace
 
 
 
-
 TEST_F(StackTelemetryIntegration, TelemetryEnabledStack_ReturnsTelemetryData)
 {
-    const auto telemetry = telemetryStack.getTelemetry();
-    static_assert(std::is_same_v<decltype(telemetry), const pmm::StackTelemetry> == true);
+    const auto& telemetry = telemetryStack.getTelemetry();
+    static_assert(std::is_same_v<decltype(telemetry), const pmm::StackTelemetry&> == true);
     EXPECT_EQ(telemetry.getStackSize(), size);
 }
 
-
 TEST_F(StackTelemetryIntegration, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
 {
-    const auto telemetry = noTelemetryStack.getTelemetry();
-    static_assert(std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry> == true);
+    const auto& telemetry = noTelemetryStack.getTelemetry();
+    static_assert(std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry&> == true);
     EXPECT_EQ(0, telemetry.getStackSize());
 }
+
+
+TEST_F(StackTelemetryIntegration, AllocationUsingAllocBytes_IncreasesMemoryUsage)
+{
+    constexpr auto bytesAllocated = 512_KB;
+    constexpr auto alignment      = 1024;
+    const auto& telemetry         = telemetryStack.getTelemetry();
+
+    static_cast<void>(telemetryStack.allocBytes(bytesAllocated, alignment));
+
+    EXPECT_EQ(bytesAllocated, telemetry.getCurrentMemoryUsage());
+    EXPECT_EQ(bytesAllocated, telemetry.getPeakMemoryUsage());
+    EXPECT_EQ(bytesAllocated, telemetry.getMinMemoryUsage());
+
+    // Comparing padding to an arbitrary value can be flaky
+    EXPECT_GE(telemetry.getCurrentPadding(), 0);
+    EXPECT_GE(telemetry.getPeakPadding(), 0);
+    EXPECT_GE(telemetry.getMinPadding(), 0);
+
+    EXPECT_GT(telemetry.getTotalUsage(), bytesAllocated);
+}
+
+
+TEST_F(StackTelemetryIntegration, AllocationUsingAlloc_IncreasesMemoryUsage)
+{
+    constexpr auto bytesAllocated = 2_KB;
+    const auto& telemetry         = telemetryStack.getTelemetry();
+
+    static_cast<void>(telemetryStack.alloc<LargeData<bytesAllocated>>());
+
+    EXPECT_EQ(bytesAllocated, telemetry.getCurrentMemoryUsage());
+    EXPECT_EQ(bytesAllocated, telemetry.getPeakMemoryUsage());
+    EXPECT_EQ(bytesAllocated, telemetry.getMinMemoryUsage());
+
+    EXPECT_GE(telemetry.getCurrentPadding(), 0);
+    EXPECT_GE(telemetry.getPeakPadding(), 0);
+    EXPECT_GE(telemetry.getMinPadding(), 0);
+
+    EXPECT_GT(telemetry.getTotalUsage(), bytesAllocated);
+}
+
+
+TEST_F(StackTelemetryIntegration, AllocationUsingAllocV_IncreasesMemoryUsage)
+{
+    constexpr auto count          = 1000;
+    constexpr auto bytesAllocated = count * sizeof(int);
+    const auto& telemetry         = telemetryStack.getTelemetry();
+
+    static_cast<void>(telemetryStack.allocV<int>(count));
+
+    EXPECT_EQ(bytesAllocated, telemetry.getCurrentMemoryUsage());
+    EXPECT_EQ(bytesAllocated, telemetry.getPeakMemoryUsage());
+    EXPECT_EQ(bytesAllocated, telemetry.getMinMemoryUsage());
+
+    EXPECT_GE(telemetry.getCurrentPadding(), 0);
+    EXPECT_GE(telemetry.getPeakPadding(), 0);
+    EXPECT_GE(telemetry.getMinPadding(), 0);
+
+    EXPECT_GE(telemetry.getTotalUsage(), bytesAllocated);
+}
+
 
 /** @} */

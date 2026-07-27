@@ -55,8 +55,8 @@ namespace pmm
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr const StackTelemetryType<TelemetryPolicy>& Stack<Type, MemStrategy, TelemetryPolicy>::getTelemetry()
-        const noexcept
+    PMM_INLINE constexpr const StackTelemetryType<TelemetryPolicy>& Stack<
+        Type, MemStrategy, TelemetryPolicy>::getTelemetry() const noexcept
     { return _telemetry; }
 
 
@@ -100,6 +100,12 @@ namespace pmm
 
         _offset += size;
         memset(currentAddress, 0, size); // Zero out memory (TODO: Remove when using HAL)
+
+        if constexpr (std::same_as<TelemetryPolicy, telemetry::Enabled>)
+        {
+            _telemetry.incStackUsage(size, padding);
+        }
+
         return currentAddress;
     }
 
