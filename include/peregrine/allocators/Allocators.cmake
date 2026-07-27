@@ -9,5 +9,7 @@ set(AllocatorHeaders
         Policy.h
         TempArena.h
         TempArena.tpp
+        Pool.h
+        Pool.tpp
 )
 list(TRANSFORM AllocatorHeaders PREPEND ${AllocatorDir})

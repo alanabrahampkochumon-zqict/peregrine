@@ -351,10 +351,10 @@ TEST_F(LooseStackTelemetryIntegration, ResizeLast_ResizingToSmallerSize_DoesNotC
 
 TEST_F(LooseStackTelemetryIntegration, Clear_ResetPaddingAndMemoryUsage)
 {
-    constexpr auto size   = 256_KB;
+    constexpr auto allocSize   = 256_KB;
     const auto& telemetry = stack.getTelemetry();
 
-    static_cast<void>(stack.allocBytes(size));
+    static_cast<void>(stack.allocBytes(allocSize));
     stack.clear();
 
     EXPECT_EQ(0, telemetry.getCurrentMemoryUsage());
@@ -365,10 +365,10 @@ TEST_F(LooseStackTelemetryIntegration, Clear_ResetPaddingAndMemoryUsage)
 
 TEST_F(LooseStackTelemetryIntegration, Clear_DoesNotResetPeakAndMinUsage)
 {
-    constexpr auto size   = 256_KB;
+    constexpr auto allocSize   = 256_KB;
     const auto& telemetry = stack.getTelemetry();
 
-    static_cast<void>(stack.allocBytes(size));
+    static_cast<void>(stack.allocBytes(allocSize));
 
     EXPECT_NE(0, telemetry.getPeakMemoryUsage());
     EXPECT_NE(0, telemetry.getMinMemoryUsage());
@@ -724,10 +724,10 @@ TEST_F(StrictStackTelemetryIntegration, ResizeLast_ResizingToSmallerSize_DoesNot
 
 TEST_F(StrictStackTelemetryIntegration, Clear_ResetPaddingAndMemoryUsage)
 {
-    constexpr auto size   = 256_KB;
+    constexpr auto allocSize   = 256_KB;
     const auto& telemetry = stack.getTelemetry();
 
-    static_cast<void>(stack.allocBytes(size));
+    static_cast<void>(stack.allocBytes(allocSize));
     stack.clear();
 
     EXPECT_EQ(0, telemetry.getCurrentMemoryUsage());
@@ -738,10 +738,10 @@ TEST_F(StrictStackTelemetryIntegration, Clear_ResetPaddingAndMemoryUsage)
 
 TEST_F(StrictStackTelemetryIntegration, Clear_DoesNotResetPeakAndMinUsage)
 {
-    constexpr auto size   = 256_KB;
+    constexpr auto allocSize   = 256_KB;
     const auto& telemetry = stack.getTelemetry();
 
-    static_cast<void>(stack.allocBytes(size));
+    static_cast<void>(stack.allocBytes(allocSize));
 
     EXPECT_NE(0, telemetry.getPeakMemoryUsage());
     EXPECT_NE(0, telemetry.getMinMemoryUsage());
