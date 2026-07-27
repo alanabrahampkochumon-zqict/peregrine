@@ -258,7 +258,17 @@ namespace pmm
         // Although all the operands are unsigned, even if oldSize is larger(result in negative result)
         // offset will move backward or forward, in the correct direction. (TESTED)
         _offset += newSize - oldSize;
-
+        if constexpr (std::same_as<TelemetryPolicy, telemetry::Enabled>)
+        {
+            if (newSize > oldSize)
+            {
+                _telemetry.incStackUsage(newSize - oldSize, 0);
+            }
+            else
+            {
+                _telemetry.decStackUsage(oldSize - newSize, 0);
+            }
+        }
         return oldMemory;
     }
 
@@ -280,7 +290,17 @@ namespace pmm
         // Although all the operands are unsigned, even if oldSize is larger(result in negative result)
         // offset will move backward or forward, in the correct direction. (TESTED)
         _offset += newSize - oldSize;
-
+        if constexpr (std::same_as<TelemetryPolicy, telemetry::Enabled>)
+        {
+            if (newSize > oldSize)
+            {
+                _telemetry.incStackUsage(newSize - oldSize, 0);
+            }
+            else
+            {
+                _telemetry.decStackUsage(oldSize - newSize, 0);
+            }
+        }
         return oldMemory;
     }
 
