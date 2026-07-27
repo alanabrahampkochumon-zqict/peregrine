@@ -13,14 +13,68 @@
 #include <peregrine/telemetry/StackTelemetry.h>
 
 
-class StackTelemetryTests: public ::testing::Test
+namespace
 {
-public:
-    std::size_t size{ 10240 };
-    pmm::StackTelemetry telemetry{ size };
-};
+    /**************************************
+     *                                    *
+     *               SETUP                *
+     *                                    *
+     **************************************/
+
+    class StackTelemetryTests: public ::testing::Test
+    {
+    public:
+        std::size_t size{ 10240 };
+        pmm::StackTelemetry telemetry{ size };
+    };
 
 
+
+    /**************************************
+     *                                    *
+     *            STATIC TESTS            *
+     *                                    *
+     **************************************/
+
+    namespace static_tests
+    {
+        namespace telemetry_type
+        {
+            /// @test Verify that StackTelemetryType returns StackTelemetry when the telemetry policy is Managed.
+            static_assert(std::same_as<pmm::StackTelemetryType<pmm::telemetry::Managed>, pmm::StackTelemetry> == true);
+
+
+            /// @test Verify that StackTelemetryType returns StackTelemetry when the telemetry policy is Unmanaged.
+            static_assert(std::same_as<pmm::StackTelemetryType<pmm::telemetry::Unmanaged>, pmm::StackTelemetry> ==
+                          true);
+
+
+            /// @test Verify that StackTelemetryType returns DummyStackTelemetry when the telemetry policy is Disabled.
+            static_assert(std::same_as<pmm::StackTelemetryType<pmm::telemetry::Disabled>, pmm::DummyStackTelemetry> ==
+                          true);
+
+        } // namespace telemetry_type
+
+
+
+        namespace telemetry_helpers
+        {
+            /// @test Verify that getTelemetryInstance returns a real stack when the telemetry policy is Managed.
+            [[maybe_unused]] constexpr auto STACK_TEL_MANAGED = pmm::getTelemetryInstance<pmm::telemetry::Managed>(512);
+            static_assert(std::is_same_v<decltype(STACK_TEL_MANAGED), const pmm::StackTelemetry> == true);
+
+            /// @test Verify that getTelemetryInstance returns a real stack when the telemetry policy is Unmanaged.
+            [[maybe_unused]]constexpr auto STACK_TEL_UNMANAGED = pmm::getTelemetryInstance<pmm::telemetry::Unmanaged>(512);
+            static_assert(std::is_same_v<decltype(STACK_TEL_UNMANAGED), const pmm::StackTelemetry> == true);
+
+            /// @test Verify that getTelemetryInstance returns a real stack when the telemetry policy is Disabled.
+            [[maybe_unused]]constexpr auto STACK_TEL_DISABLED = pmm::getTelemetryInstance<pmm::telemetry::Disabled>(512);
+            static_assert(std::is_same_v<decltype(STACK_TEL_DISABLED), const pmm::DummyStackTelemetry> == true);
+        } // namespace telemetry_helpers
+
+    } // namespace static_tests
+
+} // namespace
 
 /**
  * @addtogroup T_PMM_Telemetry
@@ -64,6 +118,9 @@ TEST_F(StackTelemetryTests, IncTelemetryUsage_UpdatesWithCorrectUsage)
 
     EXPECT_EQ(1336, telemetry.getTotalUsage());
 }
+
+
+TEST(StackTelemetryHelpers, ManagedPolicy_ReturnRealStackTelemetry) {}
 
 
 /** @test Verify that stack telemetry is decrement with correct usage values. */

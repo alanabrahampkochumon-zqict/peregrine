@@ -11,6 +11,8 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
+#include "peregrine/allocators/Policy.h"
+
 #include <cstddef>
 
 namespace pmm
@@ -269,6 +271,30 @@ namespace pmm
     template <telemetry::TelemetryPolicy Policy>
     using StackTelemetryType =
         std::conditional_t<std::is_same_v<Policy, telemetry::Disabled>, DummyStackTelemetry, StackTelemetry>;
+
+
+
+    /**
+     * @brief Get a telemetry instance depending the telemetry policy in use by the target stack.
+     *
+     * @tparam Policy The Telemetry policy in use by the target stack.
+     *
+     * @param stackSize The size of the stack
+     *
+     * @return A stack telemetry instance suited for the telemetry policy.
+     */
+    template <telemetry::TelemetryPolicy Policy>
+    constexpr StackTelemetryType<Policy> getTelemetryInstance(const std::size_t stackSize) noexcept
+    {
+        if constexpr (std::same_as<Policy, telemetry::Disabled>)
+        {
+            return DummyStackTelemetry(stackSize);
+        }
+        else
+        {
+            return StackTelemetry(stackSize);
+        }
+    }
 
     /** @} */
 
