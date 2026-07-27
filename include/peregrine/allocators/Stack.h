@@ -61,12 +61,8 @@ namespace pmm
     class Stack
     {
     public:
-
-
         /**
          * @brief Allocate a new physical memory vault from the Operating System.
-         *
-         * @note TODO: When telemetry is enabled, allocates a Telemetry instance on the **Heap**.
          *
          * @param[in] sizeInBytes The total capacity of the stack in bytes.
          *
@@ -82,8 +78,6 @@ namespace pmm
 
         /**
          * @brief Allocate a new physical memory vault from the Operating System.
-         *
-         * @note TODO: When telemetry is enabled, allocates a Telemetry instance on the **Heap**.
          *
          * @param[in] sizeInBytes The total capacity of the stack in bytes.
          * @param[in] buffer      The starting address to the backing buffer.
@@ -123,7 +117,7 @@ namespace pmm
          *
          * @return A telemetry instance if telemetry policy is not Disabled, else an empty struct.
          */
-        [[nodiscard]] constexpr StackTelemetryType<TelemetryPolicy> getTelemetry() const noexcept;
+        [[nodiscard]] constexpr const StackTelemetryType<TelemetryPolicy>& getTelemetry() const noexcept;
 
 
         /**
