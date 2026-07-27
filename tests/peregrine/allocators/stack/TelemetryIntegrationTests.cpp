@@ -189,6 +189,44 @@ TEST_F(LooseStackTelemetryIntegration, FreeUsingFreeV_DecreasesMemoryUsage)
 }
 
 
+TEST_F(LooseStackTelemetryIntegration, ResizingToLargerSize_IncreasesMemoryUsage)
+{
+    constexpr auto oldSize = 512_KB;
+    constexpr auto newSize = 1024_KB;
+    const auto& telemetry  = telemetryStack.getTelemetry();
+
+
+    auto ptr                     = telemetryStack.allocBytes(oldSize);
+    const auto priorPaddingUsage = telemetry.getCurrentPadding();
+
+    ptr = telemetryStack.resize(ptr, oldSize, newSize);
+
+    EXPECT_EQ(oldSize + newSize, telemetry.getCurrentMemoryUsage());
+    EXPECT_GT(telemetry.getCurrentPadding(), priorPaddingUsage);
+    EXPECT_GT(telemetry.getTotalUsage(), priorPaddingUsage + oldSize + newSize);
+}
+
+
+TEST_F(LooseStackTelemetryIntegration, ResizeToSmallerSize_DoesNotIncreaseMemoryUsage)
+{
+    constexpr auto oldSize = 1024_KB;
+    constexpr auto newSize = 512_KB;
+    const auto& telemetry  = telemetryStack.getTelemetry();
+
+
+    auto ptr                     = telemetryStack.allocBytes(oldSize);
+    const auto priorMemoryUsage = telemetry.getCurrentMemoryUsage();
+    const auto priorPaddingUsage = telemetry.getCurrentPadding();
+    const auto priorTotalUsage = telemetry.getTotalUsage();
+
+    ptr = telemetryStack.resize(ptr, oldSize, newSize);
+
+    EXPECT_EQ(priorMemoryUsage, telemetry.getCurrentMemoryUsage());
+    EXPECT_EQ(priorPaddingUsage, telemetry.getCurrentPadding());
+    EXPECT_EQ(priorTotalUsage, telemetry.getTotalUsage());
+}
+
+
 
 /**************************************
  *                                    *

@@ -172,7 +172,6 @@ namespace pmm
         // Else make new allocations
         auto newPtr = allocBytes(newSize, alignment);
         memmove(newPtr, oldMemory, oldSize);
-
         return newPtr;
     }
 
