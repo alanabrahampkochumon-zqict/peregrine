@@ -23,19 +23,33 @@
 
 namespace
 {
+    /**************************************
+     *                                    *
+     *            TEST SETUP              *
+     *                                    *
+     **************************************/
+
     class ArenaTelemetry: public testing::Test
     {
     public:
-        const std::size_t size = 1024;
-        pmm::ArenaTelemetry telemetry{ size };
+        const std::size_t SIZE = 1024;
+        pmm::ArenaTelemetry telemetry{ SIZE };
     };
 
 } // namespace
 
+
+
+/**************************************
+ *                                    *
+ *           RUNTIME TESTS            *
+ *                                    *
+ **************************************/
+
 /** @brief Verify that arena telemetry is initialized with size and usage defaults. */
 TEST_F(ArenaTelemetry, IntializesWithSizeAndDefaultStats)
 {
-    EXPECT_EQ(size, telemetry.getArenaSize());
+    EXPECT_EQ(SIZE, telemetry.getArenaSize());
     EXPECT_EQ(0, telemetry.getCurrentUsage());
     EXPECT_EQ(std::numeric_limits<std::size_t>::max(), telemetry.getMinUsage());
     EXPECT_EQ(0, telemetry.getPeakUsage());

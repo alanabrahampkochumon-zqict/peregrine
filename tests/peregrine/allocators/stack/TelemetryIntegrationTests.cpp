@@ -41,7 +41,6 @@ namespace
         pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory, pmm::telemetry::Enabled> stack{ size };
     };
 
-
 } // namespace
 
 
@@ -52,11 +51,25 @@ namespace
  *                                    *
  **************************************/
 
+TEST_F(LooseStackTelemetryIntegration, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)
+{ EXPECT_TRUE(stack.isTelemetryEnabled()); }
+
+
 TEST_F(LooseStackTelemetryIntegration, TelemetryEnabledStack_ReturnsTelemetryData)
 {
     const auto& telemetry = stack.getTelemetry();
     static_assert(std::is_same_v<decltype(telemetry), const pmm::StackTelemetry&> == true);
     EXPECT_EQ(telemetry.getStackSize(), size);
+}
+
+
+TEST_F(LooseStackTelemetryIntegration, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
+{
+    constexpr auto noTelStackSize = 2_KB;
+    const pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
+        noTelStackSize
+    };
+    EXPECT_FALSE(noTelemetryStack.isTelemetryEnabled());
 }
 
 
@@ -371,6 +384,10 @@ TEST_F(LooseStackTelemetryIntegration, Clear_DoesNotResetPeakAndMinUsage)
  *                                    *
  **************************************/
 
+TEST_F(StrictStackTelemetryIntegration, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)
+{ EXPECT_TRUE(stack.isTelemetryEnabled()); }
+
+
 TEST_F(StrictStackTelemetryIntegration, TelemetryEnabledStack_ReturnsTelemetryData)
 {
     const auto& telemetry = stack.getTelemetry();
@@ -379,10 +396,20 @@ TEST_F(StrictStackTelemetryIntegration, TelemetryEnabledStack_ReturnsTelemetryDa
 }
 
 
+TEST_F(StrictStackTelemetryIntegration, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
+{
+    constexpr auto noTelStackSize = 2_KB;
+    const pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
+        noTelStackSize
+    };
+    EXPECT_FALSE(noTelemetryStack.isTelemetryEnabled());
+}
+
+
 TEST_F(StrictStackTelemetryIntegration, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
 {
     constexpr auto noTelStackSize = 2_KB;
-    const pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
+    const pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
         noTelStackSize
     };
     const auto& telemetry = noTelemetryStack.getTelemetry();

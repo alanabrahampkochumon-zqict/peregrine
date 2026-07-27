@@ -75,7 +75,6 @@ namespace pmm
             requires std::same_as<MemStrategy, ManagedMemory>;
 
 
-
         /**
          * @brief Allocate a new physical memory vault from the Operating System.
          *
@@ -109,6 +108,12 @@ namespace pmm
          * @return The used capacity of the stack in bytes.
          */
         [[nodiscard]] constexpr std::size_t usedSize() const noexcept;
+
+
+        /**
+         * @brief Return whether telemetry is enabled for this stack.
+         */
+        [[nodiscard]] constexpr bool isTelemetryEnabled() const noexcept;
 
 
         /**
@@ -417,17 +422,6 @@ namespace pmm
         void clear();
 
 
-        // TODO: Implementation (SPLIT OUT to Deque)
-        // /**
-        //  * @brief Allocate @p size bytes of memory at the back of the stack.
-        //  *
-        //  * @param[in] size: Number of bytes to allocate.
-        //  * @param[in] alignment: Base alignment of the allocation.
-        //  *
-        //  * @return A `void pointer` to starting memory address of the allocation.
-        //  */
-        // [[nodiscard]] constexpr void* allocBack(std::size_t size, std::size_t alignment = sizeof(void*));
-
         /**
          * @brief Stack Destructor. Free the internal buffer.
          *
@@ -489,7 +483,6 @@ namespace pmm
         FRIEND_TEST(StrictStack, Initialization_MovesOffsetAtleastByAllocationSize);
         FRIEND_TEST(StrictStack, Clear_MovesOffsetAndPreviousOffsetToZero);
         FRIEND_TEST(StrictStackResizeLast, ResizeLast_MovesOffsetInCorrectDirection);
-
 
         FRIEND_TEST(LooseStackInitialization, InitializesDefaultStateAndBuffer);
         FRIEND_TEST(LooseStack, Initialization_MovesOffsetAtleastByAllocationSize);
