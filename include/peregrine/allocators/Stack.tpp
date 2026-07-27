@@ -312,7 +312,6 @@ namespace pmm
         PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
         PMM_ASSERT_MSG(ptr >= _buffer && ptr <= _buffer + _offset, "Out-of-bounds free!");
 
-        // TODO: Disable warning
         const auto header = reinterpret_cast<LooseStackHeader*>(static_cast<char*>(ptr) - sizeof(LooseStackHeader));
         // Previous offset is the current ptr's position - whatever space we assigned for padding
         const auto prevOffset =
@@ -338,7 +337,6 @@ namespace pmm
         PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
         PMM_ASSERT_MSG(ptr >= _buffer && ptr <= _buffer + _offset, "Out-of-bounds free!");
 
-        // TODO: Disable warning
         const auto header = reinterpret_cast<StrictStackHeader*>(static_cast<char*>(ptr) - sizeof(StrictStackHeader));
         // Previous offset is the current ptr's position - whatever space we assigned for padding
         const auto currentBlockStart =
@@ -383,12 +381,16 @@ namespace pmm
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy>::freeAll()
+    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy>::clear()
     {
         _offset = 0;
         if constexpr (std::is_same_v<Type, stack::Strict>)
         {
             _prevOffset = 0;
+        }
+        if constexpr (std::same_as<TelemetryPolicy, telemetry::Enabled>)
+        {
+            _telemetry.resetCurrentUsage();
         }
     }
 

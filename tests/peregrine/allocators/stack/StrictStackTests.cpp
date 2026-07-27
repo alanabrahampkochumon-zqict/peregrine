@@ -121,7 +121,7 @@ TEST_F(StrictStackTests, FreeSize_AfterFreeingAllAllocations_ReturnsStackSize)
 {
     constexpr std::size_t allocatedSize = 512;
     static_cast<void>(stack.allocBytes(allocatedSize));
-    stack.freeAll();
+    stack.clear();
     EXPECT_EQ(stackSize, stack.freeSize());
 }
 
@@ -161,11 +161,11 @@ TEST_F(StrictStackTests, UsedSize_AfterFreeingAllocation_ReturnsZero)
 /**
  * @brief Verify that usedSize() returns zero, after all allocations are freed.
  */
-TEST_F(StrictStackTests, UsedSize_FreeAllAllocation_ReturnsStackSize)
+TEST_F(StrictStackTests, UsedSize_ClearAllocation_ReturnsStackSize)
 {
     constexpr std::size_t allocatedSize = 512;
     static_cast<void>(stack.allocBytes(allocatedSize));
-    stack.freeAll();
+    stack.clear();
     EXPECT_EQ(0, stack.usedSize());
 }
 
@@ -934,7 +934,7 @@ TEST_F(StrictStackTests, FreeBytes_MultipleTimesMakesRoomInTheStack)
 
 
 /** @brief Verify that stack freeAll, frees the entire stack. */
-TEST_F(StrictStackTests, FreeAll_FreesTheEntireStack)
+TEST_F(StrictStackTests, Clear_FreesTheEntireStack)
 {
     constexpr std::size_t alignment = 8;
     // Last 128 is the offset used to make room for header + alignment
@@ -947,7 +947,7 @@ TEST_F(StrictStackTests, FreeAll_FreesTheEntireStack)
     }
 
     // Free the entire memory
-    stack.freeAll();
+    stack.clear();
 
     // Allocation another buffer with a large enough size that proper allocation will not happen without proper frees
     const auto elementCount  = (stackSize - sizeof(pmm::StrictStackHeader) - alignment - 1) / sizeof(int);
@@ -1266,7 +1266,7 @@ namespace pmm
     }
 
     /** @brief Verify that freeAll moves the offset back to zero. */
-    TEST_F(StrictStackTests, FreeAll_MovesOffsetAndPreviousOffsetToZero)
+    TEST_F(StrictStackTests, Clear_MovesOffsetAndPreviousOffsetToZero)
     {
         constexpr auto size = 512;
         // Initially allocate some memory
@@ -1275,7 +1275,7 @@ namespace pmm
         EXPECT_GT(stack._offset, size);
 
         // Free the entire stack
-        stack.freeAll();
+        stack.clear();
 
         // Offset is reset to 0
         EXPECT_EQ(0, stack._offset);

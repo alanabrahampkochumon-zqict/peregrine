@@ -336,6 +336,34 @@ TEST_F(LooseStackTelemetryIntegration, ResizeLast_ResizingToSmallerSize_DoesNotC
 }
 
 
+TEST_F(LooseStackTelemetryIntegration, FreeAll_ResetPaddingAndMemoryUsage)
+{
+    constexpr auto size   = 256_KB;
+    const auto& telemetry = stack.getTelemetry();
+
+    static_cast<void>(stack.allocBytes(size));
+
+    EXPECT_EQ(0, telemetry.getCurrentMemoryUsage());
+    EXPECT_EQ(0, telemetry.getCurrentPadding());
+    EXPECT_EQ(0, telemetry.getTotalUsage());
+}
+
+
+TEST_F(LooseStackTelemetryIntegration, FreeAll_DoesNotResetPeakAndMinUsage)
+{
+    constexpr auto size   = 256_KB;
+    const auto& telemetry = stack.getTelemetry();
+
+    static_cast<void>(stack.allocBytes(size));
+
+    EXPECT_NE(0, telemetry.getPeakMemoryUsage());
+    EXPECT_NE(0, telemetry.getMinMemoryUsage());
+    EXPECT_NE(0, telemetry.getPeakPadding());
+    EXPECT_NE(0, telemetry.getMinPadding());
+}
+
+
+
 /**************************************
  *                                    *
  *           STRICT STACK             *
@@ -663,6 +691,34 @@ TEST_F(StrictStackTelemetryIntegration, ResizeLast_ResizingToSmallerSize_DoesNot
     ptr = stack.resizeLast(ptr, oldSize, newSize);
 
     EXPECT_EQ(telemetry.getCurrentPadding(), priorPaddingUsage);
+}
+
+
+TEST_F(StrictStackTelemetryIntegration, FreeAll_ResetPaddingAndMemoryUsage)
+{
+    constexpr auto size   = 256_KB;
+    const auto& telemetry = stack.getTelemetry();
+
+    static_cast<void>(stack.allocBytes(size));
+    stack.clear();
+
+    EXPECT_EQ(0, telemetry.getCurrentMemoryUsage());
+    EXPECT_EQ(0, telemetry.getCurrentPadding());
+    EXPECT_EQ(0, telemetry.getTotalUsage());
+}
+
+
+TEST_F(StrictStackTelemetryIntegration, FreeAll_DoesNotResetPeakAndMinUsage)
+{
+    constexpr auto size   = 256_KB;
+    const auto& telemetry = stack.getTelemetry();
+
+    static_cast<void>(stack.allocBytes(size));
+
+    EXPECT_NE(0, telemetry.getPeakMemoryUsage());
+    EXPECT_NE(0, telemetry.getMinMemoryUsage());
+    EXPECT_NE(0, telemetry.getPeakPadding());
+    EXPECT_NE(0, telemetry.getMinPadding());
 }
 
 /** @} */

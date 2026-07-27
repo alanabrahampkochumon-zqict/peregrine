@@ -348,7 +348,7 @@ namespace pmm
          *
          * @relatedalso free
          * @relatedalso freeV
-         * @relatedalso freeAll
+         * @relatedalso clear
          */
         void freeBytes(void* ptr) noexcept
             requires std::same_as<Type, stack::Loose>;
@@ -368,7 +368,7 @@ namespace pmm
          *
          * @relatedalso free
          * @relatedalso freeV
-         * @relatedalso freeAll
+         * @relatedalso clear
          */
         void freeBytes(void* ptr) noexcept
             requires std::same_as<Type, stack::Strict>;
@@ -385,7 +385,7 @@ namespace pmm
          *
          * @relatedalso freeV
          * @relatedalso freeBytes
-         * @relatedalso freeAll
+         * @relatedalso clear
          */
         template <typename T>
         void free(T* ptr) noexcept;
@@ -402,7 +402,7 @@ namespace pmm
          *
          * @relatedalso free
          * @relatedalso freeBytes
-         * @relatedalso freeAll
+         * @relatedalso clear
          */
         template <typename T>
         void freeV(std::span<T> vector) noexcept;
@@ -414,7 +414,7 @@ namespace pmm
          * @relatedalso  free
          * @relatedalso  freeBytes
          */
-        void freeAll();
+        void clear();
 
 
         // TODO: Implementation (SPLIT OUT to Deque)
@@ -431,7 +431,7 @@ namespace pmm
         /**
          * @brief Stack Destructor. Free the internal buffer.
          *
-         * @note For clearing the Arena, use @ref freeAll, or to move free individual frames use @ref free.
+         * @note For clearing the Arena, use @ref clear, or to move free individual frames use @ref free.
          *
          * @remarks API specialized for @ref pmm::ManagedMemory.
          */
@@ -442,7 +442,7 @@ namespace pmm
         /**
          * @brief Stack Destructor.
          *
-         * @note For clearing the Arena, use @ref freeAll, or to move free individual frames use @ref free.
+         * @note For clearing the Arena, use @ref clear, or to move free individual frames use @ref free.
          *
          * @warning Will not clear free the backing buffer since its managed by the user.
          *
