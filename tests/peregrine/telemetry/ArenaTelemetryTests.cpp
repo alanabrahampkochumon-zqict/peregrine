@@ -13,19 +13,28 @@
 #include <peregrine/telemetry/ArenaTelemetry.h>
 
 
+
+#ifdef ENABLE_PMM_TELEMETRY
+
 /**
  * @addtogroup T_PMM_Telemetry
  * @{
  */
 
-#ifdef ENABLE_PMM_TELEMETRY
+namespace
+{
+    class ArenaTelemetry: public testing::Test
+    {
+    public:
+        const std::size_t size = 1024;
+        pmm::ArenaTelemetry telemetry{ size };
+    };
+
+} // namespace
 
 /** @brief Verify that arena telemetry is initialized with size and usage defaults. */
-TEST(ArenaTelemetry, IntializesWithSizeAndDefaultStats)
+TEST_F(ArenaTelemetry, IntializesWithSizeAndDefaultStats)
 {
-    constexpr auto size = 1024;
-    pmm::ArenaTelemetry telemetry(size);
-
     EXPECT_EQ(size, telemetry.getArenaSize());
     EXPECT_EQ(0, telemetry.getCurrentUsage());
     EXPECT_EQ(std::numeric_limits<std::size_t>::max(), telemetry.getMinUsage());
@@ -34,11 +43,8 @@ TEST(ArenaTelemetry, IntializesWithSizeAndDefaultStats)
 
 
 /** @brief Verify that arena telemetry is updated with correct usage values. */
-TEST(ArenaTelemetry, UpdateTelemetry_UpdatesWithCorrectUsage)
+TEST_F(ArenaTelemetry, UpdateTelemetry_UpdatesWithCorrectUsage)
 {
-    constexpr auto size = 1024;
-    pmm::ArenaTelemetry telemetry(size);
-
     telemetry.updateAllocationUsage(10);
     telemetry.updateAllocationUsage(50);
     telemetry.updateAllocationUsage(20);
@@ -55,10 +61,8 @@ TEST(ArenaTelemetry, UpdateTelemetry_UpdatesWithCorrectUsage)
  * @brief Verify that arena telemetry update min usage updates the minimum usage
  *        when passing in a smaller usage value.
  */
-TEST(ArenaTelemetry, UpdateMinUsage_UpdateMinimumWhenPassingInASmallValue)
+TEST_F(ArenaTelemetry, UpdateMinUsage_UpdateMinimumWhenPassingInASmallValue)
 {
-    constexpr auto size = 1024;
-    pmm::ArenaTelemetry telemetry(size);
     constexpr std::size_t newMin = 5;
 
     telemetry.updateAllocationUsage(10);
@@ -73,10 +77,8 @@ TEST(ArenaTelemetry, UpdateMinUsage_UpdateMinimumWhenPassingInASmallValue)
  * @brief Verify that arena telemetry update min usage does not update the minimum usage
  *        when passing in a larger usage value.
  */
-TEST(ArenaTelemetry, UpdateMinUsage_DoesNotUpdateMinimumWhenPassingInALargerValue)
+TEST_F(ArenaTelemetry, UpdateMinUsage_DoesNotUpdateMinimumWhenPassingInALargerValue)
 {
-    constexpr auto size = 1024;
-    pmm::ArenaTelemetry telemetry(size);
     constexpr std::size_t newMin = 50;
 
     telemetry.updateAllocationUsage(10);
@@ -93,10 +95,8 @@ TEST(ArenaTelemetry, UpdateMinUsage_DoesNotUpdateMinimumWhenPassingInALargerValu
  * @brief Verify that arena telemetry update peak usage updates the peak usage
  *        when passing in a larger usage value.
  */
-TEST(ArenaTelemetry, UpdatePeakUsage_UpdatePeakUsageWhenPassingInALargerValue)
+TEST_F(ArenaTelemetry, UpdatePeakUsage_UpdatePeakUsageWhenPassingInALargerValue)
 {
-    constexpr auto size = 1024;
-    pmm::ArenaTelemetry telemetry(size);
     constexpr std::size_t newPeak = 500;
 
     telemetry.updateAllocationUsage(10);
@@ -111,10 +111,8 @@ TEST(ArenaTelemetry, UpdatePeakUsage_UpdatePeakUsageWhenPassingInALargerValue)
  * @brief Verify that arena telemetry update peak usage does not update the peak usage
  *        when passing in a smaller usage value.
  */
-TEST(ArenaTelemetry, UpdatePeakUsage_DoesNotUpdatePeakUsageWhenPassingInASmallerValue)
+TEST_F(ArenaTelemetry, UpdatePeakUsage_DoesNotUpdatePeakUsageWhenPassingInASmallerValue)
 {
-    constexpr auto size = 1024;
-    pmm::ArenaTelemetry telemetry(size);
     constexpr std::size_t newPeak = 15;
 
     telemetry.updateAllocationUsage(10);
@@ -131,10 +129,8 @@ TEST(ArenaTelemetry, UpdatePeakUsage_DoesNotUpdatePeakUsageWhenPassingInASmaller
  * @brief Verify that @ref pmm::ArenaTelemetry::resetCurrentUsage resets current usage
  *        but preserves peak and minimum usage.
  */
-TEST(ArenaTelemetry, ResetCurrentUsage_OnlyResetsCurrentUsage)
+TEST_F(ArenaTelemetry, ResetCurrentUsage_OnlyResetsCurrentUsage)
 {
-    constexpr auto size = 1024;
-    pmm::ArenaTelemetry telemetry(size);
 
     telemetry.updateAllocationUsage(10);
     telemetry.updateAllocationUsage(50);
@@ -155,11 +151,8 @@ TEST(ArenaTelemetry, ResetCurrentUsage_OnlyResetsCurrentUsage)
 
 
 /** @brief Verify that arena telemetry reset to default values. */
-TEST(ArenaTelemetry, Reset_ResetsUsages)
+TEST_F(ArenaTelemetry, Reset_ResetsUsages)
 {
-    constexpr auto size = 1024;
-    pmm::ArenaTelemetry telemetry(size);
-
     telemetry.updateAllocationUsage(10);
     telemetry.updateAllocationUsage(50);
     telemetry.updateAllocationUsage(20);
