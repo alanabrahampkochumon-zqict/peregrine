@@ -100,12 +100,10 @@ namespace pmm
 
         _offset += size;
         memset(currentAddress, 0, size); // Zero out memory (TODO: Remove when using HAL)
-
         if constexpr (std::same_as<TelemetryPolicy, telemetry::Enabled>)
         {
             _telemetry.incStackUsage(size, padding);
         }
-
         return currentAddress;
     }
 
@@ -137,6 +135,10 @@ namespace pmm
 
         _offset += size;
         memset(currentAddress, 0, size); // Zero out memory (TODO: Remove when using HAL)
+        if constexpr (std::same_as<TelemetryPolicy, telemetry::Enabled>)
+        {
+            _telemetry.incStackUsage(size, padding);
+        }
         return currentAddress;
     }
 
