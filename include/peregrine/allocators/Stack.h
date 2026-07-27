@@ -57,14 +57,10 @@ namespace pmm
 
 
     template <stack::StackType Type = stack::Loose, MemoryStrategy MemStrategy = ManagedMemory,
-              telemetry::TelemetryPolicy TelemetryPolicy = telemetry::Managed>
+              telemetry::TelemetryPolicy TelemetryPolicy = telemetry::Enabled>
     class Stack
     {
     public:
-        /// Custom Types
-        using PreviousOffsetType = std::conditional_t<std::is_same_v<Type, stack::Strict>, std::size_t, EmptyMember>;
-        // using TelemetryType =
-        //     std::conditional_t<std::is_same_v<TelemetryPolicy, telemetry::Disabled>, EmptyMember, StackTelemetry>;
 
 
         /**
@@ -474,6 +470,9 @@ namespace pmm
          */
         std::size_t _calcAlignment(std::size_t alignment) noexcept;
 
+
+        /// Custom Types
+        using PreviousOffsetType = std::conditional_t<std::is_same_v<Type, stack::Strict>, std::size_t, EmptyMember>;
 
         /// Member Variables
         uint8_t* _buffer;

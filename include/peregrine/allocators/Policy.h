@@ -123,8 +123,7 @@ namespace pmm
         /**
          * @brief Concept defining the requirements for telemetry.
          *
-         * @relatedalso Managed
-         * @relatedalso Unmanaged
+         * @relatedalso Enabled
          * @relatedalso Disabled
          */
         template <typename T>
@@ -134,34 +133,20 @@ namespace pmm
 
 
         /**
-         * @brief Telemetry policy indicating that the telemetry is managed by the allocator.
+         * @brief Telemetry policy indicating that the telemetry is enabled and managed by the allocator.
          *
-         * @relatedalso Unmanaged
          * @relatedalso Disabled
          */
-        struct Managed
+        struct Enabled
         {
-            static constexpr std::string getPolicyName() noexcept { return "Managed Telemetry"; }
-        };
-
-        /**
-         * @brief Telemetry policy indicating that the telemetry is managed by the user.
-         *        The user must provide a telemetry instance to the allocator.
-         *
-         * @relatedalso Managed
-         * @relatedalso Disabled
-         */
-        struct Unmanaged
-        {
-            static constexpr std::string getPolicyName() noexcept { return "Unmanaged Telemetry"; }
+            static constexpr std::string getPolicyName() noexcept { return "Telemetry Enabled"; }
         };
 
 
         /**
          * @brief Telemetry policy indicating that telemetry is disabled.
          *
-         * @relatedalso Managed
-         * @relatedalso Unmanaged
+         * @relatedalso Enabled
          */
         struct Disabled
         {
