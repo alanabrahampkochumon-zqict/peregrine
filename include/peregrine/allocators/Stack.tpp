@@ -25,13 +25,11 @@ namespace pmm
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
     PMM_INLINE Stack<Type, MemStrategy, TelemetryPolicy>::Stack(const std::size_t sizeInBytes) noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
-        : _buffer{ new uint8_t[sizeInBytes] }, _size{ sizeInBytes }, _prevOffset{}
-    {
-        if constexpr (std::same_as<TelemetryPolicy, telemetry::Managed>)
-        {
-            _telemetry = StackTelemetry(size);
-        }
-    }
+        : _buffer{ new uint8_t[sizeInBytes] },
+          _size{ sizeInBytes },
+          _prevOffset{},
+          _telemetry{ getTelemetryInstance<TelemetryPolicy>(sizeInBytes) }
+    {}
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
@@ -57,8 +55,8 @@ namespace pmm
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::TelemetryType Stack<
-        Type, MemStrategy, TelemetryPolicy>::getTelemetry() const noexcept
+    PMM_INLINE constexpr StackTelemetryType<TelemetryPolicy> Stack<Type, MemStrategy, TelemetryPolicy>::getTelemetry()
+        const noexcept
     { return _telemetry; }
 
 

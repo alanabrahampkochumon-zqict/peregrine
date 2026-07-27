@@ -18,11 +18,5 @@ target_include_directories(
 
 target_link_libraries(
         AllocatorTests PRIVATE
-        GTest::gtest_main
-        StrictWarnings
-        Peregrine
+        PeregrineTestSetup
 )
-
-# Enables GTest's Friend tests
-# Unless the consuming application has GTest imported, DON'T enable this!!
-target_compile_definitions(AllocatorTests PRIVATE ENABLE_PMM_TESTS)

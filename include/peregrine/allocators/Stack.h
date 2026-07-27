@@ -63,8 +63,8 @@ namespace pmm
     public:
         /// Custom Types
         using PreviousOffsetType = std::conditional_t<std::is_same_v<Type, stack::Strict>, std::size_t, EmptyMember>;
-        using TelemetryType =
-            std::conditional_t<std::is_same_v<TelemetryPolicy, telemetry::Disabled>, EmptyMember, StackTelemetry>;
+        // using TelemetryType =
+        //     std::conditional_t<std::is_same_v<TelemetryPolicy, telemetry::Disabled>, EmptyMember, StackTelemetry>;
 
 
         /**
@@ -121,12 +121,13 @@ namespace pmm
         [[nodiscard]] constexpr std::size_t usedSize() const noexcept;
 
 
+        // TODO: Add tests
         /**
          * @brief Get the telemetry instance.
          *
          * @return A telemetry instance if telemetry policy is not Disabled, else an empty struct.
          */
-        [[nodiscard]] constexpr TelemetryType getTelemetry() const noexcept;
+        [[nodiscard]] constexpr StackTelemetryType<TelemetryPolicy> getTelemetry() const noexcept;
 
 
         /**
@@ -477,11 +478,8 @@ namespace pmm
         /// Member Variables
         uint8_t* _buffer;
         std::size_t _size, _offset{ 0 };
-
-
         PMM_NO_UNIQUE_ADDR PreviousOffsetType _prevOffset{ 0 };
-
-        PMM_NO_UNIQUE_ADDR TelemetryType _telemetry{};
+        PMM_NO_UNIQUE_ADDR StackTelemetryType<TelemetryPolicy> _telemetry{ 0 };
 
 
 

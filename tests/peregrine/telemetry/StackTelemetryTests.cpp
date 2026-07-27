@@ -13,6 +13,11 @@
 #include <peregrine/telemetry/StackTelemetry.h>
 
 
+/**
+ * @addtogroup T_PMM_Telemetry
+ * @{
+ */
+
 namespace
 {
     /**************************************
@@ -63,24 +68,31 @@ namespace
             [[maybe_unused]] constexpr auto STACK_TEL_MANAGED = pmm::getTelemetryInstance<pmm::telemetry::Managed>(512);
             static_assert(std::is_same_v<decltype(STACK_TEL_MANAGED), const pmm::StackTelemetry> == true);
 
+
             /// @test Verify that getTelemetryInstance returns a real stack when the telemetry policy is Unmanaged.
-            [[maybe_unused]]constexpr auto STACK_TEL_UNMANAGED = pmm::getTelemetryInstance<pmm::telemetry::Unmanaged>(512);
+            [[maybe_unused]] constexpr auto STACK_TEL_UNMANAGED =
+                pmm::getTelemetryInstance<pmm::telemetry::Unmanaged>(512);
             static_assert(std::is_same_v<decltype(STACK_TEL_UNMANAGED), const pmm::StackTelemetry> == true);
 
+
             /// @test Verify that getTelemetryInstance returns a real stack when the telemetry policy is Disabled.
-            [[maybe_unused]]constexpr auto STACK_TEL_DISABLED = pmm::getTelemetryInstance<pmm::telemetry::Disabled>(512);
+            [[maybe_unused]] constexpr auto STACK_TEL_DISABLED =
+                pmm::getTelemetryInstance<pmm::telemetry::Disabled>(512);
             static_assert(std::is_same_v<decltype(STACK_TEL_DISABLED), const pmm::DummyStackTelemetry> == true);
+
         } // namespace telemetry_helpers
 
     } // namespace static_tests
 
 } // namespace
 
-/**
- * @addtogroup T_PMM_Telemetry
- * @{
- */
 
+
+/**************************************
+ *                                    *
+ *           RUNTIME TESTS            *
+ *                                    *
+ **************************************/
 
 /** @test Verify that stack telemetry is initialized with size and usage defaults. */
 TEST_F(StackTelemetryTests, IntializesWithSizeAndDefaultStats)

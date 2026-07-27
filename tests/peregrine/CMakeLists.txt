@@ -1,5 +1,15 @@
 add_executable(PeregrineTests $<TARGET_OBJECTS:AllocatorTests> $<TARGET_OBJECTS:TelemetryTests>)
 
+add_library(PeregrineTestSetup INTERFACE)
+target_link_libraries(PeregrineTestSetup INTERFACE
+        GTest::gtest_main
+        StrictWarnings
+        Peregrine
+)
+# Enables GTest's Friend tests
+# Unless the consuming application has GTest imported, DON'T enable this!!
+target_compile_definitions(PeregrineTestSetup INTERFACE ENABLE_PMM_TESTS ENABLE_PMM_TELEMETRY)
+
 add_subdirectory(allocators)
 add_subdirectory(telemetry)
 
@@ -17,20 +27,13 @@ target_include_directories(
 
 target_link_libraries(
         PeregrineTests PRIVATE
-        GTest::gtest_main
-        StrictWarnings
-        Peregrine
+        PeregrineTestSetup
 
         # Subdirectory Objects
         AllocatorTests
         TelemetryTests
 )
 
-# Preprocessor Macros
-# ENABLE_PMM_TELEMETRY -> Enable telemetry testing
-target_compile_definitions(PeregrineTests PRIVATE ENABLE_PMM_TELEMETRY)
-target_compile_definitions(AllocatorTests PRIVATE ENABLE_PMM_TELEMETRY)
-target_compile_definitions(TelemetryTests PRIVATE ENABLE_PMM_TELEMETRY)
 
 include(GoogleTest)
 gtest_discover_tests(PeregrineTests)
