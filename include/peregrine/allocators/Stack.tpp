@@ -290,6 +290,14 @@ namespace pmm
             reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(_buffer) - header->padding;
 
         // Move the pointer back to the previous offset.
+        if constexpr (std::same_as<TelemetryPolicy, telemetry::Enabled>)
+        {
+            const auto padding = header->padding;
+            // Since offset-prevOffset includes the padding, we need remove the padding to ensure that
+            // size and padding are independently decremented
+            const auto allocationSize = _offset - prevOffset - padding;
+            _telemetry.decStackUsage(allocationSize, padding);
+        }
         _offset = prevOffset;
     }
 
@@ -307,8 +315,12 @@ namespace pmm
         const auto currentBlockStart =
             reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(_buffer) - header->padding;
 
-        // Move the pointer back to the previous offset, and then by the header size.
         PMM_ASSERT_MSG(_prevOffset == currentBlockStart, "Out of order stack free!");
+        // Move the pointer back to the previous offset, and then by the header size.
+        if constexpr (std::same_as<TelemetryPolicy, telemetry::Enabled>)
+        {
+            _telemetry.decStackUsage(_offset - currentBlockStart - header->padding, header->padding);
+        }
         _offset     = currentBlockStart;
         _prevOffset = header->prevOffset;
     }

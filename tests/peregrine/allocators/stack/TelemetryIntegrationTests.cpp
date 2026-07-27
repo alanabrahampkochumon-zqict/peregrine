@@ -116,4 +116,60 @@ TEST_F(StackTelemetryIntegration, AllocationUsingAllocV_IncreasesMemoryUsage)
 }
 
 
+TEST_F(StackTelemetryIntegration, FreeUsingFreeBytes_DecreasesMemoryUsage)
+{
+    constexpr auto bytesAllocated = 512_KB;
+    constexpr auto alignment      = 1024;
+    const auto& telemetry         = telemetryStack.getTelemetry();
+
+    static_cast<void>(telemetryStack.alloc<LargeData<bytesAllocated>>());
+    const auto priorMemoryUsage  = telemetry.getCurrentMemoryUsage();
+    const auto priorPaddingUsage = telemetry.getCurrentPadding();
+
+    const auto ptr = telemetryStack.allocBytes(bytesAllocated, alignment);
+    telemetryStack.freeBytes(ptr);
+
+    EXPECT_EQ(priorMemoryUsage, telemetry.getCurrentMemoryUsage());
+    EXPECT_EQ(priorPaddingUsage, telemetry.getCurrentPadding());
+    EXPECT_EQ(priorMemoryUsage + priorPaddingUsage, telemetry.getTotalUsage());
+}
+
+
+TEST_F(StackTelemetryIntegration, FreeUsingFree_DecreasesMemoryUsage)
+{
+    constexpr auto bytesAllocated = 2_KB;
+    const auto& telemetry         = telemetryStack.getTelemetry();
+
+    static_cast<void>(telemetryStack.alloc<LargeData<bytesAllocated>>());
+    const auto priorMemoryUsage  = telemetry.getCurrentMemoryUsage();
+    const auto priorPaddingUsage = telemetry.getCurrentPadding();
+
+    const auto objPtr = telemetryStack.alloc<LargeData<bytesAllocated>>();
+    telemetryStack.free(objPtr);
+
+    EXPECT_EQ(priorMemoryUsage, telemetry.getCurrentMemoryUsage());
+    EXPECT_EQ(priorPaddingUsage, telemetry.getCurrentPadding());
+    EXPECT_EQ(priorMemoryUsage + priorPaddingUsage, telemetry.getTotalUsage());
+}
+
+
+TEST_F(StackTelemetryIntegration, FreeUsingFreeV_DecreasesMemoryUsage)
+{
+    constexpr auto count          = 1000;
+    constexpr auto bytesAllocated = count * sizeof(int);
+    const auto& telemetry         = telemetryStack.getTelemetry();
+
+    static_cast<void>(telemetryStack.alloc<LargeData<bytesAllocated>>());
+    const auto priorMemoryUsage  = telemetry.getCurrentMemoryUsage();
+    const auto priorPaddingUsage = telemetry.getCurrentPadding();
+
+    const auto vecPtr = telemetryStack.allocV<int>(count);
+    telemetryStack.freeV(vecPtr);
+
+
+    EXPECT_EQ(priorMemoryUsage, telemetry.getCurrentMemoryUsage());
+    EXPECT_EQ(priorPaddingUsage, telemetry.getCurrentPadding());
+    EXPECT_EQ(priorMemoryUsage + priorPaddingUsage, telemetry.getTotalUsage());
+}
+
 /** @} */
