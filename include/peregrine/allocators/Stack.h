@@ -487,13 +487,13 @@ namespace pmm
 
         FRIEND_TEST(StrictStackInitialization, InitializesDefaultStateAndBuffer);
         FRIEND_TEST(StrictStackTests, Initialization_MovesOffsetAtleastByAllocationSize);
-        FRIEND_TEST(StrictStackTests, FreeAll_MovesOffsetAndPreviousOffsetToZero);
+        FRIEND_TEST(StrictStackTests, Clear_MovesOffsetAndPreviousOffsetToZero);
         FRIEND_TEST(StrictStackResizeLast, ResizeLast_MovesOffsetInCorrectDirection);
 
 
         FRIEND_TEST(LooseStackInitialization, InitializesDefaultStateAndBuffer);
         FRIEND_TEST(LooseStackTests, Initialization_MovesOffsetAtleastByAllocationSize);
-        FRIEND_TEST(LooseStackTests, FreeAll_MovesOffsetToZero);
+        FRIEND_TEST(LooseStackTests, Clear_MovesOffsetToZero);
         FRIEND_TEST(LooseStackResizeLast, ResizeLast_MovesOffsetInCorrectDirection);
 
 
