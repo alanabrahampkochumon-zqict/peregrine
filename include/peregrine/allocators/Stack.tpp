@@ -23,7 +23,7 @@ namespace pmm
 {
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE Stack<Type, MemStrategy, TelemetryPolicy>::Stack(const std::size_t sizeInBytes) noexcept
+    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(const std::size_t sizeInBytes) noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
         : _buffer{ new uint8_t[sizeInBytes] },
           _size{ sizeInBytes },
@@ -33,7 +33,7 @@ namespace pmm
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    Stack<Type, MemStrategy, TelemetryPolicy>::Stack(const std::size_t sizeInBytes, uint8_t* buffer) noexcept
+    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(const std::size_t sizeInBytes, uint8_t* buffer) noexcept
         requires std::same_as<MemStrategy, UnmanagedMemory>
         : _buffer{ buffer }, _size{ sizeInBytes }, _prevOffset{}
     {}
@@ -67,7 +67,7 @@ namespace pmm
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
     template <typename T>
-    PMM_INLINE constexpr std::span<T> Stack<Type, MemStrategy, TelemetryPolicy>::allocV(std::size_t count) noexcept
+    PMM_INLINE std::span<T> Stack<Type, MemStrategy, TelemetryPolicy>::allocV(std::size_t count) noexcept
     {
         PMM_ASSERT_MSG(count > 0, "[Stack]: Cannot allocate an array of size 0");
 
@@ -414,7 +414,7 @@ namespace pmm
      **************************************/
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE std::size_t Stack<Type, MemStrategy, TelemetryPolicy>::_calcAlignment(
+    PMM_INLINE constexpr std::size_t Stack<Type, MemStrategy, TelemetryPolicy>::_calcAlignment(
         const std::size_t alignment) noexcept
     {
         const auto baseAddress    = reinterpret_cast<uintptr_t>(_buffer);

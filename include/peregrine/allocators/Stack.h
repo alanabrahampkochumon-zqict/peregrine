@@ -71,7 +71,7 @@ namespace pmm
          * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        [[nodiscard]] explicit Stack(std::size_t sizeInBytes) noexcept
+        [[nodiscard]] explicit constexpr Stack(std::size_t sizeInBytes) noexcept
             requires std::same_as<MemStrategy, ManagedMemory>;
 
 
@@ -86,7 +86,7 @@ namespace pmm
          * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        [[nodiscard]] explicit Stack(std::size_t sizeInBytes, uint8_t* buffer) noexcept
+        [[nodiscard]] explicit constexpr Stack(std::size_t sizeInBytes, uint8_t* buffer) noexcept
             requires std::same_as<MemStrategy, UnmanagedMemory>;
 
         /**
@@ -203,7 +203,7 @@ namespace pmm
          * @relatedalso alloc
          */
         template <typename T>
-        [[nodiscard]] constexpr std::span<T> allocV(std::size_t count) noexcept;
+        [[nodiscard]] std::span<T> allocV(std::size_t count) noexcept;
 
 
         /**
@@ -455,7 +455,7 @@ namespace pmm
          *
          * @return The padding required for alignment.
          */
-        std::size_t _calcAlignment(std::size_t alignment) noexcept;
+        constexpr std::size_t _calcAlignment(std::size_t alignment) noexcept;
 
 
         /// Custom Types

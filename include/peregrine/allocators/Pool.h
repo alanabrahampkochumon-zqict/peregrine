@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdint>
 /**
  * @file Pool.h
  * @author Alan Abraham P Kochumon
@@ -9,11 +10,21 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
+
+
 namespace pmm
 {
 
-    struct Pool
-    {};
+    class Pool
+    {
+    public:
+        // [[nodiscard]] explicit constexpr Pool(size_t sizeInBytes) noexcept;
+
+    private:
+        // uint8_t* _buffer;
+    };
+
+
 } // namespace pmm
 
 
