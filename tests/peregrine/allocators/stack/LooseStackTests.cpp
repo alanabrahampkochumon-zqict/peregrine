@@ -1331,7 +1331,7 @@ namespace pmm
         EXPECT_EQ(initialOffset, stack2._offset);
         EXPECT_EQ(stackSize, stack2._size);
     }
-    
+
 
     TEST_F(LooseStack, MoveOperator_NullsOutInternalBuffer)
     {

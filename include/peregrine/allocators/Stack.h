@@ -519,10 +519,13 @@ namespace pmm
         FRIEND_TEST(StrictStackResizeLast, ResizeLast_MovesOffsetInCorrectDirection);
         FRIEND_TEST(StrictStack, MoveCtor_NullsOutInternalBuffer);
         FRIEND_TEST(StrictStack, MoveCtor_MovesBufferIntoNewObject);
+<<<<<<< HEAD
         FRIEND_TEST(StrictStack, MoveOperator_NullsOutInternalBuffer);
         FRIEND_TEST(StrictStack, MoveOperator_MovesBufferIntoNewObject);
         FRIEND_TEST(StrictStack, MoveOperator_SelfAssignmentReturnsTheSameStack);
         FRIEND_TEST(StrictStack, MoveOperator_DeletingOriginalStackDoNotDeleteTheNewStacksMemory);
+=======
+>>>>>>> origin/main
 
 
         FRIEND_TEST(LooseStackInitialization, InitializesDefaultStateAndBuffer);
@@ -530,11 +533,15 @@ namespace pmm
         FRIEND_TEST(LooseStack, Clear_MovesOffsetToZero);
         FRIEND_TEST(LooseStackResizeLast, ResizeLast_MovesOffsetInCorrectDirection);
         FRIEND_TEST(LooseStack, MoveCtor_NullsOutInternalBuffer);
+<<<<<<< HEAD
         FRIEND_TEST(LooseStack, MoveCtor_MovesBufferIntoNewObject);
         FRIEND_TEST(LooseStack, MoveOperator_NullsOutInternalBuffer);
         FRIEND_TEST(LooseStack, MoveOperator_MovesBufferIntoNewObject);
         FRIEND_TEST(LooseStack, MoveOperator_SelfAssignmentReturnsTheSameStack);
         FRIEND_TEST(LooseStack, MoveOperator_DeletingOriginalStackDoNotDeleteTheNewStacksMemory);
+=======
+        FRIEND_TEST(StrictStack, MoveCtor_MovesBufferIntoNewObject);
+>>>>>>> origin/main
 #endif
     };
 } // namespace pmm
