@@ -33,7 +33,49 @@ namespace pmm
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(const std::size_t sizeInBytes, uint8_t* buffer) noexcept
+    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(Stack&& stack) noexcept
+        : _buffer{ std::exchange(stack._buffer, nullptr) },
+          _size{ std::exchange(stack._size, 0) },
+          _offset{ std::exchange(stack._offset, 0) },
+          _telemetry{ std::exchange(stack._telemetry, getTelemetryInstance<TelemetryPolicy>(_size)) }
+    {
+        if constexpr (std::same_as<Type, stack::Strict>)
+        {
+            _prevOffset = std::exchange(stack._prevOffset, 0);
+        }
+    }
+
+
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
+    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>& Stack<
+        Type, MemStrategy, TelemetryPolicy>::operator=(Stack&& stack) noexcept
+    {
+        // For self assignment return the current arena.
+        if (this == &stack)
+        {
+            return *this;
+        }
+
+        // Release the buffer held by the current arena
+        delete[] _buffer; // TODO: Update as we move to HAL
+
+        // Move the data members and null-out the moved data members.
+        _buffer = std::exchange(stack._buffer, nullptr);
+        _offset = std::exchange(stack._offset, 0);
+        _size      = std::exchange(stack._size, 0);
+        _telemetry = std::exchange(stack._telemetry, getTelemetryInstance<TelemetryPolicy>(_size));
+        if constexpr (std::same_as<Type, stack::Strict>)
+        {
+            _prevOffset = std::exchange(stack._prevOffset, 0);
+        }
+
+        return *this;
+    }
+
+
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
+    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(const std::size_t sizeInBytes,
+                                                                          uint8_t* buffer) noexcept
         requires std::same_as<MemStrategy, UnmanagedMemory>
         : _buffer{ buffer }, _size{ sizeInBytes }, _prevOffset{}
     {}

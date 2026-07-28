@@ -173,6 +173,35 @@ TEST_F(LooseStack, UsedSize_ClearAllocation_ReturnsStackSize)
 }
 
 
+TEST_F(LooseStack, MoveCtor_CopiesAttributesToNewObject)
+{
+    const pmm::Stack<> stack2 = std::move(stack);
+    EXPECT_EQ(stackSize, stack2.freeSize());
+    EXPECT_EQ(stackSize, stack2.size());
+    EXPECT_EQ(0, stack2.usedSize());
+    EXPECT_EQ(stackSize, stack2.getTelemetry().getStackSize());
+}
+
+
+TEST_F(LooseStack, MoveCtor_MovesTelemetry)
+{
+
+    static_cast<void>(stack.allocBytes(250, 16));
+    // Must get the telemetry by value here else the reference will be reset
+    const auto initialTelemetry = stack.getTelemetry();
+    const pmm::Stack<> stack2 = std::move(stack);
+
+    // Checking for telemetry equality
+    EXPECT_EQ(initialTelemetry.getCurrentMemoryUsage(), stack2.getTelemetry().getCurrentMemoryUsage());
+    EXPECT_EQ(initialTelemetry.getPeakMemoryUsage(), stack2.getTelemetry().getPeakMemoryUsage());
+    EXPECT_EQ(initialTelemetry.getMinMemoryUsage(), stack2.getTelemetry().getMinMemoryUsage());
+    EXPECT_EQ(initialTelemetry.getPeakPadding(), stack2.getTelemetry().getPeakPadding());
+    EXPECT_EQ(initialTelemetry.getMinPadding(), stack2.getTelemetry().getMinPadding());
+    EXPECT_EQ(initialTelemetry.getStackSize(), stack2.getTelemetry().getStackSize());
+}
+
+
+
 /**************************************
  *                                    *
  *            ALLOC BYTES             *
@@ -1057,6 +1086,8 @@ TEST_F(LooseStack, FreeV_CallsClassDestructorForNonTrivialTypes)
 }
 
 
+
+
 #ifndef NDEBUG
 /**
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*, when allocating memory greater
@@ -1277,6 +1308,108 @@ namespace pmm
         EXPECT_EQ(expectedOffsetDiff, actualOffsetDiff);
     }
 
+
+    TEST_F(LooseStack, MoveCtor_NullsOutInternalBuffer)
+    {
+        [[maybe_unused]] const Stack<> stack2 = std::move(stack);
+        // NOLINT(bugprone-use-after-move)
+        EXPECT_EQ(nullptr, stack._buffer);
+        EXPECT_EQ(0, stack._offset);
+        EXPECT_EQ(0, stack._size);
+    }
+
+    /**
+     * @brief Verify that move constructor moves all data members, including buffer into new object.
+     */
+    TEST_F(LooseStack, MoveCtor_MovesBufferIntoNewObject)
+    {
+        const auto initialPointer   = stack._buffer;
+        const auto initialOffset    = stack._offset;
+
+        const Stack<> stack2 = std::move(stack);
+        EXPECT_EQ(initialPointer, stack2._buffer);
+        EXPECT_EQ(initialOffset, stack2._offset);
+        EXPECT_EQ(stackSize, stack2._size);
+    }
+    
+
+    TEST_F(LooseStack, MoveOperator_NullsOutInternalBuffer)
+    {
+        [[maybe_unused]] Stack<> stack2(256);
+        static_cast<void>(stack2 = std::move(stack));
+        EXPECT_EQ(nullptr, stack._buffer);
+        EXPECT_EQ(0, stack._offset);
+        // EXPECT_EQ(0, stack._prevOffset);
+        EXPECT_EQ(0, stack._size);
+    }
+
+
+
+    TEST_F(LooseStack, MoveOperator_MovesBufferIntoNewObject)
+    {
+        const auto initialPointer = stack._buffer;
+
+        Stack<> stack2(256);
+        stack2 = std::move(stack);
+
+        EXPECT_EQ(initialPointer, stack2._buffer);
+        EXPECT_EQ(0, stack2._offset);
+        EXPECT_EQ(stackSize, stack2._size);
+        // EXPECT_EQ(0, stack2._prevOffset);
+    }
+
+
+    TEST_F(LooseStack, MoveOperator_SelfAssignmentReturnsTheSameStack)
+    {
+        const auto initialAddress    = reinterpret_cast<uintptr_t>(stack._buffer);
+        const auto initialOffset     = stack._offset;
+        // const auto initialPrevOffset = stack._prevOffset;
+
+#ifdef __clang__
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wself-move"
+#endif
+#ifdef __GNUC__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wself-move"
+#endif
+        stack = std::move(stack);
+#ifdef __GNUC__
+    #pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
+
+        EXPECT_EQ(initialAddress, reinterpret_cast<uintptr_t>(stack._buffer));
+        EXPECT_EQ(initialOffset, stack._offset);
+        // EXPECT_EQ(initialPrevOffset, stack._prevOffset);
+    }
+
+
+    TEST_F(LooseStack, MoveOperator_DeletingOriginalStackDoNotDeleteTheNewStacksMemory)
+    {
+        Stack<> stack2(256);
+        constexpr auto size = 512;
+
+        {
+            stack2 = std::move(stack);
+        }
+        EXPECT_NE(nullptr, stack2._buffer);
+
+        // Write arbitrary data into the buffer
+        // NOTE: i % 128 ensures that uint8_t does not overflow
+        for (uint32_t i = 0; i < size; ++i)
+        {
+            stack2._buffer[i] = i % 255;
+        }
+
+        // Read the value from buffer
+        for (uint32_t i = 0; i < size / 4; i += 4)
+        {
+            EXPECT_EQ(i % 255, stack2._buffer[i]);
+        }
+    }
 
 } // namespace pmm
 /** @} */

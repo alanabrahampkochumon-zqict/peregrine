@@ -40,7 +40,7 @@ namespace pmm
          */
         constexpr explicit Arena(std::size_t bytes) noexcept;
 
-        // TODO: Update zero initialization docs when updating to OS HAL
+
         /**
          * @brief Allocate a new physical memory vault from the Operating System, with custom telemetry support.
          *

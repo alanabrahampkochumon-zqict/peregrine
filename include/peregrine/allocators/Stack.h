@@ -76,6 +76,40 @@ namespace pmm
 
 
         /**
+         * @brief Copying is strictly prohibited to prevent double-free crashes.
+         * @note Use std::move() to transfer ownership of the stack.
+         */
+        constexpr Stack(const Stack&) = delete;
+
+
+        /**
+         * @brief Copying is strictly prohibited to prevent double-free crashes.
+         * @note Use std::move() to transfer ownership of the stack.
+         */
+        constexpr Stack& operator=(const Stack&) = delete;
+
+
+        /**
+         * @brief Transfer the current Stack's memory to a new object.
+         *
+         * @param[in,out] stack The stack to move into the new object.
+         */
+        constexpr Stack(Stack&& stack) noexcept;
+
+
+        /**
+         * @brief Transfer the current Stack's memory to another object.
+         *
+         * @warning This will delete any buffers held by the LHS object.
+         *
+         * @param[in,out] stack The stack to move into the object.
+         *
+         * @return The current stack instance.
+         */
+        constexpr Stack& operator=(Stack&& stack) noexcept;
+
+
+        /**
          * @brief Allocate a new physical memory vault from the Operating System.
          *
          * @param[in] sizeInBytes The total capacity of the stack in bytes.
@@ -197,7 +231,7 @@ namespace pmm
          * @param[in] count The total number of contiguous elements requested.
          *
          * @return A `std::span<T>` viewing the allocated memory block.
-         *         Returns an empty span (`.empty() == true`) if the Arena lacks sufficient capacity.
+         *         Returns an empty span (`.empty() == true`) if the Stack lacks sufficient capacity.
          *
          * @relatedalso allocBytes
          * @relatedalso alloc
@@ -425,7 +459,7 @@ namespace pmm
         /**
          * @brief Stack Destructor. Free the internal buffer.
          *
-         * @note For clearing the Arena, use @ref clear, or to move free individual frames use @ref free.
+         * @note For clearing the Stack, use @ref clear, or to move free individual frames use @ref free.
          *
          * @remarks API specialized for @ref pmm::ManagedMemory.
          */
@@ -436,7 +470,7 @@ namespace pmm
         /**
          * @brief Stack Destructor.
          *
-         * @note For clearing the Arena, use @ref clear, or to move free individual frames use @ref free.
+         * @note For clearing the Stack, use @ref clear, or to move free individual frames use @ref free.
          *
          * @warning Will not clear free the backing buffer since its managed by the user.
          *
@@ -464,7 +498,7 @@ namespace pmm
         /// Member Variables
         uint8_t* _buffer;
         std::size_t _size, _offset{ 0 };
-        PMM_NO_UNIQUE_ADDR PreviousOffsetType _prevOffset{ 0 };
+        PMM_NO_UNIQUE_ADDR PreviousOffsetType _prevOffset;
         PMM_NO_UNIQUE_ADDR StackTelemetryType<TelemetryPolicy> _telemetry{ 0 };
 
 
@@ -483,18 +517,26 @@ namespace pmm
         FRIEND_TEST(StrictStack, Initialization_MovesOffsetAtleastByAllocationSize);
         FRIEND_TEST(StrictStack, Clear_MovesOffsetAndPreviousOffsetToZero);
         FRIEND_TEST(StrictStackResizeLast, ResizeLast_MovesOffsetInCorrectDirection);
+        FRIEND_TEST(StrictStack, MoveCtor_NullsOutInternalBuffer);
+        FRIEND_TEST(StrictStack, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(StrictStack, MoveOperator_NullsOutInternalBuffer);
+        FRIEND_TEST(StrictStack, MoveOperator_MovesBufferIntoNewObject);
+        FRIEND_TEST(StrictStack, MoveOperator_SelfAssignmentReturnsTheSameStack);
+        FRIEND_TEST(StrictStack, MoveOperator_DeletingOriginalStackDoNotDeleteTheNewStacksMemory);
+
 
         FRIEND_TEST(LooseStackInitialization, InitializesDefaultStateAndBuffer);
         FRIEND_TEST(LooseStack, Initialization_MovesOffsetAtleastByAllocationSize);
         FRIEND_TEST(LooseStack, Clear_MovesOffsetToZero);
         FRIEND_TEST(LooseStackResizeLast, ResizeLast_MovesOffsetInCorrectDirection);
-
-
+        FRIEND_TEST(LooseStack, MoveCtor_NullsOutInternalBuffer);
+        FRIEND_TEST(LooseStack, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(LooseStack, MoveOperator_NullsOutInternalBuffer);
+        FRIEND_TEST(LooseStack, MoveOperator_MovesBufferIntoNewObject);
+        FRIEND_TEST(LooseStack, MoveOperator_SelfAssignmentReturnsTheSameStack);
+        FRIEND_TEST(LooseStack, MoveOperator_DeletingOriginalStackDoNotDeleteTheNewStacksMemory);
 #endif
     };
-
-    /** @} */
-
 } // namespace pmm
 
 
