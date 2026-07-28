@@ -26,7 +26,7 @@ namespace pmm
      *                                    *
      **************************************/
 
-    inline Arena::Arena(const std::size_t bytes) noexcept
+    PMM_INLINE constexpr Arena::Arena(const std::size_t bytes) noexcept
         : _buffer(new uint8_t[bytes]),
           _sizeInBytes(bytes),
           _offset(0),
@@ -36,7 +36,7 @@ namespace pmm
           _ownedTelemetry(true)
     {}
 
-    inline Arena::Arena(const std::size_t bytes, ArenaTelemetry* telemetry) noexcept
+    PMM_INLINE constexpr Arena::Arena(const std::size_t bytes, ArenaTelemetry* telemetry) noexcept
         : _buffer(new uint8_t[bytes]),
           _sizeInBytes(bytes),
           _offset(0),
@@ -47,7 +47,7 @@ namespace pmm
     {}
 
 
-    inline Arena::Arena(const std::size_t bytes, const std::size_t alignment) noexcept
+    PMM_INLINE constexpr Arena::Arena(const std::size_t bytes, const std::size_t alignment) noexcept
         : _buffer(new uint8_t[bytes]),
           _sizeInBytes(bytes),
           _offset(0),
@@ -65,7 +65,7 @@ namespace pmm
     }
 
 
-    inline Arena::Arena(const std::size_t bytes, const std::size_t alignment, ArenaTelemetry* telemetry) noexcept
+    PMM_INLINE constexpr Arena::Arena(const std::size_t bytes, const std::size_t alignment, ArenaTelemetry* telemetry) noexcept
         : _buffer(new uint8_t[bytes]),
           _sizeInBytes(bytes),
           _offset(0),
@@ -83,7 +83,7 @@ namespace pmm
     }
 
 
-    inline Arena::~Arena() noexcept
+    PMM_INLINE Arena::~Arena() noexcept
     {
         // Only free the telemetry if it's owned by the arena
         if (_ownedTelemetry)
@@ -94,7 +94,7 @@ namespace pmm
     }
 
 
-    inline Arena::Arena(Arena&& arena) noexcept
+    PMM_INLINE constexpr Arena::Arena(Arena&& arena) noexcept
     {
         // TODO: Move to value init
         // Move the data members and null-out the moved data members.
@@ -108,7 +108,7 @@ namespace pmm
     }
 
 
-    inline Arena& Arena::operator=(Arena&& arena) noexcept
+    PMM_INLINE constexpr Arena& Arena::operator=(Arena&& arena) noexcept
     {
         // For self assignment return the current arena.
         if (this == &arena)
@@ -132,19 +132,19 @@ namespace pmm
     }
 
 
-    constexpr std::size_t Arena::freeSize() const noexcept { return _sizeInBytes - _offset; }
+    PMM_INLINE constexpr std::size_t Arena::freeSize() const noexcept { return _sizeInBytes - _offset; }
 
 
-    constexpr std::size_t Arena::usedSize() const noexcept { return _offset; }
+    PMM_INLINE constexpr std::size_t Arena::usedSize() const noexcept { return _offset; }
 
 
-    constexpr std::size_t Arena::size() const noexcept { return _sizeInBytes; }
+    PMM_INLINE constexpr std::size_t Arena::size() const noexcept { return _sizeInBytes; }
 
     /**
      * Align the "base address" of the arena's next allocation to @p alignment.
      * @param alignment The alignment to which the offset + base address is aligned to.
      */
-    inline void Arena::_alignForward(const std::size_t alignment) noexcept
+    PMM_INLINE void Arena::_alignForward(const std::size_t alignment) noexcept
     {
         // To make sure alignment is the power of 2
         assert(std::has_single_bit(alignment));
@@ -171,7 +171,7 @@ namespace pmm
     }
 
 
-    inline void* Arena::allocBytes(const std::size_t bytes, const std::size_t alignment) noexcept
+    PMM_INLINE void* Arena::allocBytes(const std::size_t bytes, const std::size_t alignment) noexcept
     {
         _alignForward(alignment);
 
@@ -197,7 +197,7 @@ namespace pmm
 
 
     template <typename T, typename... Args>
-    constexpr T* Arena::alloc(Args... args) noexcept
+    PMM_INLINE T* Arena::alloc(Args... args) noexcept
     {
         // Forward align the memory by the types default alignment
         _alignForward(alignof(T));
@@ -224,7 +224,7 @@ namespace pmm
 
 
     template <typename T, typename... Args>
-    constexpr T* Arena::allocAs(const std::size_t alignment, Args... args) noexcept
+    PMM_INLINE T* Arena::allocAs(const std::size_t alignment, Args... args) noexcept
     {
         // Forward align the memory by the alignment
         _alignForward(alignment);
@@ -251,7 +251,7 @@ namespace pmm
 
 
     template <typename T>
-    constexpr std::span<T> Arena::allocV(std::size_t count) noexcept
+    PMM_INLINE std::span<T> Arena::allocV(std::size_t count) noexcept
     {
         // Allocate the raw memory and wrap it in a span
         const std::size_t bytesToAllocate = sizeof(T) * count;
@@ -265,7 +265,7 @@ namespace pmm
     }
 
 
-    constexpr void Arena::freeAll() noexcept
+    PMM_INLINE void Arena::freeAll() noexcept
     {
         _offset = 0;
 
@@ -280,7 +280,7 @@ namespace pmm
     }
 
 
-    constexpr void* Arena::resize(void* oldMemory, const std::size_t oldSize, const std::size_t newSize,
+    PMM_INLINE void* Arena::resize(void* oldMemory, const std::size_t oldSize, const std::size_t newSize,
                                   const std::size_t alignment) noexcept
     {
         // The allocation is new
@@ -332,6 +332,6 @@ namespace pmm
     }
 
 
-    constexpr ArenaTelemetry Arena::getTelemetry() const noexcept { return *_telemetry; }
+    PMM_INLINE constexpr ArenaTelemetry Arena::getTelemetry() const noexcept { return *_telemetry; }
 
 } // namespace pmm

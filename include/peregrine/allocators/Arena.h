@@ -38,7 +38,7 @@ namespace pmm
          * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        inline explicit Arena(std::size_t bytes) noexcept;
+        constexpr explicit Arena(std::size_t bytes) noexcept;
 
         // TODO: Update zero initialization docs when updating to OS HAL
         /**
@@ -50,7 +50,7 @@ namespace pmm
          * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        inline explicit Arena(std::size_t bytes, ArenaTelemetry* telemetry) noexcept;
+        constexpr explicit Arena(std::size_t bytes, ArenaTelemetry* telemetry) noexcept;
 
 
         /**
@@ -65,7 +65,7 @@ namespace pmm
          * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        inline explicit Arena(std::size_t bytes, std::size_t alignment) noexcept;
+        constexpr explicit Arena(std::size_t bytes, std::size_t alignment) noexcept;
 
 
         /**
@@ -80,7 +80,7 @@ namespace pmm
          * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        inline explicit Arena(std::size_t bytes, std::size_t alignment, ArenaTelemetry* telemetry) noexcept;
+        constexpr explicit Arena(std::size_t bytes, std::size_t alignment, ArenaTelemetry* telemetry) noexcept;
 
 
         /**
@@ -94,14 +94,14 @@ namespace pmm
          * @brief Copying is strictly prohibited to prevent double-free crashes.
          * @note Use std::move() to transfer ownership of the arena.
          */
-        Arena(const Arena&) = delete;
+        constexpr Arena(const Arena&) = delete;
 
 
         /**
          * @brief Copying is strictly prohibited to prevent double-free crashes.
          * @note Use std::move() to transfer ownership of the arena.
          */
-        Arena& operator=(const Arena&) = delete;
+        constexpr Arena& operator=(const Arena&) = delete;
 
 
         /**
@@ -109,7 +109,7 @@ namespace pmm
          *
          * @param[in,out] arena The arena to move into the new object.
          */
-        Arena(Arena&& arena) noexcept;
+        constexpr Arena(Arena&& arena) noexcept;
 
 
         /**
@@ -121,7 +121,7 @@ namespace pmm
          *
          * @return The current arena instance.
          */
-        Arena& operator=(Arena&& arena) noexcept;
+        constexpr Arena& operator=(Arena&& arena) noexcept;
 
 
         /**
@@ -174,7 +174,7 @@ namespace pmm
          * @return A reference to the allocated memory.
          */
         template <typename T, typename... Args>
-        [[nodiscard]] constexpr T* alloc(Args... args) noexcept;
+        [[nodiscard]] T* alloc(Args... args) noexcept;
 
 
         /**
@@ -189,7 +189,7 @@ namespace pmm
          * @return A reference to the allocated memory.
          */
         template <typename T, typename... Args>
-        [[nodiscard]] constexpr T* allocAs(std::size_t alignment, Args... args) noexcept;
+        [[nodiscard]] T* allocAs(std::size_t alignment, Args... args) noexcept;
 
 
         /**
@@ -207,7 +207,7 @@ namespace pmm
          *         Returns an empty span (`.empty() == true`) if the Arena lacks sufficient capacity.
          */
         template <typename T>
-        [[nodiscard]] constexpr std::span<T> allocV(std::size_t count) noexcept;
+        [[nodiscard]] std::span<T> allocV(std::size_t count) noexcept;
 
 
         /**
@@ -218,7 +218,7 @@ namespace pmm
          * @param ptr The pointer to the allocated object.
          */
         template <typename T>
-        constexpr void free(T* ptr) = delete;
+        void free(T* ptr) = delete;
 
 
         /**
@@ -229,7 +229,7 @@ namespace pmm
          * @param ptr The pointer to the allocated object.
          */
         template <typename T>
-        constexpr void free(void* ptr) = delete;
+        void free(void* ptr) = delete;
 
 
         /**
@@ -239,7 +239,7 @@ namespace pmm
          *       All memory states may/may not get erased.
          *
          */
-        constexpr void freeAll() noexcept;
+        void freeAll() noexcept;
 
 
         /**
@@ -254,7 +254,7 @@ namespace pmm
          *
          * @return A reference to the new memory location in arena or nullptr if allocation fails.
          */
-        [[nodiscard]] constexpr void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
+        [[nodiscard]] void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
                                              std::size_t alignment) noexcept;
 
 
