@@ -173,6 +173,35 @@ TEST_F(LooseStack, UsedSize_ClearAllocation_ReturnsStackSize)
 }
 
 
+TEST_F(LooseStack, MoveCtor_CopiesAttributesToNewObject)
+{
+    const pmm::Stack stack2 = std::move(stack);
+    EXPECT_EQ(stackSize, stack2.freeSize());
+    EXPECT_EQ(stackSize, stack2.size());
+    EXPECT_EQ(0, stack2.usedSize());
+    EXPECT_EQ(stackSize, stack2.getTelemetry().getStackSize());
+}
+
+
+TEST_F(LooseStack, MoveCtor_MovesTelemetry)
+{
+
+    static_cast<void>(stack.allocBytes(250, 16));
+    // Must get the telemetry by value here else the reference will be reset
+    const auto initialTelemetry = stack.getTelemetry();
+    const pmm::Stack stack2 = std::move(stack);
+
+    // Checking for telemetry equality
+    EXPECT_EQ(initialTelemetry.getCurrentMemoryUsage(), stack2.getTelemetry().getCurrentMemoryUsage());
+    EXPECT_EQ(initialTelemetry.getPeakMemoryUsage(), stack2.getTelemetry().getPeakMemoryUsage());
+    EXPECT_EQ(initialTelemetry.getMinMemoryUsage(), stack2.getTelemetry().getMinMemoryUsage());
+    EXPECT_EQ(initialTelemetry.getPeakPadding(), stack2.getTelemetry().getPeakPadding());
+    EXPECT_EQ(initialTelemetry.getMinPadding(), stack2.getTelemetry().getMinPadding());
+    EXPECT_EQ(initialTelemetry.getStackSize(), stack2.getTelemetry().getStackSize());
+}
+
+
+
 /**************************************
  *                                    *
  *            ALLOC BYTES             *
@@ -1057,6 +1086,8 @@ TEST_F(LooseStack, FreeV_CallsClassDestructorForNonTrivialTypes)
 }
 
 
+
+
 #ifndef NDEBUG
 /**
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*, when allocating memory greater
@@ -1277,6 +1308,30 @@ namespace pmm
         EXPECT_EQ(expectedOffsetDiff, actualOffsetDiff);
     }
 
+
+    TEST_F(LooseStack, MoveCtor_NullsOutInternalBuffer)
+    {
+        [[maybe_unused]] const Stack stack2 = std::move(stack);
+        // NOLINT(bugprone-use-after-move)
+        EXPECT_EQ(nullptr, stack._buffer);
+        EXPECT_EQ(0, stack._offset);
+        EXPECT_EQ(0, stack._size);
+    }
+
+    /**
+     * @brief Verify that move constructor moves all data members, including buffer into new object.
+     */
+    TEST_F(LooseStack, MoveCtor_MovesBufferIntoNewObject)
+    {
+        const auto initialPointer   = stack._buffer;
+        const auto initialOffset    = stack._offset;
+        const auto initialTelemetry = stack.getTelemetry();
+
+        const Stack stack2 = std::move(stack);
+        EXPECT_EQ(initialPointer, stack2._buffer);
+        EXPECT_EQ(initialOffset, stack2._offset);
+        EXPECT_EQ(stackSize, stack2._size);
+    }
 
 } // namespace pmm
 /** @} */
