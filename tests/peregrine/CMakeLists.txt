@@ -12,12 +12,13 @@ target_compile_definitions(PeregrineTestSetup INTERFACE ENABLE_PMM_TESTS ENABLE_
 
 add_subdirectory(allocators)
 add_subdirectory(telemetry)
+add_subdirectory(utils)
 
 
 target_sources(
         PeregrineTests
         PRIVATE
-        ConstantTests.cpp
+        utils/ConstantTests.cpp
 )
 
 target_include_directories(
@@ -32,6 +33,7 @@ target_link_libraries(
         # Subdirectory Objects
         AllocatorTests
         TelemetryTests
+        UtilsTests
 )
 
 

@@ -58,6 +58,12 @@
     * @brief Verify Memory Allocator's Telemetry Logic.
     * @ingroup T_PMM_Lib
     */
+
+    /**
+    * @defgroup T_PMM_Helpers Helper Functions
+    * @brief Verifies Helper Functions.
+    * @ingroup T_PMM_Lib
+    */
     
 /** @} */ // End of FGM_Math
 

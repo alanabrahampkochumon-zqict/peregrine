@@ -60,6 +60,12 @@
      * @brief Ownership policies and strategies used by allocators for changing internal behavior.
      * @ingroup PMM_Lib
      */
+
+    /**
+     * @defgroup PMM_Helpers Helpers and Utils
+     * @brief Utility functions and structures.
+     * @ingroup PMM_Lib
+     */
     
 /** @} */ // End of PMM_Lib
 
