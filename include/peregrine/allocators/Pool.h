@@ -53,6 +53,22 @@ namespace pmm
                                               size_t chunkAlignment) noexcept
             requires std::same_as<MemStrategy, UnmanagedMemory>;
 
+
+        /**
+         * @brief Copying is strictly prohibited to prevent double-free crashes.
+         * @note Use std::move() to transfer ownership of the stack.
+         */
+        constexpr Pool(const Pool&) = delete;
+
+
+        /**
+         * @brief Copying is strictly prohibited to prevent double-free crashes.
+         * @note Use std::move() to transfer ownership of the stack.
+         */
+        constexpr Pool& operator=(const Pool&) = delete;
+
+
+
     private:
         uint8_t* _buffer;
         size_t _poolSize, _chunkSize, _chunkAlignment;
@@ -62,6 +78,7 @@ namespace pmm
 #ifdef ENABLE_PMM_TESTS
     // FRIEND TEST macros for verifying internal states
     #include <gtest/gtest_prod.h>
+
 
 
 
