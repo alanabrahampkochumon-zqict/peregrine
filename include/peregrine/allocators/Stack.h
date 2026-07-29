@@ -76,6 +76,21 @@ namespace pmm
 
 
         /**
+         * @brief Allocate a new physical memory vault from the Operating System.
+         *
+         * @param[in] sizeInBytes The total capacity of the stack in bytes.
+         * @param[in] buffer      The starting address to the backing buffer.
+         *
+         * @remarks API specialized for @ref pmm::UnmanagedMemory.
+         *
+         * @warning The memory block is NOT zero-initialized.
+         * @warning This allocator is Linear and is NOT thread-safe by default.
+         */
+        [[nodiscard]] explicit constexpr Stack(std::size_t sizeInBytes, uint8_t* buffer) noexcept
+            requires std::same_as<MemStrategy, UnmanagedMemory>;
+
+
+        /**
          * @brief Copying is strictly prohibited to prevent double-free crashes.
          * @note Use std::move() to transfer ownership of the stack.
          */
@@ -108,20 +123,6 @@ namespace pmm
          */
         constexpr Stack& operator=(Stack&& stack) noexcept;
 
-
-        /**
-         * @brief Allocate a new physical memory vault from the Operating System.
-         *
-         * @param[in] sizeInBytes The total capacity of the stack in bytes.
-         * @param[in] buffer      The starting address to the backing buffer.
-         *
-         * @remarks API specialized for @ref pmm::UnmanagedMemory.
-         *
-         * @warning The memory block is NOT zero-initialized.
-         * @warning This allocator is Linear and is NOT thread-safe by default.
-         */
-        [[nodiscard]] explicit constexpr Stack(std::size_t sizeInBytes, uint8_t* buffer) noexcept
-            requires std::same_as<MemStrategy, UnmanagedMemory>;
 
         /**
          * @brief Get the total capacity in bytes of the stack.
