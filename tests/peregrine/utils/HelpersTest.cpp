@@ -9,9 +9,10 @@
  */
 
 
+#include "Mocks.h"
+
 #include <gtest/gtest.h>
 #include <peregrine/utils/Helpers.h>
-#include "Mocks.h"
 
 
 /**

@@ -13,7 +13,6 @@
 #include <peregrine/telemetry/ArenaTelemetry.h>
 
 
-
 #ifdef ENABLE_PMM_TELEMETRY
 
 /**

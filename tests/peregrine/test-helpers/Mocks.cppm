@@ -7,10 +7,14 @@
  *
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
+module;
+
+
+#include <array>
+#include <cstdint>
+
 
 export module PeregrineTestMocks;
-
-import std;
 
 /**
  * @brief Test mock used for tracking number of times struct destructor is called.
@@ -29,8 +33,8 @@ export struct DestructionTracker
  * @brief Mock data structure to store @p Size bytes for data for mocking.
  * @tparam Size The size of the data structure.
  */
-template <std::size_t Size>
-export struct alignas(8) LargeData
+export template <size_t Size>
+struct alignas(8) LargeData
 {
     std::array<uint8_t, Size> data{};
 };
