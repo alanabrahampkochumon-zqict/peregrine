@@ -18,6 +18,15 @@
 namespace pmm
 {
 
+    /**
+     * @brief Free list node for pool allocator.
+     */
+    struct PoolFreeNode
+    {
+        PoolFreeNode* next;
+    };
+
+
     template <MemoryStrategy MemStrategy = ManagedMemory, telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled>
     class Pool
     {
@@ -71,7 +80,8 @@ namespace pmm
 
     private:
         uint8_t* _buffer;
-        size_t _poolSize, _chunkSize, _chunkAlignment;
+        size_t _poolSize, _chunkSize, _chunkAlignment, _initialAlignmentPadding;
+        PoolFreeNode* _head;
 
 
 
@@ -81,11 +91,13 @@ namespace pmm
 
 
 
-
         FRIEND_TEST(ManagedPoolAllocator, Ctor_InitializesMemberVariables);
-
+        FRIEND_TEST(PoolAllocatorAlignment, Managed_Ctor_AlignsBaseAddress);
+        FRIEND_TEST(PoolAllocatorAlignment, Managed_Ctor_AlignsChunksize);
 
         FRIEND_TEST(UnmanagedPoolAllocator, Ctor_InitializesMemberVariables);
+        FRIEND_TEST(PoolAllocatorAlignment, Unmanaged_Ctor_AlignsBaseAddress);
+        FRIEND_TEST(PoolAllocatorAlignment, Unmanaged_Ctor_AlignsChunksize);
 
 #endif
     };

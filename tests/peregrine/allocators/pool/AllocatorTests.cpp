@@ -36,6 +36,10 @@ namespace
         uint8_t* buffer = new uint8_t[bufferSize];
         pmm::Pool<pmm::UnmanagedMemory> pool{ buffer, bufferSize, chunkSize, alignment };
     };
+    //
+    // struct PoolAllocatorAlignment{};
+
+
 
 } // namespace
 

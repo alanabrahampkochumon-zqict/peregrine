@@ -11,6 +11,7 @@
 
 
 
+#include "peregrine/utils/Helpers.h"
 #include "peregrine/utils/Preprocessors.h"
 
 
@@ -21,10 +22,27 @@ namespace pmm
     PMM_INLINE constexpr Pool<MemStrategy, TelPolicy>::Pool(const size_t poolSize, const size_t chuckSize,
                                                             const size_t chunkAlignment) noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
-        : _poolSize{ poolSize }, _chunkSize{ chuckSize }, _chunkAlignment{ chunkAlignment }
+        : _buffer{ new uint8_t[poolSize] },
+          _poolSize{ poolSize },
+          _chunkSize{ chuckSize },
+          _chunkAlignment{ chunkAlignment },
+          _head(nullptr)
     {
-        // TODO: Update to HAL
-        _buffer = new uint8_t[poolSize];
+        const auto baseAddress = reinterpret_cast<uintptr_t>(_buffer);
+
+        // Align base address and chunk size to the target padding.
+        _initialAlignmentPadding = calcAlignmentPadding(baseAddress, chunkAlignment);
+        _chunkSize += calcAlignmentPadding(_chunkSize, chunkAlignment);
+
+        PMM_ASSERT_MSG(_chunkSize >= sizeof(PoolFreeNode), "Inadequate chunk size");
+        PMM_ASSERT_MSG(_poolSize - _initialAlignmentPadding >= _chunkSize, "Backing buffer smaller than chunk size");
+
+        // TODO: clear()
+        // Telemetry use
+        // const auto numChunks = (baseAddress - _initialAlignmentPadding) / _chunkSize;
+        // const auto usableSize = numChunks * _chunkSize;
+
+        // TODO: Update buffer init to HAL
     }
 
 
@@ -34,7 +52,20 @@ namespace pmm
                                                             const size_t chunkAlignment) noexcept
         requires std::same_as<MemStrategy, UnmanagedMemory>
         : _buffer{ backingBuffer }, _poolSize{ bufferSize }, _chunkSize{ chuckSize }, _chunkAlignment{ chunkAlignment }
-    {}
+    {
+        const auto baseAddress = reinterpret_cast<uintptr_t>(_buffer);
+
+        // Align base address and chunk size to the target padding.
+        _initialAlignmentPadding = calcAlignmentPadding(baseAddress, chunkAlignment);
+        _chunkSize += calcAlignmentPadding(_chunkSize, chunkAlignment);
+
+        // TODO: clear()
+        // Telemetry use
+        // const auto numChunks = (baseAddress - _initialAlignmentPadding) / _chunkSize;
+        // const auto usableSize = numChunks * _chunkSize;
+
+        // TODO: Update buffer init to HAL
+    }
 
 
 
