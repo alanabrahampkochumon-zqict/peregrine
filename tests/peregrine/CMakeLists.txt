@@ -13,6 +13,7 @@ target_compile_definitions(PeregrineTestSetup INTERFACE ENABLE_PMM_TESTS ENABLE_
 add_subdirectory(allocators)
 add_subdirectory(telemetry)
 add_subdirectory(utils)
+#add_subdirectory(test-helpers)
 
 
 target_sources(
@@ -34,6 +35,7 @@ target_link_libraries(
         AllocatorTests
         TelemetryTests
         UtilsTests
+#        TestHelpers
 )
 
 

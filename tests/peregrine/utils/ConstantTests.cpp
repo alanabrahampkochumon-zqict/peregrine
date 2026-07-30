@@ -1,3 +1,13 @@
+/**
+ * @file ConstantTests.cpp
+ * @author Alan Abraham P Kochumon
+ * @date Created on: July 28, 2026
+ *
+ * @brief Verifies size constants provided by Peregrine.
+ *
+ * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
+ */
+
 #include "Utils.h"
 
 #include <cstdint>
