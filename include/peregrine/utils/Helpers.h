@@ -22,8 +22,6 @@ namespace pmm
      * @{
      */
 
-
-    // TODO: Add group
     /**
      * @brief Empty struct to enable optimizing away conditional variables.
      */
@@ -32,17 +30,16 @@ namespace pmm
 
 
     /**
-     * @brief Calculate the padding required to make @p currentBytes aligned to @p alignment.
+     * @brief Calculate the padding required to make @p address aligned to @p alignment.
      *
      * @tparam T The numeric type of size and alignment.
      *
-     * @param currentBytes The unaligned byte size.
-     * @param alignment    The target alignment.
+     * @param address   The unaligned address start.
+     * @param alignment The target alignment.
      *
-     * @return The byte difference to add to @p currentBytes to make it aligned to @p alignment.
+     * @return The byte difference to add to @p address to make it aligned to @p alignment.
      */
-    template <std::integral T>
-    constexpr T calcAlignmentPadding(T currentBytes, T alignment);
+    constexpr size_t calcAlignmentPadding(uintptr_t address, size_t alignment);
 
 
     /** @} */

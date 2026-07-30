@@ -36,18 +36,23 @@ namespace
     /// @test Test fixture for alignment padding calculation.
     class AlignmentPadding: public testing::TestWithParam<AlignmentPaddingParams>
     {};
+    // NOLINT(modernize-use-cxx17-variable-templates)
     INSTANTIATE_TEST_SUITE_P(
         PowersOfTwoAlignment, AlignmentPadding,
         testing::Values(AlignmentPaddingParams{ .unAlignedSize = 13, .alignment = 8, .paddingRequired = 3 },
                         AlignmentPaddingParams{ .unAlignedSize = 15, .alignment = 128, .paddingRequired = 113 },
                         AlignmentPaddingParams{ .unAlignedSize = 128, .alignment = 128, .paddingRequired = 0 },
-                        AlignmentPaddingParams{ .unAlignedSize = 24, .alignment = 8, .paddingRequired = 0 }));
+                        AlignmentPaddingParams{
+                            .unAlignedSize   = 24,
+                            .alignment       = 8,
+                            .paddingRequired = 0 }));
 
 
 #ifndef NDEBUG
-    INSTANTIATE_TEST_SUITE_P(NonPowersOfTwoAlignment, AlignmentPadding,
-                             testing::Values(AlignmentPaddingParams{ 8, 1 }, AlignmentPaddingParams{ 4, 5 },
-                                             AlignmentPaddingParams{ 0, 0 }, AlignmentPaddingParams{ 256, 127 }));
+    class NonPowerOfTwoAlignment: public testing::TestWithParam<size_t>
+    {};
+    // NOLINT(modernize-use-cxx17-variable-templates)
+    INSTANTIATE_TEST_SUITE_P(InvalidAlignment, NonPowerOfTwoAlignment, testing::Values(0, 3, 6, 127, 4092));
 #endif
 
 
@@ -64,10 +69,10 @@ TEST_P(AlignmentPadding, ReturnsValidPadding)
 }
 
 #ifndef NDEBUG
-TEST_P(AlignmentPadding, NonPowerOfTwoAlignment_TriggersAssertion_InDebugMode)
+TEST_P(NonPowerOfTwoAlignment, NonPowerOfTwoAlignment_TriggersAssertion_InDebugMode)
 {
-    const auto& [unAlignedSize, alignment, padding] = GetParam();
-    ASSERT_DEBUG_DEATH(pmm::calcAlignmentPadding(unAlignedSize, alignment), "");
+    const auto alignment = GetParam();
+    ASSERT_DEBUG_DEATH(pmm::calcAlignmentPadding(2049, alignment), "");
 }
 #endif
 
