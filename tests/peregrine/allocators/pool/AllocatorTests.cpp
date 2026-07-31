@@ -20,6 +20,7 @@ namespace
      *             TEST SETUP             *
      *                                    *
      **************************************/
+
     using namespace pmm::constants;
 
     /// @brief Test fixture for @ref pmm::Pool<pmm::ManagedMemory> tests.
@@ -105,6 +106,26 @@ namespace
                                  }));
 #endif
 
+
+    /**************************************
+     *                                    *
+     *           STATIC TESTS             *
+     *                                    *
+     **************************************/
+    namespace static_tests
+    {
+        /** @test Verify that unmanaged pool does not free memory.
+         *  @note Since we cant really confirm if a buffer is freed and we only delete[] buffer in the dtor of Pool,
+         *        we can check if its trivially destructible to ensure memory is freed in the pool in unmanaged mode
+         *        and opposite otherwise.
+         */
+        static_assert(std::is_trivially_destructible_v<pmm::Pool<pmm::UnmanagedMemory>> == true);
+        static_assert(std::is_trivially_destructible_v<pmm::Pool<pmm::UnmanagedMemory>> == true);
+
+        /// @test Verify that manged pool frees buffer it allocates.
+        static_assert(std::is_trivially_destructible_v<pmm::Pool<pmm::ManagedMemory>> == false);
+        static_assert(std::is_trivially_destructible_v<pmm::Pool<pmm::ManagedMemory>> == false);
+    } // namespace static_tests
 
 } // namespace
 

@@ -475,7 +475,7 @@ namespace pmm
          *
          * @warning Will not clear free the backing buffer since its managed by the user.
          *
-         * @remarks API specialized for @ref pmm::ManagedMemory.
+         * @remarks API specialized for @ref pmm::UnmanagedMemory.
          */
         ~Stack() noexcept
             requires std::same_as<MemStrategy, UnmanagedMemory>

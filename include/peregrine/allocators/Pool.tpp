@@ -96,4 +96,10 @@ namespace pmm
         }
     }
 
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
+    PMM_INLINE Pool<MemStrategy, TelPolicy>::~Pool() noexcept
+        requires std::same_as<MemStrategy, ManagedMemory>
+    { delete[] _buffer; }
+
 } // namespace pmm

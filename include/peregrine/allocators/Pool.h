@@ -86,6 +86,31 @@ namespace pmm
         void clear();
 
 
+        /**
+         * @brief Stack Destructor. Frees the internal buffer.
+         *
+         * @note For clearing the Stack, use @ref clear, or to move free individual frames use @ref free.
+         *
+         * @remarks API specialized for @ref pmm::ManagedMemory.
+         */
+        ~Pool() noexcept
+            requires std::same_as<MemStrategy, ManagedMemory>;
+
+
+        /**
+         * @brief Stack Destructor.
+         *
+         * @note For clearing the Stack, use @ref clear, or to move free individual frames use @ref free.
+         *
+         * @warning Will not clear free the backing buffer since its managed by the user.
+         *
+         * @remarks API specialized for @ref pmm::UnmanagedMemory.
+         */
+        ~Pool() noexcept
+            requires std::same_as<MemStrategy, UnmanagedMemory>
+        = default;
+
+
 
     private:
         uint8_t* _buffer;
@@ -97,6 +122,7 @@ namespace pmm
 #ifdef ENABLE_PMM_TESTS
     // FRIEND TEST macros for verifying internal states
     #include <gtest/gtest_prod.h>
+
 
 
         FRIEND_TEST(ManagedPoolAllocator, Ctor_InitializesMemberVariables);
