@@ -100,10 +100,17 @@ namespace pmm
 
 
         FRIEND_TEST(ManagedPoolAllocator, Ctor_InitializesMemberVariables);
+        FRIEND_TEST(ManagedPoolAllocator, Ctor_ClearsThePool);
+        FRIEND_TEST(ManagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes);
+
         FRIEND_TEST(PoolAllocatorAlignment, Managed_Ctor_AlignsBaseAddress);
         FRIEND_TEST(PoolAllocatorAlignment, Managed_Ctor_AlignsChunksize);
 
+
         FRIEND_TEST(UnmanagedPoolAllocator, Ctor_InitializesMemberVariables);
+        FRIEND_TEST(UnmanagedPoolAllocator, Ctor_ClearsThePool);
+        FRIEND_TEST(UnmanagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes);
+
         FRIEND_TEST(PoolAllocatorAlignment, Unmanaged_Ctor_AlignsBaseAddress);
         FRIEND_TEST(PoolAllocatorAlignment, Unmanaged_Ctor_AlignsChunksize);
 

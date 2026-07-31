@@ -173,6 +173,21 @@ namespace pmm
     }
 
 
+    TEST_F(ManagedPoolAllocator, Ctor_ClearsThePool)
+    {
+        // If the pool is cleared then the base address must have the header
+        // with its next pointing to the base of next address
+        // But by how our clear method works, each node stores the prior address not
+        // the next address, Head -> Last Address -> Second Last Address -> etc..
+        const auto baseAddress  = pool._buffer + pool._initialAlignmentPadding;
+        const auto nextAddress  = baseAddress + chunkSize;
+        const auto secondHeader = reinterpret_cast<PoolFreeNode*>(nextAddress);
+
+        EXPECT_EQ(reinterpret_cast<uintptr_t>(baseAddress), reinterpret_cast<uintptr_t>(secondHeader->next));
+    }
+
+
+
     TEST_P(PoolAllocatorAlignment, Managed_Ctor_AlignsBaseAddress)
     {
         const auto [poolSize, chunkSize, alignment] = GetParam();
@@ -192,6 +207,25 @@ namespace pmm
     }
 
 
+    TEST_F(ManagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes)
+    {
+        const auto baseAddress = pool._buffer + pool._initialAlignmentPadding;
+
+        // Since we store the pool nodes in a front to back manner,
+        // we need to test whether the current header holds the previous address
+        // starting from 1st index and comparing it to 0th mem address and so on.
+        for (size_t i = 1; i < pool._chunkCount; ++i)
+        {
+            const auto currentHeader   = reinterpret_cast<PoolFreeNode*>(baseAddress + i * chunkSize);
+            const auto previousAddress = reinterpret_cast<uintptr_t>(baseAddress + (i - 1) * chunkSize);
+
+            EXPECT_EQ(previousAddress, reinterpret_cast<uintptr_t>(currentHeader->next));
+        }
+        // Finally checking if the node stored at base address points to nullptr
+        const auto currentHeader = reinterpret_cast<PoolFreeNode*>(baseAddress);
+        EXPECT_EQ(nullptr, currentHeader->next);
+    }
+
 
 
     /**************************************
@@ -210,6 +244,20 @@ namespace pmm
         // Invariant: This expects the previous assertions to pass
         const auto expectedChunkCount = (bufferSize - pool._initialAlignmentPadding) / pool._chunkSize;
         EXPECT_EQ(expectedChunkCount, pool._chunkCount);
+    }
+
+
+    TEST_F(UnmanagedPoolAllocator, Ctor_ClearsThePool)
+    {
+        // If the pool is cleared then the base address must have the header
+        // with its next pointing to the base of next address
+        // But by how our clear method works, each node stores the prior address not
+        // the next address, Head -> Last Address -> Second Last Address -> etc..
+        const auto baseAddress  = pool._buffer + pool._initialAlignmentPadding;
+        const auto nextAddress  = baseAddress + chunkSize;
+        const auto secondHeader = reinterpret_cast<PoolFreeNode*>(nextAddress);
+
+        EXPECT_EQ(reinterpret_cast<uintptr_t>(baseAddress), reinterpret_cast<uintptr_t>(secondHeader->next));
     }
 
 
@@ -233,4 +281,27 @@ namespace pmm
 
         delete[] buffer;
     }
+
+
+
+    TEST_F(UnmanagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes)
+    {
+        const auto baseAddress = pool._buffer + pool._initialAlignmentPadding;
+
+        // Since we store the pool nodes in a front to back manner,
+        // we need to test whether the current header holds the previous address
+        // starting from 1st index and comparing it to 0th mem address and so on.
+        for (size_t i = 1; i < pool._chunkCount; ++i)
+        {
+            const auto currentHeader   = reinterpret_cast<PoolFreeNode*>(baseAddress + i * chunkSize);
+            const auto previousAddress = reinterpret_cast<uintptr_t>(baseAddress + (i - 1) * chunkSize);
+
+            EXPECT_EQ(previousAddress, reinterpret_cast<uintptr_t>(currentHeader->next));
+        }
+        // Finally checking if the node stored at base address points to nullptr
+        const auto firstHeader = reinterpret_cast<PoolFreeNode*>(baseAddress);
+        EXPECT_EQ(nullptr, firstHeader->next);
+    }
+
+
 } // namespace pmm

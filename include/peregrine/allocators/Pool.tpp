@@ -38,6 +38,7 @@ namespace pmm
         PMM_ASSERT_MSG(_chunkSize >= sizeof(PoolFreeNode), "Inadequate chunk size");
         PMM_ASSERT_MSG(_poolSize - _initialAlignmentPadding >= _chunkSize, "Backing buffer smaller than chunk size");
 
+        clear();
         // TODO: clear()
         // Telemetry use
         // const auto numChunks = (baseAddress - _initialAlignmentPadding) / _chunkSize;
@@ -64,7 +65,7 @@ namespace pmm
         PMM_ASSERT_MSG(_chunkSize >= sizeof(PoolFreeNode), "Inadequate chunk size");
         PMM_ASSERT_MSG(_poolSize - _initialAlignmentPadding >= _chunkSize, "Backing buffer smaller than chunk size");
 
-        // TODO: clear()
+        clear();
         // Telemetry use
         // const auto numChunks = (baseAddress - _initialAlignmentPadding) / _chunkSize;
         // const auto usableSize = numChunks * _chunkSize;
@@ -76,6 +77,23 @@ namespace pmm
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
     PMM_INLINE void Pool<MemStrategy, TelPolicy>::clear()
-    {}
+    {
+        // Required as some compilers put pattern in debug mode
+        // when the buffer is user provided.
+        _head = nullptr;
+
+
+        // Iterate through each chunk, and set it's header to point to the next node
+        // and make that node the current pool head.
+        for (size_t i = 0; i < _chunkCount; ++i)
+        {
+            // Since we are storing alignment padding separately,
+            // we need to account that when taking the address.
+            const auto baseAddress = &_buffer[_initialAlignmentPadding + (i * _chunkSize)];
+            const auto freeNode    = reinterpret_cast<PoolFreeNode*>(baseAddress);
+            freeNode->next         = _head;
+            _head                  = freeNode;
+        }
+    }
 
 } // namespace pmm
