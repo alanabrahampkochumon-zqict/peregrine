@@ -29,7 +29,7 @@ namespace
         size_t poolSize{ 2_MB }, chunkSize{ 1_KB }, alignment{ 16 };
         pmm::Pool<pmm::ManagedMemory> pool{ poolSize, chunkSize, alignment };
 
-        friend void PrintTo(const ManagedPoolAllocator& param, std::ostream* os)
+        [[maybe_unused]] friend void PrintTo(const ManagedPoolAllocator& param, std::ostream* os)
         {
             *os << "Managed Pool Allocator (Pool Size: " << param.poolSize << ", Alignment: " << param.alignment
                 << ", Chunk Size: " << param.chunkSize << ")";
@@ -44,7 +44,7 @@ namespace
         uint8_t* buffer = new uint8_t[bufferSize];
         pmm::Pool<pmm::UnmanagedMemory> pool{ buffer, bufferSize, chunkSize, alignment };
 
-        friend void PrintTo(const UnmanagedPoolAllocator& param, std::ostream* os)
+        [[maybe_unused]] friend void PrintTo(const UnmanagedPoolAllocator& param, std::ostream* os)
         {
             *os << "Managed Pool Allocator (Pool Size: " << param.bufferSize << ", Alignment: " << param.alignment
                 << ", Chunk Size: " << param.chunkSize << ", Buffer: " << reinterpret_cast<uintptr_t>(param.buffer)
