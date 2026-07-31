@@ -59,6 +59,9 @@ namespace pmm
         _initialAlignmentPadding = calcAlignmentPadding(baseAddress, chunkAlignment);
         _chunkSize += calcAlignmentPadding(_chunkSize, chunkAlignment);
 
+        PMM_ASSERT_MSG(_chunkSize >= sizeof(PoolFreeNode), "Inadequate chunk size");
+        PMM_ASSERT_MSG(_poolSize - _initialAlignmentPadding >= _chunkSize, "Backing buffer smaller than chunk size");
+
         // TODO: clear()
         // Telemetry use
         // const auto numChunks = (baseAddress - _initialAlignmentPadding) / _chunkSize;
