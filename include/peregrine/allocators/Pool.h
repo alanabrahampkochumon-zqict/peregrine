@@ -77,10 +77,19 @@ namespace pmm
         constexpr Pool& operator=(const Pool&) = delete;
 
 
+        /**
+         * @brief Free the entire pool, resetting to a fresh state.
+         *
+         * @relatedalso  free
+         * @relatedalso  freeBytes
+         */
+        void clear();
+
+
 
     private:
         uint8_t* _buffer;
-        size_t _poolSize, _chunkSize, _chunkAlignment, _initialAlignmentPadding;
+        size_t _poolSize, _chunkSize, _chunkAlignment, _initialAlignmentPadding, _chunkCount;
         PoolFreeNode* _head;
 
 
@@ -88,7 +97,6 @@ namespace pmm
 #ifdef ENABLE_PMM_TESTS
     // FRIEND TEST macros for verifying internal states
     #include <gtest/gtest_prod.h>
-
 
 
         FRIEND_TEST(ManagedPoolAllocator, Ctor_InitializesMemberVariables);

@@ -33,6 +33,7 @@ namespace pmm
         // Align base address and chunk size to the target padding.
         _initialAlignmentPadding = calcAlignmentPadding(baseAddress, chunkAlignment);
         _chunkSize += calcAlignmentPadding(_chunkSize, chunkAlignment);
+        _chunkCount = (poolSize - _initialAlignmentPadding) / _chunkSize;
 
         PMM_ASSERT_MSG(_chunkSize >= sizeof(PoolFreeNode), "Inadequate chunk size");
         PMM_ASSERT_MSG(_poolSize - _initialAlignmentPadding >= _chunkSize, "Backing buffer smaller than chunk size");
@@ -58,6 +59,7 @@ namespace pmm
         // Align base address and chunk size to the target padding.
         _initialAlignmentPadding = calcAlignmentPadding(baseAddress, chunkAlignment);
         _chunkSize += calcAlignmentPadding(_chunkSize, chunkAlignment);
+        _chunkCount = (bufferSize - _initialAlignmentPadding) / _chunkSize;
 
         PMM_ASSERT_MSG(_chunkSize >= sizeof(PoolFreeNode), "Inadequate chunk size");
         PMM_ASSERT_MSG(_poolSize - _initialAlignmentPadding >= _chunkSize, "Backing buffer smaller than chunk size");
@@ -71,5 +73,9 @@ namespace pmm
     }
 
 
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
+    PMM_INLINE void Pool<MemStrategy, TelPolicy>::clear()
+    {}
 
 } // namespace pmm

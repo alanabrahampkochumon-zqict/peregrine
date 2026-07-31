@@ -35,6 +35,7 @@ namespace
         }
     };
 
+
     /// @brief Test fixture for @ref pmm::Pool<pmm::UnmanagedMemory> tests.
     struct UnmanagedPoolAllocator: public testing::Test
     {
@@ -62,6 +63,7 @@ namespace
                 << ", Chunk Size: " << param.chunkSize;
         }
     };
+
 
     /// @brief Parameterized test fixture for @ref pmm::Pool<> base address and chunk size alignment.
     class PoolAllocatorAlignment: public testing::TestWithParam<PoolAllocatorAlignmentParams>
@@ -105,6 +107,7 @@ namespace
 
 
 } // namespace
+
 
 
 /**************************************
@@ -163,9 +166,12 @@ namespace pmm
         EXPECT_EQ(chunkSize, pool._chunkSize);
         EXPECT_EQ(alignment, pool._chunkAlignment);
         EXPECT_NE(nullptr, pool._buffer);
+
+        // Invariant: This expects the previous assertions to pass
+        const auto expectedChunkCount = (poolSize - pool._initialAlignmentPadding) / pool._chunkSize;
+        EXPECT_EQ(expectedChunkCount, pool._chunkCount);
     }
 
-    // TODO: Add debug death tests
 
     TEST_P(PoolAllocatorAlignment, Managed_Ctor_AlignsBaseAddress)
     {
@@ -200,6 +206,10 @@ namespace pmm
         EXPECT_EQ(chunkSize, pool._chunkSize);
         EXPECT_EQ(alignment, pool._chunkAlignment);
         EXPECT_EQ(buffer, pool._buffer);
+
+        // Invariant: This expects the previous assertions to pass
+        const auto expectedChunkCount = (bufferSize - pool._initialAlignmentPadding) / pool._chunkSize;
+        EXPECT_EQ(expectedChunkCount, pool._chunkCount);
     }
 
 
