@@ -83,7 +83,7 @@ namespace pmm
         PMM_ASSERT_MSG(node != nullptr, "Pool allocator has no free memory");
 
         _head = _head->next;
-        return std::memset(node, 0, _chunkSize);
+        return memset(node, 0, _chunkSize);
     }
 
 
