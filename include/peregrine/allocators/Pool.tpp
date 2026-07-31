@@ -74,6 +74,18 @@ namespace pmm
     }
 
 
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
+    PMM_INLINE void* Pool<MemStrategy, TelPolicy>::allocBytes() noexcept
+    {
+        // Return the current head's address and move the head forward
+        const auto node = _head;
+
+        PMM_ASSERT_MSG(node != nullptr, "Pool allocator has no free memory");
+
+        _head = _head->next;
+        return std::memset(node, 0, _chunkSize);
+    }
+
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
     PMM_INLINE void Pool<MemStrategy, TelPolicy>::clear()
@@ -82,7 +94,7 @@ namespace pmm
         // when the buffer is user provided.
         _head = nullptr;
 
-
+        // Head -> Last Address -> Second Last Address -> .... -> nullptr
         // Iterate through each chunk, and set it's header to point to the next node
         // and make that node the current pool head.
         for (size_t i = 0; i < _chunkCount; ++i)

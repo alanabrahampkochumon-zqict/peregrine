@@ -78,6 +78,19 @@ namespace pmm
 
 
         /**
+         * @brief Allocate a chunk from the pool.
+         *
+         * @warning Does not check for free space availability in *Release Mode*.
+         *
+         * @return A `void pointer` to starting memory address of the allocation.
+         *
+         * @relatedalso alloc
+         * @relatedalso allocV
+         */
+        [[nodiscard]] void* allocBytes() noexcept;
+
+
+        /**
          * @brief Free the entire pool, resetting to a fresh state.
          *
          * @relatedalso  free
@@ -122,6 +135,7 @@ namespace pmm
 #ifdef ENABLE_PMM_TESTS
     // FRIEND TEST macros for verifying internal states
     #include <gtest/gtest_prod.h>
+
 
 
 
