@@ -82,7 +82,7 @@ namespace
 
 
 
-#ifdef ENABLE_PMM_TESTS
+#ifndef NDEBUG
     /// @brief Parameterized test fixture for @ref pmm::Pool<> constructor pool size assertions.
     class PoolAllocatorCtorAssertions: public testing::TestWithParam<PoolAllocatorAlignmentParams>
     {};
@@ -136,7 +136,8 @@ namespace
  *                                    *
  **************************************/
 
-#ifdef ENABLE_PMM_TESTS
+
+#ifndef NDEBUG
 
 /**
  * @test Verify that managed pool allocator triggers assertions when memory allocator cannot fit

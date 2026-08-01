@@ -110,8 +110,8 @@ namespace pmm
     PMM_INLINE void Pool<MemStrategy, TelPolicy>::freeChunk(void* ptr) noexcept
     {
         PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
-        const auto minFreeAddr = _buffer + _initialAlignmentPadding;
-        const auto maxFreeAddr = _buffer + _poolSize - _initialAlignmentPadding - _chunkSize;
+        [[maybe_unused]] const auto minFreeAddr = _buffer + _initialAlignmentPadding;
+        [[maybe_unused]] const auto maxFreeAddr = _buffer + _poolSize - _initialAlignmentPadding - _chunkSize;
         PMM_ASSERT_MSG(ptr >= minFreeAddr && ptr <= maxFreeAddr, "Out of bounds free");
 
         const auto freeNode = static_cast<PoolFreeNode*>(ptr);

@@ -42,13 +42,10 @@ namespace
         testing::Values(AlignmentPaddingParams{ .unAlignedSize = 13, .alignment = 8, .paddingRequired = 3 },
                         AlignmentPaddingParams{ .unAlignedSize = 15, .alignment = 128, .paddingRequired = 113 },
                         AlignmentPaddingParams{ .unAlignedSize = 128, .alignment = 128, .paddingRequired = 0 },
-                        AlignmentPaddingParams{
-                            .unAlignedSize   = 24,
-                            .alignment       = 8,
-                            .paddingRequired = 0 }));
+                        AlignmentPaddingParams{ .unAlignedSize = 24, .alignment = 8, .paddingRequired = 0 }));
 
 
-#ifdef ENABLE_PMM_TESTS
+#ifndef NDEBUG
     class NonPowerOfTwoAlignment: public testing::TestWithParam<size_t>
     {};
     // NOLINT(modernize-use-cxx17-variable-templates)
@@ -68,12 +65,14 @@ TEST_P(AlignmentPadding, ReturnsValidPadding)
     ASSERT_EQ(padding, pmm::calcAlignmentPadding(unAlignedSize, alignment));
 }
 
-#ifdef ENABLE_PMM_TESTS
+#ifndef NDEBUG
+
 TEST_P(NonPowerOfTwoAlignment, NonPowerOfTwoAlignment_TriggersAssertion_InDebugMode)
 {
     const auto alignment = GetParam();
     ASSERT_DEBUG_DEATH(pmm::calcAlignmentPadding(2049, alignment), "");
 }
+
 #endif
 
 /** @} */

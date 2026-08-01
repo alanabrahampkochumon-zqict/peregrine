@@ -48,7 +48,7 @@ namespace
     INSTANTIATE_TEST_SUITE_P(StackAlignmentTests, LooseStackAllocationAlignment,
                              ::testing::Values(4, 8, 16, 32, 64, 512, 4096));
 
-#ifdef ENABLE_PMM_TESTS
+#ifndef NDEBUG
     class LooseStackAllocationAlignmentNonBinaryPowers: public ::testing::TestWithParam<std::size_t>
     {};
     INSTANTIATE_TEST_SUITE_P(NonPowersOfTwo, LooseStackAllocationAlignmentNonBinaryPowers,
@@ -189,7 +189,7 @@ TEST_F(LooseStack, MoveCtor_MovesTelemetry)
     static_cast<void>(stack.allocBytes(250, 16));
     // Must get the telemetry by value here else the reference will be reset
     const auto initialTelemetry = stack.getTelemetry();
-    const pmm::Stack<> stack2 = std::move(stack);
+    const pmm::Stack<> stack2   = std::move(stack);
 
     // Checking for telemetry equality
     EXPECT_EQ(initialTelemetry.getCurrentMemoryUsage(), stack2.getTelemetry().getCurrentMemoryUsage());
@@ -1088,7 +1088,7 @@ TEST_F(LooseStack, FreeV_CallsClassDestructorForNonTrivialTypes)
 
 
 
-#ifdef ENABLE_PMM_TESTS
+#ifndef NDEBUG
 /**
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*, when allocating memory greater
  *        than the stack capacity.
@@ -1323,8 +1323,8 @@ namespace pmm
      */
     TEST_F(LooseStack, MoveCtor_MovesBufferIntoNewObject)
     {
-        const auto initialPointer   = stack._buffer;
-        const auto initialOffset    = stack._offset;
+        const auto initialPointer = stack._buffer;
+        const auto initialOffset  = stack._offset;
 
         const Stack<> stack2 = std::move(stack);
         EXPECT_EQ(initialPointer, stack2._buffer);
@@ -1361,8 +1361,8 @@ namespace pmm
 
     TEST_F(LooseStack, MoveOperator_SelfAssignmentReturnsTheSameStack)
     {
-        const auto initialAddress    = reinterpret_cast<uintptr_t>(stack._buffer);
-        const auto initialOffset     = stack._offset;
+        const auto initialAddress = reinterpret_cast<uintptr_t>(stack._buffer);
+        const auto initialOffset  = stack._offset;
         // const auto initialPrevOffset = stack._prevOffset;
 
 #ifdef __clang__

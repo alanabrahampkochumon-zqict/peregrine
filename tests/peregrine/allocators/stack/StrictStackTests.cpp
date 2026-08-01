@@ -1,5 +1,5 @@
 /**
- * @file StrictStack.cpp
+ * @file StrictStackTests.cpp
  * @author Alan Abraham P Kochumon
  * @date Created on: June 20, 2026
  *
@@ -49,7 +49,7 @@ namespace
     INSTANTIATE_TEST_SUITE_P(StackAlignmentTests, StrictStackAllocationAlignment,
                              ::testing::Values(4, 8, 16, 32, 64, 512, 4096));
 
-#ifdef ENABLE_PMM_TESTS
+#ifndef NDEBUG
     class StrictStackAllocationAlignmentNonBinaryPowers: public ::testing::TestWithParam<std::size_t>
     {};
     INSTANTIATE_TEST_SUITE_P(NonPowersOfTwo, StrictStackAllocationAlignmentNonBinaryPowers,
@@ -189,8 +189,8 @@ TEST_F(StrictStack, MoveCtor_MovesTelemetry)
 
     static_cast<void>(stack.allocBytes(250, 16));
     // Must get the telemetry by value here else the reference will be reset
-    const auto initialTelemetry = stack.getTelemetry();
-    const pmm::Stack<pmm::stack::Strict> stack2     = std::move(stack);
+    const auto initialTelemetry                 = stack.getTelemetry();
+    const pmm::Stack<pmm::stack::Strict> stack2 = std::move(stack);
 
     // Checking for telemetry equality
     EXPECT_EQ(initialTelemetry.getCurrentMemoryUsage(), stack2.getTelemetry().getCurrentMemoryUsage());
@@ -1087,7 +1087,7 @@ TEST_F(StrictStack, FreeV_CallsClassDestructorForNonTrivialTypes)
 }
 
 
-#ifdef ENABLE_PMM_TESTS
+#ifndef NDEBUG
 /**
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*, when allocating memory greater
  *        than the stack capacity.
