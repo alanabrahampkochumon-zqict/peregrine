@@ -76,6 +76,11 @@ namespace pmm
          */
         constexpr Pool& operator=(const Pool&) = delete;
 
+        /**
+         * @brief Get the maximum possible allocations in the pool.
+         */
+        [[nodiscard]] constexpr size_t getMaxAllocationCount() const noexcept;
+
 
         /**
          * @brief Allocate a chunk from the pool.
@@ -142,6 +147,7 @@ namespace pmm
         FRIEND_TEST(ManagedPoolAllocator, Ctor_InitializesMemberVariables);
         FRIEND_TEST(ManagedPoolAllocator, Ctor_ClearsThePool);
         FRIEND_TEST(ManagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes);
+        FRIEND_TEST(ManagedPoolAllocator, GetMaxAllocationCount_ReturnsChunkCount);
 
         FRIEND_TEST(PoolAllocatorAlignment, Managed_Ctor_AlignsBaseAddress);
         FRIEND_TEST(PoolAllocatorAlignment, Managed_Ctor_AlignsChunksize);
@@ -150,6 +156,7 @@ namespace pmm
         FRIEND_TEST(UnmanagedPoolAllocator, Ctor_InitializesMemberVariables);
         FRIEND_TEST(UnmanagedPoolAllocator, Ctor_ClearsThePool);
         FRIEND_TEST(UnmanagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes);
+        FRIEND_TEST(UnmanagedPoolAllocator, GetMaxAllocationCount_ReturnsChunkCount);
 
         FRIEND_TEST(PoolAllocatorAlignment, Unmanaged_Ctor_AlignsBaseAddress);
         FRIEND_TEST(PoolAllocatorAlignment, Unmanaged_Ctor_AlignsChunksize);

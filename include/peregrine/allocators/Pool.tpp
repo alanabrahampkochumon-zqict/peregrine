@@ -75,6 +75,13 @@ namespace pmm
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
+    PMM_INLINE constexpr size_t Pool<MemStrategy, TelPolicy>::getMaxAllocationCount() const noexcept
+    {
+        return _chunkCount;
+    }
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
     PMM_INLINE void* Pool<MemStrategy, TelPolicy>::allocBytes() noexcept
     {
         // Return the current head's address and move the head forward

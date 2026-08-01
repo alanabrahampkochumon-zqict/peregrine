@@ -165,6 +165,7 @@ TEST_P(PoolAllocatorCtorAssertions, Unmanaged_InadequateChunkSize_TriggersAssert
 #endif
 
 
+TEST_F(ManagedPoolAllocator, AllocBytes_AllocatesDistinctBuffer) { std::vector<int*> buffers; }
 
 /**************************************
  *                                    *
@@ -196,7 +197,7 @@ namespace pmm
 
     TEST_F(ManagedPoolAllocator, Ctor_ClearsThePool)
     {
-        // If the pool is cleared then the base address must have the header
+        // Theoretically, If the pool is cleared then the base address must have the header
         // with its next pointing to the base of next address
         // But by how our clear method works, each node stores the prior address not
         // the next address, Head -> Last Address -> Second Last Address -> etc..
@@ -206,6 +207,7 @@ namespace pmm
 
         EXPECT_EQ(reinterpret_cast<uintptr_t>(baseAddress), reinterpret_cast<uintptr_t>(secondHeader->next));
     }
+
 
 
 
@@ -226,6 +228,10 @@ namespace pmm
 
         EXPECT_EQ(0, pool._chunkSize % alignment);
     }
+
+
+    TEST_F(ManagedPoolAllocator, GetMaxAllocationCount_ReturnsChunkCount)
+    { EXPECT_EQ(pool._chunkCount, pool.getMaxAllocationCount()); }
 
 
     TEST_F(ManagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes)
@@ -303,6 +309,9 @@ namespace pmm
         delete[] buffer;
     }
 
+
+    TEST_F(UnmanagedPoolAllocator, GetMaxAllocationCount_ReturnsChunkCount)
+    { EXPECT_EQ(pool._chunkCount, pool.getMaxAllocationCount()); }
 
 
     TEST_F(UnmanagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes)
