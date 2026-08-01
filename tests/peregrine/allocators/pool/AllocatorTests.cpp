@@ -246,9 +246,9 @@ TEST_F(UnmanagedPoolAllocator, AllocChunk_CanAllocateMaximumPossibleChunkCountWi
 
     for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
     {
-        const auto buffer = static_cast<size_t*>(pool.allocChunk());
-        *buffer           = i * 11 + 37;
-        data.push_back(buffer);
+        const auto chunk = static_cast<size_t*>(pool.allocChunk());
+        *chunk           = i * 11 + 37;
+        data.push_back(chunk);
     }
 
     for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
@@ -264,8 +264,7 @@ TEST_F(UnmanagedPoolAllocator, Alloc_AllocatesBufferOfSizeSize)
 
     for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
     {
-        const auto buffer = pool.alloc<size_t>(i * 11 + 37);
-        data.push_back(buffer);
+        data.push_back(pool.alloc<size_t>(i * 11 + 37));
     }
 
     for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
