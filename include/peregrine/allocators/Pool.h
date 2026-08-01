@@ -92,7 +92,26 @@ namespace pmm
          * @relatedalso alloc
          * @relatedalso allocV
          */
-        [[nodiscard]] void* allocBytes() noexcept;
+        [[nodiscard]] void* allocChunk() noexcept;
+
+
+        /**
+         * @brief Allocate an object of type @p T in the pool and initialize it with @p args.
+         *
+         * @note sizeof(T) must be less than or equal to chunk size, and checks are made in *Debug Mode* ONLY.
+         *
+         * @tparam T    The type of object to allocate.
+         * @tparam Args The type of arguments to instantiate the object.
+         *
+         * @param[in] args      The arguments to instantiate the object.
+         *
+         * @return A reference to the allocated memory.
+         *
+         * @relatedalso allocChunk
+         * @relatedalso allocV
+         */
+        template <typename T, typename... Args>
+        [[nodiscard]] T* alloc(Args... args) noexcept;
 
 
         /**

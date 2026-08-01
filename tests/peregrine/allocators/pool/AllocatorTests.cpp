@@ -9,6 +9,8 @@
  */
 
 
+#include "Utils.h"
+
 #include <gtest/gtest.h>
 #include <peregrine/allocators/Pool.h>
 #include <peregrine/utils/Constants.h>
@@ -50,6 +52,8 @@ namespace
                 << ", Chunk Size: " << param.chunkSize << ", Buffer: " << reinterpret_cast<uintptr_t>(param.buffer)
                 << ")";
         }
+
+        void TearDown() override { delete[] buffer; }
     };
 
 
@@ -150,6 +154,10 @@ TEST_P(PoolAllocatorCtorAssertions, Managed_InadequateChunkSize_TriggersAssertio
 }
 
 
+TEST_F(ManagedPoolAllocator, Alloc_AllocatingObjectWithSizeGreaterThanChunkSizeTriggersAssertion)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pool.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f)), ""); }
+
+
 /**
  * @test Verify that unmanaged pool allocator triggers assertions when memory allocator cannot fit
  *       at least one chunk in the pool.
@@ -162,6 +170,11 @@ TEST_P(PoolAllocatorCtorAssertions, Unmanaged_InadequateChunkSize_TriggersAssert
                        "");
     delete[] buffer;
 }
+
+
+TEST_F(UnmanagedPoolAllocator, Alloc_AllocatingObjectWithSizeGreaterThanChunkSizeTriggersAssertion)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pool.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f)), ""); }
+
 #endif
 
 
@@ -171,23 +184,40 @@ TEST_P(PoolAllocatorCtorAssertions, Unmanaged_InadequateChunkSize_TriggersAssert
  *                                    *
  **************************************/
 
-TEST_F(ManagedPoolAllocator, AllocBytes_AllocatesDistinctBuffer)
+TEST_F(ManagedPoolAllocator, AllocChunk_AllocatesDistinctBuffer)
 {
     constexpr auto expectedValue = 1230480231401234812;
-    const auto integer           = static_cast<size_t*>(pool.allocBytes());
+    const auto integer           = static_cast<size_t*>(pool.allocChunk());
     *integer                     = expectedValue;
     EXPECT_EQ(expectedValue, *integer);
 }
 
 
-TEST_F(ManagedPoolAllocator, AllocBytes_CanAllocateMaximumPossibleChunkCountWithoutOverlap)
+TEST_F(ManagedPoolAllocator, AllocChunk_CanAllocateMaximumPossibleChunkCountWithoutOverlap)
 {
     std::vector<size_t*> data;
 
     for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
     {
-        const auto buffer = static_cast<size_t*>(pool.allocBytes());
+        const auto buffer = static_cast<size_t*>(pool.allocChunk());
         *buffer           = i * 11 + 37;
+        data.push_back(buffer);
+    }
+
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        EXPECT_EQ(i * 11 + 37, *data[i]);
+    }
+}
+
+
+TEST_F(ManagedPoolAllocator, Alloc_AllocatesBufferOfSizeSize)
+{
+    std::vector<size_t*> data;
+
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        const auto buffer = pool.alloc<size_t>(i * 11 + 37);
         data.push_back(buffer);
     }
 
@@ -205,22 +235,22 @@ TEST_F(ManagedPoolAllocator, AllocBytes_CanAllocateMaximumPossibleChunkCountWith
  *                                    *
  **************************************/
 
-TEST_F(UnmanagedPoolAllocator, AllocBytes_AllocatesDistinctBuffer)
+TEST_F(UnmanagedPoolAllocator, AllocChunk_AllocatesDistinctBuffer)
 {
     constexpr auto expectedValue = 1230480231401234812;
-    const auto integer           = static_cast<size_t*>(pool.allocBytes());
+    const auto integer           = static_cast<size_t*>(pool.allocChunk());
     *integer                     = expectedValue;
     EXPECT_EQ(expectedValue, *integer);
 }
 
 
-TEST_F(UnmanagedPoolAllocator, AllocBytes_CanAllocateMaximumPossibleChunkCountWithoutOverlap)
+TEST_F(UnmanagedPoolAllocator, AllocChunk_CanAllocateMaximumPossibleChunkCountWithoutOverlap)
 {
     std::vector<size_t*> data;
 
     for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
     {
-        const auto buffer = static_cast<size_t*>(pool.allocBytes());
+        const auto buffer = static_cast<size_t*>(pool.allocChunk());
         *buffer           = i * 11 + 37;
         data.push_back(buffer);
     }
@@ -231,6 +261,22 @@ TEST_F(UnmanagedPoolAllocator, AllocBytes_CanAllocateMaximumPossibleChunkCountWi
     }
 }
 
+
+TEST_F(UnmanagedPoolAllocator, Alloc_AllocatesBufferOfSizeSize)
+{
+    std::vector<size_t*> data;
+
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        const auto buffer = pool.alloc<size_t>(i * 11 + 37);
+        data.push_back(buffer);
+    }
+
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        EXPECT_EQ(i * 11 + 37, *data[i]);
+    }
+}
 
 
 
@@ -245,7 +291,7 @@ namespace pmm
 
     /**************************************
      *                                    *
-     *           MANAGED STACK            *
+     *           MANAGED POOL             *
      *                                    *
      **************************************/
 
@@ -324,7 +370,7 @@ namespace pmm
 
     /**************************************
      *                                    *
-     *          UNMANAGED STACK           *
+     *          UNMANAGED POOL            *
      *                                    *
      **************************************/
 

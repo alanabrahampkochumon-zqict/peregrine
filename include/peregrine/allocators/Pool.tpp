@@ -14,6 +14,9 @@
 #include "peregrine/utils/Helpers.h"
 #include "peregrine/utils/Preprocessors.h"
 
+#include <format>
+#include <utility>
+
 
 namespace pmm
 {
@@ -76,13 +79,11 @@ namespace pmm
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
     PMM_INLINE constexpr size_t Pool<MemStrategy, TelPolicy>::getMaxAllocationCount() const noexcept
-    {
-        return _chunkCount;
-    }
+    { return _chunkCount; }
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
-    PMM_INLINE void* Pool<MemStrategy, TelPolicy>::allocBytes() noexcept
+    PMM_INLINE void* Pool<MemStrategy, TelPolicy>::allocChunk() noexcept
     {
         // Return the current head's address and move the head forward
         const auto node = _head;
@@ -91,6 +92,17 @@ namespace pmm
 
         _head = _head->next;
         return memset(node, 0, _chunkSize);
+    }
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
+    template <typename T, typename... Args>
+    PMM_INLINE T* Pool<MemStrategy, TelPolicy>::alloc(Args... args) noexcept
+    {
+        PMM_ASSERT_MSG(sizeof(T) <= _chunkSize,
+                       std::format("Size of object({}) exceeds chunk size({})", sizeof(T), _chunkSize).c_str());
+        auto rawBuffer = allocChunk();
+        return new (rawBuffer) T(std::forward<Args>(args)...);
     }
 
 
