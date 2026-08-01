@@ -49,7 +49,7 @@ namespace
     INSTANTIATE_TEST_SUITE_P(StackAlignmentTests, StrictStackAllocationAlignment,
                              ::testing::Values(4, 8, 16, 32, 64, 512, 4096));
 
-#ifndef NDEBUG
+#ifdef ENABLE_PMM_TESTS
     class StrictStackAllocationAlignmentNonBinaryPowers: public ::testing::TestWithParam<std::size_t>
     {};
     INSTANTIATE_TEST_SUITE_P(NonPowersOfTwo, StrictStackAllocationAlignmentNonBinaryPowers,
@@ -1087,7 +1087,7 @@ TEST_F(StrictStack, FreeV_CallsClassDestructorForNonTrivialTypes)
 }
 
 
-#ifndef NDEBUG
+#ifdef ENABLE_PMM_TESTS
 /**
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*, when allocating memory greater
  *        than the stack capacity.

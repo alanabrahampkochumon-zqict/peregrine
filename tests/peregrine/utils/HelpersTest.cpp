@@ -48,7 +48,7 @@ namespace
                             .paddingRequired = 0 }));
 
 
-#ifndef NDEBUG
+#ifdef ENABLE_PMM_TESTS
     class NonPowerOfTwoAlignment: public testing::TestWithParam<size_t>
     {};
     // NOLINT(modernize-use-cxx17-variable-templates)
@@ -68,7 +68,7 @@ TEST_P(AlignmentPadding, ReturnsValidPadding)
     ASSERT_EQ(padding, pmm::calcAlignmentPadding(unAlignedSize, alignment));
 }
 
-#ifndef NDEBUG
+#ifdef ENABLE_PMM_TESTS
 TEST_P(NonPowerOfTwoAlignment, NonPowerOfTwoAlignment_TriggersAssertion_InDebugMode)
 {
     const auto alignment = GetParam();
