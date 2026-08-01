@@ -94,11 +94,6 @@ namespace
                                      .alignment = 8,
                                  },
                                  PoolAllocatorAlignmentParams{
-                                     .poolSize  = 4_KB,
-                                     .chunkSize = 4_KB,
-                                     .alignment = 2_KB,
-                                 },
-                                 PoolAllocatorAlignmentParams{
                                      .poolSize  = 8,
                                      .chunkSize = 9,
                                      .alignment = 8,
