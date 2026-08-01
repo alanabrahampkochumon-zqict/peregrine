@@ -90,7 +90,6 @@ namespace pmm
          * @return A `void pointer` to starting memory address of the allocation.
          *
          * @relatedalso alloc
-         * @relatedalso allocV
          */
         [[nodiscard]] void* allocChunk() noexcept;
 
@@ -108,17 +107,32 @@ namespace pmm
          * @return A reference to the allocated memory.
          *
          * @relatedalso allocChunk
-         * @relatedalso allocV
          */
         template <typename T, typename... Args>
         [[nodiscard]] T* alloc(Args... args) noexcept;
 
 
         /**
+         * @brief Free memory the @p ptr from pool.
+         *
+         * @note If you are freeing data allocated using @ref alloc, use @ref alloc as it will call the class destructor
+         *       for non-trivial types.
+         *
+         * @warning Does not check for invalid states including out-of-bounds and `nullptr` free in *Release Mode*.
+         *
+         * @param[in] ptr The pointer to free upto.
+         *
+         * @relatedalso free
+         * @relatedalso clear
+         */
+        void freeChunk(void* ptr) noexcept;
+
+
+        /**
          * @brief Free the entire pool, resetting to a fresh state.
          *
          * @relatedalso  free
-         * @relatedalso  freeBytes
+         * @relatedalso  freeChunk
          */
         void clear();
 
