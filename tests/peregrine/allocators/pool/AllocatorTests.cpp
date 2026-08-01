@@ -26,7 +26,7 @@ namespace
     /// @brief Test fixture for @ref pmm::Pool<pmm::ManagedMemory> tests.
     struct ManagedPoolAllocator: public testing::Test
     {
-        size_t poolSize{ 2_MB }, chunkSize{ 1_KB }, alignment{ 16 };
+        size_t poolSize{ 2_KB }, chunkSize{ 8 }, alignment{ 8 };
         pmm::Pool<pmm::ManagedMemory> pool{ poolSize, chunkSize, alignment };
 
         [[maybe_unused]] friend void PrintTo(const ManagedPoolAllocator& param, std::ostream* os)
@@ -40,7 +40,7 @@ namespace
     /// @brief Test fixture for @ref pmm::Pool<pmm::UnmanagedMemory> tests.
     struct UnmanagedPoolAllocator: public testing::Test
     {
-        size_t bufferSize{ 2_MB }, chunkSize{ 1_KB }, alignment{ 16 };
+        size_t bufferSize{ 2_KB }, chunkSize{ 8 }, alignment{ 8 };
         uint8_t* buffer = new uint8_t[bufferSize];
         pmm::Pool<pmm::UnmanagedMemory> pool{ buffer, bufferSize, chunkSize, alignment };
 
@@ -165,7 +165,74 @@ TEST_P(PoolAllocatorCtorAssertions, Unmanaged_InadequateChunkSize_TriggersAssert
 #endif
 
 
-TEST_F(ManagedPoolAllocator, AllocBytes_AllocatesDistinctBuffer) { std::vector<int*> buffers; }
+/**************************************
+ *                                    *
+ *            MANAGED POOL            *
+ *                                    *
+ **************************************/
+
+TEST_F(ManagedPoolAllocator, AllocBytes_AllocatesDistinctBuffer)
+{
+    constexpr auto expectedValue = 1230480231401234812;
+    const auto integer           = static_cast<size_t*>(pool.allocBytes());
+    *integer                     = expectedValue;
+    EXPECT_EQ(expectedValue, *integer);
+}
+
+
+TEST_F(ManagedPoolAllocator, AllocBytes_CanAllocateMaximumPossibleChunkCountWithoutOverlap)
+{
+    std::vector<size_t*> data;
+
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        const auto buffer = static_cast<size_t*>(pool.allocBytes());
+        *buffer           = i * 11 + 37;
+        data.push_back(buffer);
+    }
+
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        EXPECT_EQ(i * 11 + 37, *data[i]);
+    }
+}
+
+
+
+/**************************************
+ *                                    *
+ *           UNMANAGED POOL           *
+ *                                    *
+ **************************************/
+
+TEST_F(UnmanagedPoolAllocator, AllocBytes_AllocatesDistinctBuffer)
+{
+    constexpr auto expectedValue = 1230480231401234812;
+    const auto integer           = static_cast<size_t*>(pool.allocBytes());
+    *integer                     = expectedValue;
+    EXPECT_EQ(expectedValue, *integer);
+}
+
+
+TEST_F(UnmanagedPoolAllocator, AllocBytes_CanAllocateMaximumPossibleChunkCountWithoutOverlap)
+{
+    std::vector<size_t*> data;
+
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        const auto buffer = static_cast<size_t*>(pool.allocBytes());
+        *buffer           = i * 11 + 37;
+        data.push_back(buffer);
+    }
+
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        EXPECT_EQ(i * 11 + 37, *data[i]);
+    }
+}
+
+
+
 
 /**************************************
  *                                    *
