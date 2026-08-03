@@ -21,6 +21,16 @@
  *            MANAGED POOL            *
  **************************************/
 
+TEST_F(ManagedPoolAllocator, IsTelemetryEnabled_ReturnsTrue) { EXPECT_TRUE(pool.isTelemetryEnabled()); }
+
+
+TEST(ManagedPoolAllocator_TelemetryDisabled, IsTelemetryEnabled_ReturnsFalse)
+{
+    const pmm::Pool<pmm::ManagedMemory, pmm::telemetry::Disabled> pool(512, 24, 4);
+    EXPECT_FALSE(pool.isTelemetryEnabled());
+}
+
+
 TEST_F(ManagedPoolAllocator, AllocChunk_IncrementsUsageInTelemetry)
 {
     const auto& telemetry = pool.getTelemetry();
@@ -78,6 +88,20 @@ TEST_F(ManagedPoolAllocator, Clear_ClearsUsageInTelemetry)
 /**************************************
  *           UNMANAGED POOL           *
  **************************************/
+
+TEST_F(UnmanagedPoolAllocator, IsTelemetryEnabled_ReturnsTrue) { EXPECT_TRUE(pool.isTelemetryEnabled()); }
+
+
+TEST(UnmanagedPoolAllocator_TelemetryDisabled, IsTelemetryEnabled_ReturnsFalse)
+{
+    constexpr size_t size{ 512 };
+    const auto buffer = new uint8_t[size];
+
+    const pmm::Pool<pmm::UnmanagedMemory, pmm::telemetry::Disabled> pool(buffer, 512, 24, 4);
+    EXPECT_FALSE(pool.isTelemetryEnabled());
+
+    delete[] buffer;
+}
 
 TEST_F(UnmanagedPoolAllocator, AllocChunk_IncrementsUsageInTelemetry)
 {

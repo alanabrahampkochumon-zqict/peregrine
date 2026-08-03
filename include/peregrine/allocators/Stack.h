@@ -148,7 +148,7 @@ namespace pmm
         /**
          * @brief Return whether telemetry is enabled for this stack.
          */
-        [[nodiscard]] constexpr bool isTelemetryEnabled() const noexcept;
+        [[nodiscard]] static constexpr bool isTelemetryEnabled() noexcept;
 
 
         /**

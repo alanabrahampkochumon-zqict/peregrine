@@ -188,6 +188,12 @@ namespace pmm
         [[nodiscard]] constexpr const PoolTelemetryType<TelPolicy>& getTelemetry() const noexcept;
 
 
+        /**
+         * @brief Return whether telemetry is enabled for this pool.
+         */
+        [[nodiscard]] static constexpr bool isTelemetryEnabled() noexcept;
+
+
 
 
     private:
@@ -226,6 +232,7 @@ namespace pmm
 
 #endif
     };
+
 }; // namespace pmm
 
 

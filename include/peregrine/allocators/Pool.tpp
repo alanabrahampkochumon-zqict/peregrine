@@ -181,4 +181,9 @@ namespace pmm
     PMM_INLINE constexpr const PoolTelemetryType<TelPolicy>& Pool<MemStrategy, TelPolicy>::getTelemetry() const noexcept
     { return _telemetry; }
 
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
+    PMM_INLINE constexpr bool Pool<MemStrategy, TelPolicy>::isTelemetryEnabled() noexcept
+    { return std::same_as<TelPolicy, telemetry::Enabled>; }
+
 } // namespace pmm

@@ -100,7 +100,7 @@ namespace pmm
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr bool Stack<Type, MemStrategy, TelemetryPolicy>::isTelemetryEnabled() const noexcept
+    PMM_INLINE constexpr bool Stack<Type, MemStrategy, TelemetryPolicy>::isTelemetryEnabled() noexcept 
     { return std::same_as<TelemetryPolicy, telemetry::Enabled>; }
 
 
