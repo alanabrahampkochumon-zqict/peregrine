@@ -129,6 +129,22 @@ namespace pmm
 
 
         /**
+         * @brief Safely free memory allocated with @ref alloc<T>.
+         *
+         * @note Destructor is called for non-trivially destructible types.
+         *
+         * @tparam T  The data type of the memory pointer.
+         *
+         * @param[in] ptr The object pointer to free.
+         *
+         * @relatedalso freeChunk
+         * @relatedalso clear
+         */
+        template <typename T>
+        void free(T* ptr) noexcept;
+
+
+        /**
          * @brief Free the entire pool, resetting to a fresh state.
          *
          * @relatedalso  free

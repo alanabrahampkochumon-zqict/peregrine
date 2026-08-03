@@ -18,7 +18,7 @@
 /**
  * @brief Test mock used for tracking number of times struct destructor is called.
  */
-struct DestructionTracker
+struct alignas(8) DestructionTracker
 {
     int* destructorCalledCount{};
 

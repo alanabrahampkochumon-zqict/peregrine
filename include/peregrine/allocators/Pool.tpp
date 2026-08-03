@@ -121,6 +121,20 @@ namespace pmm
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
+    template <typename T>
+    PMM_INLINE void Pool<MemStrategy, TelPolicy>::free(T* ptr) noexcept
+    {
+        // Invoke the dtor if the type is not trivially destructible
+        if (!std::is_trivially_destructible_v<T>)
+        {
+            ptr->~T();
+        }
+        // Free the memory
+        freeChunk(ptr);
+    }
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
     PMM_INLINE void Pool<MemStrategy, TelPolicy>::clear()
     {
         // Required as some compilers put pattern in debug mode

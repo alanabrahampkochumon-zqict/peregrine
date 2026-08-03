@@ -9,6 +9,7 @@
  */
 
 
+#include "Mocks.h"
 #include "Utils.h"
 
 #include <gtest/gtest.h>
@@ -80,32 +81,6 @@ namespace
                         PoolAllocatorAlignmentParams{ .poolSize = 9582, .chunkSize = 127, .alignment = 64 },
                         PoolAllocatorAlignmentParams{ .poolSize = 20_MB, .chunkSize = 2_KB, .alignment = 4_KB }));
 
-
-
-#ifndef NDEBUG
-    /// @brief Parameterized test fixture for @ref pmm::Pool<> constructor pool size assertions.
-    class PoolAllocatorCtorAssertions: public testing::TestWithParam<PoolAllocatorAlignmentParams>
-    {};
-    INSTANTIATE_TEST_SUITE_P(PoolAllocatorCtorDeathTests, PoolAllocatorCtorAssertions,
-                             testing::Values(
-                                 PoolAllocatorAlignmentParams{
-                                     .poolSize  = 4_KB,
-                                     .chunkSize = 5_KB,
-                                     .alignment = 8,
-                                 },
-                                 PoolAllocatorAlignmentParams{
-                                     .poolSize  = 8,
-                                     .chunkSize = 9,
-                                     .alignment = 8,
-                                 },
-                                 PoolAllocatorAlignmentParams{
-                                     .poolSize  = 20,
-                                     .chunkSize = 19,
-                                     .alignment = 8,
-                                 }));
-#endif
-
-
     /**************************************
      *                                    *
      *           STATIC TESTS             *
@@ -135,44 +110,6 @@ namespace
  *           RUNTIME TESTS            *
  *                                    *
  **************************************/
-
-
-#ifndef NDEBUG
-
-/**
- * @test Verify that managed pool allocator triggers assertions when memory allocator cannot fit
- *       at least one chunk in the pool.
- */
-TEST_P(PoolAllocatorCtorAssertions, Managed_InadequateChunkSize_TriggersAssertionInDebugMode)
-{
-    const auto [poolSize, chunkSize, alignment] = GetParam();
-    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Pool<>{ poolSize, chunkSize, alignment }), "");
-}
-
-
-TEST_F(ManagedPoolAllocator, Alloc_AllocatingObjectWithSizeGreaterThanChunkSizeTriggersAssertion)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(pool.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f)), ""); }
-
-
-/**
- * @test Verify that unmanaged pool allocator triggers assertions when memory allocator cannot fit
- *       at least one chunk in the pool.
- */
-TEST_P(PoolAllocatorCtorAssertions, Unmanaged_InadequateChunkSize_TriggersAssertionInDebugMode)
-{
-    const auto [poolSize, chunkSize, alignment] = GetParam();
-    const auto buffer                           = new uint8_t[poolSize];
-    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Pool<pmm::UnmanagedMemory>{ buffer, poolSize, chunkSize, alignment }),
-                       "");
-    delete[] buffer;
-}
-
-
-TEST_F(UnmanagedPoolAllocator, Alloc_AllocatingObjectWithSizeGreaterThanChunkSizeTriggersAssertion)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(pool.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f)), ""); }
-
-#endif
-
 
 /**************************************
  *                                    *
@@ -222,9 +159,9 @@ TEST_F(ManagedPoolAllocator, Alloc_AllocatesBufferOfSizeSize)
         EXPECT_EQ(i * 11 + 37, *data[i]);
     }
 }
+// TODO: Add Death Tests Free
 
-
-TEST_F(ManagedPoolAllocator, Free_FreesBufferForNewerAllocations)
+TEST_F(ManagedPoolAllocator, FreeChunk_FreesBufferForNewerAllocations)
 {
     std::vector<size_t*> data;
     // Allocate some buffer and fill it with data.
@@ -255,6 +192,49 @@ TEST_F(ManagedPoolAllocator, Free_FreesBufferForNewerAllocations)
     {
         EXPECT_EQ(i * 13 + 101, *data[i]);
     }
+}
+
+
+TEST_F(ManagedPoolAllocator, Free_FreesBufferForNewerAllocations)
+{
+    std::vector<size_t*> data;
+    // Allocate some buffer and fill it with data.
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        data.push_back(pool.alloc<size_t>(i * 11 + 37));
+    }
+
+    // Free in the elements
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        // Data[i] stores the address so free the current chunk
+        // free order shouldn't matter as we are using an internal freelist
+        // rather than a strict structure like LIFO or FIFO
+        pool.free(data[i]);
+    }
+
+    // clear the vector
+    data.clear();
+    // Allocate the same count of buffer, and fill with data(different pattern)
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        data.push_back(pool.alloc<size_t>(i * 13 + 101));
+    }
+
+    // Verify the data
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        EXPECT_EQ(i * 13 + 101, *data[i]);
+    }
+}
+
+
+TEST_F(ManagedPoolAllocator, Free_OnNonTrivialTypesCallsDtor)
+{
+    int dtorInvocationCount = 0;
+    const auto typedMemory  = pool.alloc<DestructionTracker>(&dtorInvocationCount);
+    pool.free(typedMemory);
+    EXPECT_EQ(1, dtorInvocationCount);
 }
 
 
@@ -307,7 +287,7 @@ TEST_F(UnmanagedPoolAllocator, Alloc_AllocatesBufferOfSizeSize)
 }
 
 
-TEST_F(UnmanagedPoolAllocator, Free_FreesBufferForNewerAllocations)
+TEST_F(UnmanagedPoolAllocator, FreeChunk_FreesBufferForNewerAllocations)
 {
     std::vector<size_t*> data;
     // Allocate some buffer and fill it with data.
@@ -338,6 +318,50 @@ TEST_F(UnmanagedPoolAllocator, Free_FreesBufferForNewerAllocations)
     {
         EXPECT_EQ(i * 13 + 101, *data[i]);
     }
+}
+
+
+
+TEST_F(UnmanagedPoolAllocator, Free_FreesBufferForNewerAllocations)
+{
+    std::vector<size_t*> data;
+    // Allocate some buffer and fill it with data.
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        data.push_back(pool.alloc<size_t>(i * 11 + 37));
+    }
+
+    // Free in the elements
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        // Data[i] stores the address so free the current chunk
+        // free order shouldn't matter as we are using an internal freelist
+        // rather than a strict structure like LIFO or FIFO
+        pool.free(data[i]);
+    }
+
+    // clear the vector
+    data.clear();
+    // Allocate the same count of buffer, and fill with data(different pattern)
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        data.push_back(pool.alloc<size_t>(i * 13 + 101));
+    }
+
+    // Verify the data
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        EXPECT_EQ(i * 13 + 101, *data[i]);
+    }
+}
+
+
+TEST_F(UnmanagedPoolAllocator, Free_OnNonTrivialTypesCallsDtor)
+{
+    int dtorInvocationCount = 0;
+    const auto typedMemory  = pool.alloc<DestructionTracker>(&dtorInvocationCount);
+    pool.free(typedMemory);
+    EXPECT_EQ(1, dtorInvocationCount);
 }
 
 

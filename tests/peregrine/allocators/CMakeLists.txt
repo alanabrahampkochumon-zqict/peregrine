@@ -1,3 +1,5 @@
+################################################
+# Normal Tests
 add_library(AllocatorTests OBJECT)
 
 target_sources(
@@ -19,5 +21,27 @@ target_include_directories(
 
 target_link_libraries(
         AllocatorTests PRIVATE
+        PeregrineTestSetup
+)
+
+
+################################################
+# Death Tests
+
+add_library(AllocatorDeathTests OBJECT)
+
+target_sources(
+        AllocatorDeathTests
+        PRIVATE
+        pool/DeathTests.cpp
+)
+
+target_include_directories(
+        AllocatorDeathTests PRIVATE
+        ${ROOT_TEST_DIR}/include
+)
+
+target_link_libraries(
+        AllocatorDeathTests PRIVATE
         PeregrineTestSetup
 )
