@@ -138,6 +138,15 @@ namespace pmm
 
 
         /**
+         * @brief Update the telemetry's aligned chunk size with @p chunkSize.
+         *
+         * @note This will not update the real chunk size, as telemetry considers them as two different property.
+         *
+         * @param chunkSize The aligned chunk size.
+         */
+        constexpr void setAlignedChunkSize(std::size_t chunkSize) noexcept;
+
+        /**
          * @brief Log a chunk allocation in the pool
          */
         constexpr void logAlloc() noexcept;
@@ -150,14 +159,9 @@ namespace pmm
 
 
         /**
-         * @brief Update the telemetry's aligned chunk size with @p chunkSize.
-         *
-         * @note This will not update the real chunk size, as telemetry considers them as two different property.
-         *
-         * @param chunkSize The aligned chunk size.
+         * @brief Logs an pool clear, resetting all properties to default.
          */
-        constexpr void setAlignedChunkSize(std::size_t chunkSize) noexcept;
-
+        constexpr void logClear() noexcept;
 
 
     private:

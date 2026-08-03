@@ -19,13 +19,13 @@ namespace pmm
 {
     PMM_INLINE constexpr PoolTelemetry::PoolTelemetry(const std::size_t poolSize, const std::size_t chunkSize,
                                                       const std::size_t alignment) noexcept
-        : _poolSize(poolSize),
-          _realChunkSize(chunkSize),
-          _alignedChunkSize(chunkSize),
-          _basePadding(0),
-          _alignment(alignment),
-          _maxAllocationCount(poolSize / chunkSize),
-          _usedAllocationCount(0)
+        : _poolSize{poolSize},
+          _realChunkSize{chunkSize},
+          _alignedChunkSize{chunkSize},
+          _basePadding{0},
+          _alignment{alignment},
+          _maxAllocationCount{poolSize / chunkSize},
+          _usedAllocationCount{0}
     {}
 
 
@@ -55,6 +55,9 @@ namespace pmm
     {
         _usedAllocationCount = _usedAllocationCount == 0 ? 0: _usedAllocationCount - 1;
     }
+
+
+    PMM_INLINE constexpr void PoolTelemetry::logClear() noexcept { _usedAllocationCount = 0; }
 
 
 

@@ -200,4 +200,30 @@ TEST_F(PoolTelemetryTests, LogFree_DoesNotGoBelowZero)
 }
 
 
+TEST_F(PoolTelemetryTests, LogClear_ResetUsedAllocations)
+{
+    telemetry.logAlloc();
+    telemetry.logAlloc();
+    telemetry.logAlloc();
+
+    telemetry.logClear();
+    EXPECT_EQ(0, telemetry.getUsedAllocationCount());
+}
+
+
+TEST_F(PoolTelemetryTests, LogClear_DoesNotResetPoolDefaults)
+{
+    constexpr auto padding = 12;
+    telemetry.setPadding(12);
+    telemetry.logAlloc();
+    telemetry.logAlloc();
+
+    telemetry.logClear();
+    EXPECT_EQ(poolSize, telemetry.getPoolSize());
+    EXPECT_EQ(chunkSize, telemetry.getAlignedChunkSize());
+    EXPECT_EQ(chunkSize, telemetry.getChunkSize());
+    EXPECT_EQ(alignment, telemetry.getAlignment());
+    EXPECT_EQ(padding, telemetry.getPadding());
+}
+
 /** @} */
