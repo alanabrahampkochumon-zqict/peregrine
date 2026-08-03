@@ -70,6 +70,7 @@ namespace
         /// @test Verify that manged pool frees buffer it allocates.
         static_assert(std::is_trivially_destructible_v<pmm::Pool<pmm::ManagedMemory>> == false);
         static_assert(std::is_trivially_destructible_v<pmm::Pool<pmm::ManagedMemory>> == false);
+
     } // namespace static_tests
 
 } // namespace
@@ -83,9 +84,7 @@ namespace
  **************************************/
 
 /**************************************
- *                                    *
  *            MANAGED POOL            *
- *                                    *
  **************************************/
 
 TEST_F(ManagedPoolAllocator, AllocChunk_AllocatesDistinctBuffer)
@@ -210,9 +209,7 @@ TEST_F(ManagedPoolAllocator, Free_OnNonTrivialTypesCallsDtor)
 
 
 /**************************************
- *                                    *
  *           UNMANAGED POOL           *
- *                                    *
  **************************************/
 
 TEST_F(UnmanagedPoolAllocator, AllocChunk_AllocatesDistinctBuffer)
@@ -347,9 +344,7 @@ namespace pmm
 {
 
     /**************************************
-     *                                    *
      *           MANAGED POOL             *
-     *                                    *
      **************************************/
 
     TEST_F(ManagedPoolAllocator, Ctor_InitializesMemberVariables)
@@ -424,11 +419,9 @@ namespace pmm
     }
 
 
-
+    
     /**************************************
-     *                                    *
      *          UNMANAGED POOL            *
-     *                                    *
      **************************************/
 
     TEST_F(UnmanagedPoolAllocator, Ctor_InitializesMemberVariables)
@@ -502,7 +495,6 @@ namespace pmm
         const auto firstHeader = reinterpret_cast<PoolFreeNode*>(baseAddress);
         EXPECT_EQ(nullptr, firstHeader->next);
     }
-
 
 } // namespace pmm
 

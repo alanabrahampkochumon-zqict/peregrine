@@ -11,6 +11,7 @@ target_sources(
         stack/StackMemoryManagementTests.cpp
         stack/TelemetryIntegrationTests.cpp
         pool/AllocatorTests.cpp
+        pool/TelemetryIntegrationTests.cpp
         TempArenaTests.cpp
 )
 

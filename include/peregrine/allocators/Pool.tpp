@@ -29,7 +29,8 @@ namespace pmm
           _poolSize{ poolSize },
           _chunkSize{ chuckSize },
           _chunkAlignment{ chunkAlignment },
-          _head(nullptr)
+          _head(nullptr),
+          _telemetry{ getTelemetryInstance<TelPolicy>(poolSize, chuckSize, chunkAlignment) }
     {
         const auto baseAddress = reinterpret_cast<uintptr_t>(_buffer);
 
@@ -42,10 +43,12 @@ namespace pmm
         PMM_ASSERT_MSG(_poolSize - _initialAlignmentPadding >= _chunkSize, "Backing buffer smaller than chunk size");
 
         clear();
-        // TODO: clear()
-        // Telemetry use
-        // const auto numChunks = (baseAddress - _initialAlignmentPadding) / _chunkSize;
-        // const auto usableSize = numChunks * _chunkSize;
+
+        // Telemetry
+        // Since we are incrementing the chunk size we can use the member variable here
+        // instead of parameter
+        _telemetry.setAlignedChunkSize(_chunkSize);
+        _telemetry.setPadding(_initialAlignmentPadding);
 
         // TODO: Update buffer init to HAL
     }
@@ -56,7 +59,11 @@ namespace pmm
                                                             const size_t chuckSize,
                                                             const size_t chunkAlignment) noexcept
         requires std::same_as<MemStrategy, UnmanagedMemory>
-        : _buffer{ backingBuffer }, _poolSize{ bufferSize }, _chunkSize{ chuckSize }, _chunkAlignment{ chunkAlignment }
+        : _buffer{ backingBuffer },
+          _poolSize{ bufferSize },
+          _chunkSize{ chuckSize },
+          _chunkAlignment{ chunkAlignment },
+          _telemetry{ getTelemetryInstance<TelPolicy>(bufferSize, chuckSize, chunkAlignment) }
     {
         const auto baseAddress = reinterpret_cast<uintptr_t>(_buffer);
 
@@ -69,9 +76,12 @@ namespace pmm
         PMM_ASSERT_MSG(_poolSize - _initialAlignmentPadding >= _chunkSize, "Backing buffer smaller than chunk size");
 
         clear();
-        // Telemetry use
-        // const auto numChunks = (baseAddress - _initialAlignmentPadding) / _chunkSize;
-        // const auto usableSize = numChunks * _chunkSize;
+
+        // Telemetry
+        // Since we are incrementing the chunk size we can use the member variable here
+        // instead of parameter
+        _telemetry.setAlignedChunkSize(_chunkSize);
+        _telemetry.setPadding(_initialAlignmentPadding);
 
         // TODO: Update buffer init to HAL
     }
@@ -89,6 +99,7 @@ namespace pmm
         const auto node = _head;
 
         PMM_ASSERT_MSG(node != nullptr, "Pool allocator has no free memory");
+        _telemetry.logAlloc();
 
         _head = _head->next;
         return memset(node, 0, _chunkSize);
@@ -116,6 +127,7 @@ namespace pmm
         // TODO: Add this assertion for out of alignment free.
         // PMM_ASSERT_MSG(reinterpret_cast<uintptr_t>(ptr) % _chunkSize == 0, "Cannot free invalid address");
 
+        _telemetry.logFree();
         const auto freeNode = static_cast<PoolFreeNode*>(ptr);
         freeNode->next      = _head;
         _head               = freeNode;
@@ -155,6 +167,7 @@ namespace pmm
             freeNode->next         = _head;
             _head                  = freeNode;
         }
+        _telemetry.logClear();
     }
 
 
@@ -162,5 +175,10 @@ namespace pmm
     PMM_INLINE Pool<MemStrategy, TelPolicy>::~Pool() noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
     { delete[] _buffer; }
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
+    PMM_INLINE constexpr const PoolTelemetryType<TelPolicy>& Pool<MemStrategy, TelPolicy>::getTelemetry() const noexcept
+    { return _telemetry; }
 
 } // namespace pmm

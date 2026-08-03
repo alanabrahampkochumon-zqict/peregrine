@@ -500,7 +500,7 @@ namespace pmm
         uint8_t* _buffer;
         std::size_t _size, _offset{ 0 };
         PMM_NO_UNIQUE_ADDR PreviousOffsetType _prevOffset;
-        PMM_NO_UNIQUE_ADDR StackTelemetryType<TelemetryPolicy> _telemetry{ 0 };
+        PMM_NO_UNIQUE_ADDR StackTelemetryType<TelemetryPolicy> _telemetry;
 
 
 

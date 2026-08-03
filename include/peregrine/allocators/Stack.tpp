@@ -60,8 +60,8 @@ namespace pmm
         delete[] _buffer; // TODO: Update as we move to HAL
 
         // Move the data members and null-out the moved data members.
-        _buffer = std::exchange(stack._buffer, nullptr);
-        _offset = std::exchange(stack._offset, 0);
+        _buffer    = std::exchange(stack._buffer, nullptr);
+        _offset    = std::exchange(stack._offset, 0);
         _size      = std::exchange(stack._size, 0);
         _telemetry = std::exchange(stack._telemetry, getTelemetryInstance<TelemetryPolicy>(_size));
         if constexpr (std::same_as<Type, stack::Strict>)
@@ -77,7 +77,10 @@ namespace pmm
     PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(const std::size_t sizeInBytes,
                                                                           uint8_t* buffer) noexcept
         requires std::same_as<MemStrategy, UnmanagedMemory>
-        : _buffer{ buffer }, _size{ sizeInBytes }, _prevOffset{}
+        : _buffer{ buffer },
+          _size{ sizeInBytes },
+          _prevOffset{},
+          _telemetry{ getTelemetryInstance<TelemetryPolicy>(sizeInBytes) }
     {}
 
 

@@ -11,6 +11,8 @@
 
 
 #include "Policy.h"
+#include "peregrine/telemetry/PoolTelemetry.h"
+#include "peregrine/utils/Preprocessors.h"
 
 #include <cstdint>
 
@@ -178,11 +180,21 @@ namespace pmm
         = default;
 
 
+        /**
+         * @brief Get the telemetry instance.
+         *
+         * @return A telemetry instance if telemetry policy is not Disabled, else an empty struct.
+         */
+        [[nodiscard]] constexpr const PoolTelemetryType<TelPolicy>& getTelemetry() const noexcept;
+
+
+
 
     private:
         uint8_t* _buffer;
         size_t _poolSize, _chunkSize, _chunkAlignment, _initialAlignmentPadding, _chunkCount;
         PoolFreeNode* _head;
+        PMM_NO_UNIQUE_ADDR PoolTelemetryType<TelPolicy> _telemetry{ 0 };
 
 
 
@@ -197,6 +209,7 @@ namespace pmm
         FRIEND_TEST(ManagedPoolAllocator, Ctor_ClearsThePool);
         FRIEND_TEST(ManagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes);
         FRIEND_TEST(ManagedPoolAllocator, GetMaxAllocationCount_ReturnsChunkCount);
+        FRIEND_TEST(ManagedPoolAllocator, Ctor_InitializesTelemetryWithCorrectValues);
 
         FRIEND_TEST(PoolAllocatorAlignment, Managed_Ctor_AlignsBaseAddress);
         FRIEND_TEST(PoolAllocatorAlignment, Managed_Ctor_AlignsChunksize);
@@ -206,6 +219,7 @@ namespace pmm
         FRIEND_TEST(UnmanagedPoolAllocator, Ctor_ClearsThePool);
         FRIEND_TEST(UnmanagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes);
         FRIEND_TEST(UnmanagedPoolAllocator, GetMaxAllocationCount_ReturnsChunkCount);
+        FRIEND_TEST(UnmanagedPoolAllocator, Ctor_InitializesTelemetryWithCorrectValues);
 
         FRIEND_TEST(PoolAllocatorAlignment, Unmanaged_Ctor_AlignsBaseAddress);
         FRIEND_TEST(PoolAllocatorAlignment, Unmanaged_Ctor_AlignsChunksize);
