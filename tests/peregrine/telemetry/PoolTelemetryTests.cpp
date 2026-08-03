@@ -84,5 +84,36 @@ TEST_F(PoolTelemetryTests, IntializesWithSizeAndDefaultStats)
 }
 
 
+TEST_F(PoolTelemetryTests, SetAlignedChunkSize_UpdatesAlignedChunkSize)
+{
+    constexpr auto alignedChunkSize = 32;
+    telemetry.setAlignedChunkSize(alignedChunkSize);
+    EXPECT_EQ(alignedChunkSize, telemetry.getAlignedChunkSize());
+}
+
+
+TEST_F(PoolTelemetryTests, SetAlignedChunkSize_UpdatesMaxAllocationCount)
+{
+    constexpr auto alignedChunkSize = 32;
+    telemetry.setAlignedChunkSize(alignedChunkSize);
+    EXPECT_EQ((poolSize) / alignedChunkSize, telemetry.getMaxAllocationCount());
+}
+
+
+TEST_F(PoolTelemetryTests, SetPadding_UpdatesPadding)
+{
+    constexpr auto newPadding = 64;
+    telemetry.setPadding(newPadding);
+    EXPECT_EQ(newPadding, telemetry.getPadding());
+}
+
+
+TEST_F(PoolTelemetryTests, SetPadding_UpdatesMaxAllocationCount)
+{
+    constexpr auto newPadding = 64;
+    telemetry.setPadding(newPadding);
+    EXPECT_EQ((poolSize - newPadding) / chunkSize, telemetry.getMaxAllocationCount());
+}
+
 
 /** @} */

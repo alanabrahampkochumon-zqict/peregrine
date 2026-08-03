@@ -86,11 +86,35 @@ namespace pmm
         [[nodiscard]] constexpr std::size_t getAlignment() const noexcept;
 
 
+        /**
+         * @brief Get the padding applied to the pool buffer to ensure alignment.
+         */
+        [[nodiscard]] constexpr std::size_t getPadding() const noexcept;
+
+
+        /**
+         * @brief Update the telemetry's padding with the new @p padding.
+         * @param padding The padding to update with.
+         */
+        constexpr void setPadding(std::size_t padding) noexcept;
+
+
+        /**
+         * @brief Update the telemetry's aligned chunk size with @p chunkSize.
+         *
+         * @note This will not update the real chunk size, as telemetry considers them as two different property.
+         *
+         * @param chunkSize The aligned chunk size.
+         */
+        constexpr void setAlignedChunkSize(std::size_t chunkSize) noexcept;
+
+
 
     private:
         std::size_t _poolSize, _realChunkSize, _alignedChunkSize, _basePadding, _alignment;
         std::size_t _maxAllocationCount, _usedAllocationCount;
     };
+
 
 
 

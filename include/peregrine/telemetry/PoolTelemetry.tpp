@@ -31,6 +31,20 @@ namespace pmm
 
 
 
+    PMM_INLINE constexpr void PoolTelemetry::setPadding(std::size_t padding) noexcept
+    {
+        _basePadding = padding;
+        _maxAllocationCount = (_poolSize - _basePadding) / _alignedChunkSize;
+    }
+
+
+    PMM_INLINE constexpr void PoolTelemetry::setAlignedChunkSize(std::size_t chunkSize) noexcept
+    {
+        _alignedChunkSize = chunkSize;
+        _maxAllocationCount = (_poolSize - _basePadding) / _alignedChunkSize;
+    }
+
+
     /**************************************
      *              GETTERS               *
      **************************************/
@@ -51,5 +65,7 @@ namespace pmm
     { return _maxAllocationCount - _usedAllocationCount; }
 
     PMM_INLINE constexpr std::size_t PoolTelemetry::getAlignment() const noexcept { return _alignment; }
+
+    PMM_INLINE constexpr std::size_t PoolTelemetry::getPadding() const noexcept { return _basePadding; }
 
 } // namespace pmm
