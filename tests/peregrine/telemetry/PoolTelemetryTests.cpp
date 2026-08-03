@@ -116,21 +116,88 @@ TEST_F(PoolTelemetryTests, SetPadding_UpdatesMaxAllocationCount)
 }
 
 
-TEST_F(PoolTelemetryTests, GetUsedSize_ReturnsZeroInitially)
+TEST_F(PoolTelemetryTests, GetUsedSize_ReturnsZeroInitially) { EXPECT_EQ(0, telemetry.getUsedSize()); }
+
+
+TEST_F(PoolTelemetryTests, GetUsedSize_ReturnsUsedMemoryInclusiveOfPadding)
 {
-    EXPECT_EQ(0, telemetry.getUsedSize());
+    constexpr auto padding = 12;
+    telemetry.setPadding(padding);
+    telemetry.logAlloc();
+    EXPECT_EQ(chunkSize + padding, telemetry.getUsedSize());
 }
 
 
-TEST_F(PoolTelemetryTests, GetWastedSize_ReturnsZeroInitially)
+TEST_F(PoolTelemetryTests, GetWastedSize_ReturnsZeroInitially) { EXPECT_EQ(0, telemetry.getUsedSize()); }
+
+
+TEST_F(PoolTelemetryTests, GetWastedSize_ReturnPaddingUsed)
 {
-    EXPECT_EQ(0, telemetry.getUsedSize());
+    constexpr auto chunkPadding = 4;
+    constexpr auto padding      = 12;
+    // Set the aligned chunk size + padding
+    telemetry.setAlignedChunkSize(chunkSize + chunkPadding);
+    telemetry.setPadding(padding);
+    // Log one allocation
+    telemetry.logAlloc();
+    // Wasted size must be the sum of padding
+    EXPECT_EQ(chunkPadding + padding, telemetry.getWastedSize());
 }
 
 
-TEST_F(PoolTelemetryTests, GetFreeSize_ReturnsPoolSizeInitially)
+TEST_F(PoolTelemetryTests, GetFreeSize_ReturnsPoolSizeInitially) { EXPECT_EQ(poolSize, telemetry.getFreeSize()); }
+
+
+TEST_F(PoolTelemetryTests, GetFreeSize_ReturnsFreeMemory)
 {
-    EXPECT_EQ(poolSize, telemetry.getFreeSize());
+    constexpr auto padding = 12;
+    telemetry.setPadding(padding);
+    telemetry.logAlloc();
+    EXPECT_EQ(poolSize - (chunkSize + padding), telemetry.getFreeSize());
 }
+
+
+TEST_F(PoolTelemetryTests, Logging_UpdateFreeAllocationCount)
+{
+    const auto initialFreeCount = telemetry.getFreeAllocationCount();
+    telemetry.logAlloc();
+    EXPECT_EQ(1, initialFreeCount - telemetry.getFreeAllocationCount());
+}
+
+
+TEST_F(PoolTelemetryTests, Logging_UpdateUsedAllocationCount)
+{
+    telemetry.logAlloc();
+    EXPECT_EQ(1, telemetry.getUsedAllocationCount());
+}
+
+
+TEST_F(PoolTelemetryTests, LogAlloc_IncrementsUsedAllocation)
+{
+    telemetry.logAlloc();
+    EXPECT_EQ(1, telemetry.getUsedAllocationCount());
+}
+
+
+TEST_F(PoolTelemetryTests, LogFree_DecrementsUsedAllocation)
+{
+    // 4 allocations
+    telemetry.logAlloc();
+    telemetry.logAlloc();
+    telemetry.logAlloc();
+    telemetry.logAlloc();
+    // 1 Free
+    telemetry.logFree();
+    // So 3 used allocation expected
+    EXPECT_EQ(3, telemetry.getUsedAllocationCount());
+}
+
+
+TEST_F(PoolTelemetryTests, LogFree_DoesNotGoBelowZero)
+{
+    telemetry.logFree();
+    EXPECT_EQ(0, telemetry.getUsedAllocationCount());
+}
+
 
 /** @} */

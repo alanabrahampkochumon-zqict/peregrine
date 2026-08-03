@@ -138,6 +138,18 @@ namespace pmm
 
 
         /**
+         * @brief Log a chunk allocation in the pool
+         */
+        constexpr void logAlloc() noexcept;
+
+
+        /**
+         * @brief Logs a chunk free in the pool
+         */
+        constexpr void logFree() noexcept;
+
+
+        /**
          * @brief Update the telemetry's aligned chunk size with @p chunkSize.
          *
          * @note This will not update the real chunk size, as telemetry considers them as two different property.

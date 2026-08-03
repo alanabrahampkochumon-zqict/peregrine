@@ -45,6 +45,19 @@ namespace pmm
     }
 
 
+    PMM_INLINE constexpr void PoolTelemetry::logAlloc() noexcept
+    {
+        _usedAllocationCount++;
+    }
+
+
+    PMM_INLINE constexpr void PoolTelemetry::logFree() noexcept
+    {
+        _usedAllocationCount = _usedAllocationCount == 0 ? 0: _usedAllocationCount - 1;
+    }
+
+
+
     /**************************************
      *              GETTERS               *
      **************************************/
