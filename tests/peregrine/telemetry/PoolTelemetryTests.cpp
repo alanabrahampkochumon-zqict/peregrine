@@ -116,4 +116,21 @@ TEST_F(PoolTelemetryTests, SetPadding_UpdatesMaxAllocationCount)
 }
 
 
+TEST_F(PoolTelemetryTests, GetUsedSize_ReturnsZeroInitially)
+{
+    EXPECT_EQ(0, telemetry.getUsedSize());
+}
+
+
+TEST_F(PoolTelemetryTests, GetWastedSize_ReturnsZeroInitially)
+{
+    EXPECT_EQ(0, telemetry.getUsedSize());
+}
+
+
+TEST_F(PoolTelemetryTests, GetFreeSize_ReturnsPoolSizeInitially)
+{
+    EXPECT_EQ(poolSize, telemetry.getFreeSize());
+}
+
 /** @} */

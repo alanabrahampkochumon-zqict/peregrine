@@ -64,18 +64,27 @@ namespace pmm
 
         /**
          * @brief Get the maximum number of chunks/fragments in the pool.
+         *
+         * @relatedalso getUsedAllocationCount()
+         * @relatedalso getFreeAllocationCount()
          */
         [[nodiscard]] constexpr std::size_t getMaxAllocationCount() const noexcept;
 
 
         /**
          * @brief Get the number of used chunks/fragments in the pool.
+         *
+         * @relatedalso getMaxAllocationCount()
+         * @relatedalso getFreeAllocationCount()
          */
         [[nodiscard]] constexpr std::size_t getUsedAllocationCount() const noexcept;
 
 
         /**
          * @brief Get the number of free chunks/fragments in the pool.
+         *
+         * @relatedalso getMaxAllocationCount()
+         * @relatedalso getUsedAllocationCount()
          */
         [[nodiscard]] constexpr std::size_t getFreeAllocationCount() const noexcept;
 
@@ -90,6 +99,35 @@ namespace pmm
          * @brief Get the padding applied to the pool buffer to ensure alignment.
          */
         [[nodiscard]] constexpr std::size_t getPadding() const noexcept;
+
+
+        /**
+         * @brief Get the used size of the pool.
+         *
+         * @return The total used size with padding, for both the pool and chunks, if any.
+         *
+         * @relatedalso getWastedSize()
+         * @relatedalso getFreeSize()
+         */
+        [[nodiscard]] constexpr std::size_t getUsedSize() const noexcept;
+
+
+        /**
+         * @brief Get the total space wasted for padding.
+         *
+         * @relatedalso getUsedSize()
+         * @relatedalso getFreeSize()
+         */
+        [[nodiscard]] constexpr std::size_t getWastedSize() const noexcept;
+
+
+        /**
+         * @brief Get the total free size of the pool.
+         *
+         * @relatedalso getUsedSize()
+         * @relatedalso getWastedSize()
+         */
+        [[nodiscard]] constexpr std::size_t getFreeSize() const noexcept;
 
 
         /**
@@ -114,8 +152,6 @@ namespace pmm
         std::size_t _poolSize, _realChunkSize, _alignedChunkSize, _basePadding, _alignment;
         std::size_t _maxAllocationCount, _usedAllocationCount;
     };
-
-
 
 
 

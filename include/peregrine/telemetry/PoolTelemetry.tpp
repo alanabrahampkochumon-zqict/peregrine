@@ -68,4 +68,19 @@ namespace pmm
 
     PMM_INLINE constexpr std::size_t PoolTelemetry::getPadding() const noexcept { return _basePadding; }
 
+    PMM_INLINE constexpr std::size_t PoolTelemetry::getUsedSize() const noexcept
+    {
+        return _alignedChunkSize * _usedAllocationCount + _basePadding;
+    }
+
+    PMM_INLINE constexpr std::size_t PoolTelemetry::getWastedSize() const noexcept
+    {
+        return (_alignedChunkSize - _realChunkSize) * _usedAllocationCount + _basePadding;
+    }
+
+    PMM_INLINE constexpr std::size_t PoolTelemetry::getFreeSize() const noexcept
+    {
+        return _poolSize - getUsedSize();
+    }
+
 } // namespace pmm
