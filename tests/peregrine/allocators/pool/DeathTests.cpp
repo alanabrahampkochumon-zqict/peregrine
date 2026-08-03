@@ -3,7 +3,7 @@
  * @author Alan Abraham P Kochumon
  * @date Created on: August 3, 2026
  *
- * @brief Verifies pool allocation's assertions trigger correctly in DEBUG MODE.
+ * @brief Verifies pool allocator's assertions trigger correctly in DEBUG MODE.
  *
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */

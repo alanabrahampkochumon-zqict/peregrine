@@ -46,9 +46,7 @@ namespace
 
 
 /**************************************
- *                                    *
  *            LOOSE STACK             *
- *                                    *
  **************************************/
 
 TEST_F(LooseStackTelemetryIntegration, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)
@@ -379,9 +377,7 @@ TEST_F(LooseStackTelemetryIntegration, Clear_DoesNotResetPeakAndMinUsage)
 
 
 /**************************************
- *                                    *
  *           STRICT STACK             *
- *                                    *
  **************************************/
 
 TEST_F(StrictStackTelemetryIntegration, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)

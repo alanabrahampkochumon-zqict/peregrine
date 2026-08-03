@@ -1,5 +1,5 @@
 /**
- * @file LooseStack.cpp
+ * @file LooseStackTests.cpp
  * @author Alan Abraham P Kochumon
  * @date Created on: June 20, 2026
  *
@@ -9,14 +9,9 @@
  */
 
 
-#include "Mocks.h"
-#include "Utils.h"
+#include "StackTestSetup.h"
 
-#include <array>
-#include <gtest/gtest.h>
-#include <peregrine/allocators/Stack.h>
-#include <peregrine/utils/Constants.h>
-
+#include <utility>
 
 /**
  * @addtogroup T_PMM_Loose_Stack
@@ -27,55 +22,28 @@ namespace
 {
 
     /**************************************
-     *                                    *
      *             TEST SETUP             *
-     *                                    *
      **************************************/
 
-    using namespace pmm::constants;
-    constexpr auto STACK_SIZE = 5_KB;
-    class LooseStack: public ::testing::Test
-    {
-
-    public:
-        std::size_t stackSize{ STACK_SIZE };
-        pmm::Stack<pmm::stack::Loose> stack{ stackSize };
-    };
-
-
-    class LooseStackAllocationAlignment: public ::testing::TestWithParam<std::size_t>
+    /// @test Parameterized test fixture for loose stack's allocation alignment.
+    class LooseStackAllocationAlignment: public testing::TestWithParam<std::size_t>
     {};
     INSTANTIATE_TEST_SUITE_P(StackAlignmentTests, LooseStackAllocationAlignment,
                              ::testing::Values(4, 8, 16, 32, 64, 512, 4096));
 
-#ifndef NDEBUG
-    class LooseStackAllocationAlignmentNonBinaryPowers: public ::testing::TestWithParam<std::size_t>
-    {};
-    INSTANTIATE_TEST_SUITE_P(NonPowersOfTwo, LooseStackAllocationAlignmentNonBinaryPowers,
-                             ::testing::Values(0, 1, 3, 5, 111));
-#endif
 
-
-
-    struct LooseStackResizeLastParams
-    {
-        std::size_t oldSize, newSize;
-    };
-    class LooseStackResizeLast: public ::testing::TestWithParam<LooseStackResizeLastParams>
+    /// @test Parameterized test fixture for loose stack's resize last <oldSize, newSize>.
+    class LooseStackResizeLast: public testing::TestWithParam<std::pair<size_t, size_t>>
     {};
     INSTANTIATE_TEST_SUITE_P(StackResize, LooseStackResizeLast,
-                             ::testing::Values(LooseStackResizeLastParams{ .oldSize = 256, .newSize = 128 },
-                                               LooseStackResizeLastParams{ .oldSize = 128, .newSize = 512 },
-                                               LooseStackResizeLastParams{ .oldSize = 2048, .newSize = 4096 },
-                                               LooseStackResizeLastParams{ .oldSize = 4096, .newSize = 2048 }));
+                             ::testing::Values(std::make_pair(256, 128), std::make_pair(128, 512),
+                                               std::make_pair(2048, 4096), std::make_pair(4096, 2048)));
 } // namespace
 
 
 
 /**************************************
- *                                    *
  *           RUNTIME TESTS            *
- *                                    *
  **************************************/
 
 /**
@@ -203,9 +171,7 @@ TEST_F(LooseStack, MoveCtor_MovesTelemetry)
 
 
 /**************************************
- *                                    *
  *            ALLOC BYTES             *
- *                                    *
  **************************************/
 
 /** @brief Verify that stack allocation using allocBytes returns a valid pointer, given an empty stack. */
@@ -298,9 +264,7 @@ TEST_P(LooseStackAllocationAlignment, AllocBytes_AlwaysReturnAnAlignedMemoryAddr
 
 
 /**************************************
- *                                    *
  *            ALLOC (OBJ)             *
- *                                    *
  **************************************/
 
 /** @brief Verify that stack allocation returns a valid pointer, given an empty stack. */
@@ -428,9 +392,7 @@ TEST_F(LooseStack, AllocV_BaseAddressAlignedToAlignmentOfType)
 
 
 /**************************************
- *                                    *
  *            RESIZE TESTS            *
- *                                    *
  **************************************/
 
 /** @brief Verify that resizing the latest allocation to a smaller size, returns the same address. */
@@ -894,9 +856,7 @@ TEST_F(LooseStack, ResizeLast_ResizesMemory)
 
 
 /**************************************
- *                                    *
  *            FREE TESTS              *
- *                                    *
  **************************************/
 
 /** @brief Verify that stack free, frees up memory for subsequent allocations. */
@@ -1087,167 +1047,8 @@ TEST_F(LooseStack, FreeV_CallsClassDestructorForNonTrivialTypes)
 
 
 
-
-#ifndef NDEBUG
-/**
- * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*, when allocating memory greater
- *        than the stack capacity.
- */
-TEST_F(LooseStack, Allocation_GreaterThanCapacity_TriggersAssertionInDebugMode)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocBytes(stackSize + 10)), ""); }
-
-
-/**
- * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
- *        given a stack nearing its capacity(allocation > free).
- */
-TEST_F(LooseStack, Allocation_NearFullStack_TriggersAssertion)
-{
-    // Allocate a big chunk to fill the stack near capacity
-    static_cast<void>(stack.allocBytes(stackSize - 50));
-    EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocBytes(500)), "");
-}
-
-/**
- * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
- *        given an uneven alignment(non-powers of 2).
- */
-TEST_P(LooseStackAllocationAlignmentNonBinaryPowers, Allocation_InFullStack_TriggersAssertion)
-{
-    // Allocate a big chunk to fill the stack near capacity
-    pmm::Stack<pmm::stack::Loose> stack(5120);
-    EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocBytes(500, GetParam())), "");
-}
-
-/**
- * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
- *        given alignment greater than 128.
- */
-TEST_F(LooseStack, Allocation_GreaterThanSize_TriggersAssertion)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocBytes(500, 255)), ""); }
-
-
-/**
- * @brief Verify that stack allocV triggers assertion in *DEBUG MODE*,
- *        when trying to allocate a zero size buffer.
- */
-TEST_F(LooseStack, AllocV_SizeZero_TriggersAssertion)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocV<int>(0)), ""); }
-
-
-/**
- * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
- *        when freeing nullptr.
- */
-TEST_F(LooseStack, FreeBytes_Nullptr_TriggersAssertion) { EXPECT_DEBUG_DEATH(stack.freeBytes(nullptr), ""); }
-
-
-/**
- * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
- *        when freeing unallocated valid memory space.
- */
-TEST_F(LooseStack, FreeBytes_UnallocatedMemoryAddress_TriggersAssertion)
-{
-    constexpr auto size = 512;
-    const auto memory   = static_cast<char*>(stack.allocBytes(size));
-    EXPECT_DEBUG_DEATH(stack.freeBytes(memory + size + 1), "");
-}
-
-
-/**
- * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
- *        when freeing memory space below the base memory address.
- */
-TEST_F(LooseStack, FreeBytes_BelowBufferMemoryAddress_TriggersAssertion)
-{
-    constexpr auto size      = 512;
-    constexpr auto alignment = 8;
-    // We are assuming worst case padding of 7 for alignment
-    constexpr auto assumedHeaderSize = sizeof(pmm::LooseStackHeader) + alignment - 1;
-
-    const auto memory = static_cast<char*>(stack.allocBytes(size, alignment));
-    // Move 1 below assume header size
-    EXPECT_DEBUG_DEATH(stack.freeBytes(memory - assumedHeaderSize - 1), "");
-}
-
-
-/**
- * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
- *        when freeing memory above maximum memory address.
- */
-TEST_F(LooseStack, FreeBytes_BeyondCapacity_TriggersAssertion)
-{
-    constexpr auto size = 512;
-    const auto memory   = static_cast<char*>(stack.allocBytes(size, 8));
-    // Move 1 below assume header size
-    EXPECT_DEBUG_DEATH(stack.freeBytes(memory + stackSize), "");
-}
-
-
-/**
- * @brief Verify that stack resize triggers assertion in *DEBUG MODE*,
- *        when trying to resize a nullptr.
- */
-TEST_F(LooseStack, Resize_Nullptr_TriggersAssertion)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(nullptr, 120, 256)), ""); }
-
-
-/**
- * @brief Verify that stack resize triggers assertion in *DEBUG MODE*,
- *        when trying to resize to 0.
- */
-TEST_F(LooseStack, Resize_ToZero_TriggersAssertion)
-{
-    const auto address = stack.allocBytes(128);
-    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(address, 128, 0)), "");
-}
-
-
-/**
- * @brief Verify that stack resize using resizeFast triggers assertion in *DEBUG MODE*,
- *        when trying to resize a nullptr.
- */
-TEST_F(LooseStack, ResizeFast_Nullptr_TriggersAssertion)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(nullptr, 120, 256)), ""); }
-
-
-/**
- * @brief Verify that stack resize using resizeFast triggers assertion in *DEBUG MODE*,
- *        when trying to resize to 0.
- */
-TEST_F(LooseStack, ResizeFast_ToZero_TriggersAssertion)
-{
-    const auto address = stack.allocBytes(128);
-    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(address, 128, 0)), "");
-}
-
-
-/**
- * @brief Verify that stack resize using resizeLast triggers assertion in *DEBUG MODE*,
- *        when trying to resize a nullptr.
- */
-TEST_F(LooseStack, ResizeLast_Nullptr_TriggersAssertion)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(nullptr, 120, 256)), ""); }
-
-
-/**
- * @brief Verify that stack resize using resizeLast triggers assertion in *DEBUG MODE*,
- *        when trying to resize to 0.
- */
-TEST_F(LooseStack, ResizeLast_ToZero_TriggersAssertion)
-{
-    const auto address = stack.allocBytes(128);
-    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(address, 128, 0)), "");
-}
-
-
-#endif
-
-
 /**************************************
- *                                    *
  *            FRIEND TESTS            *
- *                                    *
  **************************************/
 
 namespace pmm
@@ -1339,7 +1140,6 @@ namespace pmm
         static_cast<void>(stack2 = std::move(stack));
         EXPECT_EQ(nullptr, stack._buffer);
         EXPECT_EQ(0, stack._offset);
-        // EXPECT_EQ(0, stack._prevOffset);
         EXPECT_EQ(0, stack._size);
     }
 

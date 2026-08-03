@@ -34,6 +34,7 @@ target_sources(
         AllocatorDeathTests
         PRIVATE
         pool/DeathTests.cpp
+        stack/DeathTests.cpp
 )
 
 target_include_directories(

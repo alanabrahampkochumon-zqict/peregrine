@@ -10,13 +10,7 @@
  */
 
 
-#include "Mocks.h"
-#include "Utils.h"
-
-#include <array>
-#include <gtest/gtest.h>
-#include <peregrine/allocators/Stack.h>
-#include <peregrine/utils/Constants.h>
+#include "StackTestSetup.h"
 
 
 
@@ -25,38 +19,18 @@
  * @{
  */
 
-/**************************************
- *                                    *
- *             TEST SETUP             *
- *                                    *
- **************************************/
 
 namespace
 {
-    using namespace pmm::constants;
-    constexpr static auto STACK_SIZE = 5_KB;
-    class StrictStack: public ::testing::Test
-    {
 
-    public:
-        std::size_t stackSize{ STACK_SIZE };
-        pmm::Stack<pmm::stack::Strict> stack{ stackSize };
-    };
+    /**************************************
+     *             TEST SETUP             *
+     **************************************/
 
-
-    class StrictStackAllocationAlignment: public ::testing::TestWithParam<std::size_t>
+    class StrictStackAllocationAlignment: public testing::TestWithParam<std::size_t>
     {};
     INSTANTIATE_TEST_SUITE_P(StackAlignmentTests, StrictStackAllocationAlignment,
                              ::testing::Values(4, 8, 16, 32, 64, 512, 4096));
-
-#ifndef NDEBUG
-    class StrictStackAllocationAlignmentNonBinaryPowers: public ::testing::TestWithParam<std::size_t>
-    {};
-    INSTANTIATE_TEST_SUITE_P(NonPowersOfTwo, StrictStackAllocationAlignmentNonBinaryPowers,
-                             ::testing::Values(0, 1, 3, 5, 111));
-#endif
-
-
 
     struct StrictStackResizeLastParams
     {
@@ -73,10 +47,9 @@ namespace
 } // namespace
 
 
+
 /**************************************
- *                                    *
  *           RUNTIME TESTS            *
- *                                    *
  **************************************/
 
 /**
@@ -203,9 +176,7 @@ TEST_F(StrictStack, MoveCtor_MovesTelemetry)
 
 
 /**************************************
- *                                    *
  *            ALLOC BYTES             *
- *                                    *
  **************************************/
 
 /** @brief Verify that stack allocation using allocBytes returns a valid pointer, given an empty stack. */
@@ -297,9 +268,7 @@ TEST_P(StrictStackAllocationAlignment, AllocBytes_AlwaysReturnAnAlignedMemoryAdd
 
 
 /**************************************
- *                                    *
  *            ALLOC (OBJ)             *
- *                                    *
  **************************************/
 
 /** @brief Verify that stack allocation returns a valid pointer, given an empty stack. */
@@ -426,12 +395,10 @@ TEST_F(StrictStack, AllocV_BaseAddressAlignedToAlignmentOfType)
 }
 
 
-/**************************************
- *                                    *
- *           RESIZE TESTS             *
- *                                    *
- **************************************/
 
+/**************************************
+ *           RESIZE TESTS             *
+ **************************************/
 
 /** @brief Verify that resizing the latest allocation to a smaller size, returns the same address. */
 TEST_F(StrictStack, Resize_LatestAllocationSmallerSize_ReturnsSameAddress)
@@ -891,10 +858,10 @@ TEST_F(StrictStack, ResizeLast_ResizesMemory)
     EXPECT_FLOAT_EQ(4.0f, vec->w);
 }
 
+
+
 /**************************************
- *                                    *
  *            FREE TESTS              *
- *                                    *
  **************************************/
 
 /** @brief Verify that stack free, frees up memory for subsequent allocations. */
@@ -1087,191 +1054,9 @@ TEST_F(StrictStack, FreeV_CallsClassDestructorForNonTrivialTypes)
 }
 
 
-#ifndef NDEBUG
-/**
- * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*, when allocating memory greater
- *        than the stack capacity.
- */
-TEST_F(StrictStack, Allocation_GreaterThanCapacity_TriggersAssertionInDebugMode)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocBytes(stackSize + 10)), ""); }
-
-
-/**
- * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
- *        given a stack nearing its capacity(allocation > free).
- */
-TEST_F(StrictStack, Allocation_NearFullStack_TriggersAssertion)
-{
-    // Allocate a big chunk to fill the stack near capacity
-    static_cast<void>(stack.allocBytes(stackSize - 50));
-    EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocBytes(500)), "");
-}
-
-/**
- * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
- *        given an uneven alignment(non-powers of 2).
- */
-TEST_P(StrictStackAllocationAlignmentNonBinaryPowers, Allocation_InFullStack_TriggersAssertion)
-{
-    // Allocate a big chunk to fill the stack near capacity
-    pmm::Stack<pmm::stack::Strict> stack(5120);
-    EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocBytes(500, GetParam())), "");
-}
-
-/**
- * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
- *        given alignment greater than 128.
- */
-TEST_F(StrictStack, Allocation_GreaterThanSize_TriggersAssertion)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocBytes(500, 255)), ""); }
-
-
-/**
- * @brief Verify that stack allocV triggers assertion in *DEBUG MODE*,
- *        when trying to allocate a zero size buffer.
- */
-TEST_F(StrictStack, AllocV_SizeZero_TriggersAssertion)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocV<int>(0)), ""); }
-
-
-/**
- * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
- *        when freeing nullptr.
- */
-TEST_F(StrictStack, FreeBytes_Nullptr_TriggersAssertion) { EXPECT_DEBUG_DEATH(stack.freeBytes(nullptr), ""); }
-
-
-/**
- * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
- *        when freeing unallocated valid memory space.
- */
-TEST_F(StrictStack, FreeBytes_UnallocatedMemoryAddress_TriggersAssertion)
-{
-    constexpr auto size = 512;
-    const auto memory   = static_cast<char*>(stack.allocBytes(size));
-    EXPECT_DEBUG_DEATH(stack.freeBytes(memory + size + 1), "");
-}
-
-
-/**
- * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
- *        when freeing memory space below the base memory address.
- */
-TEST_F(StrictStack, FreeBytes_BelowBufferMemoryAddress_TriggersAssertion)
-{
-    constexpr auto size      = 512;
-    constexpr auto alignment = 8;
-    // We are assuming worst case padding of 7 for alignment
-    constexpr auto assumedHeaderSize = sizeof(pmm::StrictStackHeader) + alignment - 1;
-
-    const auto memory = static_cast<char*>(stack.allocBytes(size, alignment));
-    // Move 1 below assume header size
-    EXPECT_DEBUG_DEATH(stack.freeBytes(memory - assumedHeaderSize - 1), "");
-}
-
-
-/**
- * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
- *        when freeing memory above maximum memory address.
- */
-TEST_F(StrictStack, FreeBytes_BeyondCapacity_TriggersAssertion)
-{
-    constexpr auto size = 512;
-    const auto memory   = static_cast<char*>(stack.allocBytes(size, 8));
-    // Move 1 below assume header size
-    EXPECT_DEBUG_DEATH(stack.freeBytes(memory + stackSize), "");
-}
-
-/**
- * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
- *        when memory out of order of allocation.
- */
-TEST_F(StrictStack, FreeBytes_OutOfOrder_TriggersAssertion)
-{
-    constexpr auto size = 512;
-    const auto memory   = static_cast<char*>(stack.allocBytes(size, 8));
-
-    // Second allocation
-    static_cast<void>(stack.allocBytes(40));
-
-    EXPECT_DEBUG_DEATH(stack.freeBytes(memory), "");
-}
-
-/**
- * @brief Verify that stack resize triggers assertion in *DEBUG MODE*,
- *        when trying to resize a nullptr.
- */
-TEST_F(StrictStack, Resize_Nullptr_TriggersAssertion)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(nullptr, 120, 256)), ""); }
-
-
-/**
- * @brief Verify that stack resize triggers assertion in *DEBUG MODE*,
- *        when trying to resize to 0.
- */
-TEST_F(StrictStack, Resize_ToZero_TriggersAssertion)
-{
-    const auto address = stack.allocBytes(128);
-    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(address, 128, 0)), "");
-}
-
-
-/**
- * @brief Verify that stack resize using resizeFast triggers assertion in *DEBUG MODE*,
- *        when trying to resize a nullptr.
- */
-TEST_F(StrictStack, ResizeFast_Nullptr_TriggersAssertion)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(nullptr, 120, 256)), ""); }
-
-
-/**
- * @brief Verify that stack resize using resizeFast triggers assertion in *DEBUG MODE*,
- *        when trying to resize to 0.
- */
-TEST_F(StrictStack, ResizeFast_ToZero_TriggersAssertion)
-{
-    const auto address = stack.allocBytes(128);
-    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(address, 128, 0)), "");
-}
-
-
-/**
- * @brief Verify that stack resize using resizeLast triggers assertion in *DEBUG MODE*,
- *        when trying to resize a nullptr.
- */
-TEST_F(StrictStack, ResizeLast_Nullptr_TriggersAssertion)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(nullptr, 120, 256)), ""); }
-
-
-/**
- * @brief Verify that stack resize using resizeLast triggers assertion in *DEBUG MODE*,
- *        when trying to resize to 0.
- */
-TEST_F(StrictStack, ResizeLast_ToZero_TriggersAssertion)
-{
-    const auto address = stack.allocBytes(128);
-    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(address, 128, 0)), "");
-}
-
-
-/**
- * @brief Verify that stack resize using resizeLast triggers assertion in *DEBUG MODE*,
- *        when resizing allocation in out of order.
- */
-TEST_F(StrictStack, ResizeLast_OutOfOrder_TriggersAssertion)
-{
-    const auto address = stack.allocBytes(128);
-    static_cast<void>(stack.allocBytes(20)); // Second allocation to trigger out of order
-    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(address, 128, 0)), "");
-}
-
-#endif
-
 
 /**************************************
- *                                    *
  *            FRIEND TESTS            *
- *                                    *
  **************************************/
 
 namespace pmm
