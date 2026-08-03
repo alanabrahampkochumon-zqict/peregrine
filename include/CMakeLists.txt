@@ -19,6 +19,7 @@ source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "Header Files" FILES
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "CMake Files" FILES
         ${CMAKE_CURRENT_SOURCE_DIR}/peregrine/allocators/Allocators.cmake
+        ${CMAKE_CURRENT_SOURCE_DIR}/peregrine/memory/Memory.cmake
         ${CMAKE_CURRENT_SOURCE_DIR}/peregrine/telemetry/Telemetry.cmake
         ${CMAKE_CURRENT_SOURCE_DIR}/peregrine/utils/Utils.cmake
 )
