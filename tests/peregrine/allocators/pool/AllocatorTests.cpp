@@ -224,6 +224,39 @@ TEST_F(ManagedPoolAllocator, Alloc_AllocatesBufferOfSizeSize)
 }
 
 
+TEST_F(ManagedPoolAllocator, Free_FreesBufferForNewerAllocations)
+{
+    std::vector<size_t*> data;
+    // Allocate some buffer and fill it with data.
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        data.push_back(pool.alloc<size_t>(i * 11 + 37));
+    }
+
+    // Free in the elements
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        // Data[i] stores the address so free the current chunk
+        // free order shouldn't matter as we are using an internal freelist
+        // rather than a strict structure like LIFO or FIFO
+        pool.freeChunk(data[i]);
+    }
+
+    // clear the vector
+    data.clear();
+    // Allocate the same count of buffer, and fill with data(different pattern)
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        data.push_back(pool.alloc<size_t>(i * 13 + 101));
+    }
+
+    // Verify the data
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        EXPECT_EQ(i * 13 + 101, *data[i]);
+    }
+}
+
 
 /**************************************
  *                                    *
@@ -270,6 +303,40 @@ TEST_F(UnmanagedPoolAllocator, Alloc_AllocatesBufferOfSizeSize)
     for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
     {
         EXPECT_EQ(i * 11 + 37, *data[i]);
+    }
+}
+
+
+TEST_F(UnmanagedPoolAllocator, Free_FreesBufferForNewerAllocations)
+{
+    std::vector<size_t*> data;
+    // Allocate some buffer and fill it with data.
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        data.push_back(pool.alloc<size_t>(i * 11 + 37));
+    }
+
+    // Free in the elements
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        // Data[i] stores the address so free the current chunk
+        // free order shouldn't matter as we are using an internal freelist
+        // rather than a strict structure like LIFO or FIFO
+        pool.freeChunk(data[i]);
+    }
+
+    // clear the vector
+    data.clear();
+    // Allocate the same count of buffer, and fill with data(different pattern)
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        data.push_back(pool.alloc<size_t>(i * 13 + 101));
+    }
+
+    // Verify the data
+    for (size_t i = 0; i < pool.getMaxAllocationCount(); ++i)
+    {
+        EXPECT_EQ(i * 13 + 101, *data[i]);
     }
 }
 
