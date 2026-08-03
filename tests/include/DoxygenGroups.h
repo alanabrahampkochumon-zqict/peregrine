@@ -18,32 +18,38 @@
  */
     
     /**
-     * @defgroup T_PMM_Constants Memory Literals
+     * @defgroup T_PMM_Constants Memory Literals Tests
      * @brief Verify Memory Literals.
      * @ingroup T_PMM_Lib
      */
 
     /**
-    * @defgroup T_PMM_Arena Arena Allocator
+    * @defgroup T_PMM_Arena Arena Allocator Tests
     * @brief Verify Arena Allocator Logic.
     * @ingroup T_PMM_Lib
     */
 
     /**
-    * @defgroup T_PMM_TArena Temporary Arena
+    * @defgroup T_PMM_TArena Temporary Arena Tests
     * @brief Verify Temporary Arena Logic.
     * @ingroup T_PMM_Lib
     */
 
     /**
-    * @defgroup T_PMM_Loose_Stack Loose Stack Allocator
+    * @defgroup T_PMM_Loose_Stack Loose Stack Allocator Tests
     * @brief Verify Stack<pmm::stack::Loose> Allocator Logic.
     * @ingroup T_PMM_Lib
     */
 
     /**
-    * @defgroup T_PMM_Strict_Stack Strict Stack Allocator
+    * @defgroup T_PMM_Strict_Stack Strict Stack Allocator Tests
     * @brief Verify Stack<pmm::stack::Loose> Allocator Logic.
+    * @ingroup T_PMM_Lib
+    */
+
+    /**
+    * @defgroup T_PMM_Pool Pool Allocator Tests
+    * @brief Verify Pool allocator allocation and deallocation logic.
     * @ingroup T_PMM_Lib
     */
 
@@ -54,13 +60,13 @@
     */
 
     /**
-    * @defgroup T_PMM_Telemetry Telemetry
+    * @defgroup T_PMM_Telemetry Telemetry Tests
     * @brief Verify Memory Allocator's Telemetry Logic.
     * @ingroup T_PMM_Lib
     */
 
     /**
-    * @defgroup T_PMM_Helpers Helper Functions
+    * @defgroup T_PMM_Helpers Helper Function Tests
     * @brief Verifies Helper Functions.
     * @ingroup T_PMM_Lib
     */

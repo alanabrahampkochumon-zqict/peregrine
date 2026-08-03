@@ -11,6 +11,13 @@
 
 #include "PoolTestSetup.h"
 
+
+
+/**
+ * @addtogroup T_PMM_Pool
+ * @{
+ */
+
 namespace
 {
     /**************************************
@@ -123,7 +130,7 @@ TEST_F(ManagedPoolAllocator, Alloc_AllocatesBufferOfSizeSize)
         EXPECT_EQ(i * 11 + 37, *data[i]);
     }
 }
-// TODO: Add Death Tests Free
+
 
 TEST_F(ManagedPoolAllocator, FreeChunk_FreesBufferForNewerAllocations)
 {
@@ -498,3 +505,5 @@ namespace pmm
 
 
 } // namespace pmm
+
+/** @} */

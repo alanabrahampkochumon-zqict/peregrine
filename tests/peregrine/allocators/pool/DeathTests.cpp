@@ -12,6 +12,11 @@
 #include "PoolTestSetup.h"
 
 
+/**
+ * @addtogroup T_PMM_Pool
+ * @{
+ */
+
 // NOTE: These tests only run with assertions on, which is only possible in debug mode.
 #ifndef NDEBUG
 
@@ -141,3 +146,5 @@ TEST_F(UnmanagedPoolAllocator, Free_SmallerThanMinimumMemoryAddressTriggersAsser
 }
 
 #endif
+
+/** @} */
