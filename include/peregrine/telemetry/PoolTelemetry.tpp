@@ -1,0 +1,55 @@
+#pragma once
+/**
+ * @file PoolTelemetry.tpp
+ * @author Alan Abraham P Kochumon
+ * @date Created on: August 03, 2026
+ *
+ * @brief Implementation of member functions declared in PoolTelemetry.h
+ *
+ * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
+ */
+
+
+#include "peregrine/utils/Preprocessors.h"
+
+#include <algorithm>
+
+
+namespace pmm
+{
+    PMM_INLINE constexpr PoolTelemetry::PoolTelemetry(const std::size_t poolSize, const std::size_t chunkSize,
+                                                      const std::size_t alignment) noexcept
+        : _poolSize(poolSize),
+          _realChunkSize(chunkSize),
+          _alignedChunkSize(chunkSize),
+          _basePadding(0),
+          _alignment(alignment),
+          _maxAllocationCount(poolSize / chunkSize),
+          _usedAllocationCount(0)
+    {}
+
+
+
+
+    /**************************************
+     *              GETTERS               *
+     **************************************/
+
+    PMM_INLINE constexpr std::size_t PoolTelemetry::getPoolSize() const noexcept { return _poolSize; }
+
+    PMM_INLINE constexpr std::size_t PoolTelemetry::getChunkSize() const noexcept { return _realChunkSize; }
+
+    PMM_INLINE constexpr std::size_t PoolTelemetry::getAlignedChunkSize() const noexcept { return _alignedChunkSize; }
+
+    PMM_INLINE constexpr std::size_t PoolTelemetry::getMaxAllocationCount() const noexcept
+    { return _maxAllocationCount; }
+
+    PMM_INLINE constexpr std::size_t PoolTelemetry::getUsedAllocationCount() const noexcept
+    { return _usedAllocationCount; }
+
+    PMM_INLINE constexpr std::size_t PoolTelemetry::getFreeAllocationCount() const noexcept
+    { return _maxAllocationCount - _usedAllocationCount; }
+
+    PMM_INLINE constexpr std::size_t PoolTelemetry::getAlignment() const noexcept { return _alignment; }
+
+} // namespace pmm

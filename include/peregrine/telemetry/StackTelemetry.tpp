@@ -4,7 +4,7 @@
  * @author Alan Abraham P Kochumon
  * @date Created on: July 24, 2026
  *
- * @brief Arena telemetry implementation of member functions defined in StackTelemetry.h
+ * @brief Implementation of member functions declared in StackTelemetry.h
  *
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */

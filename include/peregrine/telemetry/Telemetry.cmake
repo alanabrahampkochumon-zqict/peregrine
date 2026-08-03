@@ -6,6 +6,8 @@ set(TelemetryHeaders
         ArenaTelemetry.tpp
         StackTelemetry.h
         StackTelemetry.tpp
+        PoolTelemetry.h
+        PoolTelemetry.tpp
 )
 
 list(TRANSFORM TelemetryHeaders PREPEND ${TelemetryDir})

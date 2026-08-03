@@ -2,18 +2,18 @@
 /**
  * @file StackTelemetry.h
  * @author Alan Abraham P Kochumon
- * @date Created on: July 24, 2026
+ * @date Created on: August 03, 2026
  *
- * @brief Define structures and methods for Stack allocators telemetry collection.
- *
- * @note Telemetry is off by default and requires `ENABLE_PMM_TELEMETRY` macro defined to enable telemetry.
+ * @brief Define structures and methods for pool allocator's telemetry collection.
  *
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
+
 #include "peregrine/allocators/Policy.h"
 
 #include <cstddef>
+
 
 namespace pmm
 {
