@@ -113,6 +113,8 @@ namespace pmm
         [[maybe_unused]] const auto minFreeAddr = _buffer + _initialAlignmentPadding;
         [[maybe_unused]] const auto maxFreeAddr = _buffer + _poolSize - _initialAlignmentPadding - _chunkSize;
         PMM_ASSERT_MSG(ptr >= minFreeAddr && ptr <= maxFreeAddr, "Out of bounds free");
+        // TODO: Add this assertion for out of alignment free.
+        // PMM_ASSERT_MSG(reinterpret_cast<uintptr_t>(ptr) % _chunkSize == 0, "Cannot free invalid address");
 
         const auto freeNode = static_cast<PoolFreeNode*>(ptr);
         freeNode->next      = _head;
