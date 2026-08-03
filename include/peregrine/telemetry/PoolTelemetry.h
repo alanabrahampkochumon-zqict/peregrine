@@ -177,6 +177,22 @@ namespace pmm
     struct DummyPoolTelemetry
     {
         [[nodiscard]] explicit constexpr DummyPoolTelemetry(std::size_t, std::size_t, std::size_t) noexcept {}
+        [[nodiscard]] constexpr std::size_t getPoolSize() const noexcept { return 0; }
+        [[nodiscard]] constexpr std::size_t getChunkSize() const noexcept { return 0; }
+        [[nodiscard]] constexpr std::size_t getAlignedChunkSize() const noexcept { return 0; }
+        [[nodiscard]] constexpr std::size_t getMaxAllocationCount() const noexcept { return 0; }
+        [[nodiscard]] constexpr std::size_t getUsedAllocationCount() const noexcept { return 0; }
+        [[nodiscard]] constexpr std::size_t getFreeAllocationCount() const noexcept { return 0; }
+        [[nodiscard]] constexpr std::size_t getAlignment() const noexcept { return 0; }
+        [[nodiscard]] constexpr std::size_t getPadding() const noexcept { return 0; }
+        [[nodiscard]] constexpr std::size_t getUsedSize() const noexcept { return 0; }
+        [[nodiscard]] constexpr std::size_t getWastedSize() const noexcept { return 0; }
+        [[nodiscard]] constexpr std::size_t getFreeSize() const noexcept { return 0; }
+        constexpr void setPadding(std::size_t) noexcept {}
+        constexpr void setAlignedChunkSize(std::size_t) noexcept {}
+        constexpr void logAlloc() noexcept {}
+        constexpr void logFree() noexcept {}
+        constexpr void logClear() noexcept {}
     };
 
     /**
