@@ -51,6 +51,8 @@ namespace
         static constexpr std::size_t size = 2_MB;
         uint8_t* buffer                   = new uint8_t[size];
         pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory, pmm::telemetry::Enabled> stack{ size, buffer };
+
+        void TearDown() override { delete[] buffer; }
     };
 
 
@@ -61,6 +63,8 @@ namespace
         static constexpr std::size_t size = 2_MB;
         uint8_t* buffer                   = new uint8_t[size];
         pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory, pmm::telemetry::Enabled> stack{ size, buffer };
+
+        void TearDown() override { delete[] buffer; }
     };
 
 } // namespace
