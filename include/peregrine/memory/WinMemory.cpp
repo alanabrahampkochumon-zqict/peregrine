@@ -7,15 +7,12 @@
  *
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
-
-// TODO: REMOVE
-#define _WIN32
-
 #ifdef _WIN32
 
     #include "Memory.h"
 
-    #include <memoryapi.h>
+    #define WIN32_LEAN_AND_MEAN
+    #include <Windows.h>
 
 
 namespace pmm
