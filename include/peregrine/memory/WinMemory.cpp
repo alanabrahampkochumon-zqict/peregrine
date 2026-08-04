@@ -7,7 +7,11 @@
  *
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
+
+
 #ifdef _WIN32
+
+    #define PMM_WINDOWS
 
     #include "Memory.h"
 
@@ -19,8 +23,8 @@ namespace pmm
 {
     void* malloc(std::size_t byteSize)
     {
-        // TODO: Implementation
-        return nullptr;
+        // TODO: Add checks for page size alignment
+        return VirtualAlloc(nullptr, byteSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
     }
 
     void mfree(void* start, std::size_t size)

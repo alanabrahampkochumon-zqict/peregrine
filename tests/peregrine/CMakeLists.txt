@@ -18,6 +18,7 @@ target_include_directories(
 add_subdirectory(allocators)
 add_subdirectory(telemetry)
 add_subdirectory(utils)
+add_subdirectory(memory)
 #add_subdirectory(test-helpers)
 
 
@@ -29,6 +30,7 @@ target_link_libraries(
         AllocatorTests
         TelemetryTests
         UtilsTests
+        MemoryTests
         #        TestHelpers
 )
 
