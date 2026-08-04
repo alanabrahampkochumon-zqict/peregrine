@@ -26,11 +26,14 @@ namespace pmm
      */
     void* malloc(std::size_t byteSize);
 
+
     /**
      * @brief Free a memory block allocated using @ref pmm::malloc.
      * @param start The start address of the allocated memory.
      * @param size The size of the allocated memory.
+     *
+     * @return A boolean indicating whether the memory was freed.
      */
-    void mfree(void* start, std::size_t size);
+    bool mfree(void* start, std::size_t size);
 
 } // namespace pmm

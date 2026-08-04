@@ -40,4 +40,20 @@ TEST(WindowsMemory, Alloc_ReturnsReadWriteableMemory)
     }
 }
 
+
+TEST(WindowsMemory, Free_ReturnsTrueOnSuccessfulFree)
+{
+    constexpr std::size_t size  = 2_MB; // Greater than granularity and page size.
+    const auto data             = static_cast<int*>(pmm::malloc(size));
+    if (data != nullptr)
+    {
+        bool result = pmm::mfree(data, size);
+        EXPECT_TRUE(result);
+    }
+    else
+    {
+        EXPECT_TRUE(false) << "There was an error allocation memory in windows";
+    }
+}
+
 #endif
