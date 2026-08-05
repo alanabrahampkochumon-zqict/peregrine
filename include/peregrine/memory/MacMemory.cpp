@@ -11,6 +11,7 @@
 // TODO: Update Implementation
 #include "../utils/Preprocessors.h"
 #include "Memory.h"
+#include <cstdint>
 
 #ifdef PMM_PLATFORM_MACOS
 
