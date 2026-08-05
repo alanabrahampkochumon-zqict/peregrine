@@ -16,21 +16,29 @@
     #include "Memory.h"
 
     #define WIN32_LEAN_AND_MEAN
+    #define NOMINMAX // Prevent windows from hijacking min and max functions
+
     #include <Windows.h>
 
 
 namespace pmm
 {
-    void* malloc(const std::size_t byteSize)
-    {
-        // TODO: Add checks for page size alignment
-        return VirtualAlloc(nullptr, byteSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
-    }
+    void* malloc(const std::size_t byteSize) noexcept
+    { return VirtualAlloc(nullptr, byteSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE); }
 
-    bool mfree(void* start, std::size_t)
+
+    bool mfree(void* start, std::size_t) noexcept
     {
         // Windows requires a dwSize of 0 to free the entire memory block reserved with VirtualAlloc
         return VirtualFree(start, 0, MEM_RELEASE);
+    }
+
+    MemoryDetails queryMemoryDetails() noexcept
+    {
+        SYSTEM_INFO info{};
+        GetSystemInfo(&info);
+
+        return MemoryDetails{ .pageSize = info.dwPageSize, .granularity = info.dwAllocationGranularity };
     }
 } // namespace pmm
 

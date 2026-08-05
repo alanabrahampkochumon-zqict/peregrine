@@ -36,15 +36,15 @@ TEST(WindowsMemory, Alloc_ReturnsReadWriteableMemory)
     }
     else
     {
-        EXPECT_TRUE(false) << "There was an error allocation memory in windows";
+        EXPECT_TRUE(false) << "There was an error allocating memory on Windows";
     }
 }
 
 
 TEST(WindowsMemory, Free_ReturnsTrueOnSuccessfulFree)
 {
-    constexpr std::size_t size  = 2_MB; // Greater than granularity and page size.
-    const auto data             = static_cast<int*>(pmm::malloc(size));
+    constexpr std::size_t size = 2_MB; // Greater than granularity and page size.
+    const auto data            = static_cast<int*>(pmm::malloc(size));
     if (data != nullptr)
     {
         bool result = pmm::mfree(data, size);
@@ -52,8 +52,18 @@ TEST(WindowsMemory, Free_ReturnsTrueOnSuccessfulFree)
     }
     else
     {
-        EXPECT_TRUE(false) << "There was an error allocation memory in windows";
+        EXPECT_TRUE(false) << "There was an error allocating memory on Windows";
     }
+}
+
+
+TEST(WindowsMemory, QueryMemoryDetailsReturnsAValidStructure)
+{
+    // NOTE: We can really hardcode the values that the functio will return
+    // but we can ensure that they are not equal to zero.
+    const auto [pageSize, granularity] = pmm::queryMemoryDetails();
+    EXPECT_GT(pageSize, 0);
+    EXPECT_GT(granularity, 0);
 }
 
 #endif

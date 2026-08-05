@@ -2,6 +2,7 @@ add_library(
         MemoryTests OBJECT
         WinMemoryTests.cpp
 )
+target_compile_features(MemoryTests PRIVATE cxx_std_20)
 
 target_include_directories(
         MemoryTests PRIVATE

@@ -16,6 +16,16 @@ namespace pmm
 {
 
     /**
+     * @brief Structure holding all memory details of the current system, including page size, granularity, etc.
+     */
+    struct MemoryDetails
+    {
+        size_t pageSize;    /// The memory allocation page size.
+        size_t granularity; /// The granularity/alignment
+    };
+
+
+    /**
      * @brief Allocate a memory block from the operating system vault.
      *
      * @note The @p byteSize must align with the target operating system page size.
@@ -24,16 +34,24 @@ namespace pmm
      *
      * @return A void* to the base address of the allocation or nullptr if allocation fails.
      */
-    void* malloc(std::size_t byteSize);
+    [[nodiscard]] void* malloc(std::size_t byteSize) noexcept;
 
 
     /**
      * @brief Free a memory block allocated using @ref pmm::malloc.
+     *
      * @param start The start address of the allocated memory.
      * @param size The size of the allocated memory.
      *
      * @return A boolean indicating whether the memory was freed.
      */
-    bool mfree(void* start, std::size_t size);
+    bool mfree(void* start, std::size_t size) noexcept;
+
+
+    /**
+     * @brief Query the system for memory details in a platform agnostic manner.
+     * @return A @ref MemoryDetails struct containing all memory details.
+     */
+    MemoryDetails queryMemoryDetails() noexcept;
 
 } // namespace pmm
