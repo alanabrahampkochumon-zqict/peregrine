@@ -2,12 +2,12 @@
 
 # Peregrine Memory Manager
 
-High Performance Memory allocation toolkit with modern C++ implementation of common memory allocation strategies used in
+High-performance memory allocation toolkit with modern C++ implementation of common memory allocation strategies used in
 games.
 
 * Arena Allocator
-* Stack Allocator (WIP)
-* Pool Allocator (WIP)
+* Stack Allocator
+* Pool Allocator
 * Buddy Allocator (WIP)
 * Freelist Allocator (WIP)
 
