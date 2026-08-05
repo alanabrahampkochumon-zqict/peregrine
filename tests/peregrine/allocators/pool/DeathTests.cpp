@@ -18,7 +18,7 @@
  */
 
 // NOTE: These tests only run with assertions on, which is only possible in debug mode.
-#ifndef NDEBUG
+#ifdef ENABLE_PMM_DEATH_TESTS
 
 namespace
 {

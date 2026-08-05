@@ -11,7 +11,7 @@
 #include "StackTestSetup.h"
 
 
-#ifndef NDEBUG
+#ifdef ENABLE_PMM_DEATH_TESTS
 
 namespace
 {

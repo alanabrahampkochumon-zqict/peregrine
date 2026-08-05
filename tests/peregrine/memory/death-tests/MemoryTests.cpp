@@ -19,7 +19,7 @@
  * @{
  */
 
-#ifdef ENABLE_DEATH_TESTS
+#ifdef ENABLE_PMM_DEATH_TESTS
 
 namespace
 {

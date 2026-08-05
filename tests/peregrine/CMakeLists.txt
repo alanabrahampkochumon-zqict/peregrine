@@ -9,7 +9,7 @@ target_link_libraries(PeregrineTestSetup INTERFACE
 )
 # Enable death tests only in debug mode
 target_compile_definitions(PeregrineTestSetup INTERFACE
-        $<$<CONFIG:Debug>:ENABLE_DEATH_TESTS>
+        $<$<CONFIG:Debug>:ENABLE_PMM_DEATH_TESTS>
 )
 
 # Enables GTest's Friend tests
