@@ -59,7 +59,7 @@ TEST(WindowsMemory, Free_ReturnsTrueOnSuccessfulFree)
 
 TEST(WindowsMemory, QueryMemoryDetailsReturnsAValidStructure)
 {
-    // NOTE: We can really hardcode the values that the functio will return
+    // NOTE: We cannot hardcode the values that the function will return
     // but we can ensure that they are not equal to zero.
     const auto [pageSize, granularity] = pmm::queryMemoryDetails();
     EXPECT_GT(pageSize, 0);
