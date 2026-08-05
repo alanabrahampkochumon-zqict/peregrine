@@ -14,7 +14,7 @@ include_guard()
 # NOTE: Platforms like PS5, XBox, and Switch are proprietary and defined under "Generic" Category
 #       so autodetect will not work on those platforms.
 
-# Usage: -DPMM_TARGET_PLAFORM=Darwin
+# Usage(Override): -DPMM_TARGET_PLAFORM=Darwin or set(PMM_TARGET_PLATFORM Windows)
 # The platform value can be queried using PMM_CURRENT_PLATFORM
 
 set(PMM_TARGET_PLATFORM "Auto" CACHE STRING "Target platform: Auto, Windows, Darwin, Linux, Xbox, Switch, or PS5")
