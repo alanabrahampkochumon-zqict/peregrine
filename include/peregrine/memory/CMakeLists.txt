@@ -2,6 +2,7 @@ include_guard()
 
 add_library(PeregrineMemory OBJECT Memory.h)
 target_compile_features(PeregrineMemory PUBLIC cxx_std_20)
+set_target_properties(PeregrineMemory PROPERTIES LINKER_LANGUAGE CXX)
 
 if (PMM_CURRENT_PLATFORM STREQUAL "Windows")
     list(APPEND SOURCE_FILES WinMemory.cpp)
