@@ -29,11 +29,13 @@ endif ()
 if (PMM_DOCS)
     include(cmake/Doxygen.cmake)
 endif ()
+# Platform is auto-detected
+include(cmake/Platform.cmake)
 
 # Interprocedural Optimization
 include(CheckIPOSupported)
 check_ipo_supported(RESULT IPO_SUPPORTED)
-if(IPO_SUPPORTED)
+if (IPO_SUPPORTED)
     message(STATUS "Enabling Interprocedural Optimization")
     set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ${IPO_SUPPORTED})
 endif ()

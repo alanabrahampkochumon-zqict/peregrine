@@ -9,26 +9,26 @@
  */
 
 
-#ifdef _WIN32
+#include "../utils/Preprocessors.h"
+#include "Memory.h"
 
-    #define PMM_WINDOWS
-
-    #include "Memory.h"
-
+#ifdef PMM_PLATFORM_WINDOWS
     #define WIN32_LEAN_AND_MEAN
     #define NOMINMAX // Prevent windows from hijacking min and max functions
-
     #include <Windows.h>
-
 
 namespace pmm
 {
     void* malloc(const std::size_t byteSize) noexcept
-    { return VirtualAlloc(nullptr, byteSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE); }
+    {
+        PMM_ASSERT_MSG(byteSize > 1, "Cannot allocate less than 1 byte!");
+        return VirtualAlloc(nullptr, byteSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
+    }
 
 
     bool mfree(void* start, std::size_t) noexcept
     {
+        PMM_ASSERT_MSG(start != nullptr, "Cannot free a nullptr!");
         // Windows requires a dwSize of 0 to free the entire memory block reserved with VirtualAlloc
         return VirtualFree(start, 0, MEM_RELEASE);
     }
@@ -40,6 +40,7 @@ namespace pmm
 
         return MemoryDetails{ .pageSize = info.dwPageSize, .granularity = info.dwAllocationGranularity };
     }
+
 } // namespace pmm
 
 #endif

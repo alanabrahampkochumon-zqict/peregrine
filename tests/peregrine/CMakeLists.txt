@@ -7,6 +7,11 @@ target_link_libraries(PeregrineTestSetup INTERFACE
         StrictWarnings
         Peregrine
 )
+# Enable death tests only in debug mode
+target_compile_definitions(PeregrineTestSetup INTERFACE
+        $<$<CONFIG:Debug>:ENABLE_DEATH_TESTS>
+)
+
 # Enables GTest's Friend tests
 # Unless the consuming application has GTest imported, DON'T enable this!!
 target_compile_definitions(PeregrineTestSetup INTERFACE ENABLE_PMM_TESTS ENABLE_PMM_TELEMETRY)
@@ -39,6 +44,7 @@ target_link_libraries(
         PeregrineTestSetup
 
         AllocatorDeathTests
+        MemoryDeathTests
 )
 
 

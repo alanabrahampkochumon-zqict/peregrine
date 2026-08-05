@@ -1,22 +1,25 @@
 /**
- * @file WinMemoryTests.cpp
+ * @file MemoryTests.cpp
  * @author Alan Abraham P Kochumon
  * @date Created on: August 4, 2026
  *
- * @brief Verifies memory management logic specific to Windows.
+ * @brief Verifies memory management logic specific in a platform-agnostic manner.
  *
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
-// PMM_WINDOWS is a custom macro
 #include <gtest/gtest.h>
 #include <peregrine/memory/Memory.h>
 #include <peregrine/utils/Constants.h>
 
-#ifdef _WIN32
+
+/**
+ * @addtogroup T_PMM_Memory
+ * @{
+ */
 
 using namespace pmm::constants;
-TEST(WindowsMemory, Alloc_ReturnsReadWriteableMemory)
+TEST(PMMMemory, Alloc_ReturnsReadWriteableMemory)
 {
     constexpr std::size_t size  = 2_MB; // Greater than granularity and page size.
     constexpr std::size_t count = size / sizeof(int);
@@ -36,12 +39,12 @@ TEST(WindowsMemory, Alloc_ReturnsReadWriteableMemory)
     }
     else
     {
-        EXPECT_TRUE(false) << "There was an error allocating memory on Windows";
+        EXPECT_TRUE(false) << "There was an error allocating memory for testing!";
     }
 }
 
 
-TEST(WindowsMemory, Free_ReturnsTrueOnSuccessfulFree)
+TEST(PMMMemory, Free_ReturnsTrueOnSuccessfulFree)
 {
     constexpr std::size_t size = 2_MB; // Greater than granularity and page size.
     const auto data            = static_cast<int*>(pmm::malloc(size));
@@ -52,12 +55,12 @@ TEST(WindowsMemory, Free_ReturnsTrueOnSuccessfulFree)
     }
     else
     {
-        EXPECT_TRUE(false) << "There was an error allocating memory on Windows";
+        EXPECT_TRUE(false) << "There was an error allocating memory for testing!";
     }
 }
 
 
-TEST(WindowsMemory, QueryMemoryDetailsReturnsAValidStructure)
+TEST(PMMMemory, QueryMemoryDetailsReturnsAValidStructure)
 {
     // NOTE: We cannot hardcode the values that the function will return
     // but we can ensure that they are not equal to zero.
@@ -66,4 +69,4 @@ TEST(WindowsMemory, QueryMemoryDetailsReturnsAValidStructure)
     EXPECT_GT(granularity, 0);
 }
 
-#endif
+/** @} */

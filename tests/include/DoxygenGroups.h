@@ -70,6 +70,12 @@
     * @brief Verifies Helper Functions.
     * @ingroup T_PMM_Lib
     */
+
+    /**
+    * @defgroup T_PMM_Memory Memory Allocation Tests
+    * @brief Memory allocation tests for platform agnostic wrappers.
+    * @ingroup T_PMM_Lib
+    */
     
 /** @} */ // End of FGM_Math
 
