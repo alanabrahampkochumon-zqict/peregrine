@@ -35,7 +35,7 @@ namespace pmm
     MemoryDetails queryMemoryDetails() noexcept
     {
         // On Linux page size and granularity are the same so we return the same value.
-        auto pageSize = sysconf(_SC_PAGESIZE);
+        auto pageSize = static_cast<size_t>(sysconf(_SC_PAGESIZE));
         return MemoryDetails{ .pageSize = pageSize, .granularity = pageSize };
     }
 
