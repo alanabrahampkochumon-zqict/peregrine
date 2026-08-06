@@ -42,6 +42,22 @@ TEST_P(PMMMallocDeathTests, InvalidSizes_TriggersAssertionInDebugMode)
 
 TEST(PMMMFreeDeathTests, Nullptr_TriggersAssertionInDebugMode) { EXPECT_DEATH(pmm::mfree(nullptr, 0), ""); }
 
+
+
+/**************************************
+ *        LINUX PLATFORM TESTS        *
+ **************************************/
+
+    #ifdef PMM_PLATFORM_LINUX
+
+TEST(PMMMFreeDeathTests, ZeroSize_TriggersAssertionInDebugMode)
+{
+    const auto address = pmm::malloc(24);
+    EXPECT_DEATH(pmm::mfree(address, 0), "");
+}
+
+    #endif
+
 #endif
 
 /** @} */
