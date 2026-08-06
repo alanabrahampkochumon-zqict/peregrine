@@ -24,9 +24,7 @@ namespace pmm
         PMM_ASSERT_MSG(byteSize > 0, "Cannot allocate 0 bytes of memory!");
 
         auto ptr = mmap(nullptr, byteSize, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANON, -1, 0);
-        PMM_ASSERT_MSG(ptr != MAP_FAILED, "Failed to allocate virtual memory!");
-
-        return ptr;
+        return ptr == MAP_FAILED ? nullptr : ptr;
     }
 
 

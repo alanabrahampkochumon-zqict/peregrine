@@ -9,6 +9,7 @@
  */
 
 #include <gtest/gtest.h>
+#include <limits>
 #include <peregrine/memory/Memory.h>
 #include <peregrine/utils/Constants.h>
 
@@ -41,6 +42,14 @@ TEST(PMMMemory, Alloc_ReturnsReadWriteableMemory)
     {
         EXPECT_TRUE(false) << "There was an error allocating memory for testing!";
     }
+}
+
+
+TEST(PMMMemory, Alloc_ReturnsNullptrWhenAllocationFails)
+{
+    constexpr std::size_t size = std::numeric_limits<size_t>::max();
+    const auto memory          = pmm::malloc(size);
+    EXPECT_EQ(nullptr, memory);
 }
 
 

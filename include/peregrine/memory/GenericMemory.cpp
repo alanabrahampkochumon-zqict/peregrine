@@ -22,15 +22,13 @@ namespace pmm
     void* malloc(const std::size_t byteSize) noexcept // NOLINT(bugprone-exception-escape)
     {
         PMM_ASSERT_MSG(byteSize > 1, "Cannot allocate less than 1 byte!");
-        return new uint8_t[byteSize]; // TODO: Replace
+        return new uint8_t[byteSize];
     }
 
 
     bool mfree(void* start, std::size_t) noexcept // NOLINT(bugprone-exception-escape)
     {
         PMM_ASSERT_MSG(start != nullptr, "Cannot free a nullptr!");
-        // Windows requires a dwSize of 0 to free the entire memory block reserved with VirtualAlloc
-        // TODO: Implementation
         return true;
     }
 
