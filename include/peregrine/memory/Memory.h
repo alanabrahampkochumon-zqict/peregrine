@@ -20,8 +20,8 @@ namespace pmm
      */
     struct MemoryDetails
     {
-        size_t pageSize;    /// The memory allocation page size.
-        size_t granularity; /// The granularity/alignment
+        size_t pageSize;    ///> The memory allocation page size.
+        size_t granularity; ///> The granularity/alignment
     };
 
 

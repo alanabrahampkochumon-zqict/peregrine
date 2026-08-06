@@ -43,10 +43,6 @@ TEST_P(PMMMallocDeathTests, InvalidSizes_TriggersAssertionInDebugMode)
 TEST(PMMMFreeDeathTests, Nullptr_TriggersAssertionInDebugMode) { EXPECT_DEATH(pmm::mfree(nullptr, 0), ""); }
 
 
-TEST(PMMMFreeDeathTests, Nullptr_TriggersAssertionInDebugMode) { EXPECT_DEATH(pmm::mfree(nullptr, 0), ""); }
-
-
-
 /**************************************
  *         LINUX & MACOS TESTS        *
  **************************************/
