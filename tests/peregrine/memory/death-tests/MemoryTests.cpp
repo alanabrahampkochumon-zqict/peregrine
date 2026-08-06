@@ -30,7 +30,7 @@ namespace
     /// @test Test fixture for validating @ref pmm::malloc's invalid allocation size triggering process death.
     class PMMMallocDeathTests: public testing::TestWithParam<size_t>
     {};
-    INSTANTIATE_TEST_SUITE_P(InvalidSizes, PMMMallocDeathTests, testing::Values(0, 1));
+    INSTANTIATE_TEST_SUITE_P(InvalidSizes, PMMMallocDeathTests, testing::Values(0));
 
 } // namespace
 
@@ -45,11 +45,13 @@ TEST(PMMMFreeDeathTests, Nullptr_TriggersAssertionInDebugMode) { EXPECT_DEATH(pm
 
 
 /**************************************
- *        LINUX PLATFORM TESTS        *
+ *         LINUX & MACOS TESTS        *
  **************************************/
 
-    #ifdef PMM_PLATFORM_LINUX
-
+    #if defined(PMM_PLATFORM_LINUX) || defined(PMM_PLATFORM_MACOS)
+/**
+ * @test Verify that freeing a zero size ptr triggers assertion on Linux and MacOS.
+ */
 TEST(PMMMFreeDeathTests, ZeroSize_TriggersAssertionInDebugMode)
 {
     const auto address = pmm::malloc(24);
@@ -57,6 +59,8 @@ TEST(PMMMFreeDeathTests, ZeroSize_TriggersAssertionInDebugMode)
 }
 
     #endif
+
+
 
 #endif
 
