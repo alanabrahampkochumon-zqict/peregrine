@@ -8,6 +8,8 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
+
+#include <cstring>
 #include <gtest/gtest.h>
 #include <limits>
 #include <peregrine/memory/Memory.h>
@@ -32,7 +34,6 @@ TEST(PMMMemory, MemAlloc_ReturnsReadWriteableMemory)
             data[i] = static_cast<int>(131 * i + 11);
         }
 
-
         for (size_t i = 0; i < count; ++i)
         {
             EXPECT_EQ(static_cast<int>(131 * i + 11), data[i]);
@@ -51,6 +52,18 @@ TEST(PMMMemory, MemAlloc_ReturnsNullptrWhenAllocationFails)
     const auto memory          = pmm::memAlloc(size);
     EXPECT_EQ(nullptr, memory);
 }
+
+
+TEST(PMMMemory, MemAlloc_ReturnsZeroedOutMemory)
+{
+    constexpr size_t size = 2_MB;
+    const auto memory     = static_cast<size_t*>(pmm::memAlloc(size));
+    for (size_t i = 0; i < size / sizeof(size_t); ++i)
+    {
+        EXPECT_EQ(0, memory[i]);
+    }
+}
+
 
 
 TEST(PMMMemory, MemFree_ReturnsTrueOnSuccessfulFree)

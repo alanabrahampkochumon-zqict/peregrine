@@ -22,7 +22,7 @@ namespace pmm
 
     void* memAlloc(const std::size_t byteSize) noexcept // NOLINT(bugprone-exception-escape)
 {
-        PMM_ASSERT_MSG(byteSize > 1, "Cannot allocate less than 1 byte!");
+        PMM_ASSERT_MSG(byteSize > 0, "Cannot allocate 0 bytes!");
         return VirtualAlloc(nullptr, byteSize, MEM_RESERVE | MEM_COMMIT, PAGE_READWRITE);
 }
 
