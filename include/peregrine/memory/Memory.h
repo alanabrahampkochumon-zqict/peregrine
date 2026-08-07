@@ -36,18 +36,18 @@ namespace pmm
      *
      * @return A void* to the base address of the allocation or nullptr if allocation fails.
      */
-    [[nodiscard]] void* malloc(std::size_t byteSize) noexcept;
+    [[nodiscard]] void* memAlloc(std::size_t byteSize) noexcept;
 
-
+    // TODO: Ensure alloc frees out memory
     /**
      * @brief Free a memory block allocated using @ref pmm::malloc.
      *
      * @param start The start address of the allocated memory.
      * @param size The size of the allocated memory.
-     * 
+     *
      * @return A boolean indicating whether the memory was freed.
      */
-    bool mfree(void* start, std::size_t size) noexcept;
+    bool memFree(void* start, std::size_t size) noexcept;
 
 
     /**

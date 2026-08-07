@@ -19,14 +19,14 @@
 
 namespace pmm
 {
-    void* malloc(const std::size_t byteSize) noexcept // NOLINT(bugprone-exception-escape)
+    void* memAlloc(const std::size_t byteSize) noexcept // NOLINT(bugprone-exception-escape)
     {
         PMM_ASSERT_MSG(byteSize > 1, "Cannot allocate less than 1 byte!");
         return std::malloc(byteSize);
     }
 
 
-    bool mfree(void* start, std::size_t) noexcept // NOLINT(bugprone-exception-escape)
+    bool memFree(void* start, std::size_t) noexcept // NOLINT(bugprone-exception-escape)
     {
         PMM_ASSERT_MSG(start != nullptr, "Cannot free a nullptr!");
         std::free(start);

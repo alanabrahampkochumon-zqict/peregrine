@@ -27,20 +27,20 @@ namespace
      *            TEST SETUP              *
      **************************************/
 
-    /// @test Test fixture for validating @ref pmm::malloc's invalid allocation size triggering process death.
-    class PMMMallocDeathTests: public testing::TestWithParam<size_t>
+    /// @test Test fixture for validating @ref pmm::memAlloc's invalid allocation size triggering process death.
+    class MemAllocDeathTests: public testing::TestWithParam<size_t>
     {};
-    INSTANTIATE_TEST_SUITE_P(InvalidSizes, PMMMallocDeathTests, testing::Values(0));
+    INSTANTIATE_TEST_SUITE_P(InvalidSizes, MemAllocDeathTests, testing::Values(0));
 
 } // namespace
 
 
 
-TEST_P(PMMMallocDeathTests, InvalidSizes_TriggersAssertionInDebugMode)
-{ EXPECT_DEATH(static_cast<void>(pmm::malloc(GetParam())), ""); }
+TEST_P(MemAllocDeathTests, InvalidSizes_TriggersAssertionInDebugMode)
+{ EXPECT_DEATH(static_cast<void>(pmm::memAlloc(GetParam())), ""); }
 
 
-TEST(PMMMFreeDeathTests, Nullptr_TriggersAssertionInDebugMode) { EXPECT_DEATH(pmm::mfree(nullptr, 0), ""); }
+TEST(MemFreeDeathTests, Nullptr_TriggersAssertionInDebugMode) { EXPECT_DEATH(pmm::memFree(nullptr, 0), ""); }
 
 
 /**************************************
@@ -51,10 +51,10 @@ TEST(PMMMFreeDeathTests, Nullptr_TriggersAssertionInDebugMode) { EXPECT_DEATH(pm
 /**
  * @test Verify that freeing a zero size ptr triggers assertion on Linux and MacOS.
  */
-TEST(PMMMFreeDeathTests, ZeroSize_TriggersAssertionInDebugMode)
+TEST(MemFreeDeathTests, ZeroSize_TriggersAssertionInDebugMode)
 {
-    const auto address = pmm::malloc(24);
-    EXPECT_DEATH(pmm::mfree(address, 0), "");
+    const auto address = pmm::memAlloc(24);
+    EXPECT_DEATH(pmm::memFree(address, 0), "");
 }
 
     #endif

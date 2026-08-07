@@ -29,7 +29,7 @@ namespace pmm
     PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::Arena(const size_t arenaSize) noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
         : _buffer(new uint8_t[arenaSize]), _sizeInBytes(arenaSize), _offset(0), _prevOffset(0)
-    {} // static_cast<uint8_t*>(pmm::malloc(arenaSize))
+    {} // static_cast<uint8_t*>(pmm::memAlloc(arenaSize))
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
