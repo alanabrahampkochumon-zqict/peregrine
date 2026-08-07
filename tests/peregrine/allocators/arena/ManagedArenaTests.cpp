@@ -80,8 +80,8 @@ TEST_F(ManagedArenaTests, MoveCtor_CopiesAttributesToNewObject)
 //     // TODO: Fix Tests after impl getTelemetry
 //     // constexpr auto size = 512;
 //     // ArenaTelemetry telemetry{ size };
-//     // telemetry.updateAllocationUsage(512);
-//     // telemetry.updateAllocationUsage(256);
+//     // telemetry.logAllocationUsage(512);
+//     // telemetry.logAllocationUsage(256);
 //     // Arena<> arena(size, &telemetry);
 //     //
 //     // const Arena<> arena2 = std::move(arena);
@@ -89,7 +89,7 @@ TEST_F(ManagedArenaTests, MoveCtor_CopiesAttributesToNewObject)
 //     // // Update telemetry usage from outside
 //     // // Since the arena class only holds a ptr
 //     // // Updating the telemetry should reflect the change in the telemetry held by arena2
-//     // telemetry.updateAllocationUsage(128);
+//     // telemetry.logAllocationUsage(128);
 //     //
 //     // // Checking for telemetry equality
 //     // EXPECT_EQ(telemetry.getCurrentUsage(), arena2.getTelemetry().getCurrentUsage());
@@ -117,8 +117,8 @@ TEST_F(ManagedArenaTests, MoveAssign_CopiesAttributesToNewObject)
 //     // TODO: Fix Tests after impl getTelemetry
 //     // constexpr auto size = 512;
 //     // ArenaTelemetry telemetry{ size };
-//     // telemetry.updateAllocationUsage(512);
-//     // telemetry.updateAllocationUsage(256);
+//     // telemetry.logAllocationUsage(512);
+//     // telemetry.logAllocationUsage(256);
 //     // Arena<> arena(size, &telemetry);
 //     //
 //     //     pmm::Arena<> arena2(256);
@@ -128,7 +128,7 @@ TEST_F(ManagedArenaTests, MoveAssign_CopiesAttributesToNewObject)
 //     // // Update telemetry usage from outside
 //     // // Since the arena class only holds a ptr
 //     // // Updating the telemetry should reflect the change in the telemetry held by arena2
-//     // telemetry.updateAllocationUsage(128);
+//     // telemetry.logAllocationUsage(128);
 //     //
 //     // // Checking for telemetry equality
 //     // EXPECT_EQ(telemetry.getCurrentUsage(), arena2.getTelemetry().getCurrentUsage());

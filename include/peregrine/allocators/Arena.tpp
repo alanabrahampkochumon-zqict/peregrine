@@ -146,7 +146,7 @@ namespace pmm
             memset(ptr, 0, bytes); // TODO: Remove when moving to HAL
 
             // Update the telemetry usage
-            // _telemetry->updateAllocationUsage(bytes);
+            // _telemetry->logAllocationUsage(bytes);
 
             return ptr;
         }
@@ -173,7 +173,7 @@ namespace pmm
             T* object = new (raw) T(std::forward<Args>(args)...);
 
             // Update the telemetry usage
-            // _telemetry->updateAllocationUsage(objectSize);
+            // _telemetry->logAllocationUsage(objectSize);
 
             return object;
         }
@@ -200,7 +200,7 @@ namespace pmm
             T* object = new (raw) T(std::forward<Args>(args)...);
 
             // Update the telemetry usage
-            // _telemetry->updateAllocationUsage(objectSize);
+            // _telemetry->logAllocationUsage(objectSize);
 
             return object;
         }
@@ -264,9 +264,9 @@ namespace pmm
             _offset += offsetDiff;
 
             // Update the telemetry to include the difference
-            // _telemetry->updateAllocationUsage(offsetDiff);
-            // _telemetry->updateMinUsage(newSize);
-            // _telemetry->updatePeakUsage(newSize);
+            // _telemetry->logAllocationUsage(offsetDiff);
+            // _telemetry->logMinUsage(newSize);
+            // _telemetry->logPeakUsage(newSize);
 
             return oldMemory;
         }
