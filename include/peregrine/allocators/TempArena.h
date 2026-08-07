@@ -28,9 +28,11 @@ namespace pmm
      *
      * @warning You MUST assign this to a named local variable to maintain its scope.
      */
+    template <MemoryStrategy MemStrategy = ManagedMemory, telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled,
+              bool Safe = false>
     struct [[nodiscard]] TempArena
     {
-        Arena* targetArena;
+        Arena<MemStrategy, TelPolicy, Safe>* targetArena;
         std::size_t prevOffset, currentOffset;
 
         /**
@@ -38,7 +40,7 @@ namespace pmm
          *
          * @param arena The arena to take a snapshot of.
          */
-        [[nodiscard]] explicit constexpr TempArena(Arena* arena) noexcept;
+        [[nodiscard]] explicit constexpr TempArena(Arena<MemStrategy, TelPolicy, Safe>* arena) noexcept;
 
 
         /**
@@ -73,6 +75,7 @@ namespace pmm
         template <typename T>
         [[nodiscard]] constexpr std::span<T> allocV(std::size_t count) noexcept;
     };
+
 
 
     /** @} */

@@ -24,18 +24,21 @@ namespace pmm
      * @addtogroup PMM_Arena
      * @{
      */
+
     /**
      *  @brief Linear memory allocator.
      *
      *  @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
      *  @tparam TelPolicy   Flag indicating whether or not telemetry is enabled for this arena. See @ref pmm::telemetry.
      *  @tparam Safe        Flags an arena as safe, implying certain operations like resizing a `nullptr` are handled
-     *                      gracefully when assertions are disabled.
+     *                      gracefully when assertions are disabled. `False` by default to prevent any performance
+     *                      stalls incurred by conditional checks.
      */
     template <MemoryStrategy MemStrategy = ManagedMemory, telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled,
               bool Safe = false>
     struct Arena
     {
+
         /**
          * @brief Allocate a new physical memory vault from the Operating System.
          *
@@ -43,8 +46,10 @@ namespace pmm
          *
          * @param[in] arenaSize The total capacity of the arena in bytes.
          *
-         * @warning The memory block is NOT zero-initialized.
+         * @warning The memory block is NOT zero-initialized. // TODO: Update
          * @warning This allocator is Linear and is NOT thread-safe by default.
+         *
+         * @remarks API specialized for @ref pmm::ManagedMemory.
          */
         constexpr explicit Arena(size_t arenaSize) noexcept
             requires std::same_as<MemStrategy, ManagedMemory>;
@@ -58,19 +63,35 @@ namespace pmm
          * @param[in,out] backingBuffer The memory buffer to be used by the allocator.
          * @param[in] arenaSize         The total capacity of the arena in bytes.
          *
-         * @warning The memory block is NOT zero-initialized.
+         * @warning The memory block is NOT zero-initialized. // TODO: Update
          * @warning This allocator is Linear and is NOT thread-safe by default.
+         *
+         * @remarks API specialized for @ref pmm::UnmanagedMemory.
          */
         constexpr explicit Arena(void* backingBuffer, size_t arenaSize) noexcept
             requires std::same_as<MemStrategy, UnmanagedMemory>;
 
 
-
         /**
          * @brief Destroy Arena, freeing up any memory it holds.
-         * @note For clearing the Arena, use @ref freeAll.
+         *
+         * @note For clearing the Arena, use @ref clear.
+         *
+         * @remarks API specialized for @ref pmm::ManagedMemory.
          */
-        constexpr ~Arena() noexcept;
+        constexpr ~Arena() noexcept
+            requires std::same_as<MemStrategy, ManagedMemory>;
+
+
+        /**
+         * @brief Arena Destructor.
+         * @note User must free the buffer they provided.
+         *
+         * @remarks API specialized for @ref pmm::UnmanagedMemory.
+         */
+        constexpr ~Arena() noexcept
+            requires std::same_as<MemStrategy, UnmanagedMemory>
+        = default;
 
 
         /**
@@ -246,7 +267,7 @@ namespace pmm
          *
          * @return A readonly @ref ArenaTelemetry instance.
          */
-        [[nodiscard]] constexpr ArenaTelemetry getTelemetry() const noexcept;
+        // [[nodiscard]] constexpr ArenaTelemetry getTelemetry() const noexcept;
 
 
     private:
