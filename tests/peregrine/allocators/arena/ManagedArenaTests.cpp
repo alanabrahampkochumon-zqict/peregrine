@@ -42,10 +42,6 @@ namespace
         pmm::Arena<> arena{ arenaSize };
     };
 
-    class AlignedArenaInitialization: public testing::TestWithParam<std::size_t>
-    {};
-    INSTANTIATE_TEST_SUITE_P(ArenaInitialization, AlignedArenaInitialization,
-                             testing::Values(2, 4, 8, 16, 32, 64, 128));
 } // namespace
 
 
@@ -66,7 +62,7 @@ TEST_F(ManagedArenaTests, Ctor_InitializesArenaWithTheGivenBytes) { EXPECT_EQ(ar
 TEST_F(ManagedArenaTests, ArenaHasZeroUsedSizeInitially) { EXPECT_EQ(0, arena.usedSize()); }
 
 
-TEST_F(ManagedArenaTests, ArenaHasFreeSpaceEqualToSizeInitially) { EXPECT_EQ(512, arena.freeSize()); }
+TEST_F(ManagedArenaTests, ArenaHasFreeSpaceEqualToSizeInitially) { EXPECT_EQ(arenaSize, arena.freeSize()); }
 
 
 TEST_F(ManagedArenaTests, MoveCtor_CopiesAttributesToNewObject)
