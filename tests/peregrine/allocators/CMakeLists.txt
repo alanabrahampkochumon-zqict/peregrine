@@ -5,7 +5,8 @@ add_library(AllocatorTests OBJECT)
 target_sources(
         AllocatorTests
         PRIVATE
-        ArenaTests.cpp
+        #        ArenaTests.cpp
+        arena/ManagedArenaTests.cpp
         stack/LooseStackTests.cpp
         stack/StrictStackTests.cpp
         stack/StackMemoryManagementTests.cpp

@@ -10,11 +10,10 @@
  */
 
 
+#include "Policy.h"
 #include "peregrine/telemetry/ArenaTelemetry.h"
 
-#include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <span>
 
 
@@ -25,7 +24,16 @@ namespace pmm
      * @addtogroup PMM_Arena
      * @{
      */
-
+    /**
+     *  @brief Linear memory allocator.
+     *
+     *  @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
+     *  @tparam TelPolicy   Flag indicating whether or not telemetry is enabled for this arena. See @ref pmm::telemetry.
+     *  @tparam Safe        Flags an arena as safe, implying certain operations like resizing a `nullptr` are handled
+     *                      gracefully when assertions are disabled.
+     */
+    template <MemoryStrategy MemStrategy = ManagedMemory, telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled,
+              bool Safe = false>
     struct Arena
     {
         /**
@@ -33,61 +41,36 @@ namespace pmm
          *
          * @note When telemetry is enabled, allocates a Telemetry instance on the **Heap**.
          *
-         * @param[in] bytes The total capacity of the arena in bytes.
+         * @param[in] arenaSize The total capacity of the arena in bytes.
          *
          * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        constexpr explicit Arena(std::size_t bytes) noexcept;
+        constexpr explicit Arena(size_t arenaSize) noexcept
+            requires std::same_as<MemStrategy, ManagedMemory>;
 
 
         /**
-         * @brief Allocate a new physical memory vault from the Operating System, with custom telemetry support.
-         *
-         * @param[in] bytes     The total capacity of the arena in bytes.
-         * @param[in] telemetry The telemetry instance to use for tracking arena allocation metrics.
-         *
-         * @warning The memory block is NOT zero-initialized.
-         * @warning This allocator is Linear and is NOT thread-safe by default.
-         */
-        constexpr explicit Arena(std::size_t bytes, ArenaTelemetry* telemetry) noexcept;
-
-
-        /**
-         * @brief Allocate a new physical memory vault from the Operating System with a base alignment of @p alignment.
+         * @brief Allocate a new physical memory vault from the Operating System.
          *
          * @note When telemetry is enabled, allocates a Telemetry instance on the **Heap**.
          *
-         * @param[in] bytes     The total capacity of the arena in bytes.
-         * @param[in] alignment The base alignment of the arena.
-         *                      Must be a power of 2.
+         * @param[in,out] backingBuffer The memory buffer to be used by the allocator.
+         * @param[in] arenaSize         The total capacity of the arena in bytes.
          *
          * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        constexpr explicit Arena(std::size_t bytes, std::size_t alignment) noexcept;
+        constexpr explicit Arena(void* backingBuffer, size_t arenaSize) noexcept
+            requires std::same_as<MemStrategy, UnmanagedMemory>;
 
-
-        /**
-         * @brief Allocate a new physical memory vault from the Operating System with a base alignment of @p alignment,
-         *        with custom telemetry support.
-         *
-         * @param[in] bytes     The total capacity of the arena in bytes.
-         * @param[in] alignment The base alignment of the arena.
-         *                      Must be a power of 2.
-         * @param[in] telemetry The telemetry instance to use for tracking arena allocation metrics.
-         *
-         * @warning The memory block is NOT zero-initialized.
-         * @warning This allocator is Linear and is NOT thread-safe by default.
-         */
-        constexpr explicit Arena(std::size_t bytes, std::size_t alignment, ArenaTelemetry* telemetry) noexcept;
 
 
         /**
          * @brief Destroy Arena, freeing up any memory it holds.
          * @note For clearing the Arena, use @ref freeAll.
          */
-        inline ~Arena() noexcept;
+        constexpr ~Arena() noexcept;
 
 
         /**
@@ -233,13 +216,13 @@ namespace pmm
 
 
         /**
-         * @brief Free the entire arena.
+         * @brief Reset the entire arena.
          *
          * @note This is not a hard reset.
          *       All memory states may/may not get erased.
          *
          */
-        void freeAll() noexcept;
+        void clear() noexcept;
 
 
         /**
@@ -255,7 +238,7 @@ namespace pmm
          * @return A reference to the new memory location in arena or nullptr if allocation fails.
          */
         [[nodiscard]] void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
-                                             std::size_t alignment) noexcept;
+                                   std::size_t alignment) noexcept;
 
 
         /**
@@ -266,14 +249,9 @@ namespace pmm
         [[nodiscard]] constexpr ArenaTelemetry getTelemetry() const noexcept;
 
 
-        // TODO: Add namespace based new allocation eg: namespace arena { Mat3 mat = new Mat3(); // Uses arena new not
-        // C++ heap
-
     private:
         uint8_t* _buffer;
-        uint64_t _sizeInBytes, _offset, _prevOffset, _defaultAlignment;
-        ArenaTelemetry* _telemetry;
-        bool _ownedTelemetry; // Used for freeing the allocated telemetry if it was allocated by the Arena
+        uint64_t _sizeInBytes, _offset, _prevOffset;
 
         /**
          * @brief Align the internal buffer to @p alignment.
@@ -287,6 +265,20 @@ namespace pmm
 #ifdef ENABLE_PMM_TESTS
     // FRIEND TEST macros for verifying internal states
     #include <gtest/gtest_prod.h>
+
+
+
+
+        FRIEND_TEST(ManagedArenaTests, MoveCtor_ClearsMovedArena);
+        FRIEND_TEST(ManagedArenaTests, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(ManagedArenaTests, MoveAssign_ClearsMovedArena);
+        FRIEND_TEST(ManagedArenaTests, MoveAssign_MovesBufferIntoNewObject);
+        FRIEND_TEST(ManagedArenaTests, MoveAssign_SelfAssignmentReturnsTheSameArena);
+        FRIEND_TEST(ManagedArenaTests, MoveAssign_DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
+        FRIEND_TEST(ManagedArenaTests, AllocBytes_MovesPrevOffset);
+        FRIEND_TEST(ManagedArenaTests, Alloc_MovesPrevOffset);
+        FRIEND_TEST(ManagedArenaTests, Clear_ResetsOffsetToZero);
+
         FRIEND_TEST(ArenaInitialization, NoPassedInTelemetry_ArenaOwnsTelemetry);
         FRIEND_TEST(ArenaInitialization, PassedInTelemetry_ArenaDoesNotOwnTelemetry);
         FRIEND_TEST(ArenaInitialization, AlignedArena_NoPassedInTelemetry_ArenaOwnsTelemetry);

@@ -11,12 +11,13 @@
  */
 
 
+#include "../memory/Memory.h"
+
 #include <bit>
 #include <cassert>
 #include <cstring>
 #include <new>
 #include <utility>
-
 
 namespace pmm
 {
@@ -65,7 +66,8 @@ namespace pmm
     }
 
 
-    PMM_INLINE constexpr Arena::Arena(const std::size_t bytes, const std::size_t alignment, ArenaTelemetry* telemetry) noexcept
+    PMM_INLINE constexpr Arena::Arena(const std::size_t bytes, const std::size_t alignment,
+                                      ArenaTelemetry* telemetry) noexcept
         : _buffer(new uint8_t[bytes]),
           _sizeInBytes(bytes),
           _offset(0),
@@ -81,6 +83,20 @@ namespace pmm
             _prevOffset = _offset;
         }
     }
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
+    constexpr Arena<MemStrategy, TelPolicy>::Arena(const size_t arenaSize) noexcept
+        requires std::same_as<MemStrategy, ManagedMemory>
+        : _buffer(static_cast<uint8_t*>(pmm::malloc(arenaSize))), _sizeInBytes(arenaSize), _offset(0), _prevOffset(0)
+    {}
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
+    constexpr Arena<MemStrategy, TelPolicy>::Arena(void* backingBuffer, size_t arenaSize) noexcept
+        requires std::same_as<MemStrategy, UnmanagedMemory>
+        : _buffer(static_cast<uint8_t*>(backingBuffer)), _sizeInBytes(arenaSize), _offset(0), _prevOffset(0)
+    {}
 
 
     PMM_INLINE Arena::~Arena() noexcept
@@ -265,7 +281,7 @@ namespace pmm
     }
 
 
-    PMM_INLINE void Arena::freeAll() noexcept
+    PMM_INLINE void Arena::clear() noexcept
     {
         _offset = 0;
 
@@ -281,7 +297,7 @@ namespace pmm
 
 
     PMM_INLINE void* Arena::resize(void* oldMemory, const std::size_t oldSize, const std::size_t newSize,
-                                  const std::size_t alignment) noexcept
+                                   const std::size_t alignment) noexcept
     {
         // The allocation is new
         // No need to add telemetry since allocBytes does that for us

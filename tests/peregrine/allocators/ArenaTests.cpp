@@ -997,7 +997,7 @@ namespace pmm
         EXPECT_NE(0, arena._prevOffset);
 
         // After freeing, offsets are reset
-        arena.freeAll();
+        arena.clear();
 
         // Offsets are reset to zero
         EXPECT_EQ(0, arena._offset);
@@ -1049,7 +1049,7 @@ namespace pmm
         constexpr std::size_t expectedMinUsage  = byte1;
         constexpr std::size_t expectedPeakUsage = byte3;
 
-        arena.freeAll();
+        arena.clear();
 
         EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
         EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
