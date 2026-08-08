@@ -162,21 +162,11 @@ namespace pmm
     template <typename T, typename... Args>
     PMM_INLINE T* Arena<MemStrategy, TelPolicy, Safe>::alloc(Args... args) noexcept
     {
-        // Forward align the memory by the types default alignment
-        _alignForward(alignof(T));
-
         // Allocate memory in the arena.
-        void* raw   = &_buffer[_offset];
-        _prevOffset = _offset;
-        _offset += sizeof(T);
+        void* raw = allocBytes(sizeof(T), alignof(T));
 
         // Instantiate the object with arguments.
-        T* object = new (raw) T(std::forward<Args>(args)...);
-
-        // Update the telemetry usage
-        // _telemetry->logAllocationUsage(objectSize);
-
-        return object;
+        return new (raw) T(std::forward<Args>(args)...);
 
         // if (constexpr auto objectSize = sizeof(T); _sizeInBytes >= _offset + objectSize)
         // {

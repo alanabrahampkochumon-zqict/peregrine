@@ -9,6 +9,8 @@
  */
 
 
+#include "Mocks.h"
+
 #include <gtest/gtest.h>
 #include <peregrine/allocators/Arena.h>
 
@@ -22,7 +24,7 @@ namespace
     class ManagedArenaDeathTests: public testing::Test
     {
     public:
-        size_t arenaSize{ 4096 };
+        static constexpr size_t arenaSize{ 4096 };
         pmm::Arena<> arena{ arenaSize };
     };
 
@@ -43,12 +45,8 @@ TEST_F(ManagedArenaDeathTests, AllocBytes_SizeGreaterThanArenaSize_TriggersAsser
 { EXPECT_DEBUG_DEATH(static_cast<void>(arena.allocBytes(arenaSize + 1)), ""); }
 
 
-// TEST_F(ManagedArenaDeathTests, Alloc_ZeroSize_TriggersAssertionInDebugMode)
-// { EXPECT_DEBUG_DEATH(static_cast<void>(arena.alloc<nullptr>()), ""); }
-//
-//
-// TEST_F(ManagedArenaDeathTests, Alloc_SizeGreaterThanArenaSize_TriggersAssertionInDebugMode)
-// { EXPECT_DEBUG_DEATH(static_cast<void>(arena.allocBytes(arenaSize + 1)), ""); }
+TEST_F(ManagedArenaDeathTests, Alloc_SizeGreaterThanArenaSize_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(arena.alloc<LargeData<arenaSize + 8>>()), ""); }
 
 // TODO: Alignment ne to multiple of 1
 
