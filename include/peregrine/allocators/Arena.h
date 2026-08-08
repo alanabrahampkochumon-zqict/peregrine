@@ -255,11 +255,12 @@ namespace pmm
          * @param oldSize   The current size of the @p oldMemory.
          * @param newSize   The size to resize @p oldMemory to.
          * @param alignment The byte alignment of the @p oldMemory.
+         *                  Default: 8 bytes on a 64-bit machine.
          *
          * @return A reference to the new memory location in arena or nullptr if allocation fails.
          */
         [[nodiscard]] void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
-                                   std::size_t alignment) noexcept;
+                                   std::size_t alignment = sizeof(void*)) noexcept;
 
 
         /**

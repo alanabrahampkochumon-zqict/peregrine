@@ -226,12 +226,9 @@ namespace pmm
                                                                  const std::size_t newSize,
                                                                  const std::size_t alignment) noexcept
     {
-        // The allocation is new
-        // No need to add telemetry since allocBytes does that for us
-        if (oldMemory == nullptr || oldSize == 0)
-        {
-            return allocBytes(newSize, alignment);
-        }
+        PMM_ASSERT_MSG(oldMemory != nullptr, "Cannot resize a nullptr. Use alloc* variants for fresh allocations.");
+        PMM_ASSERT_MSG(oldSize != 0, "Cannot resize 0 bytes of memory.");
+        PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 bytes. Arena does not support individual frees.");
 
         // If the new size is smaller than the old size
         // No resizing required
@@ -262,16 +259,19 @@ namespace pmm
         // The memory exists else where in the arena, so create a new byte chunk
         // copy the existing data and return it
         // @note: This leaves a "hole" where the previous allocation was
-        if (_sizeInBytes >= _offset + newSize)
-        {
-            void* newLocation = allocBytes(newSize, alignment);
-            memmove(newLocation, oldMemory, oldSize);
-            return newLocation;
-        }
+        PMM_ASSERT_MSG(_sizeInBytes >= _offset + newSize, "Not enough memory for resize");
+        void* newLocation = allocBytes(newSize, alignment);
+        memmove(newLocation, oldMemory, oldSize);
+        return newLocation;
+
+        // if (_sizeInBytes >= _offset + newSize)
+        // {
+
+        // }
 
         // Allocation not possible due to lack of memory in arena
         // So return a nullptr.
-        return nullptr;
+        // return nullptr;
     }
 
     // template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>

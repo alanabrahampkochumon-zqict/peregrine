@@ -67,6 +67,28 @@ TEST_F(ManagedArenaDeathTests, AllocV_SizeGreaterThanArenaSize_TriggersAssertion
 { EXPECT_DEBUG_DEATH(static_cast<void>(arena.allocV<int>(arenaSize / sizeof(int) + 1)), ""); }
 
 
+TEST_F(ManagedArenaDeathTests, Resize_Nullptr_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(arena.resize(nullptr, 20, 24)), ""); }
+
+
+TEST_F(ManagedArenaDeathTests, Resize_ZeroOldSize_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(arena.resize(nullptr, 0, 24)), ""); }
+
+
+TEST_F(ManagedArenaDeathTests, Resize_ZeroNewSize_TriggersAssertionInDebugMode)
+{
+    const auto memory = arena.allocBytes(16);
+    EXPECT_DEBUG_DEATH(static_cast<void>(arena.resize(memory, 16, 0)), "");
+}
+
+
+TEST_F(ManagedArenaDeathTests, Resize_LargerThanArenaSize_TriggersAssertionInDebugMode)
+{
+    const auto memory = arena.allocBytes(16);
+    EXPECT_DEBUG_DEATH(static_cast<void>(arena.resize(memory, 16, arenaSize + 1)), "");
+}
+
+
 
 #endif
 // 1. Nullptr to alloc > size
