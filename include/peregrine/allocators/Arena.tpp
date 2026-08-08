@@ -130,29 +130,32 @@ namespace pmm
     }
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE void* Arena<MemStrategy, TelPolicy, Safe>::allocBytes(const std::size_t bytes,
+    PMM_INLINE void* Arena<MemStrategy, TelPolicy, Safe>::allocBytes(const std::size_t sizeInBytes,
                                                                      const std::size_t alignment) noexcept
     {
         _alignForward(alignment);
 
+        PMM_ASSERT_MSG(sizeInBytes > 0 && _sizeInBytes >= _offset + sizeInBytes, "Arena: Not Enough Memory");
+
+        void* ptr   = &_buffer[_offset];
+        _prevOffset = _offset;
+        _offset += sizeInBytes;
+
+        memset(ptr, 0, sizeInBytes); // TODO: Remove when moving to HAL
+
+        // Update the telemetry usage
+        // _telemetry->logAllocationUsage(sizeInBytes);
+
+        return ptr;
+
         // Check if the arena has enough memory for allocation
-        if (_sizeInBytes >= _offset + bytes)
-        {
-            void* ptr = &_buffer[_offset];
-
-            _prevOffset = _offset;
-            _offset += bytes;
-
-            memset(ptr, 0, bytes); // TODO: Remove when moving to HAL
-
-            // Update the telemetry usage
-            // _telemetry->logAllocationUsage(bytes);
-
-            return ptr;
-        }
-
-        // Return nullptr if the requested memory cannot be allocated
-        return nullptr;
+        // if (_sizeInBytes >= _offset + sizeInBytes)
+        // {
+        //
+        // }
+        //
+        // // Return nullptr if the requested memory cannot be allocated
+        // return nullptr;
     }
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
@@ -162,24 +165,26 @@ namespace pmm
         // Forward align the memory by the types default alignment
         _alignForward(alignof(T));
 
-        if (constexpr auto objectSize = sizeof(T); _sizeInBytes >= _offset + objectSize)
-        {
-            // Allocate memory in the arena.
-            void* raw   = &_buffer[_offset];
-            _prevOffset = _offset;
-            _offset += objectSize;
+        // Allocate memory in the arena.
+        void* raw   = &_buffer[_offset];
+        _prevOffset = _offset;
+        _offset += sizeof(T);
 
-            // Instantiate the object with arguments.
-            T* object = new (raw) T(std::forward<Args>(args)...);
+        // Instantiate the object with arguments.
+        T* object = new (raw) T(std::forward<Args>(args)...);
 
-            // Update the telemetry usage
-            // _telemetry->logAllocationUsage(objectSize);
+        // Update the telemetry usage
+        // _telemetry->logAllocationUsage(objectSize);
 
-            return object;
-        }
+        return object;
 
-        // Return nullptr if the requested memory cannot be allocated
-        return nullptr;
+        // if (constexpr auto objectSize = sizeof(T); _sizeInBytes >= _offset + objectSize)
+        // {
+        //
+        // }
+        //
+        // // Return nullptr if the requested memory cannot be allocated
+        // return nullptr;
     }
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>

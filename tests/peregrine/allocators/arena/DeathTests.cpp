@@ -1,6 +1,58 @@
+/**
+ * @file DeathTests.cpp
+ * @author Alan Abraham P Kochumon
+ * @date Created on: August 7, 2026
+ *
+ * @brief Verify assertion for fgm::Arena allocation in debug mode.
+ *
+ * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
+ */
+
+
+#include <gtest/gtest.h>
+#include <peregrine/allocators/Arena.h>
+
+#ifdef ENABLE_PMM_DEATH_TESTS
+namespace
+{
+    /**************************************
+     *            TEST SETUP              *
+     **************************************/
+    /// @brief Test Fixture for @ref pmm::Arena<Managed> debug assertions.
+    class ManagedArenaDeathTests: public testing::Test
+    {
+    public:
+        size_t arenaSize{ 4096 };
+        pmm::Arena<> arena{ arenaSize };
+    };
+
+
+} // namespace
+
+
+
+/**************************************
+ *           MANAGED ARENA            *
+ **************************************/
+
+TEST_F(ManagedArenaDeathTests, AllocBytes_ZeroSize_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(arena.allocBytes(0)), ""); }
+
+
+TEST_F(ManagedArenaDeathTests, AllocBytes_SizeGreaterThanArenaSize_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(arena.allocBytes(arenaSize + 1)), ""); }
+
+
+// TEST_F(ManagedArenaDeathTests, Alloc_ZeroSize_TriggersAssertionInDebugMode)
+// { EXPECT_DEBUG_DEATH(static_cast<void>(arena.alloc<nullptr>()), ""); }
 //
-// Created by Alan Abraham on 8/7/2026.
 //
+// TEST_F(ManagedArenaDeathTests, Alloc_SizeGreaterThanArenaSize_TriggersAssertionInDebugMode)
+// { EXPECT_DEBUG_DEATH(static_cast<void>(arena.allocBytes(arenaSize + 1)), ""); }
+
+// TODO: Alignment ne to multiple of 1
+
+#endif
 // 1. Nullptr to alloc > size
 // 1. Nullptr to alloc
 /** @brief Verify that arena resize on a nullptr returns a new allocation. */

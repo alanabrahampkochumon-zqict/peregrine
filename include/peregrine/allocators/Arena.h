@@ -152,7 +152,7 @@ namespace pmm
         /**
          * @brief Allocate @p bytes of memory.
          *
-         * @param bytes     The memory in bytes to allocate from the Arena.
+         * @param sizeInBytes     The memory in bytes to allocate from the Arena.
          * @param alignment The alignment to use when allocating memory (in bytes).
          *                  Defaults to sizeof(void*) which is 8 bytes in 64-bit machines.
          *
@@ -161,7 +161,7 @@ namespace pmm
          * @return A void pointer to the start of allocated memory or
          *         `nullptr` if the arena cannot allocate memory of requested size.
          */
-        [[nodiscard]] void* allocBytes(std::size_t bytes, std::size_t alignment = sizeof(void*)) noexcept;
+        [[nodiscard]] void* allocBytes(std::size_t sizeInBytes, std::size_t alignment = sizeof(void*)) noexcept;
 
 
         /**

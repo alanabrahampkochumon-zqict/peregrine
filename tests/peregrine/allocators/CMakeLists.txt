@@ -37,6 +37,7 @@ target_sources(
         PRIVATE
         pool/DeathTests.cpp
         stack/DeathTests.cpp
+        arena/DeathTests.cpp
 )
 
 target_include_directories(
