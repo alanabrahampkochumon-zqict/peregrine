@@ -7,6 +7,7 @@ target_sources(
         PRIVATE
         #        ArenaTests.cpp
         arena/ManagedArenaTests.cpp
+        arena/UnmanagedArenaTests.cpp
         stack/LooseStackTests.cpp
         stack/StrictStackTests.cpp
         stack/StackMemoryManagementTests.cpp

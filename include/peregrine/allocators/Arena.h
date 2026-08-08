@@ -304,6 +304,18 @@ namespace pmm
         FRIEND_TEST(ManagedArenaTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
         FRIEND_TEST(ManagedArenaTests, Clear_ResetsOffsetToZero);
 
+        FRIEND_TEST(UnmanagedArenaTests, MoveCtor_ClearsMovedArena);
+        FRIEND_TEST(UnmanagedArenaTests, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(UnmanagedArenaTests, MoveAssign_ClearsMovedArena);
+        FRIEND_TEST(UnmanagedArenaTests, MoveAssign_MovesBufferIntoNewObject);
+        FRIEND_TEST(UnmanagedArenaTests, MoveAssign_SelfAssignmentReturnsTheSameArena);
+        FRIEND_TEST(UnmanagedArenaTests, MoveAssign_DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
+        FRIEND_TEST(UnmanagedArenaTests, AllocBytes_MovesPrevOffset);
+        FRIEND_TEST(UnmanagedArenaTests, Alloc_MovesPrevOffset);
+        FRIEND_TEST(UnmanagedArenaTests, Resize_LatestAllocationResizeBuffer);
+        FRIEND_TEST(UnmanagedArenaTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
+        FRIEND_TEST(UnmanagedArenaTests, Clear_ResetsOffsetToZero);
+
         FRIEND_TEST(ArenaInitialization, NoPassedInTelemetry_ArenaOwnsTelemetry);
         FRIEND_TEST(ArenaInitialization, PassedInTelemetry_ArenaDoesNotOwnTelemetry);
         FRIEND_TEST(ArenaInitialization, AlignedArena_NoPassedInTelemetry_ArenaOwnsTelemetry);
