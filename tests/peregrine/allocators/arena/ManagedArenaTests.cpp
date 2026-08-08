@@ -71,32 +71,26 @@ TEST_F(ManagedArenaTests, MoveCtor_CopiesAttributesToNewObject)
     EXPECT_EQ(arenaSize, arena2.freeSize());
     EXPECT_EQ(arenaSize, arena2.size());
     EXPECT_EQ(0, arena2.usedSize());
-    // EXPECT_EQ(arenaSize, arena2.getTelemetry().getArenaSize()); // TODO: Addback
+    EXPECT_EQ(arenaSize, arena2.getTelemetry().getArenaSize());
 }
 
 
-// TEST_F(ManagedArenaTests, MoveCtor_MovesTelemetry)
-// {
-//     // TODO: Fix Tests after impl getTelemetry
-//     // constexpr auto size = 512;
-//     // ArenaTelemetry telemetry{ size };
-//     // telemetry.logAllocationUsage(512);
-//     // telemetry.logAllocationUsage(256);
-//     // Arena<> arena(size, &telemetry);
-//     //
-//     // const Arena<> arena2 = std::move(arena);
-//     //
-//     // // Update telemetry usage from outside
-//     // // Since the arena class only holds a ptr
-//     // // Updating the telemetry should reflect the change in the telemetry held by arena2
-//     // telemetry.logAllocationUsage(128);
-//     //
-//     // // Checking for telemetry equality
-//     // EXPECT_EQ(telemetry.getCurrentUsage(), arena2.getTelemetry().getCurrentUsage());
-//     // EXPECT_EQ(telemetry.getPeakUsage(), arena2.getTelemetry().getPeakUsage());
-//     // EXPECT_EQ(telemetry.getArenaSize(), arena2.getTelemetry().getArenaSize());
-//     // EXPECT_EQ(telemetry.getMinUsage(), arena2.getTelemetry().getMinUsage());
-// }
+TEST_F(ManagedArenaTests, MoveCtor_MovesTelemetry)
+{
+    static_cast<void>(arena.allocBytes(120));
+    static_cast<void>(arena.allocBytes(240));
+    // Get the telemetry to ensure that the value is preserved when moving
+    // DON'T get by reference as it will change internally
+    const auto telemetry = arena.getTelemetry();
+
+    const pmm::Arena<> arena2 = std::move(arena);
+
+    // Checking for telemetry equality
+    EXPECT_EQ(telemetry.getCurrentUsage(), arena2.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(telemetry.getPeakUsage(), arena2.getTelemetry().getPeakUsage());
+    EXPECT_EQ(telemetry.getArenaSize(), arena2.getTelemetry().getArenaSize());
+    EXPECT_EQ(telemetry.getMinUsage(), arena2.getTelemetry().getMinUsage());
+}
 
 
 TEST_F(ManagedArenaTests, MoveAssign_CopiesAttributesToNewObject)
@@ -112,30 +106,23 @@ TEST_F(ManagedArenaTests, MoveAssign_CopiesAttributesToNewObject)
 }
 
 
-// TEST_F(ManagedArenaTests, MoveAssign_MovesTelemetry)
-// {
-//     // TODO: Fix Tests after impl getTelemetry
-//     // constexpr auto size = 512;
-//     // ArenaTelemetry telemetry{ size };
-//     // telemetry.logAllocationUsage(512);
-//     // telemetry.logAllocationUsage(256);
-//     // Arena<> arena(size, &telemetry);
-//     //
-//     //     pmm::Arena<> arena2(256);
+TEST_F(ManagedArenaTests, MoveAssign_MovesTelemetry)
+{
+    static_cast<void>(arena.allocBytes(120));
+    static_cast<void>(arena.allocBytes(240));
+    // Get the telemetry to ensure that the value is preserved when moving
+    // DON'T get by reference as it will change internally
+    const auto telemetry = arena.getTelemetry();
 
-// arena2 = std::move(arena);
-//     //
-//     // // Update telemetry usage from outside
-//     // // Since the arena class only holds a ptr
-//     // // Updating the telemetry should reflect the change in the telemetry held by arena2
-//     // telemetry.logAllocationUsage(128);
-//     //
-//     // // Checking for telemetry equality
-//     // EXPECT_EQ(telemetry.getCurrentUsage(), arena2.getTelemetry().getCurrentUsage());
-//     // EXPECT_EQ(telemetry.getPeakUsage(), arena2.getTelemetry().getPeakUsage());
-//     // EXPECT_EQ(telemetry.getArenaSize(), arena2.getTelemetry().getArenaSize());
-//     // EXPECT_EQ(telemetry.getMinUsage(), arena2.getTelemetry().getMinUsage());
-// }
+    pmm::Arena<> arena2(256);
+    arena2 = std::move(arena);
+
+    // Checking for telemetry equality
+    EXPECT_EQ(telemetry.getCurrentUsage(), arena2.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(telemetry.getPeakUsage(), arena2.getTelemetry().getPeakUsage());
+    EXPECT_EQ(telemetry.getArenaSize(), arena2.getTelemetry().getArenaSize());
+    EXPECT_EQ(telemetry.getMinUsage(), arena2.getTelemetry().getMinUsage());
+}
 
 
 
@@ -211,26 +198,23 @@ TEST_F(ManagedArenaTests, AllocBytes_SubsequentAllocationDoNotCorruptMemory)
     }
 }
 
-// TODO: Add back after impl getTelemetry
-// TEST_F(ManagedArenaTests, AllocBytes_UpdatesTelemetry)
-// {
-//     constexpr auto size         = 512;
-//     constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
-//     Arena<> arena(size);
-//
-//     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-//     static_cast<void>(arena.allocBytes(byte1));
-//     static_cast<void>(arena.allocBytes(byte2));
-//     static_cast<void>(arena.allocBytes(byte3));
-//
-//     constexpr std::size_t expectedMinUsage  = byte1;
-//     constexpr std::size_t expectedPeakUsage = byte3;
-//     constexpr std::size_t expectedUsage     = byte1 + byte2 + byte3;
-//
-//     EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
-//     EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
-//     EXPECT_EQ(expectedUsage, arena.getTelemetry().getCurrentUsage());
-// }
+TEST_F(ManagedArenaTests, AllocBytes_UpdatesTelemetry)
+{
+    constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
+
+    // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+    static_cast<void>(arena.allocBytes(byte1));
+    static_cast<void>(arena.allocBytes(byte2));
+    static_cast<void>(arena.allocBytes(byte3));
+
+    constexpr std::size_t expectedMinUsage  = byte1;
+    constexpr std::size_t expectedPeakUsage = byte3;
+    constexpr std::size_t expectedUsage     = byte1 + byte2 + byte3;
+
+    EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
+    EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
+    EXPECT_EQ(expectedUsage, arena.getTelemetry().getCurrentUsage());
+}
 
 
 
@@ -261,23 +245,22 @@ TEST_F(ManagedArenaTests, Alloc_AlignsToTargetAlignment)
 }
 
 
-// TODO: Add back after impl getTelemetry()
-// TEST_F(ManagedArenaTests, Alloc_UpdatesTelemetry)
-// {
-//     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-//     static_cast<void>(arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
-//     static_cast<void>(arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
-//     static_cast<void>(arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
-//     static_cast<void>(arena.alloc<int>(1));
-//
-//     constexpr std::size_t expectedMinUsage  = sizeof(int);
-//     constexpr std::size_t expectedPeakUsage = sizeof(Vec4);
-//     constexpr std::size_t expectedUsage     = sizeof(Vec4) * 3 + sizeof(int);
-//
-//     EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
-//     EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
-//     EXPECT_EQ(expectedUsage, arena.getTelemetry().getCurrentUsage());
-// }
+TEST_F(ManagedArenaTests, Alloc_UpdatesTelemetry)
+{
+    // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+    static_cast<void>(arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+    static_cast<void>(arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+    static_cast<void>(arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+    static_cast<void>(arena.alloc<int>(1));
+
+    constexpr std::size_t expectedMinUsage  = sizeof(int);
+    constexpr std::size_t expectedPeakUsage = sizeof(Vec4);
+    constexpr std::size_t expectedUsage     = sizeof(Vec4) * 3 + sizeof(int);
+
+    EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
+    EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
+    EXPECT_EQ(expectedUsage, arena.getTelemetry().getCurrentUsage());
+}
 
 
 
@@ -342,24 +325,23 @@ TEST_F(ManagedArenaTests, AllocV_SubsequentAllocationDoNotCorruptMemory)
 }
 
 
-// TODO: Add back after impl getTelemetry
-// TEST_F(ManagedArenaTests, AllocV_UpdatesTelemetry)
-// {
-//     constexpr std::size_t count1 = 2, count2 = 4, count3 = 6;
-//
-//     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-//     static_cast<void>(arena.allocV<Vec4>(count1));
-//     static_cast<void>(arena.allocV<Vec4>(count2));
-//     static_cast<void>(arena.allocV<Vec4>(count3));
-//
-//     constexpr std::size_t expectedMinUsage  = count1 * sizeof(Vec4);
-//     constexpr std::size_t expectedPeakUsage = count3 * sizeof(Vec4);
-//     constexpr std::size_t expectedUsage     = (count1 + count2 + count3) * sizeof(Vec4);
-//
-//     EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
-//     EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
-//     EXPECT_EQ(expectedUsage, arena.getTelemetry().getCurrentUsage());
-// }
+TEST_F(ManagedArenaTests, AllocV_UpdatesTelemetry)
+{
+    constexpr std::size_t count1 = 2, count2 = 4, count3 = 6;
+
+    // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+    static_cast<void>(arena.allocV<Vec4>(count1));
+    static_cast<void>(arena.allocV<Vec4>(count2));
+    static_cast<void>(arena.allocV<Vec4>(count3));
+
+    constexpr std::size_t expectedMinUsage  = count1 * sizeof(Vec4);
+    constexpr std::size_t expectedPeakUsage = count3 * sizeof(Vec4);
+    constexpr std::size_t expectedUsage     = (count1 + count2 + count3) * sizeof(Vec4);
+
+    EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
+    EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
+    EXPECT_EQ(expectedUsage, arena.getTelemetry().getCurrentUsage());
+}
 
 
 
@@ -455,6 +437,88 @@ TEST_F(ManagedArenaTests, Resize_AllocationPriorToLatestAllocationCopiesOldData)
 }
 
 
+TEST_F(ManagedArenaTests, Resize_SameMemorySize_DoesNotUpdateTelemetry)
+{
+    constexpr auto byteSize = 128;
+
+    const auto allocatedBytes = arena.allocBytes(byteSize);
+
+    const auto oldUsage     = arena.getTelemetry().getCurrentUsage();
+    const auto oldMinUsage  = arena.getTelemetry().getMinUsage();
+    const auto oldPeakUsage = arena.getTelemetry().getPeakUsage();
+
+
+    [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, byteSize, alignof(void*));
+
+    EXPECT_EQ(oldUsage, arena.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
+    EXPECT_EQ(oldPeakUsage, arena.getTelemetry().getPeakUsage());
+}
+
+
+TEST_F(ManagedArenaTests, Resize_SmallerMemorySize_DoesNotUpdateTelemetry)
+{
+    constexpr auto byteSize    = 128;
+    constexpr auto newByteSize = byteSize - 10;
+
+    const auto allocatedBytes = arena.allocBytes(byteSize);
+
+    const auto oldUsage     = arena.getTelemetry().getCurrentUsage();
+    const auto oldMinUsage  = arena.getTelemetry().getMinUsage();
+    const auto oldPeakUsage = arena.getTelemetry().getPeakUsage();
+
+
+    [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, newByteSize, alignof(void*));
+
+    EXPECT_EQ(oldUsage, arena.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
+    EXPECT_EQ(oldPeakUsage, arena.getTelemetry().getPeakUsage());
+}
+
+
+TEST_F(ManagedArenaTests, Resize_LatestAllocationResize_UpdatesTelemetry)
+{
+    constexpr auto byteSize       = 128;
+    constexpr auto byteDifference = 100;
+    constexpr auto newByteSize    = byteSize + byteDifference;
+
+    [[maybe_unused]] const auto unusedBytes = arena.allocBytes(50);
+    const auto allocatedBytes               = arena.allocBytes(byteSize);
+
+    const auto oldUsage                      = arena.getTelemetry().getCurrentUsage();
+    const auto oldMinUsage                   = arena.getTelemetry().getMinUsage();
+    [[maybe_unused]] const auto oldPeakUsage = arena.getTelemetry().getPeakUsage();
+
+
+    [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, newByteSize, alignof(void*));
+
+    EXPECT_EQ(oldUsage + byteDifference, arena.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
+    EXPECT_EQ(oldPeakUsage + byteDifference, arena.getTelemetry().getPeakUsage());
+}
+
+
+TEST_F(ManagedArenaTests, Resize_InBetweenAllocationResize_UpdatesTelemetry)
+{
+    constexpr auto byteSize       = 128;
+    constexpr auto byteDifference = 100;
+    constexpr auto newByteSize    = byteSize + byteDifference;
+
+    const auto allocatedBytes               = arena.allocBytes(byteSize);
+    [[maybe_unused]] const auto unusedBytes = arena.allocBytes(50);
+
+    const auto oldUsage    = arena.getTelemetry().getCurrentUsage();
+    const auto oldMinUsage = arena.getTelemetry().getMinUsage();
+
+
+    [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, newByteSize, alignof(void*));
+
+    EXPECT_EQ(oldUsage + newByteSize, arena.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
+    EXPECT_EQ(newByteSize, arena.getTelemetry().getPeakUsage());
+}
+
+
 
 /**************************************
  *                                    *
@@ -474,7 +538,7 @@ namespace pmm
         EXPECT_EQ(0, arena._offset);
         EXPECT_EQ(0, arena._prevOffset);
         EXPECT_EQ(0, arena._sizeInBytes);
-        // EXPECT_FALSE(arena._ownedTelemetry); // TODO: Add telemetry
+        EXPECT_EQ(0, arena.getTelemetry().getCurrentUsage());
     }
 
 
@@ -483,16 +547,12 @@ namespace pmm
         const auto initialPointer    = arena._buffer;
         const auto initialOffset     = arena._offset;
         const auto initialPrevOffset = arena._prevOffset;
-        // TODO: Add telemetry
-        // const auto initialTelemetry          = arena.getTelemetry();
-        // const auto initialTelemetryOwnership = arena._ownedTelemetry;
 
         const Arena<> arena2 = std::move(arena);
         EXPECT_EQ(initialPointer, arena2._buffer);
         EXPECT_EQ(initialOffset, arena2._offset);
         EXPECT_EQ(initialPrevOffset, arena2._prevOffset);
         EXPECT_EQ(arenaSize, arena2._sizeInBytes);
-        // EXPECT_EQ(initialTelemetryOwnership, arena2._ownedTelemetry);
     }
 
 
@@ -627,172 +687,59 @@ namespace pmm
         EXPECT_EQ(0, arena._prevOffset);
     }
 
-    // TODO: Add back after adding telemetry
-    // TEST_F(ManagedArenaTests, Clear_OnlyResetsCurrentTelemetryUsage)
-    // {
-    //     constexpr auto size         = 512;
-    //     constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
-    //     Arena<> arena(size);
-    //
-    //     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-    //     static_cast<void>(arena.allocBytes(byte1));
-    //     static_cast<void>(arena.allocBytes(byte2));
-    //     static_cast<void>(arena.allocBytes(byte3));
-    //
-    //     constexpr std::size_t expectedMinUsage  = byte1;
-    //     constexpr std::size_t expectedPeakUsage = byte3;
-    //
-    //     arena.clear();
-    //
-    //     EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
-    //     EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
-    //     EXPECT_EQ(0, arena.getTelemetry().getCurrentUsage());
-    // }
 
-    /** @brief Verify that arena resize with last allocated buffer only resizes the arena. */
-    // TEST(ArenaResize, LatestAllocationResizeBuffer)
-    // {
-    //     constexpr auto arenaSize = 1024;
-    //     Arena<> arena(arenaSize);
-    //     constexpr auto byteSize    = 128;
-    //     constexpr auto newByteSize = byteSize * 2;
-    //
-    //     [[maybe_unused]] const auto firstByteChunk = arena.allocBytes(byteSize);
-    //     auto secondByteChunk                       = arena.allocBytes(byteSize);
-    //     const auto offsetBeforeResize              = arena._offset;
-    //
-    //     [[maybe_unused]] const auto data = arena.resize(secondByteChunk, byteSize, newByteSize, alignof(void*));
-    //
-    //     EXPECT_GT(arena._offset, offsetBeforeResize);
-    //     EXPECT_EQ(reinterpret_cast<uintptr_t>(secondByteChunk), reinterpret_cast<uintptr_t>(data));
-    // }
-    //
-    //
-    // /** @brief Verify that arena resize with last allocated buffer resizes only by the size difference. */
-    // TEST(ArenaResize, LatestAllocationOnlyResizeByOffsetDifference)
-    // {
-    //     constexpr auto arenaSize = 1024;
-    //     Arena<> arena(arenaSize);
-    //     constexpr auto byteSize    = 128;
-    //     constexpr auto newByteSize = byteSize * 2;
-    //
-    //     [[maybe_unused]] const auto firstByteChunk = arena.allocBytes(byteSize);
-    //     const auto secondByteChunk                 = arena.allocBytes(byteSize);
-    //     const auto offsetBeforeResize              = arena._offset;
-    //     const auto expectedOffset                  = offsetBeforeResize + (newByteSize - byteSize);
-    //
-    //     [[maybe_unused]] const auto data = arena.resize(secondByteChunk, byteSize, newByteSize, alignof(void*));
-    //
-    //     EXPECT_EQ(expectedOffset, arena._offset) << "Offset Mismatch";
-    // }
-    //
-    //
-    // /** @brief Verify that arena resize with nullptr updates the telemetry with freshly allocated byte usage. */
-    // TEST(ArenaResize, NoOldMemory_UpdatesTelemetry)
-    // {
-    //     constexpr auto arenaSize = 1024;
-    //     Arena<> arena(arenaSize);
-    //     constexpr auto byteSize = 128;
-    //
-    //
-    //     [[maybe_unused]] const auto data = arena.resize(nullptr, byteSize, byteSize, alignof(void*));
-    //
-    //     EXPECT_EQ(byteSize, arena.getTelemetry().getCurrentUsage());
-    //     EXPECT_EQ(byteSize, arena.getTelemetry().getMinUsage());
-    //     EXPECT_EQ(byteSize, arena.getTelemetry().getPeakUsage());
-    // }
-    //
-    // /** @brief Verify that arena resize with same size, does not update telemetry. */
-    // TEST(ArenaResize, SameMemorySize_DoesNotUpdateTelemetry)
-    // {
-    //     constexpr auto arenaSize = 1024;
-    //     Arena<> arena(arenaSize);
-    //     constexpr auto byteSize = 128;
-    //
-    //     const auto allocatedBytes = arena.allocBytes(byteSize);
-    //
-    //     const auto oldUsage     = arena.getTelemetry().getCurrentUsage();
-    //     const auto oldMinUsage  = arena.getTelemetry().getMinUsage();
-    //     const auto oldPeakUsage = arena.getTelemetry().getPeakUsage();
-    //
-    //
-    //     [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, byteSize, alignof(void*));
-    //
-    //     EXPECT_EQ(oldUsage, arena.getTelemetry().getCurrentUsage());
-    //     EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
-    //     EXPECT_EQ(oldPeakUsage, arena.getTelemetry().getPeakUsage());
-    // }
-    //
-    //
-    // /** @brief Verify that arena resize with same size, does not update telemetry. */
-    // TEST(ArenaResize, SmallerMemorySize_DoesNotUpdateTelemetry)
-    // {
-    //     constexpr auto arenaSize = 1024;
-    //     Arena<> arena(arenaSize);
-    //     constexpr auto byteSize    = 128;
-    //     constexpr auto newByteSize = byteSize - 10;
-    //
-    //     const auto allocatedBytes = arena.allocBytes(byteSize);
-    //
-    //     const auto oldUsage     = arena.getTelemetry().getCurrentUsage();
-    //     const auto oldMinUsage  = arena.getTelemetry().getMinUsage();
-    //     const auto oldPeakUsage = arena.getTelemetry().getPeakUsage();
-    //
-    //
-    //     [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, newByteSize, alignof(void*));
-    //
-    //     EXPECT_EQ(oldUsage, arena.getTelemetry().getCurrentUsage());
-    //     EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
-    //     EXPECT_EQ(oldPeakUsage, arena.getTelemetry().getPeakUsage());
-    // }
-    //
-    // /** @brief Verify that arena resize with larger size of final allocation, update telemetry by size difference. */
-    // TEST(ArenaResize, LatestAllocationResize_UpdatesTelemetry)
-    // {
-    //     constexpr auto arenaSize = 1024;
-    //     Arena<> arena(arenaSize);
-    //     constexpr auto byteSize       = 128;
-    //     constexpr auto byteDifference = 100;
-    //     constexpr auto newByteSize    = byteSize + byteDifference;
-    //
-    //     [[maybe_unused]] const auto unusedBytes = arena.allocBytes(50);
-    //     const auto allocatedBytes               = arena.allocBytes(byteSize);
-    //
-    //     const auto oldUsage                      = arena.getTelemetry().getCurrentUsage();
-    //     const auto oldMinUsage                   = arena.getTelemetry().getMinUsage();
-    //     [[maybe_unused]] const auto oldPeakUsage = arena.getTelemetry().getPeakUsage();
-    //
-    //
-    //     [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, newByteSize, alignof(void*));
-    //
-    //     EXPECT_EQ(oldUsage + byteDifference, arena.getTelemetry().getCurrentUsage());
-    //     EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
-    //     EXPECT_EQ(oldPeakUsage + byteDifference, arena.getTelemetry().getPeakUsage());
-    // }
-    //
-    // /** @brief Verify that arena resize with larger size of in-between allocation, update telemetry by size
-    // difference.
-    //  */
-    // TEST(ArenaResize, InBetweenAllocationResize_UpdatesTelemetry)
-    // {
-    //     constexpr auto arenaSize = 1024;
-    //     Arena<> arena(arenaSize);
-    //     constexpr auto byteSize       = 128;
-    //     constexpr auto byteDifference = 100;
-    //     constexpr auto newByteSize    = byteSize + byteDifference;
-    //
-    //     const auto allocatedBytes               = arena.allocBytes(byteSize);
-    //     [[maybe_unused]] const auto unusedBytes = arena.allocBytes(50);
-    //
-    //     const auto oldUsage    = arena.getTelemetry().getCurrentUsage();
-    //     const auto oldMinUsage = arena.getTelemetry().getMinUsage();
-    //
-    //
-    //     [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, newByteSize, alignof(void*));
-    //
-    //     EXPECT_EQ(oldUsage + newByteSize, arena.getTelemetry().getCurrentUsage());
-    //     EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
-    //     EXPECT_EQ(newByteSize, arena.getTelemetry().getPeakUsage());
-    // }
+    TEST_F(ManagedArenaTests, Clear_OnlyResetsCurrentTelemetryUsage)
+    {
+        constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
+
+        // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+        static_cast<void>(arena.allocBytes(byte1));
+        static_cast<void>(arena.allocBytes(byte2));
+        static_cast<void>(arena.allocBytes(byte3));
+
+        constexpr std::size_t expectedMinUsage  = byte1;
+        constexpr std::size_t expectedPeakUsage = byte3;
+
+        arena.clear();
+
+        EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
+        EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
+        EXPECT_EQ(0, arena.getTelemetry().getCurrentUsage());
+    }
+
+
+    TEST_F(ManagedArenaTests, Resize_LatestAllocationResizeBuffer)
+    {
+        constexpr auto byteSize    = 128;
+        constexpr auto newByteSize = byteSize * 2;
+
+        [[maybe_unused]] const auto firstByteChunk = arena.allocBytes(byteSize);
+        auto secondByteChunk                       = arena.allocBytes(byteSize);
+        const auto offsetBeforeResize              = arena._offset;
+
+        [[maybe_unused]] const auto data = arena.resize(secondByteChunk, byteSize, newByteSize, alignof(void*));
+
+        EXPECT_GT(arena._offset, offsetBeforeResize);
+        EXPECT_EQ(reinterpret_cast<uintptr_t>(secondByteChunk), reinterpret_cast<uintptr_t>(data));
+    }
+
+
+    TEST_F(ManagedArenaTests, Resize_LatestAllocationOnlyResizeByOffsetDifference)
+    {
+        constexpr auto byteSize    = 128;
+        constexpr auto newByteSize = byteSize * 2;
+
+        [[maybe_unused]] const auto firstByteChunk = arena.allocBytes(byteSize);
+        const auto secondByteChunk                 = arena.allocBytes(byteSize);
+        const auto offsetBeforeResize              = arena._offset;
+        const auto expectedOffset                  = offsetBeforeResize + (newByteSize - byteSize);
+
+        [[maybe_unused]] const auto data = arena.resize(secondByteChunk, byteSize, newByteSize, alignof(void*));
+
+        EXPECT_EQ(expectedOffset, arena._offset) << "Offset Mismatch";
+    }
+
+
+
 
 } // namespace pmm

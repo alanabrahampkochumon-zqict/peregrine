@@ -28,7 +28,11 @@ namespace pmm
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::Arena(const size_t arenaSize) noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
-        : _buffer(new uint8_t[arenaSize]), _sizeInBytes(arenaSize), _offset(0), _prevOffset(0)
+        : _buffer(new uint8_t[arenaSize]),
+          _sizeInBytes(arenaSize),
+          _offset(0),
+          _prevOffset(0),
+          _telemetry{ getTelemetryInstance<TelPolicy>(arenaSize) }
     {} // static_cast<uint8_t*>(pmm::memAlloc(arenaSize))
 
 
@@ -36,7 +40,11 @@ namespace pmm
     PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::Arena(void* backingBuffer,
                                                                     const size_t arenaSize) noexcept
         requires std::same_as<MemStrategy, UnmanagedMemory>
-        : _buffer(static_cast<uint8_t*>(backingBuffer)), _sizeInBytes(arenaSize), _offset(0), _prevOffset(0)
+        : _buffer(static_cast<uint8_t*>(backingBuffer)),
+          _sizeInBytes(arenaSize),
+          _offset(0),
+          _prevOffset(0),
+          _telemetry{ getTelemetryInstance<TelPolicy>(arenaSize) }
     {}
 
 
@@ -55,7 +63,7 @@ namespace pmm
         _offset      = std::exchange(arena._offset, 0);
         _prevOffset  = std::exchange(arena._prevOffset, 0);
         _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
-        // _telemetry        = std::exchange(arena._telemetry, nullptr);
+        _telemetry   = std::exchange(arena._telemetry, getTelemetryInstance<TelPolicy>(_sizeInBytes));
     }
 
 
@@ -77,7 +85,7 @@ namespace pmm
         _offset      = std::exchange(arena._offset, 0);
         _prevOffset  = std::exchange(arena._prevOffset, 0);
         _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
-        // _telemetry        = std::exchange(arena._telemetry, nullptr);
+        _telemetry   = std::exchange(arena._telemetry, getTelemetryInstance<TelPolicy>(_sizeInBytes));
 
         return *this;
     }
@@ -143,7 +151,7 @@ namespace pmm
         memset(ptr, 0, sizeInBytes); // TODO: Remove when moving to HAL
 
         // Update the telemetry usage
-        // _telemetry->logAllocationUsage(sizeInBytes);
+        _telemetry.logAllocationUsage(sizeInBytes);
 
         return ptr;
 
@@ -186,7 +194,7 @@ namespace pmm
             T* object = new (raw) T(std::forward<Args>(args)...);
 
             // Update the telemetry usage
-            // _telemetry->logAllocationUsage(objectSize);
+            _telemetry.logAllocationUsage(objectSize);
 
             return object;
         }
@@ -216,9 +224,10 @@ namespace pmm
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE void Arena<MemStrategy, TelPolicy, Safe>::clear() noexcept
     {
-        _offset = 0;
-        // _telemetry->resetCurrentUsage();
+        _offset     = 0;
         _prevOffset = _offset;
+
+        _telemetry.resetCurrentUsage();
     }
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
@@ -247,11 +256,10 @@ namespace pmm
         if (allocationAddress == lastAllocatedAddress && _sizeInBytes >= _offset + offsetDiff)
         {
             _offset += offsetDiff;
-
             // Update the telemetry to include the difference
-            // _telemetry->logAllocationUsage(offsetDiff);
-            // _telemetry->logMinUsage(newSize);
-            // _telemetry->logPeakUsage(newSize);
+            _telemetry.logAllocationUsage(offsetDiff);
+            _telemetry.logMinUsage(newSize);
+            _telemetry.logPeakUsage(newSize);
 
             return oldMemory;
         }
@@ -274,8 +282,9 @@ namespace pmm
         // return nullptr;
     }
 
-    // template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    // PMM_INLINE constexpr ArenaTelemetry Arena<MemStrategy, TelPolicy, Safe>::getTelemetry() const noexcept { return
-    // *_telemetry; }
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
+    PMM_INLINE constexpr const ArenaTelemetryType<TelPolicy>& Arena<MemStrategy, TelPolicy, Safe>::getTelemetry() const noexcept
+    { return _telemetry; }
 
 } // namespace pmm

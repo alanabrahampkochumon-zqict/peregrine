@@ -12,6 +12,7 @@
 
 #include "Policy.h"
 #include "peregrine/telemetry/ArenaTelemetry.h"
+#include "peregrine/utils/Preprocessors.h"
 
 #include <cstdint>
 #include <span>
@@ -265,15 +266,15 @@ namespace pmm
 
         /**
          * @brief Get the telemetry instance associated with this arena.
-         *
-         * @return A readonly @ref ArenaTelemetry instance.
+         * @return A const reference to the @ref ArenaTelemetry instance.
          */
-        // [[nodiscard]] constexpr ArenaTelemetry getTelemetry() const noexcept;
+        [[nodiscard]] constexpr const ArenaTelemetryType<TelPolicy>& getTelemetry() const noexcept;
 
 
     private:
         uint8_t* _buffer;
         uint64_t _sizeInBytes, _offset, _prevOffset;
+        PMM_NO_UNIQUE_ADDR ArenaTelemetryType<TelPolicy> _telemetry{ 0 };
 
         /**
          * @brief Align the internal buffer to @p alignment.
@@ -299,6 +300,8 @@ namespace pmm
         FRIEND_TEST(ManagedArenaTests, MoveAssign_DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
         FRIEND_TEST(ManagedArenaTests, AllocBytes_MovesPrevOffset);
         FRIEND_TEST(ManagedArenaTests, Alloc_MovesPrevOffset);
+        FRIEND_TEST(ManagedArenaTests, Resize_LatestAllocationResizeBuffer);
+        FRIEND_TEST(ManagedArenaTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
         FRIEND_TEST(ManagedArenaTests, Clear_ResetsOffsetToZero);
 
         FRIEND_TEST(ArenaInitialization, NoPassedInTelemetry_ArenaOwnsTelemetry);
