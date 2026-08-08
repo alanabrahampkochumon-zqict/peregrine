@@ -56,8 +56,13 @@ namespace pmm
             return *this;
         }
 
-        // Release the buffer held by the current arena
-        delete[] _buffer; // TODO: Update as we move to HAL
+
+        if constexpr (std::same_as<MemStrategy, ManagedMemory>)
+        {
+            // Release the buffer held by the current arena (ONLY applicable for managed arena)
+            delete[] _buffer; // TODO: Update as we move to HAL
+        }
+
 
         // Move the data members and null-out the moved data members.
         _buffer    = std::exchange(stack._buffer, nullptr);
@@ -100,7 +105,7 @@ namespace pmm
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr bool Stack<Type, MemStrategy, TelemetryPolicy>::isTelemetryEnabled() noexcept 
+    PMM_INLINE constexpr bool Stack<Type, MemStrategy, TelemetryPolicy>::isTelemetryEnabled() noexcept
     { return std::same_as<TelemetryPolicy, telemetry::Enabled>; }
 
 

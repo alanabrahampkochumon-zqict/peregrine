@@ -25,8 +25,8 @@ namespace
     namespace static_tests
     {
         /** @test Verify that unmanaged stack does not free memory.
-         *  @note Since we cant really confirm confirm if a buffer is freed and we only delete[] buffer in the dtor of Stack,
-         *        we can check if its trivially destructible to ensure memory is freed in the stack in unmanaged mode
+         *  @note Since we cant really confirm confirm if a buffer is freed and we only delete[] buffer in the dtor of
+         * Stack, we can check if its trivially destructible to ensure memory is freed in the stack in unmanaged mode
          *        and opposite otherwise.
          */
         static_assert(std::is_trivially_destructible_v<pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory>> == true);
@@ -61,6 +61,64 @@ TEST(StackMemoryManagement, ManagedStack_MaintainsInternalBuffer)
 }
 
 
+TEST(StackMemoryManagement, LooseUnmanagedStack_MoveCtor_DoesNotFreeMemory)
+{
+    constexpr auto size = 4096;
+    auto* buffer        = new uint8_t[size];
+    pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory> stack{ size, buffer };
+
+    const pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory> stack2 = std::move(stack);
+    EXPECT_EQ(size, stack2.freeSize()); // Perform some tests
+    // If the buffer is freed inside, this will crash
+    delete[] buffer;
+}
+
+
+TEST(StackMemoryManagement, LooseUnmanagedStack_MoveAssign_DoesNotFreeMemory)
+{
+    constexpr auto size = 4096;
+    auto* buffer        = new uint8_t[size];
+    auto* buffer2       = new uint8_t[size];
+    pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory> stack{ size, buffer };
+    pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory> stack2{ size, buffer2 };
+
+    stack2 = std::move(stack);
+    EXPECT_EQ(size, stack2.freeSize()); // Perform some tests
+    // If the buffer is freed inside, this will crash
+    delete[] buffer;
+    delete[] buffer2;
+}
+
+
+TEST(StackMemoryManagement, StrictUnmanagedStack_MoveCtor_DoesNotFreeMemory)
+{
+    constexpr auto size = 4096;
+    auto* buffer        = new uint8_t[size];
+    pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory> stack{ size, buffer };
+
+    const pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory> stack2 = std::move(stack);
+    EXPECT_EQ(size, stack2.freeSize()); // Perform some tests
+    // If the buffer is freed inside, this will crash
+    delete[] buffer;
+}
+
+
+TEST(StackMemoryManagement, StrictUnmanagedStack_MoveAssign_DoesNotFreeMemory)
+{
+    constexpr auto size = 4096;
+    auto* buffer        = new uint8_t[size];
+    auto* buffer2       = new uint8_t[size];
+    pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory> stack{ size, buffer };
+    pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory> stack2{ size, buffer2 };
+
+    stack2 = std::move(stack);
+    EXPECT_EQ(size, stack2.freeSize()); // Perform some tests
+    // If the buffer is freed inside, this will crash
+    delete[] buffer;
+    delete[] buffer2;
+}
+
+
 namespace pmm
 {
     /** @brief Verify that unmanaged loose stack uses the external buffer. */
@@ -71,7 +129,9 @@ namespace pmm
         const Stack<stack::Loose, UnmanagedMemory> stack{ size, buffer };
 
         EXPECT_EQ(buffer, stack._buffer);
+        delete[] buffer;
     }
+
 
     /** @brief Verify that unmanaged strict stack uses the external buffer. */
     TEST(StackMemoryManagement, StrictUnmanagedStack_UsesExternalBuffer)
@@ -81,6 +141,7 @@ namespace pmm
         const Stack<stack::Strict, UnmanagedMemory> stack{ size, buffer };
 
         EXPECT_EQ(buffer, stack._buffer);
+        delete[] buffer;
     }
 
 } // namespace pmm
