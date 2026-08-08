@@ -134,7 +134,6 @@ namespace pmm
                                                                      const std::size_t alignment) noexcept
     {
         _alignForward(alignment);
-
         PMM_ASSERT_MSG(sizeInBytes > 0 && _sizeInBytes >= _offset + sizeInBytes, "Arena: Not Enough Memory");
 
         void* ptr   = &_buffer[_offset];
@@ -167,14 +166,6 @@ namespace pmm
 
         // Instantiate the object with arguments.
         return new (raw) T(std::forward<Args>(args)...);
-
-        // if (constexpr auto objectSize = sizeof(T); _sizeInBytes >= _offset + objectSize)
-        // {
-        //
-        // }
-        //
-        // // Return nullptr if the requested memory cannot be allocated
-        // return nullptr;
     }
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
@@ -209,15 +200,17 @@ namespace pmm
     template <typename T>
     PMM_INLINE std::span<T> Arena<MemStrategy, TelPolicy, Safe>::allocV(std::size_t count) noexcept
     {
-        // Allocate the raw memory and wrap it in a span
-        const std::size_t bytesToAllocate = sizeof(T) * count;
-        if (T* rawPointer = static_cast<T*>(allocBytes(bytesToAllocate, alignof(T))))
-        {
-            // No need to update the telemetry since allocBytes already does that
-            return std::span(rawPointer, count);
-        }
 
-        return std::span<T>();
+        // Allocate the raw memory and wrap it in a span
+        return std::span<T>(static_cast<T*>(allocBytes(sizeof(T) * count, alignof(T))), count);
+        // const std::size_t bytesToAllocate = sizeof(T) * count;
+        // if (T* rawPointer = static_cast<T*>(allocBytes(bytesToAllocate, alignof(T))))
+        // {
+        //     // No need to update the telemetry since allocBytes already does that
+        //
+        // }
+
+        // return std::span<T>();
     }
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>

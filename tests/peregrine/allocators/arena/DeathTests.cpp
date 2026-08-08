@@ -45,8 +45,14 @@ TEST_F(ManagedArenaDeathTests, AllocBytes_SizeGreaterThanArenaSize_TriggersAsser
 { EXPECT_DEBUG_DEATH(static_cast<void>(arena.allocBytes(arenaSize + 1)), ""); }
 
 
+/// HERE 8 bit alignment needs to preserved when increment LargeData size beyond the arena size
+/// else it will give a warning on unpadded-byte which will not compile in strict mode(See CML).
 TEST_F(ManagedArenaDeathTests, Alloc_SizeGreaterThanArenaSize_TriggersAssertionInDebugMode)
 { EXPECT_DEBUG_DEATH(static_cast<void>(arena.alloc<LargeData<arenaSize + 8>>()), ""); }
+
+
+TEST_F(ManagedArenaDeathTests, AllocV_SizeGreaterThanArenaSize_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(arena.allocV<int>(arenaSize / sizeof(int) + 1)), ""); }
 
 // TODO: Alignment ne to multiple of 1
 
