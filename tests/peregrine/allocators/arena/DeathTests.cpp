@@ -28,6 +28,11 @@ namespace
         pmm::Arena<> arena{ arenaSize };
     };
 
+    /// @brief Test fixture for @ref pmm::Arena debug assertions for alignments.
+    class ArenaAllocAlignmentTests: public testing::TestWithParam<size_t>
+    {};
+    INSTANTIATE_TEST_SUITE_P(ArenaNonPowersOfTwoAlignment, ArenaAllocAlignmentTests, testing::Values(0, 1, 3, 6, 12));
+
 
 } // namespace
 
@@ -45,6 +50,13 @@ TEST_F(ManagedArenaDeathTests, AllocBytes_SizeGreaterThanArenaSize_TriggersAsser
 { EXPECT_DEBUG_DEATH(static_cast<void>(arena.allocBytes(arenaSize + 1)), ""); }
 
 
+TEST_P(ArenaAllocAlignmentTests, AllocBytes_UnevenAlignment_TriggersAssertionInDebugMode)
+{
+    pmm::Arena arena(512);
+    EXPECT_DEBUG_DEATH(static_cast<void>(arena.allocBytes(12, 12)), "");
+}
+
+
 /// HERE 8 bit alignment needs to preserved when increment LargeData size beyond the arena size
 /// else it will give a warning on unpadded-byte which will not compile in strict mode(See CML).
 TEST_F(ManagedArenaDeathTests, Alloc_SizeGreaterThanArenaSize_TriggersAssertionInDebugMode)
@@ -54,7 +66,7 @@ TEST_F(ManagedArenaDeathTests, Alloc_SizeGreaterThanArenaSize_TriggersAssertionI
 TEST_F(ManagedArenaDeathTests, AllocV_SizeGreaterThanArenaSize_TriggersAssertionInDebugMode)
 { EXPECT_DEBUG_DEATH(static_cast<void>(arena.allocV<int>(arenaSize / sizeof(int) + 1)), ""); }
 
-// TODO: Alignment ne to multiple of 1
+
 
 #endif
 // 1. Nullptr to alloc > size

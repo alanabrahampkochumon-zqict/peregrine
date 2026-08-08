@@ -106,7 +106,7 @@ namespace pmm
     PMM_INLINE void Arena<MemStrategy, TelPolicy, Safe>::_alignForward(const std::size_t alignment) noexcept
     {
         // To make sure alignment is the power of 2
-        assert(std::has_single_bit(alignment));
+        PMM_ASSERT_MSG(std::has_single_bit(alignment), "Alignment must be a power of 2");
 
         // Base address of the pointer
         const auto absoluteBaseAddress = reinterpret_cast<uintptr_t>(_buffer);
