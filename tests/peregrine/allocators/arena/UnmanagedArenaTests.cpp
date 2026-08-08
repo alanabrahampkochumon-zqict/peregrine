@@ -39,12 +39,28 @@ namespace
     {
     public:
         size_t arenaSize{ 2_KB };
-        uint8_t* buffer =new uint8_t[arenaSize];
+        uint8_t* buffer = new uint8_t[arenaSize];
         pmm::Arena<pmm::UnmanagedMemory> arena{ buffer, arenaSize };
 
     protected:
         void TearDown() override { delete[] buffer; }
     };
+
+    
+
+    /**************************************
+     *           STATIC TESTS             *
+     **************************************/
+    
+    namespace static_tests
+    {
+        /** @test Verify that unmanaged arena does not free memory.
+         *  @note Since we cant really confirm confirm if a buffer is freed and we only delete[] buffer in the dtor of
+         *        Arena, we can check if its trivially destructible to ensure memory is freed in the arena in unmanaged
+         *        mode and opposite otherwise.
+         */
+        static_assert(std::is_trivially_destructible_v<pmm::Arena<pmm::UnmanagedMemory>> == true);
+    } // namespace static_tests
 
 } // namespace
 
@@ -99,7 +115,7 @@ TEST_F(UnmanagedArenaTests, MoveCtor_MovesTelemetry)
 
 TEST_F(UnmanagedArenaTests, MoveAssign_CopiesAttributesToNewObject)
 {
-    const auto buffer2               = new uint8_t[256];
+    const auto buffer2              = new uint8_t[256];
     constexpr auto sampleAllocation = 50;
     static_cast<void>(arena.allocBytes(sampleAllocation));
     pmm::Arena<pmm::UnmanagedMemory> arena2(buffer2, 256);
@@ -582,7 +598,7 @@ namespace pmm
 
     TEST_F(UnmanagedArenaTests, MoveAssign_MovesBufferIntoNewObject)
     {
-        const auto buffer2         = new uint8_t[256];
+        const auto buffer2        = new uint8_t[256];
         const auto initialPointer = arena._buffer;
         Arena<pmm::UnmanagedMemory> arena2(buffer2, 256);
 
