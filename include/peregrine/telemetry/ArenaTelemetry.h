@@ -36,10 +36,19 @@ namespace pmm
          *
          * @note The function expects the size of current allocation, not the size of the arena's buffer,
          *       or the current offset.
+         * @note The size is inclusive of padding.
          *
          * @param[in] allocatedByteSize The byte allocated in the current allocation call of the arena.
          */
         constexpr void logAllocationUsage(size_t allocatedByteSize) noexcept;
+
+
+        /**
+         * @brief Update the current arena padding usage.
+         *
+         * @param[in] padding The amount of padding used for the allocation.
+         */
+        constexpr void logPaddingUsage(size_t padding) noexcept;
 
 
         /**
@@ -81,25 +90,38 @@ namespace pmm
 
 
         /**
+         * @brief Get the total padding used in the arena.
+         */
+        [[nodiscard]] constexpr size_t getTotalPadding() const noexcept;
+
+
+        /**
          * @brief Get the current memory usage of the arena.
+         *
+         * @note Size is inclusive of padding.
          */
         [[nodiscard]] constexpr size_t getUsedSize() const noexcept;
 
 
         /**
          * @brief Get the all-time minimum memory usage of the arena.
+         *
+         * @note Size is inclusive of padding.
          */
         [[nodiscard]] constexpr size_t getMinUsage() const noexcept;
 
 
         /**
          * @brief Get the all-time maximum memory usage of the arena.
+         *
+         * @note Size is inclusive of padding.
          */
         [[nodiscard]] constexpr size_t getPeakUsage() const noexcept;
 
     private:
         size_t _currentUsage{ 0 };
         size_t _peakUsage{ 0 };
+        size_t _totalPadding{ 0 };
         size_t _minUsage;
         size_t _arenaSize;
     };
@@ -116,7 +138,8 @@ namespace pmm
         constexpr void resetCurrentUsage() noexcept {}
         constexpr void resetTelemetry() noexcept {}
         [[nodiscard]] constexpr size_t getArenaSize() const noexcept { return 0; }
-        [[nodiscard]] constexpr size_t getCurrentUsage() const noexcept { return 0; }
+        [[nodiscard]] constexpr size_t getFreeSize() const noexcept { return 0; }
+        [[nodiscard]] constexpr size_t getUsedSize() const noexcept { return 0; }
         [[nodiscard]] constexpr size_t getMinUsage() const noexcept { return 0; }
         [[nodiscard]] constexpr size_t getPeakUsage() const noexcept { return 0; }
     };

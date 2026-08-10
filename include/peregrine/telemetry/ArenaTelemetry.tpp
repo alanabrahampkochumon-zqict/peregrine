@@ -30,15 +30,24 @@ namespace pmm
         logPeakUsage(allocatedByteSize);
     }
 
-    PMM_INLINE constexpr void ArenaTelemetry::logMinUsage(size_t usage) noexcept
+
+    PMM_INLINE constexpr void ArenaTelemetry::logPaddingUsage(const size_t padding) noexcept
+    { _totalPadding += padding; }
+
+
+    PMM_INLINE constexpr void ArenaTelemetry::logMinUsage(const size_t usage) noexcept
     { _minUsage = std::min(_minUsage, usage); }
 
 
-    PMM_INLINE constexpr void ArenaTelemetry::logPeakUsage(size_t usage) noexcept
+    PMM_INLINE constexpr void ArenaTelemetry::logPeakUsage(const size_t usage) noexcept
     { _peakUsage = std::max(_peakUsage, usage); }
 
 
-    PMM_INLINE constexpr void ArenaTelemetry::resetCurrentUsage() noexcept { _currentUsage = 0; }
+    PMM_INLINE constexpr void ArenaTelemetry::resetCurrentUsage() noexcept
+    {
+        _currentUsage = 0;
+        _totalPadding = 0;
+    }
 
 
     PMM_INLINE constexpr void ArenaTelemetry::resetTelemetry() noexcept
@@ -46,6 +55,7 @@ namespace pmm
         _currentUsage = 0;
         _minUsage     = std::numeric_limits<size_t>::max();
         _peakUsage    = 0;
+        _totalPadding = 0;
     }
 
 
@@ -62,5 +72,7 @@ namespace pmm
     PMM_INLINE constexpr size_t ArenaTelemetry::getMinUsage() const noexcept { return _minUsage; }
 
     PMM_INLINE constexpr size_t ArenaTelemetry::getPeakUsage() const noexcept { return _peakUsage; }
+
+    PMM_INLINE constexpr size_t ArenaTelemetry::getTotalPadding() const noexcept { return _totalPadding; }
 
 } // namespace pmm

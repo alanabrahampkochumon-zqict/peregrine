@@ -116,6 +116,14 @@ TEST_F(ArenaTelemetryTests, LogPeakUsage_DoesNotUpdatePeakUsageWhenPassingInASma
 }
 
 
+TEST_F(ArenaTelemetryTests, LogPaddingUsage_IncrementsPaddingSize)
+{
+    telemetry.logPaddingUsage(10);
+    telemetry.logPaddingUsage(40);
+    EXPECT_EQ(50, telemetry.getTotalPadding());
+}
+
+
 TEST_F(ArenaTelemetryTests, GetUsedSize_ReturnsTotalAllocationSize)
 {
     telemetry.logAllocationUsage(10);
@@ -140,12 +148,14 @@ TEST_F(ArenaTelemetryTests, ResetCurrentUsage_OnlyResetsCurrentUsage)
     telemetry.logAllocationUsage(20);
     telemetry.logAllocationUsage(30);
     telemetry.logAllocationUsage(10);
+    telemetry.logPaddingUsage(50);
 
     // Reset current usage
     telemetry.resetCurrentUsage();
 
     // Only reset current usage
     EXPECT_EQ(0, telemetry.getUsedSize());
+    EXPECT_EQ(0, telemetry.getTotalPadding());
 
     // But preserves the min and peak usage
     EXPECT_EQ(10, telemetry.getMinUsage());
@@ -160,9 +170,11 @@ TEST_F(ArenaTelemetryTests, ResetTelemetry_ResetsAllUsageStats)
     telemetry.logAllocationUsage(20);
     telemetry.logAllocationUsage(30);
     telemetry.logAllocationUsage(10);
+    telemetry.logPaddingUsage(50);
 
     telemetry.resetTelemetry();
     EXPECT_EQ(0, telemetry.getUsedSize());
+    EXPECT_EQ(0, telemetry.getTotalPadding());
     EXPECT_EQ(std::numeric_limits<std::size_t>::max(), telemetry.getMinUsage());
     EXPECT_EQ(0, telemetry.getPeakUsage());
 }
