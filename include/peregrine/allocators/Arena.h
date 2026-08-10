@@ -44,10 +44,10 @@ namespace pmm
          * @brief Allocate a new physical memory vault from the Operating System.
          *
          * @note When telemetry is enabled, allocates a Telemetry instance on the **Heap**.
+         * @note The memory block is zero-initialized.
          *
          * @param[in] arenaSize The total capacity of the arena in bytes.
          *
-         * @warning The memory block is NOT zero-initialized. // TODO: Update
          * @warning This allocator is Linear and is NOT thread-safe by default.
          *
          * @remarks API specialized for @ref pmm::ManagedMemory.
@@ -64,7 +64,6 @@ namespace pmm
          * @param[in,out] backingBuffer The memory buffer to be used by the allocator.
          * @param[in] arenaSize         The total capacity of the arena in bytes.
          *
-         * @warning The memory block is NOT zero-initialized. // TODO: Update
          * @warning This allocator is Linear and is NOT thread-safe by default.
          *
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
@@ -158,6 +157,7 @@ namespace pmm
          *                  Defaults to sizeof(void*) which is 8 bytes in 64-bit machines.
          *
          * @warning Can cause internal fragmentation, when aligning ill-aligned values.
+         * @warning The memory block is NOT zero-initialized.
          *
          * @return A void pointer to the start of allocated memory or
          *         `nullptr` if the arena cannot allocate memory of requested size.

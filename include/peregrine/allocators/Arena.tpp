@@ -28,7 +28,7 @@ namespace pmm
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::Arena(const size_t arenaSize) noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
-        : _buffer(new uint8_t[arenaSize]),
+        : _buffer(static_cast<uint8_t*>(memAlloc(arenaSize))),
           _sizeInBytes(arenaSize),
           _offset(0),
           _prevOffset(0),
@@ -51,20 +51,17 @@ namespace pmm
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::~Arena() noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
-    { delete[] _buffer; }
+    { memFree(_buffer, _sizeInBytes); }
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::Arena(Arena&& arena) noexcept
-    {
-        // TODO: Move to value init
-        // Move the data members and null-out the moved data members.
-        _buffer      = std::exchange(arena._buffer, nullptr);
-        _offset      = std::exchange(arena._offset, 0);
-        _prevOffset  = std::exchange(arena._prevOffset, 0);
-        _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
-        _telemetry   = std::exchange(arena._telemetry, getTelemetryInstance<TelPolicy>(_sizeInBytes));
-    }
+        : _buffer{ std::exchange(arena._buffer, nullptr) },
+          _sizeInBytes{ std::exchange(arena._sizeInBytes, 0) },
+          _offset{ std::exchange(arena._offset, 0) },
+          _prevOffset{ std::exchange(arena._prevOffset, 0) },
+          _telemetry{ std::exchange(arena._telemetry, getTelemetryInstance<TelPolicy>(_sizeInBytes)) }
+    {}
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
@@ -79,8 +76,7 @@ namespace pmm
 
         if constexpr (std::same_as<MemStrategy, ManagedMemory>)
         {
-            // Release the buffer held by the current arena (ONLY applicable for managed arena)
-            delete[] _buffer; // TODO: Update as we move to HAL
+            memFree(_buffer, _sizeInBytes);
         }
 
         // Move the data members and null-out the moved data members.
@@ -152,8 +148,6 @@ namespace pmm
         void* ptr   = &_buffer[_offset];
         _prevOffset = _offset;
         _offset += sizeInBytes;
-
-        memset(ptr, 0, sizeInBytes); // TODO: Remove when moving to HAL
 
         // Update the telemetry usage
         _telemetry.logAllocationUsage(sizeInBytes);
