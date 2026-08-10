@@ -20,8 +20,8 @@
 // {
 //     std::cout << "Arena Telemetry\n";
 //     std::cout << "Total Memory: " << telemetry.getArenaSize() << " bytes.\n";
-//     std::cout << "Used Memory: " << telemetry.getCurrentUsage() << " bytes.\n";
-//     std::cout << "Free Memory: " << telemetry.getArenaSize() - telemetry.getCurrentUsage() << " bytes.\n";
+//     std::cout << "Used Memory: " << telemetry.getUsedSize() << " bytes.\n";
+//     std::cout << "Free Memory: " << telemetry.getArenaSize() - telemetry.getUsedSize() << " bytes.\n";
 //     std::cout << "Peak Memory Footprint: " << telemetry.getPeakUsage() << " bytes.\n";
 //     std::cout << "Minimum Memory Footprint: " << telemetry.getMinUsage() << " bytes.\n\n\n";
 // }

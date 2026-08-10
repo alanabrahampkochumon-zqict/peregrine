@@ -102,7 +102,7 @@ TEST_F(ManagedArenaTests, MoveCtor_MovesTelemetry)
     const pmm::Arena<> arena2 = std::move(arena);
 
     // Checking for telemetry equality
-    EXPECT_EQ(telemetry.getCurrentUsage(), arena2.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(telemetry.getUsedSize(), arena2.getTelemetry().getUsedSize());
     EXPECT_EQ(telemetry.getPeakUsage(), arena2.getTelemetry().getPeakUsage());
     EXPECT_EQ(telemetry.getArenaSize(), arena2.getTelemetry().getArenaSize());
     EXPECT_EQ(telemetry.getMinUsage(), arena2.getTelemetry().getMinUsage());
@@ -134,7 +134,7 @@ TEST_F(ManagedArenaTests, MoveAssign_MovesTelemetry)
     arena2 = std::move(arena);
 
     // Checking for telemetry equality
-    EXPECT_EQ(telemetry.getCurrentUsage(), arena2.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(telemetry.getUsedSize(), arena2.getTelemetry().getUsedSize());
     EXPECT_EQ(telemetry.getPeakUsage(), arena2.getTelemetry().getPeakUsage());
     EXPECT_EQ(telemetry.getArenaSize(), arena2.getTelemetry().getArenaSize());
     EXPECT_EQ(telemetry.getMinUsage(), arena2.getTelemetry().getMinUsage());
@@ -229,7 +229,7 @@ TEST_F(ManagedArenaTests, AllocBytes_UpdatesTelemetry)
 
     EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
     EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
-    EXPECT_EQ(expectedUsage, arena.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(expectedUsage, arena.getTelemetry().getUsedSize());
 }
 
 
@@ -275,7 +275,7 @@ TEST_F(ManagedArenaTests, Alloc_UpdatesTelemetry)
 
     EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
     EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
-    EXPECT_EQ(expectedUsage, arena.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(expectedUsage, arena.getTelemetry().getUsedSize());
 }
 
 
@@ -356,7 +356,7 @@ TEST_F(ManagedArenaTests, AllocV_UpdatesTelemetry)
 
     EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
     EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
-    EXPECT_EQ(expectedUsage, arena.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(expectedUsage, arena.getTelemetry().getUsedSize());
 }
 
 
@@ -459,14 +459,14 @@ TEST_F(ManagedArenaTests, Resize_SameMemorySize_DoesNotUpdateTelemetry)
 
     const auto allocatedBytes = arena.allocBytes(byteSize);
 
-    const auto oldUsage     = arena.getTelemetry().getCurrentUsage();
+    const auto oldUsage     = arena.getTelemetry().getUsedSize();
     const auto oldMinUsage  = arena.getTelemetry().getMinUsage();
     const auto oldPeakUsage = arena.getTelemetry().getPeakUsage();
 
 
     [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, byteSize, alignof(void*));
 
-    EXPECT_EQ(oldUsage, arena.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(oldUsage, arena.getTelemetry().getUsedSize());
     EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
     EXPECT_EQ(oldPeakUsage, arena.getTelemetry().getPeakUsage());
 }
@@ -479,14 +479,14 @@ TEST_F(ManagedArenaTests, Resize_SmallerMemorySize_DoesNotUpdateTelemetry)
 
     const auto allocatedBytes = arena.allocBytes(byteSize);
 
-    const auto oldUsage     = arena.getTelemetry().getCurrentUsage();
+    const auto oldUsage     = arena.getTelemetry().getUsedSize();
     const auto oldMinUsage  = arena.getTelemetry().getMinUsage();
     const auto oldPeakUsage = arena.getTelemetry().getPeakUsage();
 
 
     [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, newByteSize, alignof(void*));
 
-    EXPECT_EQ(oldUsage, arena.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(oldUsage, arena.getTelemetry().getUsedSize());
     EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
     EXPECT_EQ(oldPeakUsage, arena.getTelemetry().getPeakUsage());
 }
@@ -501,14 +501,14 @@ TEST_F(ManagedArenaTests, Resize_LatestAllocationResize_UpdatesTelemetry)
     [[maybe_unused]] const auto unusedBytes = arena.allocBytes(50);
     const auto allocatedBytes               = arena.allocBytes(byteSize);
 
-    const auto oldUsage                      = arena.getTelemetry().getCurrentUsage();
+    const auto oldUsage                      = arena.getTelemetry().getUsedSize();
     const auto oldMinUsage                   = arena.getTelemetry().getMinUsage();
     [[maybe_unused]] const auto oldPeakUsage = arena.getTelemetry().getPeakUsage();
 
 
     [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, newByteSize, alignof(void*));
 
-    EXPECT_EQ(oldUsage + byteDifference, arena.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(oldUsage + byteDifference, arena.getTelemetry().getUsedSize());
     EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
     EXPECT_EQ(oldPeakUsage + byteDifference, arena.getTelemetry().getPeakUsage());
 }
@@ -523,13 +523,13 @@ TEST_F(ManagedArenaTests, Resize_InBetweenAllocationResize_UpdatesTelemetry)
     const auto allocatedBytes               = arena.allocBytes(byteSize);
     [[maybe_unused]] const auto unusedBytes = arena.allocBytes(50);
 
-    const auto oldUsage    = arena.getTelemetry().getCurrentUsage();
+    const auto oldUsage    = arena.getTelemetry().getUsedSize();
     const auto oldMinUsage = arena.getTelemetry().getMinUsage();
 
 
     [[maybe_unused]] const auto data = arena.resize(allocatedBytes, byteSize, newByteSize, alignof(void*));
 
-    EXPECT_EQ(oldUsage + newByteSize, arena.getTelemetry().getCurrentUsage());
+    EXPECT_EQ(oldUsage + newByteSize, arena.getTelemetry().getUsedSize());
     EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
     EXPECT_EQ(newByteSize, arena.getTelemetry().getPeakUsage());
 }
@@ -554,7 +554,7 @@ namespace pmm
         EXPECT_EQ(0, arena._offset);
         EXPECT_EQ(0, arena._prevOffset);
         EXPECT_EQ(0, arena._sizeInBytes);
-        EXPECT_EQ(0, arena.getTelemetry().getCurrentUsage());
+        EXPECT_EQ(0, arena.getTelemetry().getUsedSize());
     }
 
 
@@ -720,7 +720,7 @@ namespace pmm
 
         EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
         EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
-        EXPECT_EQ(0, arena.getTelemetry().getCurrentUsage());
+        EXPECT_EQ(0, arena.getTelemetry().getUsedSize());
     }
 
 

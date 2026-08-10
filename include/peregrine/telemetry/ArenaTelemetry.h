@@ -83,7 +83,7 @@ namespace pmm
         /**
          * @brief Get the current memory usage of the arena.
          */
-        [[nodiscard]] constexpr size_t getCurrentUsage() const noexcept;
+        [[nodiscard]] constexpr size_t getUsedSize() const noexcept;
 
 
         /**
