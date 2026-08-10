@@ -704,6 +704,36 @@ namespace pmm
     }
 
 
+
+    TEST_F(UnmanagedArenaTests, AllocBytes_UpdatesTelemetryPadding)
+    {
+        const auto allocation = arena.allocBytes(128, 128);
+        const auto expectedPadding =
+            reinterpret_cast<uintptr_t>(allocation) - reinterpret_cast<uintptr_t>(arena._buffer);
+
+        EXPECT_EQ(expectedPadding, arena.getTelemetry().getTotalPadding());
+    }
+
+
+    TEST_F(UnmanagedArenaTests, Alloc_UpdatesTelemetryPadding)
+    {
+        const auto vec4                = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+        const auto expectedPadding = reinterpret_cast<uintptr_t>(vec4) - reinterpret_cast<uintptr_t>(arena._buffer);
+
+        EXPECT_EQ(expectedPadding, arena.getTelemetry().getTotalPadding());
+    }
+
+
+    TEST_F(UnmanagedArenaTests, AllocV_UpdatesTelemetryPadding)
+    {
+        const auto data = arena.allocV<Vec4>(10);
+        const auto expectedPadding =
+            reinterpret_cast<uintptr_t>(data.data()) - reinterpret_cast<uintptr_t>(arena._buffer);
+
+        EXPECT_EQ(expectedPadding, arena.getTelemetry().getTotalPadding());
+    }
+
+
     TEST_F(UnmanagedArenaTests, Clear_ResetsOffsetToZero)
     {
         [[maybe_unused]] const auto chunkOne = arena.allocBytes(128);
@@ -739,6 +769,7 @@ namespace pmm
         EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
         EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
         EXPECT_EQ(0, arena.getTelemetry().getUsedSize());
+        EXPECT_EQ(0, arena.getTelemetry().getTotalPadding());
     }
 
 

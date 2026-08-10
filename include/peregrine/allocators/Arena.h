@@ -315,6 +315,9 @@ namespace pmm
         FRIEND_TEST(UnmanagedArenaTests, MoveAssign_DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
         FRIEND_TEST(UnmanagedArenaTests, AllocBytes_MovesPrevOffset);
         FRIEND_TEST(UnmanagedArenaTests, Alloc_MovesPrevOffset);
+        FRIEND_TEST(UnmanagedArenaTests, AllocBytes_UpdatesTelemetryPadding);
+        FRIEND_TEST(UnmanagedArenaTests, Alloc_UpdatesTelemetryPadding);
+        FRIEND_TEST(UnmanagedArenaTests, AllocV_UpdatesTelemetryPadding);
         FRIEND_TEST(UnmanagedArenaTests, Resize_LatestAllocationResizeBuffer);
         FRIEND_TEST(UnmanagedArenaTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
         FRIEND_TEST(UnmanagedArenaTests, Clear_ResetsOffsetToZero);
