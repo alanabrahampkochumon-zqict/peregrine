@@ -690,9 +690,8 @@ namespace pmm
 
     TEST_F(ManagedArenaTests, AllocBytes_UpdatesTelemetryPadding)
     {
-        const auto buffer = arena.allocBytes(128, 128);
-        const auto expectedPadding =
-            reinterpret_cast<uintptr_t>(buffer) - reinterpret_cast<uintptr_t>(arena._buffer);
+        const auto buffer          = arena.allocBytes(128, 128);
+        const auto expectedPadding = reinterpret_cast<uintptr_t>(buffer) - reinterpret_cast<uintptr_t>(arena._buffer);
 
         EXPECT_EQ(expectedPadding, arena.getTelemetry().getTotalPadding());
     }
@@ -700,7 +699,7 @@ namespace pmm
 
     TEST_F(ManagedArenaTests, Alloc_UpdatesTelemetryPadding)
     {
-        const auto vec4                = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+        const auto vec4            = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
         const auto expectedPadding = reinterpret_cast<uintptr_t>(vec4) - reinterpret_cast<uintptr_t>(arena._buffer);
 
         EXPECT_EQ(expectedPadding, arena.getTelemetry().getTotalPadding());
@@ -786,6 +785,23 @@ namespace pmm
         [[maybe_unused]] const auto data = arena.resize(secondByteChunk, byteSize, newByteSize, alignof(void*));
 
         EXPECT_EQ(expectedOffset, arena._offset) << "Offset Mismatch";
+    }
+
+
+    TEST_F(ManagedArenaTests, ZeroOut_ZeroesOutTheInternalBuffer)
+    {
+        // Allocate and clear the arena to ensure there is some data
+        static_cast<void>(arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+        arena.clear();
+
+        // Zero-out
+        arena.zeroOut();
+        
+        // Assert arena's buffer is cleared
+        for (size_t i = 0; i < arena.size(); ++i)
+        {
+            EXPECT_EQ(0, arena._buffer[i]);
+        }
     }
 
 } // namespace pmm

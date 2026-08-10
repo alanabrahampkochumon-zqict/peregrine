@@ -249,6 +249,15 @@ namespace pmm
 
 
         /**
+         * @brief Zero out the arena's buffer.
+         *
+         * @warning This will completely overwrite the arena entire buffer with zeroes. Only call this method if you
+         *          want a zero-ed out arena after clearing.
+         */
+        void zeroOut() const noexcept;
+
+
+        /**
          * @brief Resize @p oldMemory block from @p oldSize to @p newSize.
          *
          * @note This does not resize the arena.
@@ -307,6 +316,7 @@ namespace pmm
         FRIEND_TEST(ManagedArenaTests, Resize_LatestAllocationResizeBuffer);
         FRIEND_TEST(ManagedArenaTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
         FRIEND_TEST(ManagedArenaTests, Clear_ResetsOffsetToZero);
+        FRIEND_TEST(ManagedArenaTests, ZeroOut_ZeroesOutTheInternalBuffer);
 
         FRIEND_TEST(UnmanagedArenaTests, MoveCtor_ClearsMovedArena);
         FRIEND_TEST(UnmanagedArenaTests, MoveCtor_MovesBufferIntoNewObject);

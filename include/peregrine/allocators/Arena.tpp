@@ -229,6 +229,13 @@ namespace pmm
         _telemetry.resetCurrentUsage();
     }
 
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
+    PMM_INLINE void Arena<MemStrategy, TelPolicy, Safe>::zeroOut() const noexcept
+    {
+        std::memset(_buffer, 0, _sizeInBytes);
+    }
+
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE void* Arena<MemStrategy, TelPolicy, Safe>::resize(void* oldMemory, const std::size_t oldSize,
                                                                  const std::size_t newSize,

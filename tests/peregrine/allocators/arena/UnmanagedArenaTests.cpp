@@ -545,6 +545,24 @@ TEST_F(UnmanagedArenaTests, Resize_InBetweenAllocationResize_UpdatesTelemetry)
 }
 
 
+TEST_F(UnmanagedArenaTests, ZeroOut_ZeroesOutTheInternalBuffer)
+{
+    // Allocate and clear the arena to ensure there is some data
+    static_cast<void>(arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+    arena.clear();
+
+    // Zero-out
+    arena.zeroOut();
+
+    // Assert arena's buffer is cleared
+    // No need for friend tests since we are passing the buffer
+    // and can access it
+    for (size_t i = 0; i < arena.size(); ++i)
+    {
+        EXPECT_EQ(0, buffer[i]);
+    }
+}
+
 
 /**************************************
  *                                    *
