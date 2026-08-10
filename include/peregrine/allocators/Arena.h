@@ -315,29 +315,6 @@ namespace pmm
         FRIEND_TEST(UnmanagedArenaTests, Resize_LatestAllocationResizeBuffer);
         FRIEND_TEST(UnmanagedArenaTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
         FRIEND_TEST(UnmanagedArenaTests, Clear_ResetsOffsetToZero);
-
-        FRIEND_TEST(ArenaInitialization, NoPassedInTelemetry_ArenaOwnsTelemetry);
-        FRIEND_TEST(ArenaInitialization, PassedInTelemetry_ArenaDoesNotOwnTelemetry);
-        FRIEND_TEST(ArenaInitialization, AlignedArena_NoPassedInTelemetry_ArenaOwnsTelemetry);
-        FRIEND_TEST(ArenaInitialization, AlignedArena_PassedInTelemetry_ArenaDoesNotOwnTelemetry);
-        FRIEND_TEST(AlignedArenaInitialization, InternalState_AlignBaseOffset);
-        FRIEND_TEST(ArenaMoveConstructor, NullsOutInternalBuffer);
-        FRIEND_TEST(ArenaMoveConstructor, MovesBufferIntoNewObject);
-        FRIEND_TEST(ArenaMoveAssignment, NullsOutInternalBuffer);
-        FRIEND_TEST(ArenaMoveAssignment, MovesBufferIntoNewObject);
-        FRIEND_TEST(ArenaMoveAssignment, SelfAssignmentReturnsTheSameArena);
-        FRIEND_TEST(ArenaMoveConstructor, AlignedArena_MovesBufferIntoNewObject);
-        FRIEND_TEST(ArenaMoveAssignment, DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
-        FRIEND_TEST(ArenaAllocBytes, OffsetMinusPrevOffsetGivesObjectSize);
-        FRIEND_TEST(ArenaAlloc, AlignsToTargetAlignment);
-        FRIEND_TEST(ArenaAlloc, OffsetMinusPrevOffsetGivesObjectSize);
-        FRIEND_TEST(ArenaAllocAs, AlignsToGivenAlignment);
-        FRIEND_TEST(ArenaAllocAs, OffsetMinusPrevOffsetGivesObjectSize);
-        FRIEND_TEST(ArenaFreeAll, ResetsOffsetToZero);
-        FRIEND_TEST(ArenaFreeAll, AlignedArena_ResetsOffsetToAlignedAddress);
-        FRIEND_TEST(ArenaResize, LatestAllocationResizeBuffer);
-        FRIEND_TEST(ArenaResize, LatestAllocationOnlyResizeByOffsetDifference);
-        FRIEND_TEST(ArenaResize, AllocationBeforePriorAllocationReturnNewBuffer);
 #endif
     };
 
