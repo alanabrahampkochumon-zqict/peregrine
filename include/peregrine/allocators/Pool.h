@@ -109,6 +109,7 @@ namespace pmm
          * @brief Allocate a chunk from the pool.
          *
          * @warning Does not check for free space availability in *Release Mode*.
+         * @warning The memory block may NOT zero-initialized.
          *
          * @return A `void pointer` to starting memory address of the allocation.
          *

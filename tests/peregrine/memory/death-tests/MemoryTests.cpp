@@ -35,8 +35,9 @@ namespace
 } // namespace
 
 
-
 TEST_P(MemAllocDeathTests, InvalidSizes_TriggersAssertionInDebugMode)
 { EXPECT_DEATH(static_cast<void>(pmm::memAlloc(GetParam())), ""); }
+
+#endif
 
 /** @} */

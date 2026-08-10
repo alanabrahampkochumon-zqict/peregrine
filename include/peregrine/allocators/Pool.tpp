@@ -11,6 +11,7 @@
 
 
 
+#include "peregrine/memory/Memory.h"
 #include "peregrine/utils/Helpers.h"
 #include "peregrine/utils/Preprocessors.h"
 
@@ -25,7 +26,7 @@ namespace pmm
     PMM_INLINE constexpr Pool<MemStrategy, TelPolicy>::Pool(const size_t poolSize, const size_t chuckSize,
                                                             const size_t chunkAlignment) noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
-        : _buffer{ new uint8_t[poolSize] },
+        : _buffer{ static_cast<uint8_t*>(memAlloc(poolSize)) },
           _poolSize{ poolSize },
           _chunkSize{ chuckSize },
           _chunkAlignment{ chunkAlignment },
@@ -49,8 +50,6 @@ namespace pmm
         // instead of parameter
         _telemetry.setAlignedChunkSize(_chunkSize);
         _telemetry.setPadding(_initialAlignmentPadding);
-
-        // TODO: Update buffer init to HAL
     }
 
 
@@ -82,8 +81,6 @@ namespace pmm
         // instead of parameter
         _telemetry.setAlignedChunkSize(_chunkSize);
         _telemetry.setPadding(_initialAlignmentPadding);
-
-        // TODO: Update buffer init to HAL
     }
 
 
@@ -113,7 +110,7 @@ namespace pmm
         if constexpr (std::same_as<MemStrategy, ManagedMemory>)
         {
             // Release the buffer held by the current pool (ONLY applicable for managed pool)
-            delete[] _buffer; // TODO: Update as we move to HAL
+            memFree(_buffer, _poolSize);
         }
 
         // Move the data members and null-out the moved data members.
@@ -146,7 +143,7 @@ namespace pmm
         _telemetry.logAlloc();
 
         _head = _head->next;
-        return memset(node, 0, _chunkSize);
+        return node;
     }
 
 

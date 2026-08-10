@@ -157,7 +157,8 @@ namespace pmm
          *                  Defaults to sizeof(void*) which is 8 bytes in 64-bit machines.
          *
          * @warning Can cause internal fragmentation, when aligning ill-aligned values.
-         * @warning The memory block is NOT zero-initialized.
+         * @warning Does not check for free space availability in *Release Mode*. // TODO
+         * @warning The memory block may NOT zero-initialized.
          *
          * @return A void pointer to the start of allocated memory or
          *         `nullptr` if the arena cannot allocate memory of requested size.
