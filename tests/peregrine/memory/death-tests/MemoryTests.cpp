@@ -39,28 +39,4 @@ namespace
 TEST_P(MemAllocDeathTests, InvalidSizes_TriggersAssertionInDebugMode)
 { EXPECT_DEATH(static_cast<void>(pmm::memAlloc(GetParam())), ""); }
 
-
-TEST(MemFreeDeathTests, Nullptr_TriggersAssertionInDebugMode) { EXPECT_DEATH(pmm::memFree(nullptr, 0), ""); }
-
-
-/**************************************
- *         LINUX & MACOS TESTS        *
- **************************************/
-
-    #if defined(PMM_PLATFORM_LINUX) || defined(PMM_PLATFORM_MACOS)
-/**
- * @test Verify that freeing a zero size ptr triggers assertion on Linux and MacOS.
- */
-TEST(MemFreeDeathTests, ZeroSize_TriggersAssertionInDebugMode)
-{
-    const auto address = pmm::memAlloc(24);
-    EXPECT_DEATH(pmm::memFree(address, 0), "");
-}
-
-    #endif
-
-
-
-#endif
-
 /** @} */

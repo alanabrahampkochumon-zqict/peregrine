@@ -30,7 +30,10 @@ namespace pmm
 
     bool memFree(void* start, std::size_t) noexcept // NOLINT(bugprone-exception-escape)
     {
-        PMM_ASSERT_MSG(start != nullptr, "Cannot free a nullptr!");
+        if (start == nullptr || size == 0)
+        {
+            return false;
+        }
         std::free(start);
         return true;
     }

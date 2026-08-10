@@ -29,8 +29,10 @@ namespace pmm
 
     bool memFree(void* start, std::size_t size) noexcept // NOLINT(bugprone-exception-escape)
     {
-        PMM_ASSERT_MSG(start != nullptr, "Cannot free a nullptr!");
-        PMM_ASSERT_MSG(size > 0, "Cannot free 0 bytes of memory!");
+        if (start == nullptr || size == 0)
+        {
+            return false;
+        }
         return munmap(start, size) == 0;
     }
 

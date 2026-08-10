@@ -9,7 +9,6 @@
  */
 
 
-#include <cstring>
 #include <gtest/gtest.h>
 #include <limits>
 #include <peregrine/memory/Memory.h>
@@ -80,6 +79,26 @@ TEST(PMMMemory, MemFree_ReturnsTrueOnSuccessfulFree)
         EXPECT_TRUE(false) << "There was an error allocating memory for testing!";
     }
 }
+
+
+TEST(PMMMemory, MemFree_NullptrReturnsFalse) { EXPECT_FALSE(pmm::memFree(nullptr, 0)); }
+
+
+/**************************************
+ *         LINUX & MACOS TESTS        *
+ **************************************/
+
+#if defined(PMM_PLATFORM_LINUX) || defined(PMM_PLATFORM_MACOS)
+/**
+ * @test Verify that freeing a zero size ptr on non-Windows platforms return false.
+ */
+TEST(PMMMemory, MemFree_ZeroSizeReturnsFalse)
+{
+    const auto address = pmm::memAlloc(24);
+    EXPECT_FALSE(pmm::memFree(address, 0));
+}
+
+#endif
 
 
 TEST(PMMMemory, QueryMemoryDetailsReturnsAValidStructure)
