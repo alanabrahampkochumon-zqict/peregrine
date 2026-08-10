@@ -137,7 +137,9 @@ namespace pmm
         //
         //      64 -> 1 0 0 0 0 0 0 (Padding Required)
         //       0 -> 0 0 0 0 0 0 0 (Offset Increment)
-        _offset += (alignment - misalignment) & (alignment - 1);
+        const auto padding = (alignment - misalignment) & (alignment - 1);
+        _telemetry.logPaddingUsage(padding);
+        _offset += padding;
     }
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>

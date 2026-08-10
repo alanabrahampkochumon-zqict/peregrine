@@ -52,8 +52,8 @@ namespace
     {
         /** @test Verify that manged arena frees buffer it allocates.
          *  @note Since we cant really confirm confirm if a buffer is freed and we only delete[] buffer in the dtor of
-         *        Arena, we can check if its trivially destructible to ensure memory is freed in the arena in unmanaged mode
-         *        and opposite otherwise.
+         *        Arena, we can check if its trivially destructible to ensure memory is freed in the arena in unmanaged
+         * mode and opposite otherwise.
          */
         static_assert(std::is_trivially_destructible_v<pmm::Arena<pmm::ManagedMemory>> == false);
     } // namespace static_tests
@@ -106,6 +106,7 @@ TEST_F(ManagedArenaTests, MoveCtor_MovesTelemetry)
     EXPECT_EQ(telemetry.getPeakUsage(), arena2.getTelemetry().getPeakUsage());
     EXPECT_EQ(telemetry.getArenaSize(), arena2.getTelemetry().getArenaSize());
     EXPECT_EQ(telemetry.getMinUsage(), arena2.getTelemetry().getMinUsage());
+    EXPECT_EQ(telemetry.getTotalPadding(), arena2.getTelemetry().getTotalPadding());
 }
 
 
@@ -138,6 +139,7 @@ TEST_F(ManagedArenaTests, MoveAssign_MovesTelemetry)
     EXPECT_EQ(telemetry.getPeakUsage(), arena2.getTelemetry().getPeakUsage());
     EXPECT_EQ(telemetry.getArenaSize(), arena2.getTelemetry().getArenaSize());
     EXPECT_EQ(telemetry.getMinUsage(), arena2.getTelemetry().getMinUsage());
+    EXPECT_EQ(telemetry.getTotalPadding(), arena2.getTelemetry().getTotalPadding());
 }
 
 
@@ -686,6 +688,36 @@ namespace pmm
     }
 
 
+    TEST_F(ManagedArenaTests, AllocBytes_UpdatesTelemetryPadding)
+    {
+        const auto buffer = arena.allocBytes(128, 128);
+        const auto expectedPadding =
+            reinterpret_cast<uintptr_t>(buffer) - reinterpret_cast<uintptr_t>(arena._buffer);
+
+        EXPECT_EQ(expectedPadding, arena.getTelemetry().getTotalPadding());
+    }
+
+
+    TEST_F(ManagedArenaTests, Alloc_UpdatesTelemetryPadding)
+    {
+        const auto vec4                = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+        const auto expectedPadding = reinterpret_cast<uintptr_t>(vec4) - reinterpret_cast<uintptr_t>(arena._buffer);
+
+        EXPECT_EQ(expectedPadding, arena.getTelemetry().getTotalPadding());
+    }
+
+
+    TEST_F(ManagedArenaTests, AllocV_UpdatesTelemetryPadding)
+    {
+        const auto data = arena.allocV<Vec4>(10);
+        const auto expectedPadding =
+            reinterpret_cast<uintptr_t>(data.data()) - reinterpret_cast<uintptr_t>(arena._buffer);
+
+        EXPECT_EQ(expectedPadding, arena.getTelemetry().getTotalPadding());
+    }
+
+
+
     TEST_F(ManagedArenaTests, Clear_ResetsOffsetToZero)
     {
         [[maybe_unused]] const auto chunkOne = arena.allocBytes(128);
@@ -721,6 +753,7 @@ namespace pmm
         EXPECT_EQ(expectedMinUsage, arena.getTelemetry().getMinUsage());
         EXPECT_EQ(expectedPeakUsage, arena.getTelemetry().getPeakUsage());
         EXPECT_EQ(0, arena.getTelemetry().getUsedSize());
+        EXPECT_EQ(0, arena.getTelemetry().getTotalPadding());
     }
 
 
@@ -754,8 +787,5 @@ namespace pmm
 
         EXPECT_EQ(expectedOffset, arena._offset) << "Offset Mismatch";
     }
-
-
-
 
 } // namespace pmm
