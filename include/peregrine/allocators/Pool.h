@@ -78,6 +78,27 @@ namespace pmm
          */
         constexpr Pool& operator=(const Pool&) = delete;
 
+
+        /**
+         * @brief Transfer the current Pool's memory to a new object.
+         *
+         * @param[in,out] pool The pool to move into the new object.
+         */
+        constexpr Pool(Pool&& pool) noexcept;
+
+
+        /**
+         * @brief Transfer the current Pool's memory to another object.
+         *
+         * @warning This will delete any buffers held by the LHS object.
+         *
+         * @param[in,out] pool The pool to move into the object.
+         *
+         * @return The current pool instance.
+         */
+        constexpr Pool& operator=(Pool&& pool) noexcept;
+
+
         /**
          * @brief Get the maximum possible allocations in the pool.
          */
@@ -211,24 +232,38 @@ namespace pmm
 
 
 
-        FRIEND_TEST(ManagedPoolAllocator, Ctor_InitializesMemberVariables);
-        FRIEND_TEST(ManagedPoolAllocator, Ctor_ClearsThePool);
-        FRIEND_TEST(ManagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes);
-        FRIEND_TEST(ManagedPoolAllocator, GetMaxAllocationCount_ReturnsChunkCount);
-        FRIEND_TEST(ManagedPoolAllocator, Ctor_InitializesTelemetryWithCorrectValues);
+        FRIEND_TEST(ManagedPoolAllocatorTests, Ctor_InitializesMemberVariables);
+        FRIEND_TEST(ManagedPoolAllocatorTests, Ctor_ClearsThePool);
+        FRIEND_TEST(ManagedPoolAllocatorTests, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes);
+        FRIEND_TEST(ManagedPoolAllocatorTests, GetMaxAllocationCount_ReturnsChunkCount);
+        FRIEND_TEST(ManagedPoolAllocatorTests, Ctor_InitializesTelemetryWithCorrectValues);
+        FRIEND_TEST(ManagedPoolAllocatorTests, MoveCtor_ClearsMovedPool);
+        FRIEND_TEST(ManagedPoolAllocatorTests, MoveCtor_ClearsMovedPool);
+        FRIEND_TEST(ManagedPoolAllocatorTests, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(ManagedPoolAllocatorTests, MoveAssign_ClearsMovedPool);
+        FRIEND_TEST(ManagedPoolAllocatorTests, MoveAssign_MovesBufferIntoNewObject);
+        FRIEND_TEST(ManagedPoolAllocatorTests, MoveAssign_SelfAssignmentReturnsTheSamePool);
+        FRIEND_TEST(ManagedPoolAllocatorTests, MoveAssign_DeletingOriginalPoolDoNotDeleteTheNewPoolsMemory);
 
-        FRIEND_TEST(PoolAllocatorAlignment, Managed_Ctor_AlignsBaseAddress);
-        FRIEND_TEST(PoolAllocatorAlignment, Managed_Ctor_AlignsChunksize);
+        FRIEND_TEST(PoolAllocatorAlignmentTests, Managed_Ctor_AlignsBaseAddress);
+        FRIEND_TEST(PoolAllocatorAlignmentTests, Managed_Ctor_AlignsChunksize);
 
 
-        FRIEND_TEST(UnmanagedPoolAllocator, Ctor_InitializesMemberVariables);
-        FRIEND_TEST(UnmanagedPoolAllocator, Ctor_ClearsThePool);
-        FRIEND_TEST(UnmanagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes);
-        FRIEND_TEST(UnmanagedPoolAllocator, GetMaxAllocationCount_ReturnsChunkCount);
-        FRIEND_TEST(UnmanagedPoolAllocator, Ctor_InitializesTelemetryWithCorrectValues);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, Ctor_InitializesMemberVariables);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, Ctor_ClearsThePool);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, GetMaxAllocationCount_ReturnsChunkCount);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, Ctor_InitializesTelemetryWithCorrectValues);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, MoveCtor_ClearsMovedPool);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, MoveCtor_ClearsMovedPool);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, MoveAssign_ClearsMovedPool);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, MoveAssign_MovesBufferIntoNewObject);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, MoveAssign_SelfAssignmentReturnsTheSamePool);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, MoveAssign_DeletingOriginalPoolDoNotDeleteTheNewPoolsMemory);
 
-        FRIEND_TEST(PoolAllocatorAlignment, Unmanaged_Ctor_AlignsBaseAddress);
-        FRIEND_TEST(PoolAllocatorAlignment, Unmanaged_Ctor_AlignsChunksize);
+        FRIEND_TEST(PoolAllocatorAlignmentTests, Unmanaged_Ctor_AlignsBaseAddress);
+        FRIEND_TEST(PoolAllocatorAlignmentTests, Unmanaged_Ctor_AlignsChunksize);
 
 #endif
     };

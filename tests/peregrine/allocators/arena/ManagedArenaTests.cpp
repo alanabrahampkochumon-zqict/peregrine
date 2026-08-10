@@ -638,7 +638,7 @@ namespace pmm
         EXPECT_NE(nullptr, arena2._buffer);
 
         // Write arbitrary data into the buffer
-        // NOTE: i % 128 ensures that uint8_t does not overflow
+        // NOTE: i % 255 ensures that uint8_t does not overflow
         for (uint32_t i = 0; i < scopedArenaSize; ++i)
         {
             arena2._buffer[i] = i % 255;

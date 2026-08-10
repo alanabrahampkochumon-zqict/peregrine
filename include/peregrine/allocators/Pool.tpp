@@ -88,6 +88,50 @@ namespace pmm
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
+    PMM_INLINE constexpr Pool<MemStrategy, TelPolicy>::Pool(Pool&& pool) noexcept
+        : _buffer{ std::exchange(pool._buffer, nullptr) },
+          _poolSize{ std::exchange(pool._poolSize, 0) },
+          _chunkSize{ std::exchange(pool._chunkSize, 0) },
+          _chunkAlignment{ std::exchange(pool._chunkAlignment, 0) },
+          _initialAlignmentPadding{ std::exchange(pool._initialAlignmentPadding, 0) },
+          _chunkCount{ std::exchange(pool._chunkCount, 0) },
+          _head{ std::exchange(pool._head, nullptr) },
+          _telemetry{ std::exchange(pool._telemetry,
+                                    getTelemetryInstance<TelPolicy>(_poolSize, _chunkSize, _chunkAlignment)) }
+    {}
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
+    PMM_INLINE constexpr Pool<MemStrategy, TelPolicy>& Pool<MemStrategy, TelPolicy>::operator=(Pool&& pool) noexcept
+    {
+        // For self assignment return the current pool.
+        if (this == &pool)
+        {
+            return *this;
+        }
+
+        if constexpr (std::same_as<MemStrategy, ManagedMemory>)
+        {
+            // Release the buffer held by the current pool (ONLY applicable for managed pool)
+            delete[] _buffer; // TODO: Update as we move to HAL
+        }
+
+        // Move the data members and null-out the moved data members.
+        _buffer                  = std::exchange(pool._buffer, nullptr);
+        _poolSize                = std::exchange(pool._poolSize, 0);
+        _chunkSize               = std::exchange(pool._chunkSize, 0);
+        _chunkAlignment          = std::exchange(pool._chunkAlignment, 0);
+        _initialAlignmentPadding = std::exchange(pool._initialAlignmentPadding, 0);
+        _chunkCount              = std::exchange(pool._chunkCount, 0);
+        _head                    = std::exchange(pool._head, nullptr);
+        _telemetry =
+            std::exchange(pool._telemetry, getTelemetryInstance<TelPolicy>(_poolSize, _chunkSize, _chunkAlignment));
+
+        return *this;
+    }
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
     PMM_INLINE constexpr size_t Pool<MemStrategy, TelPolicy>::getMaxAllocationCount() const noexcept
     { return _chunkCount; }
 
