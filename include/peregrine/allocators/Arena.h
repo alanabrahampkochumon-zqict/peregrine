@@ -158,7 +158,7 @@ namespace pmm
          *
          * @warning Can cause internal fragmentation, when aligning ill-aligned values.
          * @warning Does not check for free space availability in *Release Mode*. // TODO
-         * @warning The memory block may NOT zero-initialized.
+         * @warning The memory block may NOT be zero-initialized.
          *
          * @return A void pointer to the start of allocated memory or
          *         `nullptr` if the arena cannot allocate memory of requested size.

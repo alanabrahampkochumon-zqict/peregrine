@@ -215,7 +215,7 @@ namespace pmm
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>
     PMM_INLINE Pool<MemStrategy, TelPolicy>::~Pool() noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
-    { delete[] _buffer; }
+    { memFree(_buffer, _poolSize); }
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy>

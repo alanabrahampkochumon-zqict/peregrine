@@ -64,11 +64,12 @@ namespace pmm
         /**
          * @brief Allocate a new physical memory vault from the Operating System.
          *
+         * @note The memory block is zero-initialized.
+         *
          * @param[in] sizeInBytes The total capacity of the stack in bytes.
          *
          * @remarks API specialized for @ref pmm::ManagedMemory.
          *
-         * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
         [[nodiscard]] explicit constexpr Stack(std::size_t sizeInBytes) noexcept
@@ -83,7 +84,6 @@ namespace pmm
          *
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
          *
-         * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
         [[nodiscard]] explicit constexpr Stack(std::size_t sizeInBytes, uint8_t* buffer) noexcept
@@ -163,6 +163,7 @@ namespace pmm
          * @brief Allocate @p size bytes of memory on the stack.
          *
          * @warning Does not check for invalid states in *Release Mode*.
+         * @warning The memory block may NOT be zero-initialized.
          *
          * @param[in] size      Number of bytes to allocate.
          * @param[in] alignment Base alignment of the allocation.
@@ -183,6 +184,7 @@ namespace pmm
          * @brief Allocate @p size bytes of memory on the stack.
          *
          * @warning Does not check for invalid states in *Release Mode*.
+         * @warning The memory block may NOT be zero-initialized.
          *
          * @param[in] size      Number of bytes to allocate.
          * @param[in] alignment Base alignment of the allocation.

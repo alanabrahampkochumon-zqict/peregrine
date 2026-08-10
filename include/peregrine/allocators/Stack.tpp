@@ -11,11 +11,11 @@
 
 
 
+#include "peregrine/memory/Memory.h"
 #include "peregrine/utils/Preprocessors.h"
 
 #include <bit>
 #include <limits>
-#include <new>
 #include <type_traits>
 
 
@@ -25,7 +25,7 @@ namespace pmm
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
     PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(const std::size_t sizeInBytes) noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
-        : _buffer{ new uint8_t[sizeInBytes] },
+        : _buffer{ static_cast<uint8_t*>(memAlloc(sizeInBytes)) },
           _size{ sizeInBytes },
           _prevOffset{},
           _telemetry{ getTelemetryInstance<TelemetryPolicy>(sizeInBytes) }
@@ -60,7 +60,7 @@ namespace pmm
         if constexpr (std::same_as<MemStrategy, ManagedMemory>)
         {
             // Release the buffer held by the current arena (ONLY applicable for managed arena)
-            delete[] _buffer; // TODO: Update as we move to HAL
+            memFree(_buffer, _size);
         }
 
 
@@ -154,7 +154,6 @@ namespace pmm
         header->padding           = padding;
 
         _offset += size;
-        memset(currentAddress, 0, size); // Zero out memory (TODO: Remove when using HAL)
         if constexpr (std::same_as<TelemetryPolicy, telemetry::Enabled>)
         {
             _telemetry.incStackUsage(size, padding);
@@ -189,7 +188,6 @@ namespace pmm
         header->prevOffset        = prevAllocOffset;
 
         _offset += size;
-        memset(currentAddress, 0, size); // Zero out memory (TODO: Remove when using HAL)
         if constexpr (std::same_as<TelemetryPolicy, telemetry::Enabled>)
         {
             _telemetry.incStackUsage(size, padding);
@@ -453,7 +451,7 @@ namespace pmm
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
     PMM_INLINE Stack<Type, MemStrategy, TelemetryPolicy>::~Stack() noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
-    { delete[] _buffer; }
+    { memFree(_buffer, _size); }
 
 
 
