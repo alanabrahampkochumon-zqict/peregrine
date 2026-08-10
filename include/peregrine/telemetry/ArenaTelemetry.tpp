@@ -55,6 +55,8 @@ namespace pmm
 
     PMM_INLINE constexpr size_t ArenaTelemetry::getArenaSize() const noexcept { return _arenaSize; }
 
+    PMM_INLINE constexpr size_t ArenaTelemetry::getFreeSize() const noexcept { return _arenaSize - _currentUsage; }
+
     PMM_INLINE constexpr size_t ArenaTelemetry::getCurrentUsage() const noexcept { return _currentUsage; }
 
     PMM_INLINE constexpr size_t ArenaTelemetry::getMinUsage() const noexcept { return _minUsage; }

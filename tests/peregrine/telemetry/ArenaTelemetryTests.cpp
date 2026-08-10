@@ -116,6 +116,13 @@ TEST_F(ArenaTelemetryTests, LogPeakUsage_DoesNotUpdatePeakUsageWhenPassingInASma
 }
 
 
+TEST_F(ArenaTelemetryTests, GetFreeSize_ReturnsRemainingSizeAfterAllocation)
+{
+    telemetry.logAllocationUsage(10);
+    telemetry.logAllocationUsage(50);
+    EXPECT_EQ(SIZE - (10 + 50), telemetry.getFreeSize());
+}
+
 
 TEST_F(ArenaTelemetryTests, ResetCurrentUsage_OnlyResetsCurrentUsage)
 {

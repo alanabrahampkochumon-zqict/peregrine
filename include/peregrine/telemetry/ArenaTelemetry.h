@@ -75,9 +75,16 @@ namespace pmm
 
 
         /**
+         * @brief Get the free memory usage of the arena.
+         */
+        [[nodiscard]] constexpr size_t getFreeSize() const noexcept;
+
+
+        /**
          * @brief Get the current memory usage of the arena.
          */
         [[nodiscard]] constexpr size_t getCurrentUsage() const noexcept;
+
 
         /**
          * @brief Get the all-time minimum memory usage of the arena.
