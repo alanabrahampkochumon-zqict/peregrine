@@ -335,13 +335,13 @@ namespace pmm
          * @note Passing `0` as @p newSize will not deallocate memory, and is undefined behavior in release mode.
          *
          * @warning In **Release Mode** safety checks for `nullptr`, and 0 sizes are disabled.
-         * @warning Recommended to use for latest allocations.
+         * @warning Use only on latest allocations.
          *
          * @param[in] oldMemory The pointer to the memory to resize.
          * @param[in] oldSize   The current size of @p oldMemory.
          * @param[in] newSize   The size to resize @p oldMemory to.
          *
-         * @return A reference to the new memory location in stack.
+         * @return A reference to the passed-in memory location.
          *
          * @remarks API specialized for @ref pmm::stack::Loose.
          *
@@ -360,13 +360,13 @@ namespace pmm
          * @note Performs assertion in *Debug Mode* to ensure that the latest allocation is being resized.
          *
          * @warning In **Release Mode** safety checks for `nullptr`, and 0 sizes are disabled.
-         * @warning Recommended to use for latest allocations, otherwise memory corruption can occur.
+         * @warning Use only on latest allocations, otherwise memory corruption can occur.
          *
          * @param[in] oldMemory The pointer to the memory to resize.
          * @param[in] oldSize   The current size of @p oldMemory.
          * @param[in] newSize   The size to resize @p oldMemory to.
          *
-         * @return A reference to the new memory location in stack.
+         * @return A reference to the passed-in memory location.
          *
          * @remarks API specialized for @ref pmm::stack::Strict.
          *

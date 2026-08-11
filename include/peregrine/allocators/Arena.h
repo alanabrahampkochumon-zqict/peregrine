@@ -228,45 +228,47 @@ namespace pmm
          * @param alignment The byte alignment of the @p oldMemory.
          *                  Default: 8 bytes on a 64-bit machine.
          *
-        * @return A reference to the new memory location in arena or nullptr if allocation fails.
-        *
-        * @relatedalso resizeFast
-        * @relatedalso resizeLast
+         * @return A reference to the new memory location in arena or nullptr if allocation fails.
+         *
+         * @relatedalso resizeFast
+         * @relatedalso resizeLast
          */
         [[nodiscard]] void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
                                    std::size_t alignment = sizeof(void*)) noexcept;
 
 
         /**
-        * @brief Resize @p oldMemory block from @p oldSize to @p newSize.
-        *
-        * @note Arena will not be resized.
-        * @note Passing `0` as @p newSize will not deallocate memory, and is undefined behavior in release mode.
-        * @note Doesn't optimize memory footprint, as allocation always reserves new memory.
-        *       If you want optimal memory usage use @ref resize, or for resizing lastest allocations
-        *       without overheads use @ref resizeLast
-        *
-        * @warning In **Release Mode** safety checks for `nullptr`, and 0 sizes are disabled.
-        * @warning Never use this for the latest allocations, as this method bypasses all checks and
-        *          allocate a new buffer.
-        *
-        * @param[in] oldMemory The pointer to the memory to resize.
-        * @param[in] oldSize   The current size of @p oldMemory.
-        * @param[in] newSize   The size to resize @p oldMemory to.
-        * @param[in] alignment The required alignment.
-        *                      Default: 8-bytes on 64-bit machine.
-        *
-        * @return A reference to the new memory location in arena.
-        *
-        * @relatedalso resize
-        * @relatedalso resizeLast
-        */
+         * @brief Resize @p oldMemory block from @p oldSize to @p newSize.
+         *
+         * @note Arena will not be resized.
+         * @note Passing `0` as @p newSize will not deallocate memory, and is undefined behavior in release mode.
+         * @note Doesn't optimize memory footprint, as allocation always reserves new memory.
+         *       If you want optimal memory usage use @ref resize, or for resizing lastest allocations
+         *       without overheads use @ref resizeLast
+         *
+         * @warning In **Release Mode** safety checks for `nullptr`, and 0 sizes are disabled.
+         * @warning Never use this for the latest allocations, as this method bypasses all checks and
+         *          allocate a new buffer.
+         *
+         * @param[in] oldMemory The pointer to the memory to resize.
+         * @param[in] oldSize   The current size of @p oldMemory.
+         * @param[in] newSize   The size to resize @p oldMemory to.
+         * @param[in] alignment The required alignment.
+         *                      Default: 8-bytes on 64-bit machine.
+         *
+         * @return A reference to the new memory location in arena.
+         *
+         * @relatedalso resize
+         * @relatedalso resizeLast
+         */
         [[nodiscard]] void* resizeFast(const void* oldMemory, std::size_t oldSize, std::size_t newSize,
                                        std::size_t alignment = sizeof(void*));
 
 
         /**
          * @brief [NO-OP] Objects cannot be individually freed in an arena.
+         *
+         * @warning Any non-trivial types must be manually destroyed before clearing the arena.
          *
          * @tparam T  The type of allocated object.
          *
