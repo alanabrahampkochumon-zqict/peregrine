@@ -144,6 +144,13 @@ namespace pmm
     {
         _alignForward(alignment);
         PMM_ASSERT_MSG(sizeInBytes > 0 && _arenaSize >= _offset + sizeInBytes, "Arena: Not Enough Memory");
+        if constexpr (Safe)
+        {
+            if (sizeInBytes == 0 || _offset + sizeInBytes > _arenaSize)
+            {
+                return nullptr;
+            }
+        }
 
         void* ptr   = &_buffer[_offset];
         _prevOffset = _offset;
@@ -153,16 +160,8 @@ namespace pmm
         _telemetry.logAllocationUsage(sizeInBytes);
 
         return ptr;
-
-        // Check if the arena has enough memory for allocation
-        // if (_arenaSize >= _offset + sizeInBytes)
-        // {
-        //
-        // }
-        //
-        // // Return nullptr if the requested memory cannot be allocated
-        // return nullptr;
     }
+
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     template <typename T, typename... Args>
@@ -170,10 +169,19 @@ namespace pmm
     {
         // Allocate memory in the arena.
         void* raw = allocBytes(sizeof(T), alignof(T));
+        if constexpr (Safe)
+        {
+            if (raw == nullptr)
+            {
+                return nullptr;
+            }
+        }
+
 
         // Instantiate the object with arguments.
         return new (raw) T(std::forward<Args>(args)...);
     }
+
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     template <typename T, typename... Args>
@@ -207,17 +215,15 @@ namespace pmm
     template <typename T>
     PMM_INLINE std::span<T> Arena<MemStrategy, TelPolicy, Safe>::allocV(std::size_t count) noexcept
     {
-
+        if constexpr (Safe)
+        {
+            if (_offset + sizeof(T) * count > _arenaSize)
+            {
+                return std::span<T>();
+            }
+        }
         // Allocate the raw memory and wrap it in a span
         return std::span<T>(static_cast<T*>(allocBytes(sizeof(T) * count, alignof(T))), count);
-        // const std::size_t bytesToAllocate = sizeof(T) * count;
-        // if (T* rawPointer = static_cast<T*>(allocBytes(bytesToAllocate, alignof(T))))
-        // {
-        //     // No need to update the telemetry since allocBytes already does that
-        //
-        // }
-
-        // return std::span<T>();
     }
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
