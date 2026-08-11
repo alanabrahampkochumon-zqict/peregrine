@@ -1227,5 +1227,58 @@ namespace pmm
     }
 
 
+    TEST_F(StrictStack, ZeroOut_ZeroesOutTheInternalBuffer)
+    {
+        // Allocate and clear the stack to ensure there is some data
+        // Choosing an arbitrary count since to find hte exact amount we need to take into
+        // account padding, header size, etc.
+        const auto count  = 100;
+        for (size_t i = 0; i < count; ++i)
+        {
+            static_cast<void>(stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+        }
+        stack.clear();
+
+        // Zero-out
+        stack.zeroOut();
+
+        // Assert stack's buffer is cleared
+        for (size_t i = 0; i < stack.size(); ++i)
+        {
+            EXPECT_EQ(0, stack._buffer[i]);
+        }
+    }
+
+
+    TEST(UmanagedStrictStackTests, ZeroOut_ZeroesOutTheInternalBuffer)
+    {
+        // Allocate and clear the stack to ensure there is some data
+        const auto stackSize = 4_KB;
+        const auto buffer = new uint8_t[stackSize];
+        Stack<stack::Loose, UnmanagedMemory> stack{buffer, stackSize};
+
+        // Choosing an arbitrary count since to find hte exact amount we need to take into
+        // account padding, header size, etc.
+        const auto count  = 100;
+
+        for (size_t i = 0; i < count; ++i)
+        {
+            static_cast<void>(stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+        }
+        stack.clear();
+
+        // Zero-out
+        stack.zeroOut();
+
+        // Assert stack's buffer is cleared
+        for (size_t i = 0; i < stack.size(); ++i)
+        {
+            EXPECT_EQ(0, buffer[i]);
+        }
+
+        delete[] buffer;
+    }
+
+
 } // namespace pmm
 /** @} */

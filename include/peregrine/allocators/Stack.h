@@ -79,15 +79,15 @@ namespace pmm
         /**
          * @brief Allocate a new physical memory vault from the Operating System.
          *
-         * @param[in] bufferSize  The size of the backing buffer in bytes, which will directly
-         *                        translate into the stack size.
-         * @param[in] buffer      The starting address to the backing buffer.
+         * @param[in,out] buffer The starting address to the backing buffer.
+         * @param[in] bufferSize The size of the backing buffer in bytes, which will directly
+         *                       translate into the stack size.
          *
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
          *
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        [[nodiscard]] explicit constexpr Stack(std::size_t bufferSize, uint8_t* buffer) noexcept
+        [[nodiscard]] explicit constexpr Stack(uint8_t* buffer, std::size_t bufferSize) noexcept
             requires std::same_as<MemStrategy, UnmanagedMemory>;
 
 
@@ -461,6 +461,15 @@ namespace pmm
 
 
         /**
+         * @brief Zero out the stack's buffer.
+         *
+         * @warning This will completely overwrite the stack entire buffer with zeroes. Only call this method if you
+         *          want a zero-ed out stack after clearing.
+         */
+        void zeroOut() const noexcept;
+
+
+        /**
          * @brief Stack Destructor. Free the internal buffer.
          *
          * @note For clearing the Stack, use @ref clear, or to move free individual frames use @ref free.
@@ -527,6 +536,7 @@ namespace pmm
         FRIEND_TEST(StrictStack, MoveOperator_MovesBufferIntoNewObject);
         FRIEND_TEST(StrictStack, MoveOperator_SelfAssignmentReturnsTheSameStack);
         FRIEND_TEST(StrictStack, MoveOperator_DeletingOriginalStackDoNotDeleteTheNewStacksMemory);
+        FRIEND_TEST(StrictStack, ZeroOut_ZeroesOutTheInternalBuffer);
 
 
         FRIEND_TEST(LooseStackInitialization, InitializesDefaultStateAndBuffer);
@@ -539,6 +549,7 @@ namespace pmm
         FRIEND_TEST(LooseStack, MoveOperator_MovesBufferIntoNewObject);
         FRIEND_TEST(LooseStack, MoveOperator_SelfAssignmentReturnsTheSameStack);
         FRIEND_TEST(LooseStack, MoveOperator_DeletingOriginalStackDoNotDeleteTheNewStacksMemory);
+        FRIEND_TEST(LooseStack, ZeroOut_ZeroesOutTheInternalBuffer);
 #endif
     };
 } // namespace pmm

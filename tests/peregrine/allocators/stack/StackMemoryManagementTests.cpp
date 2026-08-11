@@ -63,7 +63,7 @@ TEST(StackMemoryManagement, LooseUnmanagedStack_MoveCtor_DoesNotFreeMemory)
 {
     constexpr auto size = 4096;
     auto* buffer        = new uint8_t[size];
-    pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory> stack{ size, buffer };
+    pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory> stack{ buffer, size };
 
     const pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory> stack2 = std::move(stack);
     EXPECT_EQ(size, stack2.freeSize()); // Perform some tests
@@ -77,8 +77,8 @@ TEST(StackMemoryManagement, LooseUnmanagedStack_MoveAssign_DoesNotFreeMemory)
     constexpr auto size = 4096;
     auto* buffer        = new uint8_t[size];
     auto* buffer2       = new uint8_t[size];
-    pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory> stack{ size, buffer };
-    pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory> stack2{ size, buffer2 };
+    pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory> stack{ buffer, size };
+    pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory> stack2{ buffer2, size };
 
     stack2 = std::move(stack);
     EXPECT_EQ(size, stack2.freeSize()); // Perform some tests
@@ -92,7 +92,7 @@ TEST(StackMemoryManagement, StrictUnmanagedStack_MoveCtor_DoesNotFreeMemory)
 {
     constexpr auto size = 4096;
     auto* buffer        = new uint8_t[size];
-    pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory> stack{ size, buffer };
+    pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory> stack{ buffer, size };
 
     const pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory> stack2 = std::move(stack);
     EXPECT_EQ(size, stack2.freeSize()); // Perform some tests
@@ -106,8 +106,8 @@ TEST(StackMemoryManagement, StrictUnmanagedStack_MoveAssign_DoesNotFreeMemory)
     constexpr auto size = 4096;
     auto* buffer        = new uint8_t[size];
     auto* buffer2       = new uint8_t[size];
-    pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory> stack{ size, buffer };
-    pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory> stack2{ size, buffer2 };
+    pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory> stack{ buffer, size };
+    pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory> stack2{ buffer2, size };
 
     stack2 = std::move(stack);
     EXPECT_EQ(size, stack2.freeSize()); // Perform some tests
@@ -124,7 +124,7 @@ namespace pmm
     {
         constexpr auto size = 4096;
         auto* buffer        = new uint8_t[size];
-        const Stack<stack::Loose, UnmanagedMemory> stack{ size, buffer };
+        const Stack<stack::Loose, UnmanagedMemory> stack{ buffer, size };
 
         EXPECT_EQ(buffer, stack._buffer);
         delete[] buffer;
@@ -136,7 +136,7 @@ namespace pmm
     {
         constexpr auto size = 4096;
         auto* buffer        = new uint8_t[size];
-        const Stack<stack::Strict, UnmanagedMemory> stack{ size, buffer };
+        const Stack<stack::Strict, UnmanagedMemory> stack{ buffer, size };
 
         EXPECT_EQ(buffer, stack._buffer);
         delete[] buffer;

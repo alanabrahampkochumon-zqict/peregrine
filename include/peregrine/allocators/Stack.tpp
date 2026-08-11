@@ -15,6 +15,7 @@
 #include "peregrine/utils/Preprocessors.h"
 
 #include <bit>
+#include <cstring>
 #include <limits>
 #include <type_traits>
 
@@ -67,7 +68,7 @@ namespace pmm
         // Move the data members and null-out the moved data members.
         _buffer    = std::exchange(stack._buffer, nullptr);
         _offset    = std::exchange(stack._offset, 0);
-        _stackSize      = std::exchange(stack._stackSize, 0);
+        _stackSize = std::exchange(stack._stackSize, 0);
         _telemetry = std::exchange(stack._telemetry, getTelemetryInstance<TelemetryPolicy>(_stackSize));
         if constexpr (std::same_as<Type, stack::Strict>)
         {
@@ -79,8 +80,8 @@ namespace pmm
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(const std::size_t bufferSize,
-                                                                          uint8_t* buffer) noexcept
+    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(uint8_t* buffer,
+                                                                          const std::size_t bufferSize) noexcept
         requires std::same_as<MemStrategy, UnmanagedMemory>
         : _buffer{ buffer },
           _stackSize{ bufferSize },
@@ -446,6 +447,11 @@ namespace pmm
             _telemetry.resetCurrentUsage();
         }
     }
+
+
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
+    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy>::zeroOut() const noexcept
+    { std::memset(_buffer, 0, _stackSize); }
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
