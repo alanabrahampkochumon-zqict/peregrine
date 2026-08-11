@@ -1229,14 +1229,14 @@ namespace pmm
 
     TEST_F(StrictStack, ZeroOut_ZeroesOutTheInternalBuffer)
     {
-        // Allocate and clear the stack to ensure there is some data
-        // Choosing an arbitrary count since to find hte exact amount we need to take into
-        // account padding, header size, etc.
-        const auto count  = 100;
-        for (size_t i = 0; i < count; ++i)
+
+        // Fill the buffer with arbitrary data
+        for (size_t i = 0; i < stack.size(); ++i)
         {
-            static_cast<void>(stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+            stack._buffer[i] = static_cast<uint8_t>(i % 255);
         }
+        // This call unnecessary for testing, but adhering to how the method is supposed to be called,
+        // we are leaving it here.
         stack.clear();
 
         // Zero-out
@@ -1254,17 +1254,16 @@ namespace pmm
     {
         // Allocate and clear the stack to ensure there is some data
         const auto stackSize = 4_KB;
-        const auto buffer = new uint8_t[stackSize];
-        Stack<stack::Loose, UnmanagedMemory> stack{buffer, stackSize};
+        const auto buffer    = new uint8_t[stackSize];
+        Stack<stack::Loose, UnmanagedMemory> stack{ buffer, stackSize };
 
-        // Choosing an arbitrary count since to find hte exact amount we need to take into
-        // account padding, header size, etc.
-        const auto count  = 100;
-
-        for (size_t i = 0; i < count; ++i)
+        // Fill the buffer with arbitrary data
+        for (size_t i = 0; i < stack.size(); ++i)
         {
-            static_cast<void>(stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+            buffer[i] = static_cast<uint8_t>(i % 255);
         }
+        // This call unnecessary for testing, but adhering to how the method is supposed to be called,
+        // we are leaving it here.
         stack.clear();
 
         // Zero-out

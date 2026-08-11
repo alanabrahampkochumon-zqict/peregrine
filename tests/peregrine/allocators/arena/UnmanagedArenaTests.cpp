@@ -46,12 +46,12 @@ namespace
         void TearDown() override { delete[] buffer; }
     };
 
-    
+
 
     /**************************************
      *           STATIC TESTS             *
      **************************************/
-    
+
     namespace static_tests
     {
         /** @test Verify that unmanaged arena does not free memory.
@@ -547,8 +547,13 @@ TEST_F(UnmanagedArenaTests, Resize_InBetweenAllocationResize_UpdatesTelemetry)
 
 TEST_F(UnmanagedArenaTests, ZeroOut_ZeroesOutTheInternalBuffer)
 {
-    // Allocate and clear the arena to ensure there is some data
-    static_cast<void>(arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+    // Fill the buffer with arbitrary data
+    for (size_t i = 0; i < arena.size(); ++i)
+    {
+        buffer[i] = static_cast<uint8_t>(i % 255);
+    }
+    // This call unnecessary for testing, but adhering to how the method is supposed to be called,
+    // we are leaving it here.
     arena.clear();
 
     // Zero-out
@@ -735,7 +740,7 @@ namespace pmm
 
     TEST_F(UnmanagedArenaTests, Alloc_UpdatesTelemetryPadding)
     {
-        const auto vec4                = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+        const auto vec4            = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
         const auto expectedPadding = reinterpret_cast<uintptr_t>(vec4) - reinterpret_cast<uintptr_t>(arena._buffer);
 
         EXPECT_EQ(expectedPadding, arena.getTelemetry().getTotalPadding());

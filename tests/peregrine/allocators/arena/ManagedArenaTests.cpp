@@ -790,13 +790,18 @@ namespace pmm
 
     TEST_F(ManagedArenaTests, ZeroOut_ZeroesOutTheInternalBuffer)
     {
-        // Allocate and clear the arena to ensure there is some data
-        static_cast<void>(arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+        // Fill the buffer with arbitrary data
+        for (size_t i = 0; i < arena.size(); ++i)
+        {
+            arena._buffer[i] = static_cast<uint8_t>(i % 255);
+        }
+        // This call unnecessary for testing, but adhering to how the method is supposed to be called,
+        // we are leaving it here.
         arena.clear();
 
         // Zero-out
         arena.zeroOut();
-        
+
         // Assert arena's buffer is cleared
         for (size_t i = 0; i < arena.size(); ++i)
         {
