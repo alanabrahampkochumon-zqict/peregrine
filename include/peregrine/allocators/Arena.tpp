@@ -29,7 +29,7 @@ namespace pmm
     PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::Arena(const size_t arenaSize) noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
         : _buffer(static_cast<uint8_t*>(memAlloc(arenaSize))),
-          _sizeInBytes(arenaSize),
+          _arenaSize(arenaSize),
           _offset(0),
           _prevOffset(0),
           _telemetry{ getTelemetryInstance<TelPolicy>(arenaSize) }
@@ -38,29 +38,29 @@ namespace pmm
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::Arena(void* backingBuffer,
-                                                                    const size_t arenaSize) noexcept
+                                                                    const size_t bufferSize) noexcept
         requires std::same_as<MemStrategy, UnmanagedMemory>
         : _buffer(static_cast<uint8_t*>(backingBuffer)),
-          _sizeInBytes(arenaSize),
+          _arenaSize(bufferSize),
           _offset(0),
           _prevOffset(0),
-          _telemetry{ getTelemetryInstance<TelPolicy>(arenaSize) }
+          _telemetry{ getTelemetryInstance<TelPolicy>(bufferSize) }
     {}
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::~Arena() noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
-    { memFree(_buffer, _sizeInBytes); }
+    { memFree(_buffer, _arenaSize); }
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::Arena(Arena&& arena) noexcept
         : _buffer{ std::exchange(arena._buffer, nullptr) },
-          _sizeInBytes{ std::exchange(arena._sizeInBytes, 0) },
+          _arenaSize{ std::exchange(arena._arenaSize, 0) },
           _offset{ std::exchange(arena._offset, 0) },
           _prevOffset{ std::exchange(arena._prevOffset, 0) },
-          _telemetry{ std::exchange(arena._telemetry, getTelemetryInstance<TelPolicy>(_sizeInBytes)) }
+          _telemetry{ std::exchange(arena._telemetry, getTelemetryInstance<TelPolicy>(_arenaSize)) }
     {}
 
 
@@ -76,15 +76,15 @@ namespace pmm
 
         if constexpr (std::same_as<MemStrategy, ManagedMemory>)
         {
-            memFree(_buffer, _sizeInBytes);
+            memFree(_buffer, _arenaSize);
         }
 
         // Move the data members and null-out the moved data members.
         _buffer      = std::exchange(arena._buffer, nullptr);
         _offset      = std::exchange(arena._offset, 0);
         _prevOffset  = std::exchange(arena._prevOffset, 0);
-        _sizeInBytes = std::exchange(arena._sizeInBytes, 0);
-        _telemetry   = std::exchange(arena._telemetry, getTelemetryInstance<TelPolicy>(_sizeInBytes));
+        _arenaSize = std::exchange(arena._arenaSize, 0);
+        _telemetry   = std::exchange(arena._telemetry, getTelemetryInstance<TelPolicy>(_arenaSize));
 
         return *this;
     }
@@ -92,7 +92,7 @@ namespace pmm
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE constexpr std::size_t Arena<MemStrategy, TelPolicy, Safe>::freeSize() const noexcept
-    { return _sizeInBytes - _offset; }
+    { return _arenaSize - _offset; }
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
@@ -102,7 +102,7 @@ namespace pmm
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE constexpr std::size_t Arena<MemStrategy, TelPolicy, Safe>::size() const noexcept
-    { return _sizeInBytes; }
+    { return _arenaSize; }
 
 
     /**
@@ -143,7 +143,7 @@ namespace pmm
                                                                      const std::size_t alignment) noexcept
     {
         _alignForward(alignment);
-        PMM_ASSERT_MSG(sizeInBytes > 0 && _sizeInBytes >= _offset + sizeInBytes, "Arena: Not Enough Memory");
+        PMM_ASSERT_MSG(sizeInBytes > 0 && _arenaSize >= _offset + sizeInBytes, "Arena: Not Enough Memory");
 
         void* ptr   = &_buffer[_offset];
         _prevOffset = _offset;
@@ -155,7 +155,7 @@ namespace pmm
         return ptr;
 
         // Check if the arena has enough memory for allocation
-        // if (_sizeInBytes >= _offset + sizeInBytes)
+        // if (_arenaSize >= _offset + sizeInBytes)
         // {
         //
         // }
@@ -182,7 +182,7 @@ namespace pmm
         // Forward align the memory by the alignment
         _alignForward(alignment);
 
-        if (constexpr auto objectSize = sizeof(T); _sizeInBytes >= _offset + objectSize)
+        if (constexpr auto objectSize = sizeof(T); _arenaSize >= _offset + objectSize)
         {
             // Allocate memory in the arena.
             void* raw   = &_buffer[_offset];
@@ -233,7 +233,7 @@ namespace pmm
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE void Arena<MemStrategy, TelPolicy, Safe>::zeroOut() const noexcept
     {
-        std::memset(_buffer, 0, _sizeInBytes);
+        std::memset(_buffer, 0, _arenaSize);
     }
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
@@ -259,7 +259,7 @@ namespace pmm
 
         // If there is enough memory in the arena to "expand" last allocation
         // expand the offset to the difference between new size and old size
-        if (allocationAddress == lastAllocatedAddress && _sizeInBytes >= _offset + offsetDiff)
+        if (allocationAddress == lastAllocatedAddress && _arenaSize >= _offset + offsetDiff)
         {
             _offset += offsetDiff;
             // Update the telemetry to include the difference
@@ -273,12 +273,12 @@ namespace pmm
         // The memory exists else where in the arena, so create a new byte chunk
         // copy the existing data and return it
         // @note: This leaves a "hole" where the previous allocation was
-        PMM_ASSERT_MSG(_sizeInBytes >= _offset + newSize, "Not enough memory for resize");
+        PMM_ASSERT_MSG(_arenaSize >= _offset + newSize, "Not enough memory for resize");
         void* newLocation = allocBytes(newSize, alignment);
         memmove(newLocation, oldMemory, oldSize);
         return newLocation;
 
-        // if (_sizeInBytes >= _offset + newSize)
+        // if (_arenaSize >= _offset + newSize)
         // {
 
         // }

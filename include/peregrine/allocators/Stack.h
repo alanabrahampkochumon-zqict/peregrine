@@ -66,27 +66,28 @@ namespace pmm
          *
          * @note The memory block is zero-initialized.
          *
-         * @param[in] sizeInBytes The total capacity of the stack in bytes.
+         * @param[in] stackSize The total capacity of the stack in bytes.
          *
          * @remarks API specialized for @ref pmm::ManagedMemory.
          *
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        [[nodiscard]] explicit constexpr Stack(std::size_t sizeInBytes) noexcept
+        [[nodiscard]] explicit constexpr Stack(std::size_t stackSize) noexcept
             requires std::same_as<MemStrategy, ManagedMemory>;
 
 
         /**
          * @brief Allocate a new physical memory vault from the Operating System.
          *
-         * @param[in] sizeInBytes The total capacity of the stack in bytes.
+         * @param[in] bufferSize  The size of the backing buffer in bytes, which will directly
+         *                        translate into the stack size.
          * @param[in] buffer      The starting address to the backing buffer.
          *
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
          *
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        [[nodiscard]] explicit constexpr Stack(std::size_t sizeInBytes, uint8_t* buffer) noexcept
+        [[nodiscard]] explicit constexpr Stack(std::size_t bufferSize, uint8_t* buffer) noexcept
             requires std::same_as<MemStrategy, UnmanagedMemory>;
 
 
@@ -500,7 +501,7 @@ namespace pmm
 
         /// Member Variables
         uint8_t* _buffer;
-        std::size_t _size, _offset{ 0 };
+        std::size_t _stackSize, _offset{ 0 };
         PMM_NO_UNIQUE_ADDR PreviousOffsetType _prevOffset;
         PMM_NO_UNIQUE_ADDR StackTelemetryType<TelemetryPolicy> _telemetry;
 

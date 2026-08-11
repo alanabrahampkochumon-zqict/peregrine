@@ -23,21 +23,21 @@ namespace pmm
 {
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(const std::size_t sizeInBytes) noexcept
+    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(const std::size_t stackSize) noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
-        : _buffer{ static_cast<uint8_t*>(memAlloc(sizeInBytes)) },
-          _size{ sizeInBytes },
+        : _buffer{ static_cast<uint8_t*>(memAlloc(stackSize)) },
+          _stackSize{ stackSize },
           _prevOffset{},
-          _telemetry{ getTelemetryInstance<TelemetryPolicy>(sizeInBytes) }
+          _telemetry{ getTelemetryInstance<TelemetryPolicy>(stackSize) }
     {}
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
     PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(Stack&& stack) noexcept
         : _buffer{ std::exchange(stack._buffer, nullptr) },
-          _size{ std::exchange(stack._size, 0) },
+          _stackSize{ std::exchange(stack._stackSize, 0) },
           _offset{ std::exchange(stack._offset, 0) },
-          _telemetry{ std::exchange(stack._telemetry, getTelemetryInstance<TelemetryPolicy>(_size)) }
+          _telemetry{ std::exchange(stack._telemetry, getTelemetryInstance<TelemetryPolicy>(_stackSize)) }
     {
         if constexpr (std::same_as<Type, stack::Strict>)
         {
@@ -60,15 +60,15 @@ namespace pmm
         if constexpr (std::same_as<MemStrategy, ManagedMemory>)
         {
             // Release the buffer held by the current arena (ONLY applicable for managed arena)
-            memFree(_buffer, _size);
+            memFree(_buffer, _stackSize);
         }
 
 
         // Move the data members and null-out the moved data members.
         _buffer    = std::exchange(stack._buffer, nullptr);
         _offset    = std::exchange(stack._offset, 0);
-        _size      = std::exchange(stack._size, 0);
-        _telemetry = std::exchange(stack._telemetry, getTelemetryInstance<TelemetryPolicy>(_size));
+        _stackSize      = std::exchange(stack._stackSize, 0);
+        _telemetry = std::exchange(stack._telemetry, getTelemetryInstance<TelemetryPolicy>(_stackSize));
         if constexpr (std::same_as<Type, stack::Strict>)
         {
             _prevOffset = std::exchange(stack._prevOffset, 0);
@@ -79,24 +79,24 @@ namespace pmm
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(const std::size_t sizeInBytes,
+    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(const std::size_t bufferSize,
                                                                           uint8_t* buffer) noexcept
         requires std::same_as<MemStrategy, UnmanagedMemory>
         : _buffer{ buffer },
-          _size{ sizeInBytes },
+          _stackSize{ bufferSize },
           _prevOffset{},
-          _telemetry{ getTelemetryInstance<TelemetryPolicy>(sizeInBytes) }
+          _telemetry{ getTelemetryInstance<TelemetryPolicy>(bufferSize) }
     {}
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
     PMM_INLINE constexpr std::size_t Stack<Type, MemStrategy, TelemetryPolicy>::size() const noexcept
-    { return _size; }
+    { return _stackSize; }
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
     PMM_INLINE constexpr std::size_t Stack<Type, MemStrategy, TelemetryPolicy>::freeSize() const noexcept
-    { return _size - _offset; }
+    { return _stackSize - _offset; }
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
@@ -141,7 +141,7 @@ namespace pmm
         PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment != 1, "Alignment must be a power of 2");
 
         const auto padding = _calcAlignment(alignment);
-        PMM_ASSERT_MSG(_offset + size + padding <= _size, "Stack capacity exceeded. Cannot assign memory!");
+        PMM_ASSERT_MSG(_offset + size + padding <= _stackSize, "Stack capacity exceeded. Cannot assign memory!");
         PMM_ASSERT_MSG(padding <= std::numeric_limits<decltype(LooseStackHeader::padding)>::max(),
                        "Alignment exceeded maximum permissible size of padding.");
 
@@ -170,7 +170,7 @@ namespace pmm
         PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment != 1, "Alignment must be a power of 2");
 
         const auto padding = _calcAlignment(alignment);
-        PMM_ASSERT_MSG(_offset + size + padding <= _size, "Stack capacity exceeded. Cannot assign memory!");
+        PMM_ASSERT_MSG(_offset + size + padding <= _stackSize, "Stack capacity exceeded. Cannot assign memory!");
         PMM_ASSERT_MSG(padding <= std::numeric_limits<decltype(StrictStackHeader::padding)>::max(),
                        "Alignment exceeded maximum permissible size of padding.");
 
@@ -451,7 +451,7 @@ namespace pmm
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
     PMM_INLINE Stack<Type, MemStrategy, TelemetryPolicy>::~Stack() noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
-    { memFree(_buffer, _size); }
+    { memFree(_buffer, _stackSize); }
 
 
 

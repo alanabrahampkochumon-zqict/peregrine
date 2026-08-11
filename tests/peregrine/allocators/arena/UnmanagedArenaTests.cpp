@@ -581,7 +581,7 @@ namespace pmm
         EXPECT_EQ(nullptr, arena._buffer);
         EXPECT_EQ(0, arena._offset);
         EXPECT_EQ(0, arena._prevOffset);
-        EXPECT_EQ(0, arena._sizeInBytes);
+        EXPECT_EQ(0, arena._arenaSize);
         EXPECT_EQ(0, arena.getTelemetry().getUsedSize());
     }
 
@@ -596,7 +596,7 @@ namespace pmm
         EXPECT_EQ(initialPointer, arena2._buffer);
         EXPECT_EQ(initialOffset, arena2._offset);
         EXPECT_EQ(initialPrevOffset, arena2._prevOffset);
-        EXPECT_EQ(arenaSize, arena2._sizeInBytes);
+        EXPECT_EQ(arenaSize, arena2._arenaSize);
     }
 
 
@@ -609,7 +609,7 @@ namespace pmm
         EXPECT_EQ(nullptr, arena._buffer);
         EXPECT_EQ(0, arena._offset);
         EXPECT_EQ(0, arena._prevOffset);
-        EXPECT_EQ(0, arena._sizeInBytes);
+        EXPECT_EQ(0, arena._arenaSize);
         delete[] buffer2;
     }
 
@@ -624,7 +624,7 @@ namespace pmm
 
         EXPECT_EQ(initialPointer, arena2._buffer);
         EXPECT_EQ(0, arena2._offset);
-        EXPECT_EQ(arenaSize, arena2._sizeInBytes);
+        EXPECT_EQ(arenaSize, arena2._arenaSize);
         EXPECT_EQ(0, arena2._prevOffset);
         delete[] buffer2;
     }

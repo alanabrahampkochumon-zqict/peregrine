@@ -62,13 +62,14 @@ namespace pmm
          * @note When telemetry is enabled, allocates a Telemetry instance on the **Heap**.
          *
          * @param[in,out] backingBuffer The memory buffer to be used by the allocator.
-         * @param[in] arenaSize         The total capacity of the arena in bytes.
+         * @param[in] bufferSize        The size of the backing buffer in bytes, which will directly
+         *                              translate into the arena size.
          *
          * @warning This allocator is Linear and is NOT thread-safe by default.
          *
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
          */
-        constexpr explicit Arena(void* backingBuffer, size_t arenaSize) noexcept
+        constexpr explicit Arena(void* backingBuffer, size_t bufferSize) noexcept
             requires std::same_as<MemStrategy, UnmanagedMemory>;
 
 
@@ -283,7 +284,7 @@ namespace pmm
 
     private:
         uint8_t* _buffer;
-        uint64_t _sizeInBytes, _offset, _prevOffset;
+        uint64_t _arenaSize, _offset, _prevOffset;
         PMM_NO_UNIQUE_ADDR ArenaTelemetryType<TelPolicy> _telemetry{ 0 };
 
         /**

@@ -1060,7 +1060,7 @@ namespace pmm
         constexpr std::size_t sizeInBytes = 512;
         const Stack<pmm::stack::Loose> stack{ sizeInBytes };
 
-        EXPECT_EQ(sizeInBytes, stack._size);
+        EXPECT_EQ(sizeInBytes, stack._stackSize);
         EXPECT_EQ(0, stack._offset);
         EXPECT_NE(nullptr, stack._buffer);
     }
@@ -1116,7 +1116,7 @@ namespace pmm
         // NOLINT(bugprone-use-after-move)
         EXPECT_EQ(nullptr, stack._buffer);
         EXPECT_EQ(0, stack._offset);
-        EXPECT_EQ(0, stack._size);
+        EXPECT_EQ(0, stack._stackSize);
     }
 
     /**
@@ -1130,7 +1130,7 @@ namespace pmm
         const Stack<> stack2 = std::move(stack);
         EXPECT_EQ(initialPointer, stack2._buffer);
         EXPECT_EQ(initialOffset, stack2._offset);
-        EXPECT_EQ(stackSize, stack2._size);
+        EXPECT_EQ(stackSize, stack2._stackSize);
     }
 
 
@@ -1140,7 +1140,7 @@ namespace pmm
         static_cast<void>(stack2 = std::move(stack));
         EXPECT_EQ(nullptr, stack._buffer);
         EXPECT_EQ(0, stack._offset);
-        EXPECT_EQ(0, stack._size);
+        EXPECT_EQ(0, stack._stackSize);
     }
 
 
@@ -1154,7 +1154,7 @@ namespace pmm
 
         EXPECT_EQ(initialPointer, stack2._buffer);
         EXPECT_EQ(0, stack2._offset);
-        EXPECT_EQ(stackSize, stack2._size);
+        EXPECT_EQ(stackSize, stack2._stackSize);
         // EXPECT_EQ(0, stack2._prevOffset);
     }
 

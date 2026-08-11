@@ -1068,7 +1068,7 @@ namespace pmm
         constexpr std::size_t sizeInBytes = 512;
         const Stack<pmm::stack::Strict> stack{ sizeInBytes };
 
-        EXPECT_EQ(sizeInBytes, stack._size);
+        EXPECT_EQ(sizeInBytes, stack._stackSize);
         EXPECT_EQ(0, stack._offset);
         EXPECT_NE(nullptr, stack._buffer);
     }
@@ -1128,7 +1128,7 @@ namespace pmm
         EXPECT_EQ(nullptr, stack._buffer);
         EXPECT_EQ(0, stack._offset);
         EXPECT_EQ(0, stack._prevOffset);
-        EXPECT_EQ(0, stack._size);
+        EXPECT_EQ(0, stack._stackSize);
     }
 
     /**
@@ -1144,7 +1144,7 @@ namespace pmm
         EXPECT_EQ(initialPointer, stack2._buffer);
         EXPECT_EQ(initialOffset, stack2._offset);
         EXPECT_EQ(initialPrevOffset, stack2._prevOffset);
-        EXPECT_EQ(stackSize, stack2._size);
+        EXPECT_EQ(stackSize, stack2._stackSize);
     }
 
 
@@ -1155,7 +1155,7 @@ namespace pmm
         EXPECT_EQ(nullptr, stack._buffer);
         EXPECT_EQ(0, stack._offset);
         EXPECT_EQ(0, stack._prevOffset);
-        EXPECT_EQ(0, stack._size);
+        EXPECT_EQ(0, stack._stackSize);
     }
 
 
@@ -1169,7 +1169,7 @@ namespace pmm
 
         EXPECT_EQ(initialPointer, stack2._buffer);
         EXPECT_EQ(0, stack2._offset);
-        EXPECT_EQ(stackSize, stack2._size);
+        EXPECT_EQ(stackSize, stack2._stackSize);
         EXPECT_EQ(0, stack2._prevOffset);
     }
 

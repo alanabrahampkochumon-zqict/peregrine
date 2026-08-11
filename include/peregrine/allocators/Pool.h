@@ -51,10 +51,11 @@ namespace pmm
         /**
          * @brief Create a pool allocator with unmanaged memory.
          *
-         * @param[in,out] backingBuffer  The memory buffer to be used by the allocator.
-         * @param[in] bufferSize         The size of the backing buffer in bytes.
-         * @param[in] chuckSize          The per fragment/chunk size of the pool in bytes.
-         * @param[in] chunkAlignment     The base alignment for each fragment/chunk.
+         * @param[in,out] backingBuffer The memory buffer to be used by the allocator.
+        * @param[in] bufferSize         The size of the backing buffer in bytes, which will directly
+         *                              translate into the pool size.
+         * @param[in] chuckSize         The per fragment/chunk size of the pool in bytes.
+         * @param[in] chunkAlignment    The base alignment for each fragment/chunk.
          *
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
          *
