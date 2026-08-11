@@ -184,34 +184,6 @@ namespace pmm
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    template <typename T, typename... Args>
-    PMM_INLINE T* Arena<MemStrategy, TelPolicy, Safe>::allocAs(const std::size_t alignment, Args... args) noexcept
-    {
-        // Forward align the memory by the alignment
-        _alignForward(alignment);
-
-        if (constexpr auto objectSize = sizeof(T); _arenaSize >= _offset + objectSize)
-        {
-            // Allocate memory in the arena.
-            void* raw   = &_buffer[_offset];
-            _prevOffset = _offset;
-            _offset += objectSize;
-
-            // Instantiate the object with arguments.
-            T* object = new (raw) T(std::forward<Args>(args)...);
-
-            // Update the telemetry usage
-            _telemetry.logAllocationUsage(objectSize);
-
-            return object;
-        }
-
-        // Return nullptr if the requested memory cannot be allocated
-        return nullptr;
-    }
-
-
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     template <typename T>
     PMM_INLINE std::span<T> Arena<MemStrategy, TelPolicy, Safe>::allocV(std::size_t count) noexcept
     {

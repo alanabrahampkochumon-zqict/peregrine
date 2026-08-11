@@ -185,21 +185,6 @@ namespace pmm
 
 
         /**
-         * @brief Allocate an object of type @p T in the arena with @p alignment.
-         *
-         * @tparam T    The type of object to allocate.
-         * @tparam Args The type of arguments to instantiate the object.
-         *
-         * @param alignment The byte alignment of the object.
-         * @param args      The arguments to instantiate the object.
-         *
-         * @return A reference to the allocated memory.
-         */
-        template <typename T, typename... Args>
-        [[nodiscard]] T* allocAs(std::size_t alignment, Args... args) noexcept;
-
-
-        /**
          * @brief Allocate a contiguous memory block for an array of @p count objects.
          *
          * @note This function allocates raw, uninitialized memory aligned to type @p T.
