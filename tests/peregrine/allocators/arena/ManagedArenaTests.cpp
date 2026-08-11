@@ -314,13 +314,13 @@ TEST_F(ManagedArenaTests, AllocV_SubsequentAllocationDoNotCorruptMemory)
     // Write into the first allocated span
     for (std::size_t i = 0; i < blockCount; ++i)
     {
-        vertices[i] = Vec4{ vertexData[i * 4], vertexData[(i * 4) + 1], vertexData[i * 4 + 2], vertexData[i * 4 + 3] };
+        vertices[i] = Vec4{ vertexData[i * 4], vertexData[i * 4 + 1], vertexData[i * 4 + 2], vertexData[i * 4 + 3] };
     }
 
     // Write into the second allocated span
     for (std::size_t i = 0; i < blockCount; ++i)
     {
-        edges[i] = Vec4{ edgeData[i * 4], edgeData[(i * 4) + 1], edgeData[i * 4 + 2], edgeData[i * 4 + 3] };
+        edges[i] = Vec4{ edgeData[i * 4], edgeData[i * 4 + 1], edgeData[i * 4 + 2], edgeData[i * 4 + 3] };
     }
 
 
@@ -367,7 +367,7 @@ TEST_F(ManagedArenaTests, AllocV_UpdatesTelemetry)
  *             RESIZE                 *
  **************************************/
 
-TEST_F(ManagedArenaTests, Resize_NewSizeLowerThanOldSizeReturnsSameAddress)
+TEST_F(ManagedArenaTests, Resize_NewSizeSmallerThanOldSizeReturnsSameAddress)
 {
     constexpr auto byteSize   = 128;
     const auto firstByteChunk = arena.allocBytes(byteSize);
@@ -427,7 +427,6 @@ TEST_F(ManagedArenaTests, Resize_AllocationPriorToLatestAllocationReturnNewBuffe
 /** @test Verify that resize of allocation before the last allocation copies old data. */
 TEST_F(ManagedArenaTests, Resize_AllocationPriorToLatestAllocationCopiesOldData)
 {
-    ;
     constexpr auto byteSize    = 128;
     constexpr auto newByteSize = byteSize * 2;
 
@@ -536,6 +535,167 @@ TEST_F(ManagedArenaTests, Resize_InBetweenAllocationResize_UpdatesTelemetry)
     EXPECT_EQ(newByteSize, arena.getTelemetry().getPeakUsage());
 }
 
+
+TEST_F(ManagedArenaTests, ResizeFast_NewSizeSmallerThanOldSizeReturnsNewBufferWithOldData)
+{
+    constexpr auto byteSize   = 128;
+    const auto firstByteChunk = static_cast<size_t*>(arena.allocBytes(byteSize));
+    const auto dataCount = byteSize / sizeof(size_t);
+    for (size_t i = 0; i < dataCount; ++i)
+    {
+        firstByteChunk[i] = i + 11;
+    }
+    // Additional allocation
+    [[maybe_unused]] const auto secondByteChunk = arena.allocBytes(byteSize);
+
+    const auto data = static_cast<size_t*>(arena.resizeFast(firstByteChunk, byteSize, byteSize / 2, alignof(void*)));
+
+    EXPECT_NE(reinterpret_cast<uintptr_t>(firstByteChunk), reinterpret_cast<uintptr_t>(data));
+    // Verify data is not overwritten
+    for (std::size_t i = 0; i < dataCount; ++i)
+    {
+        EXPECT_EQ(i + 11, data[i]);
+    }
+}
+
+
+TEST_F(ManagedArenaTests, ResizeFast_LatestAllocationReturnsNewBufferWithOldData)
+{
+    constexpr auto byteSize    = 128;
+    constexpr auto newByteSize = byteSize * 2;
+
+    // Allocate the chunk
+    const auto firstByteChunk = arena.allocBytes(byteSize);
+    const auto data = static_cast<int*>(arena.resizeFast(firstByteChunk, byteSize, newByteSize, alignof(int)));
+
+    // Resize it
+    constexpr auto firstArraySize = newByteSize / sizeof(int);
+
+    // Write some data
+    for (std::size_t i = 0; i < firstArraySize; ++i)
+    {
+        data[i] = static_cast<int>(i + 100);
+    }
+
+    // Allocate some more memory
+    [[maybe_unused]] auto vec = arena.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+    // Verify data is not overwritten
+    for (std::size_t i = 0; i < firstArraySize; ++i)
+    {
+        EXPECT_EQ(i + 100, data[i]);
+    }
+}
+
+
+TEST_F(ManagedArenaTests, ResizeFast_AllocationPriorToLatestAllocationReturnNewBufferWithOldData)
+{
+    constexpr auto byteSize    = 128;
+    constexpr auto newByteSize = byteSize * 2;
+
+    const auto firstByteChunk = static_cast<size_t*>(arena.allocBytes(byteSize));
+    const auto dataCount = byteSize / sizeof(size_t);
+    for (size_t i = 0; i < dataCount; ++i)
+    {
+        firstByteChunk[i] = i + 11;
+    }
+
+    [[maybe_unused]] const auto secondByteChunk = arena.allocBytes(byteSize);
+
+    const auto data = static_cast<size_t*>(arena.resizeFast(firstByteChunk, byteSize, newByteSize, alignof(size_t)));
+
+    EXPECT_NE(reinterpret_cast<uintptr_t>(firstByteChunk), reinterpret_cast<uintptr_t>(data));
+    for (size_t i = 0; i < dataCount; ++i)
+    {
+        EXPECT_EQ(i + 11, data[i]);
+    }
+}
+
+
+TEST_F(ManagedArenaTests, ResizeFast_SameMemorySize_UpdatesTelemetry)
+{
+    constexpr auto byteSize = 128;
+
+    const auto allocatedBytes = arena.allocBytes(byteSize);
+
+    const auto oldUsage     = arena.getTelemetry().getUsedSize();
+    const auto oldMinUsage  = arena.getTelemetry().getMinUsage();
+    const auto oldPeakUsage = arena.getTelemetry().getPeakUsage();
+
+
+    [[maybe_unused]] const auto data = arena.resizeFast(allocatedBytes, byteSize, byteSize, alignof(void*));
+
+    // Since we are allocating twice the usage will also increment by 2x, but the peak stats will remain the same.
+    EXPECT_EQ(2 * oldUsage, arena.getTelemetry().getUsedSize());
+    EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
+    EXPECT_EQ(oldPeakUsage, arena.getTelemetry().getPeakUsage());
+}
+
+
+TEST_F(ManagedArenaTests, Resize_SmallerMemorySize_UpdatesTelemetry)
+{
+    constexpr auto byteSize    = 128;
+    constexpr auto newByteSize = byteSize - 10;
+
+    const auto allocatedBytes = arena.allocBytes(byteSize);
+
+    const auto oldUsage     = arena.getTelemetry().getUsedSize();
+    const auto oldPeakUsage = arena.getTelemetry().getPeakUsage();
+
+
+    [[maybe_unused]] const auto data = arena.resizeFast(allocatedBytes, byteSize, newByteSize, alignof(void*));
+
+    // Since we are allocating twice the usage will also increment.
+    EXPECT_EQ(oldUsage + newByteSize, arena.getTelemetry().getUsedSize());
+    // Since the new allocation is smaller the min usage will decrease to the new size
+    EXPECT_EQ(newByteSize, arena.getTelemetry().getMinUsage());
+    // But peak usage doesn't change
+    EXPECT_EQ(oldPeakUsage, arena.getTelemetry().getPeakUsage());
+}
+
+
+TEST_F(ManagedArenaTests, ResizeFast_LatestAllocationResize_UpdatesTelemetry)
+{
+    constexpr auto byteSize       = 128;
+    constexpr auto byteDifference = 100;
+    constexpr auto newByteSize    = byteSize + byteDifference;
+
+    [[maybe_unused]] const auto unusedBytes = arena.allocBytes(50);
+    const auto allocatedBytes               = arena.allocBytes(byteSize);
+
+    const auto oldUsage                      = arena.getTelemetry().getUsedSize();
+    const auto oldMinUsage                   = arena.getTelemetry().getMinUsage();
+    [[maybe_unused]] const auto oldPeakUsage = arena.getTelemetry().getPeakUsage();
+
+
+    [[maybe_unused]] const auto data = arena.resizeFast(allocatedBytes, byteSize, newByteSize, alignof(void*));
+
+    // Since we are creating a new allocation, the usage stats increment
+    EXPECT_EQ(oldUsage + newByteSize, arena.getTelemetry().getUsedSize());
+    EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
+    EXPECT_EQ(newByteSize, arena.getTelemetry().getPeakUsage());
+}
+
+
+TEST_F(ManagedArenaTests, ResizeFast_InBetweenAllocationResize_UpdatesTelemetry)
+{
+    constexpr auto byteSize       = 128;
+    constexpr auto byteDifference = 100;
+    constexpr auto newByteSize    = byteSize + byteDifference;
+
+    const auto allocatedBytes               = arena.allocBytes(byteSize);
+    [[maybe_unused]] const auto unusedBytes = arena.allocBytes(50);
+
+    const auto oldUsage    = arena.getTelemetry().getUsedSize();
+    const auto oldMinUsage = arena.getTelemetry().getMinUsage();
+
+
+    [[maybe_unused]] const auto data = arena.resizeFast(allocatedBytes, byteSize, newByteSize, alignof(void*));
+
+    EXPECT_EQ(oldUsage + newByteSize, arena.getTelemetry().getUsedSize());
+    EXPECT_EQ(oldMinUsage, arena.getTelemetry().getMinUsage());
+    EXPECT_EQ(newByteSize, arena.getTelemetry().getPeakUsage());
+}
 
 
 /**************************************

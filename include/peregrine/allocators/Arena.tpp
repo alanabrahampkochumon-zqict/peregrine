@@ -80,11 +80,11 @@ namespace pmm
         }
 
         // Move the data members and null-out the moved data members.
-        _buffer      = std::exchange(arena._buffer, nullptr);
-        _offset      = std::exchange(arena._offset, 0);
-        _prevOffset  = std::exchange(arena._prevOffset, 0);
-        _arenaSize = std::exchange(arena._arenaSize, 0);
-        _telemetry   = std::exchange(arena._telemetry, getTelemetryInstance<TelPolicy>(_arenaSize));
+        _buffer     = std::exchange(arena._buffer, nullptr);
+        _offset     = std::exchange(arena._offset, 0);
+        _prevOffset = std::exchange(arena._prevOffset, 0);
+        _arenaSize  = std::exchange(arena._arenaSize, 0);
+        _telemetry  = std::exchange(arena._telemetry, getTelemetryInstance<TelPolicy>(_arenaSize));
 
         return *this;
     }
@@ -232,9 +232,7 @@ namespace pmm
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE void Arena<MemStrategy, TelPolicy, Safe>::zeroOut() const noexcept
-    {
-        std::memset(_buffer, 0, _arenaSize);
-    }
+    { std::memset(_buffer, 0, _arenaSize); }
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE void* Arena<MemStrategy, TelPolicy, Safe>::resize(void* oldMemory, const std::size_t oldSize,
@@ -286,6 +284,23 @@ namespace pmm
         // Allocation not possible due to lack of memory in arena
         // So return a nullptr.
         // return nullptr;
+    }
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
+    PMM_INLINE void* Arena<MemStrategy, TelPolicy, Safe>::resizeFast(const void* oldMemory, const std::size_t oldSize,
+                                                                     const std::size_t newSize,
+                                                                     const std::size_t alignment)
+    {
+        PMM_ASSERT_MSG(
+            oldMemory != nullptr,
+            "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
+        PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
+
+        const auto newPtr = allocBytes(newSize, alignment);
+        memmove(newPtr, oldMemory, oldSize);
+
+        return newPtr;
     }
 
 
