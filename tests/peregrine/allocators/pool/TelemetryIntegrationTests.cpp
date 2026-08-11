@@ -24,7 +24,7 @@
 TEST_F(ManagedPoolAllocatorTests, IsTelemetryEnabled_ReturnsTrue) { EXPECT_TRUE(pool.isTelemetryEnabled()); }
 
 
-TEST(ManagedPoolAllocator_TelemetryDisabled, IsTelemetryEnabled_ReturnsFalse)
+TEST(ManagedPoolAllocatorTests_TelemetryDisabled, IsTelemetryEnabled_ReturnsFalse)
 {
     const pmm::Pool<pmm::ManagedMemory, pmm::telemetry::Disabled> pool(512, 24, 4);
     EXPECT_FALSE(pool.isTelemetryEnabled());

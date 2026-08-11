@@ -21,7 +21,7 @@
  */
 
 using namespace pmm::constants;
-TEST(PMMMemory, MemAlloc_ReturnsReadWriteableMemory)
+TEST(PMMMemoryTests, MemAlloc_ReturnsReadWriteableMemory)
 {
     constexpr std::size_t size  = 2_MB; // Greater than granularity and page size.
     constexpr std::size_t count = size / sizeof(int);
@@ -45,7 +45,7 @@ TEST(PMMMemory, MemAlloc_ReturnsReadWriteableMemory)
 }
 
 
-TEST(PMMMemory, MemAlloc_ReturnsNullptrWhenAllocationFails)
+TEST(PMMMemoryTests, MemAlloc_ReturnsNullptrWhenAllocationFails)
 {
     constexpr std::size_t size = std::numeric_limits<size_t>::max();
     const auto memory          = pmm::memAlloc(size);
@@ -53,7 +53,7 @@ TEST(PMMMemory, MemAlloc_ReturnsNullptrWhenAllocationFails)
 }
 
 
-TEST(PMMMemory, MemAlloc_ReturnsZeroedOutMemory)
+TEST(PMMMemoryTests, MemAlloc_ReturnsZeroedOutMemory)
 {
     constexpr size_t size = 2_MB;
     const auto memory     = static_cast<size_t*>(pmm::memAlloc(size));
@@ -65,7 +65,7 @@ TEST(PMMMemory, MemAlloc_ReturnsZeroedOutMemory)
 
 
 
-TEST(PMMMemory, MemFree_ReturnsTrueOnSuccessfulFree)
+TEST(PMMMemoryTests, MemFree_ReturnsTrueOnSuccessfulFree)
 {
     constexpr std::size_t size = 2_MB; // Greater than granularity and page size.
     const auto data            = static_cast<int*>(pmm::memAlloc(size));
@@ -81,7 +81,7 @@ TEST(PMMMemory, MemFree_ReturnsTrueOnSuccessfulFree)
 }
 
 
-TEST(PMMMemory, MemFree_NullptrReturnsFalse) { EXPECT_FALSE(pmm::memFree(nullptr, 0)); }
+TEST(PMMMemoryTests, MemFree_NullptrReturnsFalse) { EXPECT_FALSE(pmm::memFree(nullptr, 0)); }
 
 
 /**************************************
@@ -92,7 +92,7 @@ TEST(PMMMemory, MemFree_NullptrReturnsFalse) { EXPECT_FALSE(pmm::memFree(nullptr
 /**
  * @test Verify that freeing a zero size ptr on non-Windows platforms return false.
  */
-TEST(PMMMemory, MemFree_ZeroSizeReturnsFalse)
+TEST(PMMMemoryTests, MemFree_ZeroSizeReturnsFalse)
 {
     const auto address = pmm::memAlloc(24);
     EXPECT_FALSE(pmm::memFree(address, 0));
@@ -101,7 +101,7 @@ TEST(PMMMemory, MemFree_ZeroSizeReturnsFalse)
 #endif
 
 
-TEST(PMMMemory, QueryMemoryDetailsReturnsAValidStructure)
+TEST(PMMMemoryTests, QueryMemoryDetailsReturnsAValidStructure)
 {
     // NOTE: We cannot hardcode the values that the function will return
     // but we can ensure that they are not equal to zero.

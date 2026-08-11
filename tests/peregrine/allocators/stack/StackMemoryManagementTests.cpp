@@ -1,5 +1,5 @@
 /**
- * @file StackMemoryManagementTests.cpp
+ * @file StackMemoryManagementTestsTests.cpp
  * @author Alan Abraham P Kochumon
  * @date Created on: July 22, 2026
  *
@@ -40,7 +40,7 @@ namespace
 
 
 /** @brief Verify that managed stack maintains its own internal buffer. */
-TEST(StackMemoryManagement, ManagedStack_MaintainsInternalBuffer)
+TEST(StackMemoryManagementTests, ManagedStack_MaintainsInternalBuffer)
 {
     pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory> stack{ 4096 };
 
@@ -59,7 +59,7 @@ TEST(StackMemoryManagement, ManagedStack_MaintainsInternalBuffer)
 }
 
 
-TEST(StackMemoryManagement, LooseUnmanagedStack_MoveCtor_DoesNotFreeMemory)
+TEST(StackMemoryManagementTests, LooseUnmanagedStack_MoveCtor_DoesNotFreeMemory)
 {
     constexpr auto size = 4096;
     auto* buffer        = new uint8_t[size];
@@ -72,7 +72,7 @@ TEST(StackMemoryManagement, LooseUnmanagedStack_MoveCtor_DoesNotFreeMemory)
 }
 
 
-TEST(StackMemoryManagement, LooseUnmanagedStack_MoveAssign_DoesNotFreeMemory)
+TEST(StackMemoryManagementTests, LooseUnmanagedStack_MoveAssign_DoesNotFreeMemory)
 {
     constexpr auto size = 4096;
     auto* buffer        = new uint8_t[size];
@@ -88,7 +88,7 @@ TEST(StackMemoryManagement, LooseUnmanagedStack_MoveAssign_DoesNotFreeMemory)
 }
 
 
-TEST(StackMemoryManagement, StrictUnmanagedStack_MoveCtor_DoesNotFreeMemory)
+TEST(StackMemoryManagementTests, StrictUnmanagedStack_MoveCtor_DoesNotFreeMemory)
 {
     constexpr auto size = 4096;
     auto* buffer        = new uint8_t[size];
@@ -101,7 +101,7 @@ TEST(StackMemoryManagement, StrictUnmanagedStack_MoveCtor_DoesNotFreeMemory)
 }
 
 
-TEST(StackMemoryManagement, StrictUnmanagedStack_MoveAssign_DoesNotFreeMemory)
+TEST(StackMemoryManagementTests, StrictUnmanagedStack_MoveAssign_DoesNotFreeMemory)
 {
     constexpr auto size = 4096;
     auto* buffer        = new uint8_t[size];
@@ -120,7 +120,7 @@ TEST(StackMemoryManagement, StrictUnmanagedStack_MoveAssign_DoesNotFreeMemory)
 namespace pmm
 {
     /** @brief Verify that unmanaged loose stack uses the external buffer. */
-    TEST(StackMemoryManagement, LooseUnmanagedStack_UsesExternalBuffer)
+    TEST(StackMemoryManagementTests, LooseUnmanagedStack_UsesExternalBuffer)
     {
         constexpr auto size = 4096;
         auto* buffer        = new uint8_t[size];
@@ -132,7 +132,7 @@ namespace pmm
 
 
     /** @brief Verify that unmanaged strict stack uses the external buffer. */
-    TEST(StackMemoryManagement, StrictUnmanagedStack_UsesExternalBuffer)
+    TEST(StackMemoryManagementTests, StrictUnmanagedStack_UsesExternalBuffer)
     {
         constexpr auto size = 4096;
         auto* buffer        = new uint8_t[size];

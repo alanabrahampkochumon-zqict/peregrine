@@ -27,18 +27,18 @@ namespace
      *             TEST SETUP             *
      **************************************/
 
-    class StrictStackAllocationAlignment: public testing::TestWithParam<std::size_t>
+    class StrictStackAllocationAlignmentTests: public testing::TestWithParam<std::size_t>
     {};
-    INSTANTIATE_TEST_SUITE_P(StackAlignmentTests, StrictStackAllocationAlignment,
+    INSTANTIATE_TEST_SUITE_P(StackAlignmentTests, StrictStackAllocationAlignmentTests,
                              ::testing::Values(4, 8, 16, 32, 64, 512, 4096));
 
     struct StrictStackResizeLastParams
     {
         std::size_t oldSize, newSize;
     };
-    class StrictStackResizeLast: public ::testing::TestWithParam<StrictStackResizeLastParams>
+    class StrictStackResizeLastTests: public ::testing::TestWithParam<StrictStackResizeLastParams>
     {};
-    INSTANTIATE_TEST_SUITE_P(StackResize, StrictStackResizeLast,
+    INSTANTIATE_TEST_SUITE_P(StackResize, StrictStackResizeLastTests,
                              ::testing::Values(StrictStackResizeLastParams{ .oldSize = 256, .newSize = 128 },
                                                StrictStackResizeLastParams{ .oldSize = 128, .newSize = 512 },
                                                StrictStackResizeLastParams{ .oldSize = 2048, .newSize = 4096 },
@@ -55,20 +55,20 @@ namespace
 /**
  * @brief Verify that size() returns the total size of the stack.
  */
-TEST_F(StrictStack, Size_ReturnsTheSizeOfTheStack) { EXPECT_EQ(stackSize, stack.size()); }
+TEST_F(StrictStackTests, Size_ReturnsTheSizeOfTheStack) { EXPECT_EQ(stackSize, stack.size()); }
 
 
 /**
  * @brief Verify that freeSize() returns the total size of the stack, when no allocation is made.
  */
-TEST_F(StrictStack, FreeSize_NoAllocations_ReturnsTheSizeOfTheStack) { EXPECT_EQ(stackSize, stack.freeSize()); }
+TEST_F(StrictStackTests, FreeSize_NoAllocations_ReturnsTheSizeOfTheStack) { EXPECT_EQ(stackSize, stack.freeSize()); }
 
 
 /**
  * @brief Verify that freeSize() returns the size - (allocated size + padding),
  *        after an allocation is made.
  */
-TEST_F(StrictStack, FreeSize_ReturnsStackSizeMinusPaddingAndAllocationSize)
+TEST_F(StrictStackTests, FreeSize_ReturnsStackSizeMinusPaddingAndAllocationSize)
 {
     constexpr std::size_t allocatedSize = 512;
     const auto memory                   = static_cast<char*>(stack.allocBytes(allocatedSize));
@@ -82,7 +82,7 @@ TEST_F(StrictStack, FreeSize_ReturnsStackSizeMinusPaddingAndAllocationSize)
 /**
  * @brief Verify that freeSize() returns stack size, after an allocation is freed.
  */
-// TEST_F(StrictStack, FreeSize_AfterFreeingAllocation_ReturnsStackSize)
+// TEST_F(StrictStackTests, FreeSize_AfterFreeingAllocation_ReturnsStackSize)
 // {
 //     constexpr std::size_t allocatedSize = 512;
 //     const auto memory                   = static_cast<char*>(stack.allocBytes(allocatedSize));
@@ -94,7 +94,7 @@ TEST_F(StrictStack, FreeSize_ReturnsStackSizeMinusPaddingAndAllocationSize)
 /**
  * @brief Verify that freeSize() returns stack size, after all allocations are freed.
  */
-TEST_F(StrictStack, FreeSize_AfterFreeingAllAllocations_ReturnsStackSize)
+TEST_F(StrictStackTests, FreeSize_AfterFreeingAllAllocations_ReturnsStackSize)
 {
     constexpr std::size_t allocatedSize = 512;
     static_cast<void>(stack.allocBytes(allocatedSize));
@@ -106,13 +106,13 @@ TEST_F(StrictStack, FreeSize_AfterFreeingAllAllocations_ReturnsStackSize)
 /**
  * @brief Verify that usedSize() returns 0, when no allocation is made.
  */
-TEST_F(StrictStack, UsedSize_NoAllocations_ReturnsZero) { EXPECT_EQ(0, stack.usedSize()); }
+TEST_F(StrictStackTests, UsedSize_NoAllocations_ReturnsZero) { EXPECT_EQ(0, stack.usedSize()); }
 
 
 /**
  * @brief Verify that usedSize() returns (allocated size + padding), after an allocation is made.
  */
-TEST_F(StrictStack, UsedSize_ReturnsStackSizeMinusPaddingAndAllocationSize)
+TEST_F(StrictStackTests, UsedSize_ReturnsStackSizeMinusPaddingAndAllocationSize)
 {
     constexpr std::size_t allocatedSize = 512;
     const auto memory                   = static_cast<char*>(stack.allocBytes(allocatedSize));
@@ -126,7 +126,7 @@ TEST_F(StrictStack, UsedSize_ReturnsStackSizeMinusPaddingAndAllocationSize)
 /**
  * @brief Verify that usedSize() returns zero, after an allocation is freed.
  */
-TEST_F(StrictStack, UsedSize_AfterFreeingAllocation_ReturnsZero)
+TEST_F(StrictStackTests, UsedSize_AfterFreeingAllocation_ReturnsZero)
 {
     constexpr std::size_t allocatedSize = 512;
     const auto memory                   = static_cast<char*>(stack.allocBytes(allocatedSize));
@@ -138,7 +138,7 @@ TEST_F(StrictStack, UsedSize_AfterFreeingAllocation_ReturnsZero)
 /**
  * @brief Verify that usedSize() returns zero, after all allocations are freed.
  */
-TEST_F(StrictStack, UsedSize_ClearAllocation_ReturnsStackSize)
+TEST_F(StrictStackTests, UsedSize_ClearAllocation_ReturnsStackSize)
 {
     constexpr std::size_t allocatedSize = 512;
     static_cast<void>(stack.allocBytes(allocatedSize));
@@ -147,7 +147,7 @@ TEST_F(StrictStack, UsedSize_ClearAllocation_ReturnsStackSize)
 }
 
 
-TEST_F(StrictStack, MoveCtor_CopiesAttributesToNewObject)
+TEST_F(StrictStackTests, MoveCtor_CopiesAttributesToNewObject)
 {
     const pmm::Stack<pmm::stack::Strict> stack2 = std::move(stack);
     EXPECT_EQ(stackSize, stack2.freeSize());
@@ -157,7 +157,7 @@ TEST_F(StrictStack, MoveCtor_CopiesAttributesToNewObject)
 }
 
 
-TEST_F(StrictStack, MoveCtor_MovesTelemetry)
+TEST_F(StrictStackTests, MoveCtor_MovesTelemetry)
 {
 
     static_cast<void>(stack.allocBytes(250, 16));
@@ -180,7 +180,7 @@ TEST_F(StrictStack, MoveCtor_MovesTelemetry)
  **************************************/
 
 /** @brief Verify that stack allocation using allocBytes returns a valid pointer, given an empty stack. */
-TEST_F(StrictStack, AllocBytes_ReturnsNonNullPtrOnEmptyStack)
+TEST_F(StrictStackTests, AllocBytes_ReturnsNonNullPtrOnEmptyStack)
 {
     const auto dataPtr = stack.allocBytes(120);
     EXPECT_NE(nullptr, dataPtr);
@@ -191,7 +191,7 @@ TEST_F(StrictStack, AllocBytes_ReturnsNonNullPtrOnEmptyStack)
  * @brief Verify that stack allocation using allocBytes returns a valid pointer,
  *        given a non-empty stack with memory to spare.
  */
-TEST_F(StrictStack, AllocBytes_ReturnNonNullPtrOnNonEmptyStack)
+TEST_F(StrictStackTests, AllocBytes_ReturnNonNullPtrOnNonEmptyStack)
 {
     const auto dataPtr1 = stack.allocBytes(500);
     const auto dataPtr2 = stack.allocBytes(500);
@@ -204,7 +204,7 @@ TEST_F(StrictStack, AllocBytes_ReturnNonNullPtrOnNonEmptyStack)
 
 
 /** @brief Verify that memory allocated using allocBytes maintains data integrity. */
-TEST_F(StrictStack, AllocBytes_RepeatedAllocationAndWritesDoNotCorruptData)
+TEST_F(StrictStackTests, AllocBytes_RepeatedAllocationAndWritesDoNotCorruptData)
 {
     constexpr std::size_t array1Len = 50;
     constexpr std::size_t array2Len = 25;
@@ -238,7 +238,7 @@ TEST_F(StrictStack, AllocBytes_RepeatedAllocationAndWritesDoNotCorruptData)
 
 
 /** @brief Verify that allocation using allocBytes stores header before returned address. */
-TEST_F(StrictStack, AllocBytes_HeaderIsStoredBehindReturnedAddress)
+TEST_F(StrictStackTests, AllocBytes_HeaderIsStoredBehindReturnedAddress)
 {
     constexpr auto alignment = 8;
     const auto memoryStart   = static_cast<char*>(stack.allocBytes(500, alignment));
@@ -253,7 +253,7 @@ TEST_F(StrictStack, AllocBytes_HeaderIsStoredBehindReturnedAddress)
  * @brief Verify that allocation using allocBytes always return an address aligned
  *        to the specified boundary.
  */
-TEST_P(StrictStackAllocationAlignment, AllocBytes_AlwaysReturnAnAlignedMemoryAddress)
+TEST_P(StrictStackAllocationAlignmentTests, AllocBytes_AlwaysReturnAnAlignedMemoryAddress)
 {
     const auto alignment = this->GetParam();
     const auto blockSize = 5 * alignment;
@@ -272,7 +272,7 @@ TEST_P(StrictStackAllocationAlignment, AllocBytes_AlwaysReturnAnAlignedMemoryAdd
  **************************************/
 
 /** @brief Verify that stack allocation returns a valid pointer, given an empty stack. */
-TEST_F(StrictStack, Alloc_ReturnsNonNullPtrOnEmptyStack)
+TEST_F(StrictStackTests, Alloc_ReturnsNonNullPtrOnEmptyStack)
 {
     const auto vector = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
     EXPECT_NE(nullptr, vector);
@@ -287,7 +287,7 @@ TEST_F(StrictStack, Alloc_ReturnsNonNullPtrOnEmptyStack)
  * @brief Verify that stack allocation using alloc returns a valid pointer,
  *        given a non-empty stack with memory to spare.
  */
-TEST_F(StrictStack, Alloc_ReturnNonNullPtrOnNonEmptyStack)
+TEST_F(StrictStackTests, Alloc_ReturnNonNullPtrOnNonEmptyStack)
 {
     const auto dataPtr1 = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
     const auto dataPtr2 = stack.alloc<Vec4>(5.0f, 1.0f, 31.0f, 3.0f);
@@ -300,7 +300,7 @@ TEST_F(StrictStack, Alloc_ReturnNonNullPtrOnNonEmptyStack)
 
 
 /** @brief Verify that allocated using alloc memory maintains data integrity. */
-TEST_F(StrictStack, Alloc_RepeatedAllocationAndWritesDoNotCorruptData)
+TEST_F(StrictStackTests, Alloc_RepeatedAllocationAndWritesDoNotCorruptData)
 {
     const auto dataPtr1 = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
     const auto dataPtr2 = stack.alloc<Vec4>(5.0f, 1.0f, 31.0f, 3.0f);
@@ -318,7 +318,7 @@ TEST_F(StrictStack, Alloc_RepeatedAllocationAndWritesDoNotCorruptData)
 
 
 /** @brief Verify that allocation using alloc stores header before returned address. */
-TEST_F(StrictStack, Alloc_HeaderIsStoredBehindReturnedAddress)
+TEST_F(StrictStackTests, Alloc_HeaderIsStoredBehindReturnedAddress)
 {
     const auto vector = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
@@ -329,7 +329,7 @@ TEST_F(StrictStack, Alloc_HeaderIsStoredBehindReturnedAddress)
 
 
 /** @brief Verify that allocation using alloc always return an address aligned to the alignment of the type. */
-TEST_P(StrictStackAllocationAlignment, Alloc_AlwaysReturnAnAlignedMemoryAddress)
+TEST_P(StrictStackAllocationAlignmentTests, Alloc_AlwaysReturnAnAlignedMemoryAddress)
 {
     pmm::Stack<pmm::stack::Strict> stack{ 512 };
     const auto vector = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
@@ -340,7 +340,7 @@ TEST_P(StrictStackAllocationAlignment, Alloc_AlwaysReturnAnAlignedMemoryAddress)
 
 
 /** @brief Verify that allocV can allocate a span of primitives. */
-TEST_F(StrictStack, AllocV_AllocatesWriteablePrimitiveArray)
+TEST_F(StrictStackTests, AllocV_AllocatesWriteablePrimitiveArray)
 {
     auto vectors = stack.allocV<int>(10);
 
@@ -360,7 +360,7 @@ TEST_F(StrictStack, AllocV_AllocatesWriteablePrimitiveArray)
 
 
 /** @brief Verify that allocV can allocate a span of user defined types. */
-TEST_F(StrictStack, AllocV_AllocatesWriteTypeArray)
+TEST_F(StrictStackTests, AllocV_AllocatesWriteTypeArray)
 {
     auto vectors = stack.allocV<Vec4>(10);
 
@@ -384,7 +384,7 @@ TEST_F(StrictStack, AllocV_AllocatesWriteTypeArray)
 }
 
 /** @brief Verify that allocation using allocV aligns to the type's alignment. */
-TEST_F(StrictStack, AllocV_BaseAddressAlignedToAlignmentOfType)
+TEST_F(StrictStackTests, AllocV_BaseAddressAlignedToAlignmentOfType)
 {
     // Allocate some memory to throw off alignment
     static_cast<void>(stack.allocBytes(2, 2));
@@ -401,7 +401,7 @@ TEST_F(StrictStack, AllocV_BaseAddressAlignedToAlignmentOfType)
  **************************************/
 
 /** @brief Verify that resizing the latest allocation to a smaller size, returns the same address. */
-TEST_F(StrictStack, Resize_LatestAllocationSmallerSize_ReturnsSameAddress)
+TEST_F(StrictStackTests, Resize_LatestAllocationSmallerSize_ReturnsSameAddress)
 {
     constexpr auto oldSize = 128, newSize = 64;
     const auto oldMemory = stack.allocBytes(oldSize);
@@ -412,7 +412,7 @@ TEST_F(StrictStack, Resize_LatestAllocationSmallerSize_ReturnsSameAddress)
 
 
 /** @brief Verify that resizing the latest allocation to a larger size, returns the same address. */
-TEST_F(StrictStack, Resize_LatestAllocationLargerSize_ReturnsSameAddress)
+TEST_F(StrictStackTests, Resize_LatestAllocationLargerSize_ReturnsSameAddress)
 {
     constexpr auto oldSize = 128, newSize = 256;
     const auto oldMemory = stack.allocBytes(oldSize);
@@ -423,7 +423,7 @@ TEST_F(StrictStack, Resize_LatestAllocationLargerSize_ReturnsSameAddress)
 
 
 /** @brief Verify that resizing the latest allocation to a larger size, resizes the memory. */
-TEST_F(StrictStack, Resize_LatestAllocationLargerSize_ResizesMemory)
+TEST_F(StrictStackTests, Resize_LatestAllocationLargerSize_ResizesMemory)
 {
     constexpr auto count          = 128;
     constexpr std::size_t oldSize = 128, newSize = sizeof(int) * count;
@@ -447,7 +447,7 @@ TEST_F(StrictStack, Resize_LatestAllocationLargerSize_ResizesMemory)
 
 
 /** @brief Verify that resizing any allocation to a smaller size, returns the same address. */
-TEST_F(StrictStack, Resize_SmallerSize_ReturnsSameAddress)
+TEST_F(StrictStackTests, Resize_SmallerSize_ReturnsSameAddress)
 {
     constexpr auto oldSize = 128, newSize = 64;
     const auto oldMemory = stack.allocBytes(oldSize);
@@ -461,7 +461,7 @@ TEST_F(StrictStack, Resize_SmallerSize_ReturnsSameAddress)
 
 
 /** @brief Verify that resizing any allocation to a larger size, returns the new address. */
-TEST_F(StrictStack, Resize_LargerSize_ReturnsNewAddress)
+TEST_F(StrictStackTests, Resize_LargerSize_ReturnsNewAddress)
 {
     constexpr auto oldSize = 128, newSize = 256;
     const auto oldMemory = stack.allocBytes(oldSize);
@@ -475,7 +475,7 @@ TEST_F(StrictStack, Resize_LargerSize_ReturnsNewAddress)
 
 
 /** @brief Verify that resizing any allocation to a larger size, resizes the memory. */
-TEST_F(StrictStack, Resize_LargerSize_ResizesMemory)
+TEST_F(StrictStackTests, Resize_LargerSize_ResizesMemory)
 {
     constexpr auto count          = 128;
     constexpr std::size_t oldSize = 128, newSize = sizeof(int) * count;
@@ -507,7 +507,7 @@ TEST_F(StrictStack, Resize_LargerSize_ResizesMemory)
 
 
 /** @brief Verify that resizing any allocation to a larger size, copies over old memory contents. */
-TEST_F(StrictStack, Resize_CopiesOverOldMemory)
+TEST_F(StrictStackTests, Resize_CopiesOverOldMemory)
 {
     constexpr auto oldCount       = 48;
     constexpr auto newCount       = 128;
@@ -536,7 +536,7 @@ TEST_F(StrictStack, Resize_CopiesOverOldMemory)
 
 /** @brief Verify that resizing a allocation allocated prior to latest allocation to smaller size, does not corrupt
  * memory. */
-TEST_F(StrictStack, Resize_NonLatestAllocShrinking_CorruptsNoMemory)
+TEST_F(StrictStackTests, Resize_NonLatestAllocShrinking_CorruptsNoMemory)
 {
     constexpr auto oldCount       = 64;
     constexpr auto newCount       = 32;
@@ -575,7 +575,7 @@ TEST_F(StrictStack, Resize_NonLatestAllocShrinking_CorruptsNoMemory)
 
 /** @brief Verify that resizing a allocation allocated prior to latest allocation to smaller size, does not corrupt
  * memory. */
-TEST_F(StrictStack, Resize_NonLatestAllocExpansion_CorruptsNoMemory)
+TEST_F(StrictStackTests, Resize_NonLatestAllocExpansion_CorruptsNoMemory)
 {
     constexpr auto oldCount       = 16;
     constexpr auto newCount       = 32;
@@ -618,7 +618,7 @@ TEST_F(StrictStack, Resize_NonLatestAllocExpansion_CorruptsNoMemory)
 
 
 /** @brief Verify that resizing the latest allocation to smaller size, does not corrupt memory. */
-TEST_F(StrictStack, Resize_LatestAllocationShrinking_CorruptsNoMemory)
+TEST_F(StrictStackTests, Resize_LatestAllocationShrinking_CorruptsNoMemory)
 {
     constexpr auto oldCount       = 64;
     constexpr auto newCount       = 32;
@@ -657,7 +657,7 @@ TEST_F(StrictStack, Resize_LatestAllocationShrinking_CorruptsNoMemory)
 
 
 /** @brief Verify that resizing the latest allocation to larger size, does not corrupt memory. */
-TEST_F(StrictStack, Resize_LatestAllocationExpansion_CorruptsNoMemory)
+TEST_F(StrictStackTests, Resize_LatestAllocationExpansion_CorruptsNoMemory)
 {
     constexpr auto oldCount       = 16;
     constexpr auto newCount       = 32;
@@ -702,7 +702,7 @@ TEST_F(StrictStack, Resize_LatestAllocationExpansion_CorruptsNoMemory)
 
 
 /** @brief Verify that resizing the latest allocation using to a smaller size resizeFast, returns new address. */
-TEST_F(StrictStack, ResizeFast_LatestAllocationSmallerSize_ReturnsNewAddress)
+TEST_F(StrictStackTests, ResizeFast_LatestAllocationSmallerSize_ReturnsNewAddress)
 {
     constexpr auto oldSize = 128, newSize = 64;
     const auto oldMemory = stack.allocBytes(oldSize);
@@ -713,7 +713,7 @@ TEST_F(StrictStack, ResizeFast_LatestAllocationSmallerSize_ReturnsNewAddress)
 
 
 /** @brief Verify that resizing the latest allocation to a larger size using resizeFast, returns new address. */
-TEST_F(StrictStack, ResizeFast_LatestAllocationLargerSize_ReturnsNewAddress)
+TEST_F(StrictStackTests, ResizeFast_LatestAllocationLargerSize_ReturnsNewAddress)
 {
     constexpr auto oldSize = 128, newSize = 256;
     const auto oldMemory = stack.allocBytes(oldSize);
@@ -724,7 +724,7 @@ TEST_F(StrictStack, ResizeFast_LatestAllocationLargerSize_ReturnsNewAddress)
 
 
 /** @brief Verify that resizing any allocation to a smaller size using resizeFast, returns new address. */
-TEST_F(StrictStack, ResizeFast_SmallerSize_ReturnsNewAddress)
+TEST_F(StrictStackTests, ResizeFast_SmallerSize_ReturnsNewAddress)
 {
     constexpr auto oldSize = 128, newSize = 64;
     const auto oldMemory = stack.allocBytes(oldSize);
@@ -738,7 +738,7 @@ TEST_F(StrictStack, ResizeFast_SmallerSize_ReturnsNewAddress)
 
 
 /** @brief Verify that resizing any allocation to a larger size using resizeFast, returns the new address. */
-TEST_F(StrictStack, ResizeFast_LargerSize_ReturnsNewAddress)
+TEST_F(StrictStackTests, ResizeFast_LargerSize_ReturnsNewAddress)
 {
     constexpr auto oldSize = 128, newSize = 256;
     const auto oldMemory = stack.allocBytes(oldSize);
@@ -752,7 +752,7 @@ TEST_F(StrictStack, ResizeFast_LargerSize_ReturnsNewAddress)
 
 
 /** @brief Verify that resizing any allocation using resizeFast, resizes the memory. */
-TEST_F(StrictStack, ResizeFast_ResizesMemory)
+TEST_F(StrictStackTests, ResizeFast_ResizesMemory)
 {
     constexpr auto count          = 128;
     constexpr std::size_t oldSize = 128, newSize = sizeof(int) * count;
@@ -784,7 +784,7 @@ TEST_F(StrictStack, ResizeFast_ResizesMemory)
 
 
 /** @brief Verify that resizing any allocation to a larger size using resizeFast, copies over old memory contents. */
-TEST_F(StrictStack, ResizeFast_CopiesOverOldMemory)
+TEST_F(StrictStackTests, ResizeFast_CopiesOverOldMemory)
 {
     constexpr auto oldCount       = 48;
     constexpr auto newCount       = 128;
@@ -808,7 +808,7 @@ TEST_F(StrictStack, ResizeFast_CopiesOverOldMemory)
 
 
 /** @brief Verify that resizing the latest allocation to a smaller size using resizeLast, returns the same address. */
-TEST_F(StrictStack, ResizeLast_LatestAllocationSmallerSize_ReturnsSameAddress)
+TEST_F(StrictStackTests, ResizeLast_LatestAllocationSmallerSize_ReturnsSameAddress)
 {
     constexpr auto oldSize = 128, newSize = 64;
     const auto oldMemory = stack.allocBytes(oldSize);
@@ -819,7 +819,7 @@ TEST_F(StrictStack, ResizeLast_LatestAllocationSmallerSize_ReturnsSameAddress)
 
 
 /** @brief Verify that resizing the latest allocation to a larger size using resizeLast, returns the same address. */
-TEST_F(StrictStack, ResizeLast_LatestAllocationLargerSize_ReturnsSameAddress)
+TEST_F(StrictStackTests, ResizeLast_LatestAllocationLargerSize_ReturnsSameAddress)
 {
     constexpr auto oldSize = 128, newSize = 256;
     const auto oldMemory = stack.allocBytes(oldSize);
@@ -830,7 +830,7 @@ TEST_F(StrictStack, ResizeLast_LatestAllocationLargerSize_ReturnsSameAddress)
 
 
 /** @brief Verify that resizing any allocation using resizeLast, resizes the memory. */
-TEST_F(StrictStack, ResizeLast_ResizesMemory)
+TEST_F(StrictStackTests, ResizeLast_ResizesMemory)
 {
     constexpr auto count          = 128;
     constexpr std::size_t oldSize = 128, newSize = sizeof(int) * count;
@@ -865,7 +865,7 @@ TEST_F(StrictStack, ResizeLast_ResizesMemory)
  **************************************/
 
 /** @brief Verify that stack free, frees up memory for subsequent allocations. */
-TEST_F(StrictStack, FreeBytes_FreesMemoryForSubsequentAllocations)
+TEST_F(StrictStackTests, FreeBytes_FreesMemoryForSubsequentAllocations)
 {
     constexpr std::size_t alignment = 8;
     const auto usableSize = stackSize - 128; // A big offset is used since we need to make room for header + alignment
@@ -891,7 +891,7 @@ TEST_F(StrictStack, FreeBytes_FreesMemoryForSubsequentAllocations)
 }
 
 /** @brief Verify that stack free, when called multiple times, free the allocated buffer. */
-TEST_F(StrictStack, FreeBytes_MultipleTimesMakesRoomInTheStack)
+TEST_F(StrictStackTests, FreeBytes_MultipleTimesMakesRoomInTheStack)
 {
     constexpr std::size_t alignment = 8;
     // Last 128 is the offset used to make room for header(at least 16 bytes) + alignment
@@ -935,7 +935,7 @@ TEST_F(StrictStack, FreeBytes_MultipleTimesMakesRoomInTheStack)
 
 
 /** @brief Verify that stack freeAll, frees the entire stack. */
-TEST_F(StrictStack, Clear_FreesTheEntireStack)
+TEST_F(StrictStackTests, Clear_FreesTheEntireStack)
 {
     constexpr std::size_t alignment = 8;
     // Last 128 is the offset used to make room for header + alignment
@@ -969,7 +969,7 @@ TEST_F(StrictStack, Clear_FreesTheEntireStack)
 
 
 /** @brief Verify that stack free, frees the buffer for future allocations. */
-TEST_F(StrictStack, Free_FreesMemoryForSubsequentAllocations)
+TEST_F(StrictStackTests, Free_FreesMemoryForSubsequentAllocations)
 {
 
     // NOTE: 64 bytes is some leeway for buffer header and alignment
@@ -997,7 +997,7 @@ TEST_F(StrictStack, Free_FreesMemoryForSubsequentAllocations)
 
 
 /** @brief Verify that stack free, calls class destructor. */
-TEST_F(StrictStack, Free_CallsClassDestructorForNonTrivialTypes)
+TEST_F(StrictStackTests, Free_CallsClassDestructorForNonTrivialTypes)
 {
     int numDestructorCalls = 0;
     const auto nonTrivial  = stack.alloc<DestructionTracker>(&numDestructorCalls);
@@ -1009,7 +1009,7 @@ TEST_F(StrictStack, Free_CallsClassDestructorForNonTrivialTypes)
 
 
 /** @brief Verify that stack free, frees the buffer for future allocations. */
-TEST_F(StrictStack, FreeV_FreesMemoryForSubsequentAllocations)
+TEST_F(StrictStackTests, FreeV_FreesMemoryForSubsequentAllocations)
 {
 
     // NOTE: 64 bytes is some leeway for buffer header and alignment
@@ -1037,7 +1037,7 @@ TEST_F(StrictStack, FreeV_FreesMemoryForSubsequentAllocations)
 
 
 /** @brief Verify that stack freeV, calls class destructor for each data member. */
-TEST_F(StrictStack, FreeV_CallsClassDestructorForNonTrivialTypes)
+TEST_F(StrictStackTests, FreeV_CallsClassDestructorForNonTrivialTypes)
 {
     // @Warning Not thread safe
     int numDestructorCalls       = 0;
@@ -1063,7 +1063,7 @@ namespace pmm
 {
 
     /** @brief Verify that stack allocator is initialized with passed-in size. */
-    TEST(StrictStackInitialization, InitializesDefaultStateAndBuffer)
+    TEST(StrictStackInitializationTests, InitializesDefaultStateAndBuffer)
     {
         constexpr std::size_t sizeInBytes = 512;
         const Stack<pmm::stack::Strict> stack{ sizeInBytes };
@@ -1074,7 +1074,7 @@ namespace pmm
     }
 
     /** @brief Verify that allocation moves the stack offset by at least the request size. */
-    TEST_F(StrictStack, Initialization_MovesOffsetAtleastByAllocationSize)
+    TEST_F(StrictStackTests, Initialization_MovesOffsetAtleastByAllocationSize)
     {
         // Note: Due to alignment and header storage we cannot guarantee
         // that the allocation will be exactly the size
@@ -1085,7 +1085,7 @@ namespace pmm
     }
 
     /** @brief Verify that freeAll moves the offset back to zero. */
-    TEST_F(StrictStack, Clear_MovesOffsetAndPreviousOffsetToZero)
+    TEST_F(StrictStackTests, Clear_MovesOffsetAndPreviousOffsetToZero)
     {
         constexpr auto size = 512;
         // Initially allocate some memory
@@ -1102,7 +1102,7 @@ namespace pmm
     }
 
     /** @brief Verify that stack.resizeLast, moves the offset in the correct direction. */
-    TEST_P(StrictStackResizeLast, ResizeLast_MovesOffsetInCorrectDirection)
+    TEST_P(StrictStackResizeLastTests, ResizeLast_MovesOffsetInCorrectDirection)
     {
         Stack<stack::Strict> stack(20_KB);
         const auto [oldSize, newSize] = GetParam();
@@ -1121,7 +1121,7 @@ namespace pmm
 
 
 
-    TEST_F(StrictStack, MoveCtor_NullsOutInternalBuffer)
+    TEST_F(StrictStackTests, MoveCtor_NullsOutInternalBuffer)
     {
         [[maybe_unused]] const Stack<stack::Strict> stack2 = std::move(stack);
         // NOLINT(bugprone-use-after-move)
@@ -1134,7 +1134,7 @@ namespace pmm
     /**
      * @brief Verify that move constructor moves all data members, including buffer into new object.
      */
-    TEST_F(StrictStack, MoveCtor_MovesBufferIntoNewObject)
+    TEST_F(StrictStackTests, MoveCtor_MovesBufferIntoNewObject)
     {
         const auto initialPointer    = stack._buffer;
         const auto initialOffset     = stack._offset;
@@ -1148,7 +1148,7 @@ namespace pmm
     }
 
 
-    TEST_F(StrictStack, MoveOperator_NullsOutInternalBuffer)
+    TEST_F(StrictStackTests, MoveOperator_NullsOutInternalBuffer)
     {
         [[maybe_unused]] Stack<stack::Strict> stack2(256);
         static_cast<void>(stack2 = std::move(stack));
@@ -1160,7 +1160,7 @@ namespace pmm
 
 
 
-    TEST_F(StrictStack, MoveOperator_MovesBufferIntoNewObject)
+    TEST_F(StrictStackTests, MoveOperator_MovesBufferIntoNewObject)
     {
         const auto initialPointer = stack._buffer;
 
@@ -1174,7 +1174,7 @@ namespace pmm
     }
 
 
-    TEST_F(StrictStack, MoveOperator_SelfAssignmentReturnsTheSameStack)
+    TEST_F(StrictStackTests, MoveOperator_SelfAssignmentReturnsTheSameStack)
     {
         const auto initialAddress    = reinterpret_cast<uintptr_t>(stack._buffer);
         const auto initialOffset     = stack._offset;
@@ -1202,7 +1202,7 @@ namespace pmm
     }
 
 
-    TEST_F(StrictStack, MoveOperator_DeletingOriginalStackDoNotDeleteTheNewStacksMemory)
+    TEST_F(StrictStackTests, MoveOperator_DeletingOriginalStackDoNotDeleteTheNewStacksMemory)
     {
         Stack<stack::Strict> stack2(256);
         constexpr auto size = 512;
@@ -1227,7 +1227,7 @@ namespace pmm
     }
 
 
-    TEST_F(StrictStack, ZeroOut_ZeroesOutTheInternalBuffer)
+    TEST_F(StrictStackTests, ZeroOut_ZeroesOutTheInternalBuffer)
     {
 
         // Fill the buffer with arbitrary data
