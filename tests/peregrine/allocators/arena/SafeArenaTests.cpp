@@ -99,6 +99,51 @@ TEST_F(ManagedSafeArenaTests, AllocV_ReturnsEmptySpan)
 }
 
 
+TEST_F(ManagedSafeArenaTests, Resize_ZeroNewSizeReturnsNullptr)
+{
+    // Use the full capacity
+    [[maybe_unused]] const auto firstAllocation = arena.allocBytes(12);
+    [[maybe_unused]] const auto resize          = arena.resize(firstAllocation, 12, 0);
+
+    EXPECT_EQ(nullptr, resize);
+}
+
+
+TEST_F(ManagedSafeArenaTests, Resize_ZeroOldSizeReturnsNullptr)
+{
+    // Use the full capacity
+    [[maybe_unused]] const auto firstAllocation = arena.allocBytes(12);
+    [[maybe_unused]] const auto resize          = arena.resize(firstAllocation, 0, 12);
+
+    EXPECT_EQ(nullptr, resize);
+}
+
+
+TEST_F(ManagedSafeArenaTests, Resize_ZeroAlignmentReturnsNullptr)
+{
+    // Use the full capacity
+    [[maybe_unused]] const auto firstAllocation = arena.allocBytes(12);
+    [[maybe_unused]] const auto resize          = arena.resize(firstAllocation, 12, 24, 0);
+
+    EXPECT_EQ(nullptr, resize);
+}
+
+
+// TODO: Catch from here
+// TODO: Add tests for non latest allocatiion resize
+// TODO: Add tests for resizeFast and unmanaged arena.
+TEST_F(ManagedSafeArenaTests, Resize_LatestsAllocation_FullArenaReturnsNullptr)
+{
+    // Use the full capacity
+    constexpr auto firstAllocSize               = 32;
+    [[maybe_unused]] const auto firstAllocation = arena.allocBytes(firstAllocSize);
+    [[maybe_unused]] const auto nearFullSize    = arena.allocBytes(arenaSize - (firstAllocSize - alignof(void*) - 1));
+
+    [[maybe_unused]] const auto resize = arena.resize(firstAllocation, firstAllocSize, firstAllocSize + 120);
+    EXPECT_EQ(nullptr, resize);
+}
+
+
 
 /**************************************
  *          UNMANAGED ARENA           *
