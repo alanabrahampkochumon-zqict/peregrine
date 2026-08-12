@@ -300,6 +300,13 @@ namespace pmm
         }
 
         const auto newPtr = allocBytes(newSize, alignment);
+        if constexpr (Safe)
+        {
+            if (newPtr == nullptr)
+            {
+                return nullptr;
+            }
+        }
         memmove(newPtr, oldMemory, oldSize);
 
         return newPtr;
