@@ -28,11 +28,11 @@ namespace
  *            LOOSE STACK             *
  **************************************/
 
-TEST(ManagedLooseStackTests, ZeroSize_TriggersAssertionInDebugMode)
+TEST(ManagedLooseStackCtorTests, ZeroSize_TriggersAssertionInDebugMode)
 { EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory>(0)), ""); }
 
 
-TEST(UnmanagedLooseStackTests, ZeroSize_TriggersAssertionInDebugMode)
+TEST(UnmanagedLooseStackCtorTests, ZeroSize_TriggersAssertionInDebugMode)
 {
     const auto buffer = new uint8_t[512];
     EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory>(buffer, 0)), "");
@@ -40,7 +40,7 @@ TEST(UnmanagedLooseStackTests, ZeroSize_TriggersAssertionInDebugMode)
 }
 
 
-TEST(UnmanagedLooseStackTests, NullptrForBackingBuffer_TriggersAssertionInDebugMode)
+TEST(UnmanagedLooseStackCtorTests, NullptrForBackingBuffer_TriggersAssertionInDebugMode)
 { EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory>(nullptr, 512)), ""); }
 
 
@@ -201,11 +201,11 @@ TEST_F(LooseStackTests, ResizeLast_ToZero_TriggersAssertion)
  *            STRICT STACK            *
  **************************************/
 
-TEST(ManagedStrictStackTests, ZeroSize_TriggersAssertionInDebugMode)
+TEST(ManagedStrictStackCtorTests, ZeroSize_TriggersAssertionInDebugMode)
 { EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory>(0)), ""); }
 
 
-TEST(UnmanagedStrictStackTests, ZeroSize_TriggersAssertionInDebugMode)
+TEST(UnmanagedStrictStackCtorTests, ZeroSize_TriggersAssertionInDebugMode)
 {
     const auto buffer = new uint8_t[512];
     EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory>(buffer, 0)), "");
@@ -213,7 +213,7 @@ TEST(UnmanagedStrictStackTests, ZeroSize_TriggersAssertionInDebugMode)
 }
 
 
-TEST(UnmanagedStrictStackTests, NullptrForBackingBuffer_TriggersAssertionInDebugMode)
+TEST(UnmanagedStrictStackCtorTests, NullptrForBackingBuffer_TriggersAssertionInDebugMode)
 { EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory>(nullptr, 512)), ""); }
 
 

@@ -52,7 +52,7 @@ namespace
  *           MANAGED ARENA            *
  **************************************/
 
-TEST(ManagedArenaTests, ZeroArenaSize_TriggersAssertionInDebugMode)
+TEST(ManagedArenaCtorTests, ZeroArenaSize_TriggersAssertionInDebugMode)
 { EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Arena<pmm::ManagedMemory>{ 0 }), ""); }
 
 TEST_F(ManagedArenaDeathTests, AllocBytes_ZeroSize_TriggersAssertionInDebugMode)
@@ -129,7 +129,7 @@ TEST_F(ManagedArenaDeathTests, ResizeFast_LargerThanArenaSize_TriggersAssertionI
  *          UNMANAGED ARENA           *
  **************************************/
 
-TEST(UnmanagedArenaTests, ZeroArenaSize_TriggersAssertionInDebugMode)
+TEST(UnmanagedArenaCtorTests, ZeroArenaSize_TriggersAssertionInDebugMode)
 {
     const auto buffer = new uint8_t[512];
     EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Arena<pmm::UnmanagedMemory>(buffer, 0)), "");
@@ -137,7 +137,7 @@ TEST(UnmanagedArenaTests, ZeroArenaSize_TriggersAssertionInDebugMode)
 }
 
 
-TEST(UnmanagedArenaTests, NullptrForBackingBuffer_TriggersAssertionInDebugMode)
+TEST(UnmanagedArenaCtorTests, NullptrForBackingBuffer_TriggersAssertionInDebugMode)
 { EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Arena<pmm::UnmanagedMemory>(nullptr, 512)), ""); }
 
 

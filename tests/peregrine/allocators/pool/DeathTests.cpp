@@ -64,17 +64,24 @@ TEST_P(PoolAllocatorCtorAssertionTests, Managed_InadequateChunkSize_TriggersAsse
 }
 
 
-TEST_F(ManagedPoolAllocatorTests, Alloc_AllocatingObjectWithSizeGreaterThanChunkSizeTriggersAssertion)
+TEST(ManagedPoolCtorTests, ZeroSize_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Pool<pmm::ManagedMemory>{ 0, 16, 8 }), ""); }
+
+
+
+TEST_F(ManagedPoolAllocatorTests, Alloc_AllocatingObjectWithSizeGreaterThanChunkSizeTriggersAssertionInDebugMode)
 { EXPECT_DEBUG_DEATH(static_cast<void>(pool.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f)), ""); }
 
 
-TEST_F(ManagedPoolAllocatorTests, FreeChunk_NullptrTriggersAssertion) { EXPECT_DEBUG_DEATH(pool.freeChunk(nullptr), ""); }
+TEST_F(ManagedPoolAllocatorTests, FreeChunk_NullptrTriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(pool.freeChunk(nullptr), ""); }
 
 
-TEST_F(ManagedPoolAllocatorTests, Free_NullptrTriggersAssertion) { EXPECT_DEBUG_DEATH(pool.freeChunk(nullptr), ""); }
+TEST_F(ManagedPoolAllocatorTests, Free_NullptrTriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(pool.freeChunk(nullptr), ""); }
 
 
-TEST_F(ManagedPoolAllocatorTests, FreeChunk_GreaterThanMaxMemoryAddressTriggersAssertion)
+TEST_F(ManagedPoolAllocatorTests, FreeChunk_GreaterThanMaxMemoryAddressTriggersAssertionInDebugMode)
 {
     // Since we arranging memory from back to front
     // the first allocation holds the largest allocation memory address
@@ -84,7 +91,7 @@ TEST_F(ManagedPoolAllocatorTests, FreeChunk_GreaterThanMaxMemoryAddressTriggersA
 }
 
 
-TEST_F(ManagedPoolAllocatorTests, Free_SmallerThanMinimumMemoryAddressTriggersAssertion)
+TEST_F(ManagedPoolAllocatorTests, Free_SmallerThanMinimumMemoryAddressTriggersAssertionInDebugMode)
 {
     // Due to back to front arrangement, we need to allocate full buffer and try to free
     // 1 byte beyond the last buffer's address
@@ -112,17 +119,31 @@ TEST_P(PoolAllocatorCtorAssertionTests, Unmanaged_InadequateChunkSize_TriggersAs
 }
 
 
-TEST_F(UnmanagedPoolAllocatorTests, Alloc_AllocatingObjectWithSizeGreaterThanChunkSizeTriggersAssertion)
+TEST(UnmanagedPoolCtorTests, ZeroSize_TriggersAssertionInDebugMode)
+{
+    const auto buffer = new uint8_t[512];
+    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Pool<pmm::UnmanagedMemory>{ buffer, 0, 16, 8 }), "");
+    delete[] buffer;
+}
+
+
+TEST(UnmanagedPoolCtorTests, NullptrForBuffer_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Pool<pmm::UnmanagedMemory>{ nullptr, 512, 16, 8 }), ""); }
+
+
+TEST_F(UnmanagedPoolAllocatorTests, Alloc_AllocatingObjectWithSizeGreaterThanChunkSizeTriggersAssertionInDebugMode)
 { EXPECT_DEBUG_DEATH(static_cast<void>(pool.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f)), ""); }
 
 
-TEST_F(UnmanagedPoolAllocatorTests, FreeChunk_NullptrTriggersAssertion) { EXPECT_DEBUG_DEATH(pool.freeChunk(nullptr), ""); }
+TEST_F(UnmanagedPoolAllocatorTests, FreeChunk_NullptrTriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(pool.freeChunk(nullptr), ""); }
 
 
-TEST_F(UnmanagedPoolAllocatorTests, Free_NullptrTriggersAssertion) { EXPECT_DEBUG_DEATH(pool.freeChunk(nullptr), ""); }
+TEST_F(UnmanagedPoolAllocatorTests, Free_NullptrTriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(pool.freeChunk(nullptr), ""); }
 
 
-TEST_F(UnmanagedPoolAllocatorTests, FreeChunk_GreaterThanMaxMemoryAddressTriggersAssertion)
+TEST_F(UnmanagedPoolAllocatorTests, FreeChunk_GreaterThanMaxMemoryAddressTriggersAssertionInDebugMode)
 {
     // Since we arranging memory from back to front
     // the first allocation holds the largest allocation memory address
@@ -132,7 +153,7 @@ TEST_F(UnmanagedPoolAllocatorTests, FreeChunk_GreaterThanMaxMemoryAddressTrigger
 }
 
 
-TEST_F(UnmanagedPoolAllocatorTests, Free_SmallerThanMinimumMemoryAddressTriggersAssertion)
+TEST_F(UnmanagedPoolAllocatorTests, Free_SmallerThanMinimumMemoryAddressTriggersAssertionInDebugMode)
 {
     // Due to back to front arrangement, we need to allocate full buffer and try to free
     // 1 byte beyond the last buffer's address
