@@ -24,7 +24,7 @@ namespace pmm
     /**************************************
      *           CONSTRUCTORS             *
      **************************************/
-
+    // TODO: Zero allocation
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::Arena(const size_t arenaSize) noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
@@ -33,7 +33,9 @@ namespace pmm
           _offset(0),
           _prevOffset(0),
           _telemetry{ getTelemetryInstance<TelPolicy>(arenaSize) }
-    {} // static_cast<uint8_t*>(pmm::memAlloc(arenaSize))
+    {
+        PMM_ASSERT_MSG(arenaSize > 0, "Cannot allocate zero size arena");
+    } // static_cast<uint8_t*>(pmm::memAlloc(arenaSize))
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
@@ -45,7 +47,10 @@ namespace pmm
           _offset(0),
           _prevOffset(0),
           _telemetry{ getTelemetryInstance<TelPolicy>(bufferSize) }
-    {}
+    {
+        PMM_ASSERT_MSG(backingBuffer != nullptr, "Backing buffer cannot be a nullptr");
+        PMM_ASSERT_MSG(bufferSize > 0, "Cannot allocate zero size arena");
+    }
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
@@ -114,7 +119,6 @@ namespace pmm
     {
         // To make sure alignment is the power of 2
         PMM_ASSERT_MSG(std::has_single_bit(alignment), "Alignment must be a power of 2");
-
         // Base address of the pointer
         const auto absoluteBaseAddress = reinterpret_cast<uintptr_t>(_buffer);
 
