@@ -30,7 +30,21 @@ namespace pmm
           _stackSize{ stackSize },
           _prevOffset{},
           _telemetry{ getTelemetryInstance<TelemetryPolicy>(stackSize) }
-    {}
+    { PMM_ASSERT_MSG(stackSize > 0, "Cannot allocate a zero size stack"); }
+
+
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
+    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(uint8_t* buffer,
+                                                                          const std::size_t bufferSize) noexcept
+        requires std::same_as<MemStrategy, UnmanagedMemory>
+        : _buffer{ buffer },
+          _stackSize{ bufferSize },
+          _prevOffset{},
+          _telemetry{ getTelemetryInstance<TelemetryPolicy>(bufferSize) }
+    {
+        PMM_ASSERT_MSG(bufferSize > 0, "Cannot allocate a zero size stack");
+        PMM_ASSERT_MSG(buffer != nullptr, "Stack backing buffer must not be a nullptr");
+    }
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
@@ -77,17 +91,6 @@ namespace pmm
 
         return *this;
     }
-
-
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(uint8_t* buffer,
-                                                                          const std::size_t bufferSize) noexcept
-        requires std::same_as<MemStrategy, UnmanagedMemory>
-        : _buffer{ buffer },
-          _stackSize{ bufferSize },
-          _prevOffset{},
-          _telemetry{ getTelemetryInstance<TelemetryPolicy>(bufferSize) }
-    {}
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>

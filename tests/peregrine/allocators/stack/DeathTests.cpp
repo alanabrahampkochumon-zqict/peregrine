@@ -28,6 +28,22 @@ namespace
  *            LOOSE STACK             *
  **************************************/
 
+TEST(ManagedLooseStackTests, ZeroSize_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory>(0)), ""); }
+
+
+TEST(UnmanagedLooseStackTests, ZeroSize_TriggersAssertionInDebugMode)
+{
+    const auto buffer = new uint8_t[512];
+    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory>(buffer, 0)), "");
+    delete[] buffer;
+}
+
+
+TEST(UnmanagedLooseStackTests, NullptrForBackingBuffer_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory>(nullptr, 512)), ""); }
+
+
 /**
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*, when allocating memory greater
  *        than the stack capacity.
@@ -184,6 +200,22 @@ TEST_F(LooseStackTests, ResizeLast_ToZero_TriggersAssertion)
 /**************************************
  *            STRICT STACK            *
  **************************************/
+
+TEST(ManagedStrictStackTests, ZeroSize_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory>(0)), ""); }
+
+
+TEST(UnmanagedStrictStackTests, ZeroSize_TriggersAssertionInDebugMode)
+{
+    const auto buffer = new uint8_t[512];
+    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory>(buffer, 0)), "");
+    delete[] buffer;
+}
+
+
+TEST(UnmanagedStrictStackTests, NullptrForBackingBuffer_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory>(nullptr, 512)), ""); }
+
 
 /**
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*, when allocating memory greater

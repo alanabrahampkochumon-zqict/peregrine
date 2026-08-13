@@ -24,7 +24,7 @@ namespace pmm
     /**************************************
      *           CONSTRUCTORS             *
      **************************************/
-    // TODO: Zero allocation
+
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::Arena(const size_t arenaSize) noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
@@ -35,7 +35,7 @@ namespace pmm
           _telemetry{ getTelemetryInstance<TelPolicy>(arenaSize) }
     {
         PMM_ASSERT_MSG(arenaSize > 0, "Cannot allocate zero size arena");
-    } // static_cast<uint8_t*>(pmm::memAlloc(arenaSize))
+    }
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
