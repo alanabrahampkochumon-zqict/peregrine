@@ -28,8 +28,17 @@ namespace pmm
         PoolFreeNode* next;
     };
 
-
-    template <MemoryStrategy MemStrategy = ManagedMemory, telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled>
+    /**
+     *  @brief Linear memory allocator.
+     *
+     *  @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
+     *  @tparam TelPolicy   Flag indicating whether or not telemetry is enabled for this pool. See @ref pmm::telemetry.
+     *  @tparam Safe        Flags an pool as safe, implying certain operations like resizing a `nullptr` are handled
+     *                      gracefully when assertions are disabled. `False` by default to prevent any performance
+     *                      stalls incurred by conditional checks.
+     */
+    template <MemoryStrategy MemStrategy = ManagedMemory, telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled,
+              bool Safe = false>
     class Pool
     {
     public:
@@ -52,7 +61,7 @@ namespace pmm
          * @brief Create a pool allocator with unmanaged memory.
          *
          * @param[in,out] backingBuffer The memory buffer to be used by the allocator.
-        * @param[in] bufferSize         The size of the backing buffer in bytes, which will directly
+         * @param[in] bufferSize         The size of the backing buffer in bytes, which will directly
          *                              translate into the pool size.
          * @param[in] chuckSize         The per fragment/chunk size of the pool in bytes.
          * @param[in] chunkAlignment    The base alignment for each fragment/chunk.

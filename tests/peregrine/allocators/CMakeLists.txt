@@ -14,6 +14,7 @@ target_sources(
         stack/TelemetryIntegrationTests.cpp
         pool/AllocatorTests.cpp
         pool/TelemetryIntegrationTests.cpp
+        pool/SafePoolTests.cpp
         TempArenaTests.cpp
 )
 
