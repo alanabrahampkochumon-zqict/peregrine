@@ -146,7 +146,7 @@ TEST_F(ManagedPoolAllocatorTests, FreeChunk_FreesBufferForNewerAllocations)
         // Data[i] stores the address so free the current chunk
         // free order shouldn't matter as we are using an internal freelist
         // rather than a strict structure like LIFO or FIFO
-        pool.freeChunk(data[i]);
+        EXPECT_TRUE(pool.freeChunk(data[i]));
     }
 
     // clear the vector
@@ -180,7 +180,7 @@ TEST_F(ManagedPoolAllocatorTests, Free_FreesBufferForNewerAllocations)
         // Data[i] stores the address so free the current chunk
         // free order shouldn't matter as we are using an internal freelist
         // rather than a strict structure like LIFO or FIFO
-        pool.free(data[i]);
+        EXPECT_TRUE(pool.free(data[i]));
     }
 
     // clear the vector
@@ -203,7 +203,7 @@ TEST_F(ManagedPoolAllocatorTests, Free_OnNonTrivialTypesCallsDtor)
 {
     int dtorInvocationCount = 0;
     const auto typedMemory  = pool.alloc<DestructionTracker>(&dtorInvocationCount);
-    pool.free(typedMemory);
+    EXPECT_TRUE(pool.free(typedMemory));
     EXPECT_EQ(1, dtorInvocationCount);
 }
 
@@ -332,7 +332,7 @@ TEST_F(UnmanagedPoolAllocatorTests, FreeChunk_FreesBufferForNewerAllocations)
         // Data[i] stores the address so free the current chunk
         // free order shouldn't matter as we are using an internal freelist
         // rather than a strict structure like LIFO or FIFO
-        pool.freeChunk(data[i]);
+        EXPECT_TRUE(pool.freeChunk(data[i]));
     }
 
     // clear the vector
@@ -367,7 +367,7 @@ TEST_F(UnmanagedPoolAllocatorTests, Free_FreesBufferForNewerAllocations)
         // Data[i] stores the address so free the current chunk
         // free order shouldn't matter as we are using an internal freelist
         // rather than a strict structure like LIFO or FIFO
-        pool.free(data[i]);
+        EXPECT_TRUE(pool.free(data[i]));
     }
 
     // clear the vector
@@ -390,7 +390,7 @@ TEST_F(UnmanagedPoolAllocatorTests, Free_OnNonTrivialTypesCallsDtor)
 {
     int dtorInvocationCount = 0;
     const auto typedMemory  = pool.alloc<DestructionTracker>(&dtorInvocationCount);
-    pool.free(typedMemory);
+    EXPECT_TRUE(pool.free(typedMemory));
     EXPECT_EQ(1, dtorInvocationCount);
 }
 
@@ -859,8 +859,8 @@ namespace pmm
     TEST_F(UnmanagedPoolAllocatorTests, MoveAssign_DeletingOriginalPoolDoNotDeleteTheNewPoolsMemory)
     {
         constexpr auto scopedPoolSize = 512;
-        const auto backingBuffer  = new uint8_t[256];
-        const auto backingBuffer2 = new uint8_t[scopedPoolSize];
+        const auto backingBuffer      = new uint8_t[256];
+        const auto backingBuffer2     = new uint8_t[scopedPoolSize];
         Pool<pmm::UnmanagedMemory> pool2(backingBuffer, 256, 16, 16);
 
         // The pool being moved is scoped

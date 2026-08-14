@@ -175,25 +175,34 @@ namespace pmm
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE void Pool<MemStrategy, TelPolicy, Safe>::freeChunk(void* ptr) noexcept
+    PMM_INLINE bool Pool<MemStrategy, TelPolicy, Safe>::freeChunk(void* ptr) noexcept
     {
         PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
         [[maybe_unused]] const auto minFreeAddr = _buffer + _initialAlignmentPadding;
         [[maybe_unused]] const auto maxFreeAddr = _buffer + _poolSize - _initialAlignmentPadding - _chunkSize;
         PMM_ASSERT_MSG(ptr >= minFreeAddr && ptr <= maxFreeAddr, "Out of bounds free");
-        // TODO: Add this assertion for out of alignment free.
-        // PMM_ASSERT_MSG(reinterpret_cast<uintptr_t>(ptr) % _chunkSize == 0, "Cannot free invalid address");
+        if constexpr (Safe)
+        {
+            std::cout << "PTR: " << reinterpret_cast<uintptr_t>(ptr) << " MIN: " << reinterpret_cast<uintptr_t>(minFreeAddr) << " MAX: " << reinterpret_cast<uintptr_t>(maxFreeAddr) << '\n';
+            // Validate if the free is possible
+            if (ptr == nullptr || ptr < minFreeAddr || ptr > maxFreeAddr ||
+                (reinterpret_cast<uintptr_t>(ptr) & (_chunkSize - 1)) != 0)
+            {
+                return false;
+            }
+        }
 
         _telemetry.logFree();
         const auto freeNode = static_cast<PoolFreeNode*>(ptr);
         freeNode->next      = _head;
         _head               = freeNode;
+        return true;
     }
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     template <typename T>
-    PMM_INLINE void Pool<MemStrategy, TelPolicy, Safe>::free(T* ptr) noexcept
+    PMM_INLINE bool Pool<MemStrategy, TelPolicy, Safe>::free(T* ptr) noexcept
     {
         // Invoke the dtor if the type is not trivially destructible
         if (!std::is_trivially_destructible_v<T>)
@@ -201,7 +210,7 @@ namespace pmm
             ptr->~T();
         }
         // Free the memory
-        freeChunk(ptr);
+        return freeChunk(ptr);
     }
 
 

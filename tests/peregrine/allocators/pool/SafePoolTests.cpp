@@ -86,6 +86,65 @@ TEST_F(ManagedSafePoolTests, Alloc_ReturnsNullPtrWhenAllocatingInAFullPool)
     EXPECT_EQ(nullptr, vec);
 }
 
+// TODO: Start from here!
+TEST_F(ManagedSafePoolTests, FreeChunk_AddressLessThanBaseAddressReturnsFalse)
+{
+    const auto allocation          = static_cast<uint8_t*>(pool.allocChunk());
+    const auto outOfBoundsLocation = allocation - chunkSize;
+    std::cout << "Location: " << reinterpret_cast<uintptr_t>(allocation) << '\n';
+    std::cout << "OBLocation: " << reinterpret_cast<uintptr_t>(outOfBoundsLocation) << '\n';
+
+    EXPECT_FALSE(pool.freeChunk(outOfBoundsLocation));
+}
+
+TEST_F(ManagedSafePoolTests, FreeChunk_AddressGreaterThanMaxAddressReturnsFalse)
+{
+    const auto allocation          = static_cast<uint8_t*>(pool.allocChunk());
+    const auto outOfBoundsLocation = allocation + poolSize + 24;
+
+    EXPECT_FALSE(pool.freeChunk(outOfBoundsLocation));
+}
+
+
+TEST_F(ManagedSafePoolTests, FreeChunk_AddressesInBetweenChunkSizeReturnsFalse)
+{
+    const auto allocation        = static_cast<uint8_t*>(pool.allocChunk());
+    const auto inBetweenLocation = allocation + 24;
+
+    EXPECT_FALSE(pool.freeChunk(inBetweenLocation));
+}
+
+TEST_F(ManagedSafePoolTests, FreeChunk_NullptrReturnsFalse) { EXPECT_FALSE(pool.freeChunk(nullptr)); }
+
+
+TEST_F(ManagedSafePoolTests, Free_AddressLessThanBaseAddressReturnsFalse)
+{
+    const auto allocation          = pool.alloc<LargeData<chunkSize - sizeof(LargeData<chunkSize>)>>();
+    const auto outOfBoundsLocation = allocation - chunkSize;
+
+    EXPECT_FALSE(pool.freeChunk(outOfBoundsLocation));
+}
+
+TEST_F(ManagedSafePoolTests, Free_AddressGreaterThanMaxAddressReturnsFalse)
+{
+    const auto allocation          = pool.alloc<LargeData<chunkSize - sizeof(LargeData<chunkSize>)>>();
+    const auto outOfBoundsLocation = allocation + poolSize + 24;
+
+    EXPECT_FALSE(pool.freeChunk(outOfBoundsLocation));
+}
+
+
+TEST_F(ManagedSafePoolTests, Free_AddressesInBetweenChunkSizeReturnsFalse)
+{
+    const auto allocation        = pool.alloc<LargeData<chunkSize - sizeof(LargeData<chunkSize>)>>();
+    const auto inBetweenLocation = allocation + 24;
+
+    EXPECT_FALSE(pool.freeChunk(inBetweenLocation));
+}
+
+/// Note: We can't directly pass in a nullptr so we are casting it
+TEST_F(ManagedSafePoolTests, Free_NullptrReturnsFalse) { EXPECT_FALSE(pool.free(static_cast<uint8_t*>(nullptr))); }
+
 /// Free tests
 
 

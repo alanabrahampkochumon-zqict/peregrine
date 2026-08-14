@@ -156,10 +156,13 @@ namespace pmm
          *
          * @param[in] ptr The pointer to free upto.
          *
+         * @return A boolean status indicating whether the free was valid.
+         *         **Validation is available ONLY for SafePool in Release Mode**
+         *
          * @relatedalso free
          * @relatedalso clear
          */
-        void freeChunk(void* ptr) noexcept;
+        bool freeChunk(void* ptr) noexcept;
 
 
         /**
@@ -171,11 +174,14 @@ namespace pmm
          *
          * @param[in] ptr The object pointer to free.
          *
+         * @return A boolean status indicating whether the free was valid.
+         *         **Validation is available ONLY for SafePool in Release Mode**
+         *
          * @relatedalso freeChunk
          * @relatedalso clear
          */
         template <typename T>
-        void free(T* ptr) noexcept;
+        bool free(T* ptr) noexcept;
 
 
         /**
