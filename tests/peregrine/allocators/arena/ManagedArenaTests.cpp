@@ -72,6 +72,24 @@ namespace
  *           INITIALIZATIONS          *
  **************************************/
 
+TEST_F(ManagedArenaTests, EnabledTelemetry_ReturnsRealTelemetry)
+{
+    [[maybe_unused]] pmm::Arena<pmm::ManagedMemory, pmm::telemetry::Enabled> telemetryEnabledArena(512);
+    [[maybe_unused]] auto telemetry = telemetryEnabledArena.getTelemetry();
+    const bool result               = std::is_same_v<decltype(telemetry), pmm::ArenaTelemetry>;
+    EXPECT_TRUE(result);
+}
+
+
+TEST_F(ManagedArenaTests, DisabledTelemetry_ReturnsDummyTelemetry)
+{
+    [[maybe_unused]] const pmm::Arena<pmm::ManagedMemory, pmm::telemetry::Disabled> telemetryDisabledArena(512);
+    [[maybe_unused]] auto telemetry          = telemetryDisabledArena.getTelemetry();
+    const bool result = std::is_same_v<decltype(telemetry), pmm::DummyArenaTelemetry>;
+    EXPECT_TRUE(result);
+}
+
+
 TEST_F(ManagedArenaTests, Ctor_InitializesArenaWithTheGivenBytes) { EXPECT_EQ(arenaSize, arena.size()); }
 
 
@@ -540,7 +558,7 @@ TEST_F(ManagedArenaTests, ResizeFast_NewSizeSmallerThanOldSizeReturnsNewBufferWi
 {
     constexpr auto byteSize   = 128;
     const auto firstByteChunk = static_cast<size_t*>(arena.allocBytes(byteSize));
-    const auto dataCount = byteSize / sizeof(size_t);
+    const auto dataCount      = byteSize / sizeof(size_t);
     for (size_t i = 0; i < dataCount; ++i)
     {
         firstByteChunk[i] = i + 11;
@@ -594,7 +612,7 @@ TEST_F(ManagedArenaTests, ResizeFast_AllocationPriorToLatestAllocationReturnNewB
     constexpr auto newByteSize = byteSize * 2;
 
     const auto firstByteChunk = static_cast<size_t*>(arena.allocBytes(byteSize));
-    const auto dataCount = byteSize / sizeof(size_t);
+    const auto dataCount      = byteSize / sizeof(size_t);
     for (size_t i = 0; i < dataCount; ++i)
     {
         firstByteChunk[i] = i + 11;

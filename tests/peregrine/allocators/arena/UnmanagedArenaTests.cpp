@@ -76,6 +76,29 @@ namespace
  *           INITIALIZATIONS          *
  **************************************/
 
+TEST_F(UnmanagedArenaTests, EnabledTelemetry_ReturnsRealTelemetry)
+{
+    const auto backingBuffer = new uint8_t[512];
+    [[maybe_unused]] const pmm::Arena<pmm::UnmanagedMemory, pmm::telemetry::Enabled> telemetryEnabledArena(
+        backingBuffer, 512);
+    [[maybe_unused]] auto telemetry = telemetryEnabledArena.getTelemetry();
+    const bool result               = std::is_same_v<decltype(telemetry), pmm::ArenaTelemetry>;
+    EXPECT_TRUE(result);
+    delete[] backingBuffer;
+}
+
+
+TEST_F(UnmanagedArenaTests, DisabledTelemetry_ReturnsDummyTelemetry)
+{
+    const auto backingBuffer = new uint8_t[512];
+    [[maybe_unused]] const pmm::Arena<pmm::UnmanagedMemory, pmm::telemetry::Disabled> telemetryDisabledArena(
+        backingBuffer, 512);
+    [[maybe_unused]] auto telemetry = telemetryDisabledArena.getTelemetry();
+    const bool result               = std::is_same_v<decltype(telemetry), pmm::DummyArenaTelemetry>;
+    EXPECT_TRUE(result);
+    delete[] backingBuffer;
+}
+
 TEST_F(UnmanagedArenaTests, Ctor_InitializesArenaWithTheGivenBytes) { EXPECT_EQ(arenaSize, arena.size()); }
 
 
@@ -549,7 +572,7 @@ TEST_F(UnmanagedArenaTests, ResizeFast_NewSizeSmallerThanOldSizeReturnsNewBuffer
 {
     constexpr auto byteSize   = 128;
     const auto firstByteChunk = static_cast<size_t*>(arena.allocBytes(byteSize));
-    const auto dataCount = byteSize / sizeof(size_t);
+    const auto dataCount      = byteSize / sizeof(size_t);
     for (size_t i = 0; i < dataCount; ++i)
     {
         firstByteChunk[i] = i + 11;
@@ -603,7 +626,7 @@ TEST_F(UnmanagedArenaTests, ResizeFast_AllocationPriorToLatestAllocationReturnNe
     constexpr auto newByteSize = byteSize * 2;
 
     const auto firstByteChunk = static_cast<size_t*>(arena.allocBytes(byteSize));
-    const auto dataCount = byteSize / sizeof(size_t);
+    const auto dataCount      = byteSize / sizeof(size_t);
     for (size_t i = 0; i < dataCount; ++i)
     {
         firstByteChunk[i] = i + 11;
