@@ -46,6 +46,7 @@ namespace
  *           RUNTIME TESTS            *
  **************************************/
 
+
 /**
  * @brief Verify that size() returns the total size of the stack.
  */

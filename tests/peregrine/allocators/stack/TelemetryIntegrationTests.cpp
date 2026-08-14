@@ -50,8 +50,9 @@ namespace
     public:
         static constexpr std::size_t size = 2_MB;
         uint8_t* buffer                   = new uint8_t[size];
-        pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory, pmm::telemetry::Enabled> stack{ buffer, size  };
+        pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory, pmm::telemetry::Enabled> stack{ buffer, size };
 
+    protected:
         void TearDown() override { delete[] buffer; }
     };
 
@@ -64,6 +65,7 @@ namespace
         uint8_t* buffer                   = new uint8_t[size];
         pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory, pmm::telemetry::Enabled> stack{ buffer, size };
 
+    protected:
         void TearDown() override { delete[] buffer; }
     };
 
@@ -72,8 +74,25 @@ namespace
 
 
 /**************************************
- *         MANGED LOOSE STACK         *
+ *         MANAGED LOOSE STACK        *
  **************************************/
+
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, EnabledTelemetry_ReturnsRealTelemetry)
+{
+    [[maybe_unused]] auto telemetry = stack.getTelemetry();
+    const bool result               = std::is_same_v<decltype(telemetry), pmm::StackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
+
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, DisabledTelemetry_ReturnsDummyTelemetry)
+{
+    const pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ size };
+    [[maybe_unused]] const auto telemetry = noTelemetryStack.getTelemetry();
+    const bool result                     = std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
 
 TEST_F(ManagedLooseStackTelemetryIntegrationTests, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)
 { EXPECT_TRUE(stack.isTelemetryEnabled()); }
@@ -405,6 +424,23 @@ TEST_F(ManagedLooseStackTelemetryIntegrationTests, Clear_DoesNotResetPeakAndMinU
 /**************************************
  *        MANAGED STRICT STACK        *
  **************************************/
+
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, EnabledTelemetry_ReturnsRealTelemetry)
+{
+    [[maybe_unused]] auto telemetry = stack.getTelemetry();
+    const bool result               = std::is_same_v<decltype(telemetry), pmm::StackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
+
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, DisabledTelemetry_ReturnsDummyTelemetry)
+{
+    const pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ size };
+    [[maybe_unused]] const auto telemetry = noTelemetryStack.getTelemetry();
+    const bool result                     = std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
 
 TEST_F(ManagedStrictStackTelemetryIntegrationTests, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)
 { EXPECT_TRUE(stack.isTelemetryEnabled()); }
@@ -774,8 +810,26 @@ TEST_F(ManagedStrictStackTelemetryIntegrationTests, Clear_DoesNotResetPeakAndMin
 
 
 /**************************************
- *       UN-MANGED LOOSE STACK        *
+ *       UN-MANAGED LOOSE STACK       *
  **************************************/
+
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, EnabledTelemetry_ReturnsRealTelemetry)
+{
+    [[maybe_unused]] auto telemetry = stack.getTelemetry();
+    const bool result               = std::is_same_v<decltype(telemetry), pmm::StackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
+
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, DisabledTelemetry_ReturnsDummyTelemetry)
+{
+    const pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ buffer,
+                                                                                                          size };
+    [[maybe_unused]] const auto telemetry = noTelemetryStack.getTelemetry();
+    const bool result                     = std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
 
 TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)
 { EXPECT_TRUE(stack.isTelemetryEnabled()); }
@@ -791,20 +845,16 @@ TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, TelemetryEnabledStack_Retur
 
 TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
 {
-    constexpr auto noTelStackSize = 2_KB;
-    const pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
-        noTelStackSize
-    };
+    const pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ buffer,
+                                                                                                          size };
     EXPECT_FALSE(noTelemetryStack.isTelemetryEnabled());
 }
 
 
 TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
 {
-    constexpr auto noTelStackSize = 2_KB;
-    const pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
-        noTelStackSize
-    };
+    const pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ buffer,
+                                                                                                          size };
     const auto& telemetry = noTelemetryStack.getTelemetry();
     static_assert(std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry&> == true);
     EXPECT_EQ(0, telemetry.getStackSize());
@@ -1108,6 +1158,24 @@ TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, Clear_DoesNotResetPeakAndMi
  *      UN-MANAGED STRICT STACK       *
  **************************************/
 
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, EnabledTelemetry_ReturnsRealTelemetry)
+{
+    [[maybe_unused]] auto telemetry = stack.getTelemetry();
+    const bool result               = std::is_same_v<decltype(telemetry), pmm::StackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
+
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, DisabledTelemetry_ReturnsDummyTelemetry)
+{
+    const pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ buffer,
+                                                                                                           size };
+    [[maybe_unused]] const auto telemetry = noTelemetryStack.getTelemetry();
+    const bool result                     = std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
+
 TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)
 { EXPECT_TRUE(stack.isTelemetryEnabled()); }
 
@@ -1122,20 +1190,17 @@ TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, TelemetryEnabledStack_Retu
 
 TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
 {
-    constexpr auto noTelStackSize = 2_KB;
-    const pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
-        noTelStackSize
-    };
+    const pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ buffer,
+                                                                                                           size };
     EXPECT_FALSE(noTelemetryStack.isTelemetryEnabled());
 }
 
 
 TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
 {
-    constexpr auto noTelStackSize = 2_KB;
-    const pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
-        noTelStackSize
-    };
+
+    const pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ buffer,
+                                                                                                           size };
     const auto& telemetry = noTelemetryStack.getTelemetry();
     static_assert(std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry&> == true);
     EXPECT_EQ(0, telemetry.getStackSize());
@@ -1262,7 +1327,8 @@ TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, FreeUsingFreeV_DecreasesMe
  * @test Verify that latest allocation in strict stack when resized to a larger size, increases memory footprint
  *       to the newer(larger) size, but not consuming both old size and new size.
  */
-TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, LatestAllocation_ResizingToLargerSize_IncreasesMemoryUsageToNewSize)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests,
+       LatestAllocation_ResizingToLargerSize_IncreasesMemoryUsageToNewSize)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
