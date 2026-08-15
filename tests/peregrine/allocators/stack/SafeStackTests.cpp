@@ -135,117 +135,162 @@ TEST_F(ManagedLooseSafeStackTests, AllocV_ZeroCountReturnsEmptySpan)
     EXPECT_EQ(0, vec.size());
 }
 
-//
-// TEST_F(ManagedLooseSafeStackTests, Resize_ZeroNewSizeReturnsNullptr)
-// {
-//     // Use the full capacity
-//     [[maybe_unused]] const auto firstAllocation = stack.allocBytes(12);
-//     [[maybe_unused]] const auto resize          = stack.resize(firstAllocation, 12, 0);
-//
-//     EXPECT_EQ(nullptr, resize);
-// }
-//
-//
-// TEST_F(ManagedLooseSafeStackTests, Resize_ZeroOldSizeReturnsNullptr)
-// {
-//     // Use the full capacity
-//     [[maybe_unused]] const auto firstAllocation = stack.allocBytes(12);
-//     [[maybe_unused]] const auto resize          = stack.resize(firstAllocation, 0, 12);
-//
-//     EXPECT_EQ(nullptr, resize);
-// }
-//
-//
-// TEST_F(ManagedLooseSafeStackTests, Resize_ZeroAlignmentReturnsNullptr)
-// {
-//     // Use the full capacity
-//     [[maybe_unused]] const auto firstAllocation = stack.allocBytes(12);
-//     [[maybe_unused]] const auto resize          = stack.resize(firstAllocation, 12, 24, 0);
-//
-//     EXPECT_EQ(nullptr, resize);
-// }
-//
-//
-// TEST_F(ManagedLooseSafeStackTests, Resize_LatestsAllocation_FullStackReturnsNullptr)
-// {
-//     // Use the full capacity
-//     constexpr auto firstAllocSize                = 32;
-//     [[maybe_unused]] const auto nearFullSize     = stack.allocBytes(stackSize - (firstAllocSize + alignof(void*) +
-//     1));
-//     [[maybe_unused]] const auto latestAllocation = stack.allocBytes(firstAllocSize);
-//
-//     [[maybe_unused]] const auto resize = stack.resize(latestAllocation, firstAllocSize, firstAllocSize + 120);
-//     EXPECT_EQ(nullptr, resize);
-// }
-//
-//
-// TEST_F(ManagedLooseSafeStackTests, Resize_PriorToLatestsAllocation_FullStackReturnsNullptr)
-// {
-//     // Use the full capacity
-//     constexpr auto firstAllocSize               = 32;
-//     [[maybe_unused]] const auto firstAllocation = stack.allocBytes(firstAllocSize);
-//     [[maybe_unused]] const auto nearFullSize    = stack.allocBytes(stackSize - (firstAllocSize + alignof(void*) +
-//     1));
-//     [[maybe_unused]] const auto resize          = stack.resize(firstAllocation, firstAllocSize, firstAllocSize +
-//     120); EXPECT_EQ(nullptr, resize);
-// }
-//
-//
-// TEST_F(ManagedLooseSafeStackTests, ResizeFast_ZeroNewSizeReturnsNullptr)
-// {
-//     // Use the full capacity
-//     [[maybe_unused]] const auto firstAllocation = stack.allocBytes(12);
-//     [[maybe_unused]] const auto resize          = stack.resizeFast(firstAllocation, 12, 0);
-//
-//     EXPECT_EQ(nullptr, resize);
-// }
-//
-//
-// TEST_F(ManagedLooseSafeStackTests, ResizeFast_ZeroOldSizeReturnsNullptr)
-// {
-//     // Use the full capacity
-//     [[maybe_unused]] const auto firstAllocation = stack.allocBytes(12);
-//     [[maybe_unused]] const auto resize          = stack.resizeFast(firstAllocation, 0, 12);
-//
-//     EXPECT_EQ(nullptr, resize);
-// }
-//
-//
-// TEST_F(ManagedLooseSafeStackTests, ResizeFast_ZeroAlignmentReturnsNullptr)
-// {
-//     // Use the full capacity
-//     [[maybe_unused]] const auto firstAllocation = stack.allocBytes(12);
-//     [[maybe_unused]] const auto resize          = stack.resizeFast(firstAllocation, 12, 24, 0);
-//
-//     EXPECT_EQ(nullptr, resize);
-// }
-//
-//
-// TEST_F(ManagedLooseSafeStackTests, ResizeFast_LatestsAllocation_FullStackReturnsNullptr)
-// {
-//     // Use the full capacity
-//     constexpr auto firstAllocSize                = 32;
-//     [[maybe_unused]] const auto nearFullSize     = stack.allocBytes(stackSize - (firstAllocSize + alignof(void*) +
-//     1));
-//     [[maybe_unused]] const auto latestAllocation = stack.allocBytes(firstAllocSize);
-//
-//     [[maybe_unused]] const auto resize = stack.resizeFast(latestAllocation, firstAllocSize, firstAllocSize + 120);
-//     EXPECT_EQ(nullptr, resize);
-// }
-//
-//
-// TEST_F(ManagedLooseSafeStackTests, ResizeFast_PriorToLatestsAllocation_FullStackReturnsNullptr)
-// {
-//     // Use the full capacity
-//     constexpr auto firstAllocSize               = 32;
-//     [[maybe_unused]] const auto firstAllocation = stack.allocBytes(firstAllocSize);
-//     [[maybe_unused]] const auto nearFullSize    = stack.allocBytes(stackSize - (firstAllocSize + alignof(void*) +
-//     1));
-//     [[maybe_unused]] const auto resize = stack.resizeFast(firstAllocation, firstAllocSize, firstAllocSize + 120);
-//     EXPECT_EQ(nullptr, resize);
-// }
+
+TEST_F(ManagedLooseSafeStackTests, Resize_ZeroNewSizeReturnsNullptr)
+{
+    // Use the full capacity
+    [[maybe_unused]] const auto firstAllocation = stack.allocBytes(12);
+    [[maybe_unused]] const auto resize          = stack.resize(firstAllocation, 12, 0);
+
+    EXPECT_EQ(nullptr, resize);
+}
 
 
+TEST_F(ManagedLooseSafeStackTests, Resize_ZeroOldSizeReturnsNullptr)
+{
+    // Use the full capacity
+    [[maybe_unused]] const auto firstAllocation = stack.allocBytes(12);
+    [[maybe_unused]] const auto resize          = stack.resize(firstAllocation, 0, 12);
+
+    EXPECT_EQ(nullptr, resize);
+}
+
+
+TEST_F(ManagedLooseSafeStackTests, Resize_ZeroAlignmentReturnsNullptr)
+{
+    // Use the full capacity
+    [[maybe_unused]] const auto firstAllocation = stack.allocBytes(12);
+    [[maybe_unused]] const auto resize          = stack.resize(firstAllocation, 12, 24, 0);
+
+    EXPECT_EQ(nullptr, resize);
+}
+
+
+TEST_F(ManagedLooseSafeStackTests, Resize_LatestsAllocation_FullStackReturnsNullptr)
+{
+    // Use the full capacity
+    constexpr auto firstAllocSize = 32;
+    [[maybe_unused]] const auto nearFullSize =
+        stack.allocBytes(stackSize - (firstAllocSize + alignof(void*) + 1 + sizeof(pmm::LooseStackHeader)));
+    [[maybe_unused]] const auto latestAllocation = stack.allocBytes(firstAllocSize);
+
+    [[maybe_unused]] const auto resize = stack.resize(latestAllocation, firstAllocSize, firstAllocSize + 120);
+    EXPECT_EQ(nullptr, resize);
+}
+
+
+TEST_F(ManagedLooseSafeStackTests, Resize_PriorToLatestsAllocation_FullStackReturnsNullptr)
+{
+    // Use the full capacity
+    constexpr auto firstAllocSize               = 32;
+    [[maybe_unused]] const auto firstAllocation = stack.allocBytes(firstAllocSize);
+    [[maybe_unused]] const auto nearFullSize =
+        stack.allocBytes(stackSize - (firstAllocSize + alignof(void*) + 1 + sizeof(pmm::LooseStackHeader)));
+    [[maybe_unused]] const auto resize = stack.resize(firstAllocation, firstAllocSize, firstAllocSize + 120);
+    EXPECT_EQ(nullptr, resize);
+}
+
+
+TEST_F(ManagedLooseSafeStackTests, ResizeFast_ZeroNewSizeReturnsNullptr)
+{
+    // Use the full capacity
+    [[maybe_unused]] const auto firstAllocation = stack.allocBytes(12);
+    [[maybe_unused]] const auto resize          = stack.resizeFast(firstAllocation, 12, 0);
+
+    EXPECT_EQ(nullptr, resize);
+}
+
+
+TEST_F(ManagedLooseSafeStackTests, ResizeFast_ZeroOldSizeReturnsNullptr)
+{
+    // Use the full capacity
+    [[maybe_unused]] const auto firstAllocation = stack.allocBytes(12);
+    [[maybe_unused]] const auto resize          = stack.resizeFast(firstAllocation, 0, 12);
+
+    EXPECT_EQ(nullptr, resize);
+}
+
+
+TEST_F(ManagedLooseSafeStackTests, ResizeFast_ZeroAlignmentReturnsNullptr)
+{
+    // Use the full capacity
+    [[maybe_unused]] const auto firstAllocation = stack.allocBytes(12);
+    [[maybe_unused]] const auto resize          = stack.resizeFast(firstAllocation, 12, 24, 0);
+
+    EXPECT_EQ(nullptr, resize);
+}
+
+
+TEST_F(ManagedLooseSafeStackTests, ResizeFast_LatestsAllocation_FullStackReturnsNullptr)
+{
+    // Use the full capacity
+    constexpr auto firstAllocSize = 32;
+    [[maybe_unused]] const auto nearFullSize =
+        stack.allocBytes(stackSize - (firstAllocSize + alignof(void*) + 1 + sizeof(pmm::LooseStackHeader)));
+    [[maybe_unused]] const auto latestAllocation = stack.allocBytes(firstAllocSize);
+
+    [[maybe_unused]] const auto resize = stack.resizeFast(latestAllocation, firstAllocSize, firstAllocSize + 120);
+    EXPECT_EQ(nullptr, resize);
+}
+
+
+TEST_F(ManagedLooseSafeStackTests, ResizeFast_PriorToLatestsAllocation_FullStackReturnsNullptr)
+{
+    // Use the full capacity
+    constexpr auto firstAllocSize               = 32;
+    [[maybe_unused]] const auto firstAllocation = stack.allocBytes(firstAllocSize);
+    [[maybe_unused]] const auto nearFullSize =
+        stack.allocBytes(stackSize - (firstAllocSize + alignof(void*) + 1 + sizeof(pmm::LooseStackHeader)));
+    [[maybe_unused]] const auto resize = stack.resizeFast(firstAllocation, firstAllocSize, firstAllocSize + 120);
+    EXPECT_EQ(nullptr, resize);
+}
+
+
+TEST_F(ManagedLooseSafeStackTests, ResizeLast_ZeroNewSizeReturnsNullptr)
+{
+    // Use the full capacity
+    [[maybe_unused]] const auto firstAllocation = stack.allocBytes(12);
+    [[maybe_unused]] const auto resize          = stack.resizeLast(firstAllocation, 12, 0);
+
+    EXPECT_EQ(nullptr, resize);
+}
+
+
+TEST_F(ManagedLooseSafeStackTests, ResizeLast_ZeroOldSizeReturnsNullptr)
+{
+    // Use the full capacity
+    [[maybe_unused]] const auto firstAllocation = stack.allocBytes(12);
+    [[maybe_unused]] const auto resize          = stack.resizeLast(firstAllocation, 0, 12);
+
+    EXPECT_EQ(nullptr, resize);
+}
+
+
+TEST_F(ManagedLooseSafeStackTests, ResizeLast_LatestsAllocation_FullStackReturnsNullptr)
+{
+    // Use the full capacity
+    constexpr auto firstAllocSize = 32;
+    [[maybe_unused]] const auto nearFullSize =
+        stack.allocBytes(stackSize - (firstAllocSize + alignof(void*) + 1 + sizeof(pmm::LooseStackHeader)));
+    [[maybe_unused]] const auto latestAllocation = stack.allocBytes(firstAllocSize);
+
+    [[maybe_unused]] const auto resize = stack.resizeLast(latestAllocation, firstAllocSize, firstAllocSize + 120);
+    EXPECT_EQ(nullptr, resize);
+}
+
+
+TEST_F(ManagedLooseSafeStackTests, ResizeLast_PriorToLatestsAllocation_FullStackReturnsNullptr)
+{
+    // Use the full capacity
+    constexpr auto firstAllocSize               = 32;
+    [[maybe_unused]] const auto firstAllocation = stack.allocBytes(firstAllocSize);
+    [[maybe_unused]] const auto nearFullSize =
+        stack.allocBytes(stackSize - (firstAllocSize + alignof(void*) + 1 + sizeof(pmm::LooseStackHeader)));
+    [[maybe_unused]] const auto resize = stack.resizeLast(firstAllocation, firstAllocSize, firstAllocSize + 120);
+    EXPECT_EQ(nullptr, resize);
+}
+
+// TODO: Add prior to last allocation returning nullptr in StrictStack
 
 /**************************************
  *      UNMANAGED LOOSE STACK         *
@@ -474,7 +519,7 @@ TEST_F(ManagedStrictSafeStackTests, AllocBytes_AllocatingInAFullStackReturnsNull
 {
     // Use the full capacity
     [[maybe_unused]] const auto fullSize =
-        stack.allocBytes(stackSize - (sizeof(pmm::LooseStackHeader) + (alignof(void*) + 1)));
+        stack.allocBytes(stackSize - (sizeof(pmm::StrictStackHeader) + (alignof(void*) + 1)));
 
     const auto data = stack.allocBytes(24);
     EXPECT_EQ(nullptr, data);
@@ -485,7 +530,7 @@ TEST_F(ManagedStrictSafeStackTests, Alloc_AllocatingInAFullStackReturnsNullPtr)
 {
     // Use the full capacity
     [[maybe_unused]] const auto fullSize =
-        stack.allocBytes(stackSize - (sizeof(pmm::LooseStackHeader) + (alignof(void*) + 1)));
+        stack.allocBytes(stackSize - (sizeof(pmm::StrictStackHeader) + (alignof(void*) + 1)));
 
     const auto vec = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
     EXPECT_EQ(nullptr, vec);
@@ -496,7 +541,7 @@ TEST_F(ManagedStrictSafeStackTests, AllocV_FullStackReturnsEmptySpan)
 {
     // Use the full capacity
     [[maybe_unused]] const auto fullSize =
-        stack.allocBytes(stackSize - (sizeof(pmm::LooseStackHeader) + (alignof(void*) + 1)));
+        stack.allocBytes(stackSize - (sizeof(pmm::StrictStackHeader) + (alignof(void*) + 1)));
 
     const auto vec = stack.allocV<Vec4>(2);
 
@@ -530,7 +575,7 @@ TEST_F(UnmanagedStrictSafeStackTests, AllocBytes_AllocatingInAFullStackReturnsNu
 {
     // Use the full capacity
     [[maybe_unused]] const auto fullSize =
-        stack.allocBytes(stackSize - (sizeof(pmm::LooseStackHeader) + (alignof(void*) + 1)));
+        stack.allocBytes(stackSize - (sizeof(pmm::StrictStackHeader) + (alignof(void*) + 1)));
 
     const auto data = stack.allocBytes(24);
     EXPECT_EQ(nullptr, data);
@@ -541,7 +586,7 @@ TEST_F(UnmanagedStrictSafeStackTests, Alloc_AllocatingInAFullStackReturnsNullPtr
 {
     // Use the full capacity
     [[maybe_unused]] const auto fullSize =
-        stack.allocBytes(stackSize - (sizeof(pmm::LooseStackHeader) + (alignof(void*) + 1)));
+        stack.allocBytes(stackSize - (sizeof(pmm::StrictStackHeader) + (alignof(void*) + 1)));
 
     const auto vec = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
     EXPECT_EQ(nullptr, vec);
@@ -552,7 +597,7 @@ TEST_F(UnmanagedStrictSafeStackTests, AllocV_FullStackReturnsEmptySpan)
 {
     // Use the full capacity
     [[maybe_unused]] const auto fullSize =
-        stack.allocBytes(stackSize - (sizeof(pmm::LooseStackHeader) + (alignof(void*) + 1)));
+        stack.allocBytes(stackSize - (sizeof(pmm::StrictStackHeader) + (alignof(void*) + 1)));
 
     const auto vec = stack.allocV<Vec4>(2);
 

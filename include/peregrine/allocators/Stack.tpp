@@ -143,8 +143,6 @@ namespace pmm
                        "Alignment exceeded maximum permissible size of padding.");
         if constexpr (Safe)
         {
-            std::cout << "Size: " << size << " Offset: " << _offset << " Padding: " << padding
-                      << " StackSize: " << _stackSize << " Calculated: " << _offset + size + padding << '\n';
             if (!std::has_single_bit(alignment) || alignment == 1 || _offset + size + padding > _stackSize)
             {
                 return nullptr;
@@ -164,7 +162,6 @@ namespace pmm
         {
             _telemetry.incStackUsage(size, padding);
         }
-        std::cout << "Offset After: " << _offset << '\n';
         return currentAddress;
     }
 
@@ -242,6 +239,7 @@ namespace pmm
         return std::span(static_cast<T*>(allocBytes(sizeof(T) * count, alignof(T))), count);
     }
 
+
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
     PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy, Safe>::resize(void* oldMemory, const std::size_t oldSize,
                                                                              const std::size_t newSize,
@@ -252,6 +250,14 @@ namespace pmm
             oldMemory != nullptr,
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
+        PMM_ASSERT_MSG(oldSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory."); // TODO: Add test
+        if constexpr (Safe)
+        {
+            if (oldMemory == nullptr || newSize == 0 || oldSize == 0 || std::has_single_bit(alignment) || alignment < 2)
+            {
+                return nullptr;
+            }
+        }
 
         // If the current allocation requires a resize to a smaller buffer
         if (oldSize >= newSize)
@@ -276,7 +282,14 @@ namespace pmm
             oldMemory != nullptr,
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
-
+        PMM_ASSERT_MSG(oldSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory."); // TODO: Add test
+        if constexpr (Safe)
+        {
+            if (oldMemory == nullptr || newSize == 0 || oldSize == 0)
+            {
+                return nullptr;
+            }
+        }
         // Used for comparing if two offsets are matching giving us whether or not the resize is of the latest
         // allocation
         const auto currentOffset = reinterpret_cast<uintptr_t>(oldMemory) - reinterpret_cast<uintptr_t>(_buffer);
@@ -301,6 +314,15 @@ namespace pmm
         // or provided with a new memory address
         if (isLatestAllocation)
         {
+            PMM_ASSERT_MSG(_offset + (newSize - oldSize) <= _stackSize != 0,
+                           "Cannot resize to 0 size. Use `free` to deallocate memory."); // TODO: Add test
+            if constexpr (Safe)
+            {
+                if (_offset + (newSize - oldSize) > _stackSize)
+                {
+                    return nullptr;
+                }
+            }
             _offset += newSize - oldSize; // Size difference
             if constexpr (std::same_as<TelemetryPolicy, telemetry::Enabled>)
             {
@@ -310,9 +332,7 @@ namespace pmm
         }
 
         auto newPtr = allocBytes(newSize, alignment);
-        memmove(newPtr, oldMemory, oldSize);
-
-        return newPtr;
+        return memmove(newPtr, oldMemory, oldSize);
     }
 
 
@@ -326,11 +346,25 @@ namespace pmm
             oldMemory != nullptr,
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
+        PMM_ASSERT_MSG(oldSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory."); // TODO: Add test
+        if constexpr (Safe)
+        {
+            if (oldMemory == nullptr || newSize == 0 || oldSize == 0 || std::has_single_bit(alignment) || alignment < 2)
+            {
+                return nullptr;
+            }
+        }
 
         auto newPtr = allocBytes(newSize, alignment);
-        memmove(newPtr, oldMemory, oldSize);
+        if constexpr (Safe)
+        {
+            if (newPtr == nullptr)
+            {
+                return nullptr;
+            }
+        }
 
-        return newPtr;
+        return memmove(newPtr, oldMemory, oldSize);
     }
 
 
@@ -344,7 +378,15 @@ namespace pmm
             oldMemory != nullptr,
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
-
+        PMM_ASSERT_MSG(oldSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory."); // TODO: Add test
+        if constexpr (Safe)
+        {
+            if (oldMemory == nullptr || newSize == 0 || oldSize == 0 ||
+                (newSize > oldSize && _offset + (newSize - oldSize) > _stackSize))
+            {
+                return nullptr;
+            }
+        }
         // Move the forward or backward depending on the new size.
         // Although all the operands are unsigned, even if oldSize is larger(result in negative result)
         // offset will move backward or forward, in the correct direction. (TESTED)
@@ -377,7 +419,16 @@ namespace pmm
         PMM_ASSERT_MSG(reinterpret_cast<uintptr_t>(oldMemory) ==
                            reinterpret_cast<uintptr_t>(_buffer) + _prevOffset + sizeof(StrictStackHeader),
                        "Out-of-order resize. resizeLast will only allow resizing the latest allocation.");
-
+        if constexpr (Safe)
+        {
+            if (oldMemory == nullptr || newSize == 0 || oldSize == 0 ||
+                reinterpret_cast<uintptr_t>(oldMemory) !=
+                    reinterpret_cast<uintptr_t>(_buffer) + _prevOffset + sizeof(StrictStackHeader) ||
+                (newSize > oldSize && _offset + (newSize - oldSize) > _stackSize))
+            {
+                return nullptr;
+            }
+        }
         // Move the forward or backward depending on the new size.
         // Although all the operands are unsigned, even if oldSize is larger(result in negative result)
         // offset will move backward or forward, in the correct direction. (TESTED)
