@@ -59,14 +59,14 @@ namespace
  *           MANAGED ARENA            *
  **************************************/
 
-TEST_F(ManagedSafeArenaTests, ReturnsNullPtrWhenAllocatingMemoryGreaterThanArenaSize)
+TEST_F(ManagedSafeArenaTests, AllocatingMemoryGreaterThanArenaSizeReturnsNullPtr)
 {
     void* bytes = arena.allocBytes(arenaSize + 1);
     EXPECT_EQ(nullptr, bytes);
 }
 
 
-TEST_F(ManagedSafeArenaTests, AllocBytes_ReturnsNullPtrWhenAllocatingInAFullArena)
+TEST_F(ManagedSafeArenaTests, AllocBytes_AllocatingInAFullArenaReturnsNullPtr)
 {
     // Use the full capacity
     [[maybe_unused]] const auto fullSize = arena.allocBytes(arenaSize - (alignof(void*) - 1));
@@ -76,7 +76,7 @@ TEST_F(ManagedSafeArenaTests, AllocBytes_ReturnsNullPtrWhenAllocatingInAFullAren
 }
 
 
-TEST_F(ManagedSafeArenaTests, Alloc_ReturnsNullPtrWhenAllocatingInAFullArena)
+TEST_F(ManagedSafeArenaTests, Alloc_AllocatingInAFullArenaReturnsNullPtr)
 {
     // Use the full capacity
     [[maybe_unused]] const auto fullSize = arena.allocBytes(arenaSize - (alignof(void*) - 1));
@@ -86,7 +86,7 @@ TEST_F(ManagedSafeArenaTests, Alloc_ReturnsNullPtrWhenAllocatingInAFullArena)
 }
 
 
-TEST_F(ManagedSafeArenaTests, AllocV_ReturnsEmptySpan)
+TEST_F(ManagedSafeArenaTests, AllocV_FullArenaReturnsEmptySpan)
 {
     // Use the full capacity
     [[maybe_unused]] const auto fullSize = arena.allocBytes(arenaSize - (alignof(void*) - 1));
@@ -96,6 +96,16 @@ TEST_F(ManagedSafeArenaTests, AllocV_ReturnsEmptySpan)
     EXPECT_EQ(nullptr, vec.data());
     EXPECT_EQ(0, vec.size());
 }
+
+
+TEST_F(ManagedSafeArenaTests, AllocV_ZeroCountReturnsEmptySpan)
+{
+    const auto vec = arena.allocV<Vec4>(0);
+
+    EXPECT_EQ(nullptr, vec.data());
+    EXPECT_EQ(0, vec.size());
+}
+
 
 
 TEST_F(ManagedSafeArenaTests, Resize_ZeroNewSizeReturnsNullptr)
@@ -209,14 +219,14 @@ TEST_F(ManagedSafeArenaTests, ResizeFast_PriorToLatestsAllocation_FullArenaRetur
  *          UNMANAGED ARENA           *
  **************************************/
 
-TEST_F(UnmanagedSafeArenaTests, ReturnsNullPtrWhenAllocatingMemoryGreaterThanArenaSize)
+TEST_F(UnmanagedSafeArenaTests, AllocatingMemoryGreaterThanArenaSizeReturnsNullPtr)
 {
     void* bytes = arena.allocBytes(arenaSize + 1);
     EXPECT_EQ(nullptr, bytes);
 }
 
 
-TEST_F(UnmanagedSafeArenaTests, AllocBytes_ReturnsNullPtrWhenAllocatingInAFullArena)
+TEST_F(UnmanagedSafeArenaTests, AllocBytes_AllocatingInAFullArenaReturnsNullPtr)
 {
     // Use the full capacity
     [[maybe_unused]] const auto fullSize = arena.allocBytes(arenaSize - (alignof(void*) - 1));
@@ -226,7 +236,7 @@ TEST_F(UnmanagedSafeArenaTests, AllocBytes_ReturnsNullPtrWhenAllocatingInAFullAr
 }
 
 
-TEST_F(UnmanagedSafeArenaTests, Alloc_ReturnsNullPtrWhenAllocatingInAFullArena)
+TEST_F(UnmanagedSafeArenaTests, Alloc_AllocatingInAFullArenaReturnsNullPtr)
 {
     // Use the full capacity
     [[maybe_unused]] const auto fullSize = arena.allocBytes(arenaSize - (alignof(void*) - 1));
@@ -236,12 +246,21 @@ TEST_F(UnmanagedSafeArenaTests, Alloc_ReturnsNullPtrWhenAllocatingInAFullArena)
 }
 
 
-TEST_F(UnmanagedSafeArenaTests, AllocV_ReturnsEmptySpan)
+TEST_F(UnmanagedSafeArenaTests, AllocV_FullArenaReturnsEmptySpan)
 {
     // Use the full capacity
     [[maybe_unused]] const auto fullSize = arena.allocBytes(arenaSize - (alignof(void*) - 1));
 
     const auto vec = arena.allocV<Vec4>(2);
+
+    EXPECT_EQ(nullptr, vec.data());
+    EXPECT_EQ(0, vec.size());
+}
+
+
+TEST_F(UnmanagedSafeArenaTests, AllocV_ZeroCountReturnsEmptySpan)
+{
+    const auto vec = arena.allocV<Vec4>(0);
 
     EXPECT_EQ(nullptr, vec.data());
     EXPECT_EQ(0, vec.size());
