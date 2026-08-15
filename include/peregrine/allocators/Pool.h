@@ -33,7 +33,7 @@ namespace pmm
      *
      *  @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
      *  @tparam TelPolicy   Flag indicating whether or not telemetry is enabled for this pool. See @ref pmm::telemetry.
-     *  @tparam Safe        Flags an pool as safe, implying certain operations like resizing a `nullptr` are handled
+     *  @tparam Safe        Flags an pool as safe, implying certain operations like freeing a `nullptr` are handled
      *                      gracefully when assertions are disabled. `False` by default to prevent any performance
      *                      stalls incurred by conditional checks.
      */

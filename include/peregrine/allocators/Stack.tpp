@@ -23,8 +23,8 @@
 namespace pmm
 {
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(const std::size_t stackSize) noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy, Safe>::Stack(const std::size_t stackSize) noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
         : _buffer{ static_cast<uint8_t*>(memAlloc(stackSize)) },
           _stackSize{ stackSize },
@@ -33,9 +33,9 @@ namespace pmm
     { PMM_ASSERT_MSG(stackSize > 0, "Cannot allocate a zero size stack"); }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(uint8_t* buffer,
-                                                                          const std::size_t bufferSize) noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy, Safe>::Stack(uint8_t* buffer,
+                                                                                const std::size_t bufferSize) noexcept
         requires std::same_as<MemStrategy, UnmanagedMemory>
         : _buffer{ buffer },
           _stackSize{ bufferSize },
@@ -47,8 +47,8 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>::Stack(Stack&& stack) noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy, Safe>::Stack(Stack&& stack) noexcept
         : _buffer{ std::exchange(stack._buffer, nullptr) },
           _stackSize{ std::exchange(stack._stackSize, 0) },
           _offset{ std::exchange(stack._offset, 0) },
@@ -61,9 +61,9 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy>& Stack<
-        Type, MemStrategy, TelemetryPolicy>::operator=(Stack&& stack) noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy, Safe>& Stack<Type, MemStrategy, TelemetryPolicy,
+                                                                                Safe>::operator=(Stack&& stack) noexcept
     {
         // For self assignment return the current arena.
         if (this == &stack)
@@ -93,35 +93,35 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr std::size_t Stack<Type, MemStrategy, TelemetryPolicy>::size() const noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE constexpr std::size_t Stack<Type, MemStrategy, TelemetryPolicy, Safe>::size() const noexcept
     { return _stackSize; }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr std::size_t Stack<Type, MemStrategy, TelemetryPolicy>::freeSize() const noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE constexpr std::size_t Stack<Type, MemStrategy, TelemetryPolicy, Safe>::freeSize() const noexcept
     { return _stackSize - _offset; }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr std::size_t Stack<Type, MemStrategy, TelemetryPolicy>::usedSize() const noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE constexpr std::size_t Stack<Type, MemStrategy, TelemetryPolicy, Safe>::usedSize() const noexcept
     { return _offset; }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr bool Stack<Type, MemStrategy, TelemetryPolicy>::isTelemetryEnabled() noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE constexpr bool Stack<Type, MemStrategy, TelemetryPolicy, Safe>::isTelemetryEnabled() noexcept
     { return std::same_as<TelemetryPolicy, telemetry::Enabled>; }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr const StackTelemetryType<TelemetryPolicy>& Stack<
-        Type, MemStrategy, TelemetryPolicy>::getTelemetry() const noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE constexpr const StackTelemetryType<TelemetryPolicy>& Stack<Type, MemStrategy, TelemetryPolicy,
+                                                                          Safe>::getTelemetry() const noexcept
     { return _telemetry; }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
     template <typename T>
-    PMM_INLINE std::span<T> Stack<Type, MemStrategy, TelemetryPolicy>::allocV(std::size_t count) noexcept
+    PMM_INLINE std::span<T> Stack<Type, MemStrategy, TelemetryPolicy, Safe>::allocV(std::size_t count) noexcept
     {
         PMM_ASSERT_MSG(count > 0, "[Stack]: Cannot allocate an array of size 0");
 
@@ -137,9 +137,9 @@ namespace pmm
      *                                    *
      **************************************/
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy>::allocBytes(const std::size_t size,
-                                                                           const std::size_t alignment) noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy, Safe>::allocBytes(const std::size_t size,
+                                                                                 const std::size_t alignment) noexcept
         requires std::same_as<Type, stack::Loose>
     {
         PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment != 1, "Alignment must be a power of 2");
@@ -166,9 +166,9 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy>::allocBytes(const std::size_t size,
-                                                                           const std::size_t alignment) noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy, Safe>::allocBytes(const std::size_t size,
+                                                                                 const std::size_t alignment) noexcept
         requires std::same_as<Type, stack::Strict>
     {
         PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment != 1, "Alignment must be a power of 2");
@@ -200,19 +200,19 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
     template <typename T, typename... Args>
-    PMM_INLINE T* Stack<Type, MemStrategy, TelemetryPolicy>::alloc(Args... args) noexcept
+    PMM_INLINE T* Stack<Type, MemStrategy, TelemetryPolicy, Safe>::alloc(Args... args) noexcept
     {
         auto rawMemory = allocBytes(sizeof(T), alignof(T));
         return new (rawMemory) T(std::forward<Args>(args)...);
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy>::resize(void* oldMemory, const std::size_t oldSize,
-                                                                       const std::size_t newSize,
-                                                                       const std::size_t alignment)
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy, Safe>::resize(void* oldMemory, const std::size_t oldSize,
+                                                                             const std::size_t newSize,
+                                                                             const std::size_t alignment)
         requires std::same_as<Type, stack::Loose>
     {
         PMM_ASSERT_MSG(
@@ -233,10 +233,10 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy>::resize(void* oldMemory, const std::size_t oldSize,
-                                                                       const std::size_t newSize,
-                                                                       const std::size_t alignment)
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy, Safe>::resize(void* oldMemory, const std::size_t oldSize,
+                                                                             const std::size_t newSize,
+                                                                             const std::size_t alignment)
         requires std::same_as<Type, stack::Strict>
     {
         PMM_ASSERT_MSG(
@@ -283,11 +283,11 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy>::resizeFast(const void* oldMemory,
-                                                                           const std::size_t oldSize,
-                                                                           const std::size_t newSize,
-                                                                           const std::size_t alignment)
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy, Safe>::resizeFast(const void* oldMemory,
+                                                                                 const std::size_t oldSize,
+                                                                                 const std::size_t newSize,
+                                                                                 const std::size_t alignment)
     {
         PMM_ASSERT_MSG(
             oldMemory != nullptr,
@@ -301,9 +301,10 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy>::resizeLast(void* oldMemory, const std::size_t oldSize,
-                                                                           const std::size_t newSize)
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy, Safe>::resizeLast(void* oldMemory,
+                                                                                 const std::size_t oldSize,
+                                                                                 const std::size_t newSize)
         requires std::same_as<Type, stack::Loose>
     {
         PMM_ASSERT_MSG(
@@ -330,9 +331,10 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy>::resizeLast(void* oldMemory, const std::size_t oldSize,
-                                                                           const std::size_t newSize)
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy, Safe>::resizeLast(void* oldMemory,
+                                                                                 const std::size_t oldSize,
+                                                                                 const std::size_t newSize)
         requires std::same_as<Type, stack::Strict>
     {
         PMM_ASSERT_MSG(
@@ -362,8 +364,8 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy>::freeBytes(void* ptr) noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy, Safe>::freeBytes(void* ptr) noexcept
         requires std::same_as<Type, stack::Loose>
     {
         PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
@@ -387,8 +389,8 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy>::freeBytes(void* ptr) noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy, Safe>::freeBytes(void* ptr) noexcept
         requires std::same_as<Type, stack::Strict>
     {
         PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
@@ -410,9 +412,9 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
     template <typename T>
-    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy>::free(T* ptr) noexcept
+    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy, Safe>::free(T* ptr) noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
@@ -422,9 +424,9 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
     template <typename T>
-    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy>::freeV(std::span<T> vector) noexcept
+    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy, Safe>::freeV(std::span<T> vector) noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
@@ -437,8 +439,8 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy>::clear()
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy, Safe>::clear()
     {
         _offset = 0;
         if constexpr (std::is_same_v<Type, stack::Strict>)
@@ -452,13 +454,13 @@ namespace pmm
     }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy>::zeroOut() const noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy, Safe>::zeroOut() const noexcept
     { std::memset(_buffer, 0, _stackSize); }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE Stack<Type, MemStrategy, TelemetryPolicy>::~Stack() noexcept
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE Stack<Type, MemStrategy, TelemetryPolicy, Safe>::~Stack() noexcept
         requires std::same_as<MemStrategy, ManagedMemory>
     { memFree(_buffer, _stackSize); }
 
@@ -470,8 +472,8 @@ namespace pmm
      *                                    *
      **************************************/
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy>
-    PMM_INLINE constexpr std::size_t Stack<Type, MemStrategy, TelemetryPolicy>::_calcAlignment(
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    PMM_INLINE constexpr std::size_t Stack<Type, MemStrategy, TelemetryPolicy, Safe>::_calcAlignment(
         const std::size_t alignment) noexcept
     {
         const auto baseAddress    = reinterpret_cast<uintptr_t>(_buffer);
