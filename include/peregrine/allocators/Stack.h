@@ -55,9 +55,18 @@ namespace pmm
         std::size_t padding{};    /// Target allocation's block size.
     };
 
-
+    /**
+     * @brief Linear memory allocator following LIFO principle.
+     *
+     *
+     * @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
+     * @tparam TelPolicy   Flag indicating whether or not telemetry is enabled for this arena. See @ref pmm::telemetry.
+     * @tparam Safe        Flags an arena as safe, implying certain operations like resizing a `nullptr` are handled
+     *                     gracefully when assertions are disabled. `False` by default to prevent any performance
+     *                     stalls incurred by conditional checks.
+     */
     template <stack::StackType Type = stack::Loose, MemoryStrategy MemStrategy = ManagedMemory,
-              telemetry::TelemetryPolicy TelemetryPolicy = telemetry::Enabled>
+              telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled, bool Safe = false>
     class Stack
     {
     public:
@@ -157,7 +166,7 @@ namespace pmm
          *
          * @return A telemetry instance if telemetry policy is not Disabled, else an empty struct.
          */
-        [[nodiscard]] constexpr const StackTelemetryType<TelemetryPolicy>& getTelemetry() const noexcept;
+        [[nodiscard]] constexpr const StackTelemetryType<TelPolicy>& getTelemetry() const noexcept;
 
 
         /**
@@ -512,7 +521,7 @@ namespace pmm
         uint8_t* _buffer;
         std::size_t _stackSize, _offset{ 0 };
         PMM_NO_UNIQUE_ADDR PreviousOffsetType _prevOffset;
-        PMM_NO_UNIQUE_ADDR StackTelemetryType<TelemetryPolicy> _telemetry;
+        PMM_NO_UNIQUE_ADDR StackTelemetryType<TelPolicy> _telemetry;
 
 
 

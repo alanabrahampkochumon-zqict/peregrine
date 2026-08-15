@@ -29,7 +29,7 @@ namespace pmm
     };
 
     /**
-     *  @brief Linear memory allocator.
+     *  @brief Pool/Chunk memory allocator.
      *
      *  @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
      *  @tparam TelPolicy   Flag indicating whether or not telemetry is enabled for this pool. See @ref pmm::telemetry.

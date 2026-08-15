@@ -71,8 +71,6 @@ namespace pmm
         [[nodiscard]] constexpr std::span<T> allocV(std::size_t count) noexcept;
     };
 
-
-
     /** @} */
 
 } // namespace pmm

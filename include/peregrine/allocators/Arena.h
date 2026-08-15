@@ -31,13 +31,13 @@ namespace pmm
     struct TempArena;
 
     /**
-     *  @brief Linear memory allocator.
+     * @brief Linear memory allocator.
      *
-     *  @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
-     *  @tparam TelPolicy   Flag indicating whether or not telemetry is enabled for this arena. See @ref pmm::telemetry.
-     *  @tparam Safe        Flags an arena as safe, implying certain operations like resizing a `nullptr` are handled
-     *                      gracefully when assertions are disabled. `False` by default to prevent any performance
-     *                      stalls incurred by conditional checks.
+     * @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
+     * @tparam TelPolicy   Flag indicating whether or not telemetry is enabled for this arena. See @ref pmm::telemetry.
+     * @tparam Safe        Flags an arena as safe, implying certain operations like resizing a `nullptr` are handled
+     *                     gracefully when assertions are disabled. `False` by default to prevent any performance
+     *                     stalls incurred by conditional checks.
      */
     template <MemoryStrategy MemStrategy = ManagedMemory, telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled,
               bool Safe = false>
