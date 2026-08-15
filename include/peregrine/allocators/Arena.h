@@ -26,6 +26,10 @@ namespace pmm
      * @{
      */
 
+    // Forward Declaration
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
+    struct TempArena;
+
     /**
      *  @brief Linear memory allocator.
      *
@@ -171,7 +175,6 @@ namespace pmm
          * @brief Allocate an object of type @p T in the arena with natural alignment.
          *
          * @note Memory gets aligned to the default of alignment of @p T.
-         *       For finer control use @ref allocBytes or @ref allocAs.
          *
          * @tparam T    The type of object to allocate.
          * @tparam Args The type of arguments to instantiate the object.
@@ -313,7 +316,7 @@ namespace pmm
         void _alignForward(std::size_t alignment) noexcept;
 
         // For internal variable access
-        friend struct TempArena;
+        friend struct TempArena<MemStrategy, TelPolicy, Safe>;
 
 #ifdef ENABLE_PMM_TESTS
     // FRIEND TEST macros for verifying internal states

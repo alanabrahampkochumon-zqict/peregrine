@@ -9,7 +9,9 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
+
 #include "Arena.h"
+
 
 namespace pmm
 {
@@ -60,13 +62,6 @@ namespace pmm
          */
         template <typename T, typename... Args>
         [[nodiscard]] constexpr T* alloc(Args... args) noexcept;
-
-
-        /**
-         *  @copydoc pmm::Arena::allocAs(std::size_t, Args...)
-         */
-        template <typename T, typename... Args>
-        [[nodiscard]] constexpr T* allocAs(std::size_t alignment, Args... args) noexcept;
 
 
         /**

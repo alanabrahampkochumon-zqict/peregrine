@@ -11,6 +11,8 @@
  */
 
 
+#include "peregrine/utils/Preprocessors.h"
+
 
 namespace pmm
 {
@@ -19,13 +21,14 @@ namespace pmm
      **************************************/
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    constexpr TempArena<MemStrategy, TelPolicy, Safe>::TempArena(Arena* arena) noexcept
+    PMM_INLINE constexpr TempArena<MemStrategy, TelPolicy, Safe>::TempArena(
+        Arena<MemStrategy, TelPolicy, Safe>* arena) noexcept
         : targetArena(arena), prevOffset(arena->_prevOffset), currentOffset(arena->_offset)
     {}
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    constexpr TempArena<MemStrategy, TelPolicy, Safe>::~TempArena() noexcept
+    PMM_INLINE constexpr TempArena<MemStrategy, TelPolicy, Safe>::~TempArena() noexcept
     {
         targetArena->_prevOffset = prevOffset;
         targetArena->_offset     = currentOffset;
@@ -37,26 +40,21 @@ namespace pmm
      **************************************/
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    inline void* TempArena<MemStrategy, TelPolicy, Safe>::allocBytes(const std::size_t bytes, const std::size_t alignment) const noexcept
-    {
-        return targetArena->allocBytes(bytes, alignment);
-    }
+    PMM_INLINE void* TempArena<MemStrategy, TelPolicy, Safe>::allocBytes(const std::size_t bytes,
+                                                                         const std::size_t alignment) const noexcept
+    { return targetArena->allocBytes(bytes, alignment); }
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     template <typename T, typename... Args>
-    constexpr T* TempArena<MemStrategy, TelPolicy, Safe>::alloc(Args... args) noexcept
-    {
-        return targetArena->alloc<T>(args...);
-    }
+    PMM_INLINE constexpr T* TempArena<MemStrategy, TelPolicy, Safe>::alloc(Args... args) noexcept
+    { return targetArena->template alloc<T>(args...); }
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     template <typename T>
-    constexpr std::span<T> TempArena<MemStrategy, TelPolicy, Safe>::allocV(const std::size_t count) noexcept
-    {
-        return targetArena->allocV<T>(count);
-    }
+    PMM_INLINE constexpr std::span<T> TempArena<MemStrategy, TelPolicy, Safe>::allocV(const std::size_t count) noexcept
+    { return targetArena->template allocV<T>(count); }
 
 
 } // namespace pmm
