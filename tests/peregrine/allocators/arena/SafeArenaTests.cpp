@@ -59,7 +59,7 @@ namespace
  *           MANAGED ARENA            *
  **************************************/
 
-TEST_F(ManagedSafeArenaTests, AllocatingMemoryGreaterThanArenaSizeReturnsNullPtr)
+TEST_F(ManagedSafeArenaTests, AllocBytes_AllocatingMemoryGreaterThanArenaSizeReturnsNullPtr)
 {
     void* bytes = arena.allocBytes(arenaSize + 1);
     EXPECT_EQ(nullptr, bytes);
@@ -219,7 +219,7 @@ TEST_F(ManagedSafeArenaTests, ResizeFast_PriorToLatestsAllocation_FullArenaRetur
  *          UNMANAGED ARENA           *
  **************************************/
 
-TEST_F(UnmanagedSafeArenaTests, AllocatingMemoryGreaterThanArenaSizeReturnsNullPtr)
+TEST_F(UnmanagedSafeArenaTests, AllocBytes_AllocatingMemoryGreaterThanArenaSizeReturnsNullPtr)
 {
     void* bytes = arena.allocBytes(arenaSize + 1);
     EXPECT_EQ(nullptr, bytes);
@@ -297,7 +297,6 @@ TEST_F(UnmanagedSafeArenaTests, Resize_ZeroAlignmentReturnsNullptr)
 }
 
 
-// TODO: Add tests for resizeFast and unmanaged arena.
 TEST_F(UnmanagedSafeArenaTests, Resize_LatestsAllocation_FullArenaReturnsNullptr)
 {
     // Use the full capacity

@@ -16,6 +16,7 @@
 
 #include <bit>
 #include <cstring>
+#include <intrin.h>
 #include <limits>
 #include <type_traits>
 
@@ -119,16 +120,6 @@ namespace pmm
     { return _telemetry; }
 
 
-    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
-    template <typename T>
-    PMM_INLINE std::span<T> Stack<Type, MemStrategy, TelemetryPolicy, Safe>::allocV(std::size_t count) noexcept
-    {
-        PMM_ASSERT_MSG(count > 0, "[Stack]: Cannot allocate an array of size 0");
-
-        auto bytes = static_cast<T*>(allocBytes(sizeof(T) * count, alignof(T)));
-        return std::span(bytes, count);
-    }
-
 
 
     /**************************************
@@ -146,8 +137,19 @@ namespace pmm
 
         const auto padding = _calcAlignment(alignment);
         PMM_ASSERT_MSG(_offset + size + padding <= _stackSize, "Stack capacity exceeded. Cannot assign memory!");
+        // NOTE: This assertion is redundant since we are using size_t and it's impossible to pad that amount of memory
+        // realistically
         PMM_ASSERT_MSG(padding <= std::numeric_limits<decltype(LooseStackHeader::padding)>::max(),
                        "Alignment exceeded maximum permissible size of padding.");
+        if constexpr (Safe)
+        {
+            std::cout << "Size: " << size << " Offset: " << _offset << " Padding: " << padding
+                      << " StackSize: " << _stackSize << " Calculated: " << _offset + size + padding << '\n';
+            if (!std::has_single_bit(alignment) || alignment == 1 || _offset + size + padding > _stackSize)
+            {
+                return nullptr;
+            }
+        }
 
         // Move the offset to aligned address
         _offset += padding;
@@ -162,6 +164,7 @@ namespace pmm
         {
             _telemetry.incStackUsage(size, padding);
         }
+        std::cout << "Offset After: " << _offset << '\n';
         return currentAddress;
     }
 
@@ -175,9 +178,17 @@ namespace pmm
 
         const auto padding = _calcAlignment(alignment);
         PMM_ASSERT_MSG(_offset + size + padding <= _stackSize, "Stack capacity exceeded. Cannot assign memory!");
+        // NOTE: This assertion is redundant since we are using size_t and it's impossible to pad that amount of memory
+        // realistically
         PMM_ASSERT_MSG(padding <= std::numeric_limits<decltype(StrictStackHeader::padding)>::max(),
                        "Alignment exceeded maximum permissible size of padding.");
-
+        if constexpr (Safe)
+        {
+            if (!std::has_single_bit(alignment) || alignment == 1 || _offset + size + padding > _stackSize)
+            {
+                return nullptr;
+            }
+        }
         // Store the current allocation's previous offset
         auto prevAllocOffset = _prevOffset;
 
@@ -205,9 +216,31 @@ namespace pmm
     PMM_INLINE T* Stack<Type, MemStrategy, TelemetryPolicy, Safe>::alloc(Args... args) noexcept
     {
         auto rawMemory = allocBytes(sizeof(T), alignof(T));
+        if constexpr (Safe)
+        {
+            if (rawMemory == nullptr)
+            {
+                return nullptr;
+            }
+        }
         return new (rawMemory) T(std::forward<Args>(args)...);
     }
 
+
+    template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
+    template <typename T>
+    PMM_INLINE std::span<T> Stack<Type, MemStrategy, TelemetryPolicy, Safe>::allocV(std::size_t count) noexcept
+    {
+        PMM_ASSERT_MSG(count > 0, "[Stack]: Cannot allocate an array of size 0");
+        if constexpr (Safe)
+        {
+            if (_offset + sizeof(T) * count > _stackSize || count == 0)
+            {
+                return std::span<T>();
+            }
+        }
+        return std::span(static_cast<T*>(allocBytes(sizeof(T) * count, alignof(T))), count);
+    }
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
     PMM_INLINE void* Stack<Type, MemStrategy, TelemetryPolicy, Safe>::resize(void* oldMemory, const std::size_t oldSize,
