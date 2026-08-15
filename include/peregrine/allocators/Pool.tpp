@@ -183,7 +183,6 @@ namespace pmm
         PMM_ASSERT_MSG(ptr >= minFreeAddr && ptr <= maxFreeAddr, "Out of bounds free");
         if constexpr (Safe)
         {
-            std::cout << "PTR: " << reinterpret_cast<uintptr_t>(ptr) << " MIN: " << reinterpret_cast<uintptr_t>(minFreeAddr) << " MAX: " << reinterpret_cast<uintptr_t>(maxFreeAddr) << '\n';
             // Validate if the free is possible
             if (ptr == nullptr || ptr < minFreeAddr || ptr > maxFreeAddr ||
                 (reinterpret_cast<uintptr_t>(ptr) & (_chunkSize - 1)) != 0)
