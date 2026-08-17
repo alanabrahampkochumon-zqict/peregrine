@@ -11,7 +11,6 @@
 
 
 #include <cstdint>
-// TODO: Add custom assert
 
 namespace pmm::constants
 {

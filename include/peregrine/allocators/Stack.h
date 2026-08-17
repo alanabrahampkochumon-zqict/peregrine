@@ -17,7 +17,7 @@
 
 #include <cstdint>
 
-// TODO: Add stack safe mode
+
 namespace pmm
 {
     /**
@@ -25,7 +25,6 @@ namespace pmm
      * @{
      */
 
-    // TODO: Add a custom sizer that resizes footprint based on user preference. PAllocSize16?
     /**
      * @brief Header for storing *minimal* information about a stack entry.
      *

@@ -38,7 +38,7 @@ namespace pmm
      */
     [[nodiscard]] void* memAlloc(std::size_t byteSize) noexcept;
 
-    // TODO: Ensure alloc frees out memory
+
     /**
      * @brief Free a memory block allocated using @ref pmm::malloc.
      *

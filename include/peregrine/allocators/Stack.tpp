@@ -250,7 +250,7 @@ namespace pmm
             oldMemory != nullptr,
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
-        PMM_ASSERT_MSG(oldSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory."); // TODO: Add test
+        PMM_ASSERT_MSG(oldSize != 0, "Cannot resize from 0 size.");
         if constexpr (Safe == true)
         {
             if (oldMemory == nullptr || newSize == 0 || oldSize == 0 || std::has_single_bit(alignment) || alignment < 2)
