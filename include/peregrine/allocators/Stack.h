@@ -399,13 +399,16 @@ namespace pmm
          *
          * @param[in] ptr The pointer to free upto.
          *
+         * @return A boolean status indicating whether the free was valid.
+         *         **Validation is available ONLY for SafePool in Release Mode**
+         *
          * @remarks API specialized for @ref pmm::stack::Loose.
          *
          * @relatedalso free
          * @relatedalso freeV
          * @relatedalso clear
          */
-        void freeBytes(void* ptr) noexcept
+        bool freeBytes(void* ptr) noexcept
             requires std::same_as<Type, stack::Loose>;
 
 
@@ -419,13 +422,16 @@ namespace pmm
          *
          * @param[in] ptr The pointer to free upto.
          *
+         * @return A boolean status indicating whether the free was valid.
+         *         **Validation is available ONLY for SafePool in Release Mode**
+         *
          * @remarks API specialized for @ref pmm::stack::Strict.
          *
          * @relatedalso free
          * @relatedalso freeV
          * @relatedalso clear
          */
-        void freeBytes(void* ptr) noexcept
+        bool freeBytes(void* ptr) noexcept
             requires std::same_as<Type, stack::Strict>;
 
 
@@ -438,12 +444,15 @@ namespace pmm
          *
          * @param[in] ptr The object pointer to free.
          *
+         * @return A boolean status indicating whether the free was valid.
+         *         **Validation is available ONLY for SafePool in Release Mode**
+         *
          * @relatedalso freeV
          * @relatedalso freeBytes
          * @relatedalso clear
          */
         template <typename T>
-        void free(T* ptr) noexcept;
+        bool free(T* ptr) noexcept;
 
 
         /**
@@ -453,6 +462,9 @@ namespace pmm
          *
          * @tparam T  The data type of the memory pointer.
          *
+         * @return A boolean status indicating whether the free was valid.
+         *         **Validation is available ONLY for SafePool in Release Mode**
+         *
          * @param[in] vector The collection of objects to free.
          *
          * @relatedalso free
@@ -460,7 +472,7 @@ namespace pmm
          * @relatedalso clear
          */
         template <typename T>
-        void freeV(std::span<T> vector) noexcept;
+        bool freeV(std::span<T> vector) noexcept;
 
 
         /**

@@ -141,7 +141,7 @@ namespace pmm
         const auto node = _head;
 
         PMM_ASSERT_MSG(node != nullptr, "Pool allocator has no free memory");
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (node == nullptr)
             {
@@ -163,7 +163,7 @@ namespace pmm
         PMM_ASSERT_MSG(sizeof(T) <= _chunkSize,
                        std::format("Size of object({}) exceeds chunk size({})", sizeof(T), _chunkSize).c_str());
         auto rawBuffer = allocChunk();
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (rawBuffer == nullptr)
             {
@@ -181,7 +181,7 @@ namespace pmm
         [[maybe_unused]] const auto minFreeAddr = _buffer + _initialAlignmentPadding;
         [[maybe_unused]] const auto maxFreeAddr = _buffer + _poolSize - _initialAlignmentPadding - _chunkSize;
         PMM_ASSERT_MSG(ptr >= minFreeAddr && ptr <= maxFreeAddr, "Out of bounds free");
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             // Validate if the free is possible
             if (ptr == nullptr || ptr < minFreeAddr || ptr > maxFreeAddr ||

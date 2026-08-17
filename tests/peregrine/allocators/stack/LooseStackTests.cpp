@@ -867,7 +867,7 @@ TEST_F(LooseStackTests, FreeBytes_FreesMemoryForSubsequentAllocations)
     const auto usableSize = stackSize - 128; // A big offset is used since we need to make room for header + alignment
     const auto freeMemory = static_cast<char*>(stack.allocBytes(usableSize, alignment));
     // Free the memory
-    stack.freeBytes(freeMemory);
+    EXPECT_TRUE(stack.freeBytes(freeMemory));
 
     // Allocation another buffer
     const auto elementCount  = (stackSize - alignment - 1) / sizeof(int);
@@ -906,7 +906,7 @@ TEST_F(LooseStackTests, FreeBytes_MultipleTimesMakesRoomInTheStack)
     // Data must be freed in the reverse order of allocation
     for (std::size_t i = 4; i > 0; --i)
     {
-        stack.freeBytes(memory[i - 1]);
+        EXPECT_TRUE(stack.freeBytes(memory[i - 1]));
     }
 
     // Allocation another buffer with a large enough size that proper allocation will not happen without proper frees
@@ -924,6 +924,13 @@ TEST_F(LooseStackTests, FreeBytes_MultipleTimesMakesRoomInTheStack)
     {
         EXPECT_EQ(static_cast<int>(i + 3812), newAllocation[i]);
     }
+}
+
+
+TEST_F(LooseStackTests, FreeBytes_ValidAddress_ReturnsTrue)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_TRUE(stack.freeBytes(firstAllocation));
 }
 
 
@@ -971,7 +978,7 @@ TEST_F(LooseStackTests, Free_FreesMemoryForSubsequentAllocations)
     const auto largeData = stack.alloc<LargeData<STACK_SIZE - leeway>>();
 
     // Free it
-    stack.free(largeData);
+    EXPECT_TRUE(stack.free(largeData));
 
     const auto intV = stack.allocV<int>(STACK_SIZE / sizeof(int) - leeway);
 
@@ -995,8 +1002,7 @@ TEST_F(LooseStackTests, Free_CallsClassDestructorForNonTrivialTypes)
     int numDestructorCalls = 0;
     const auto nonTrivial  = stack.alloc<DestructionTracker>(&numDestructorCalls);
 
-    stack.free(nonTrivial);
-
+    EXPECT_TRUE(stack.free(nonTrivial));
     EXPECT_EQ(1, numDestructorCalls);
 }
 
@@ -1011,7 +1017,7 @@ TEST_F(LooseStackTests, FreeV_FreesMemoryForSubsequentAllocations)
     // Allocate some test data
     const auto listData = stack.allocV<int>(1200);
     // Free it
-    stack.freeV(listData);
+    EXPECT_TRUE(stack.freeV(listData));
 
     const auto intV = stack.allocV<int>(STACK_SIZE / sizeof(int) - leeway);
 
@@ -1041,8 +1047,7 @@ TEST_F(LooseStackTests, FreeV_CallsClassDestructorForNonTrivialTypes)
         item.destructorCalledCount = &numDestructorCalls;
     }
 
-    stack.freeV(nonTrivial);
-
+    EXPECT_TRUE(stack.freeV(nonTrivial));
     EXPECT_EQ(numAllocation, numDestructorCalls);
 }
 

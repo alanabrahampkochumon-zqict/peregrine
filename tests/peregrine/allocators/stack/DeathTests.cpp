@@ -113,16 +113,15 @@ TEST_F(LooseStackTests, FreeBytes_UnallocatedMemoryAddress_TriggersAssertion)
  * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing memory space below the base memory address.
  */
-TEST_F(LooseStackTests, FreeBytes_BelowBufferMemoryAddress_TriggersAssertion)
+TEST_F(LooseStackTests, FreeBytes_BelowFirstAllocationAddress_TriggersAssertion)
 {
     constexpr auto size      = 512;
     constexpr auto alignment = 8;
-    // We are assuming worst case padding of 7 for alignment
-    constexpr auto assumedHeaderSize = sizeof(pmm::LooseStackHeader) + alignment - 1;
 
     const auto memory = static_cast<char*>(stack.allocBytes(size, alignment));
+    
     // Move 1 below assume header size
-    EXPECT_DEBUG_DEATH(stack.freeBytes(memory - assumedHeaderSize - 1), "");
+    EXPECT_DEBUG_DEATH(stack.freeBytes(memory - 1), "");
 }
 
 
@@ -311,16 +310,13 @@ TEST_F(StrictStackTests, FreeBytes_UnallocatedMemoryAddress_TriggersAssertion)
  * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing memory space below the base memory address.
  */
-TEST_F(StrictStackTests, FreeBytes_BelowBufferMemoryAddress_TriggersAssertion)
+TEST_F(StrictStackTests, FreeBytes_BelowFirstAllocationAddress_TriggersAssertion)
 {
     constexpr auto size      = 512;
     constexpr auto alignment = 8;
-    // We are assuming worst case padding of 7 for alignment
-    constexpr auto assumedHeaderSize = sizeof(pmm::StrictStackHeader) + alignment - 1;
-
     const auto memory = static_cast<char*>(stack.allocBytes(size, alignment));
     // Move 1 below assume header size
-    EXPECT_DEBUG_DEATH(stack.freeBytes(memory - assumedHeaderSize - 1), "");
+    EXPECT_DEBUG_DEATH(stack.freeBytes(memory - 1), "");
 }
 
 

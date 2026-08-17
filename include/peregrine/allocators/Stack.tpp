@@ -141,7 +141,7 @@ namespace pmm
         // realistically
         PMM_ASSERT_MSG(padding <= std::numeric_limits<decltype(LooseStackHeader::padding)>::max(),
                        "Alignment exceeded maximum permissible size of padding.");
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (!std::has_single_bit(alignment) || alignment == 1 || _offset + size + padding > _stackSize)
             {
@@ -179,7 +179,7 @@ namespace pmm
         // realistically
         PMM_ASSERT_MSG(padding <= std::numeric_limits<decltype(StrictStackHeader::padding)>::max(),
                        "Alignment exceeded maximum permissible size of padding.");
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (!std::has_single_bit(alignment) || alignment == 1 || _offset + size + padding > _stackSize)
             {
@@ -213,7 +213,7 @@ namespace pmm
     PMM_INLINE T* Stack<Type, MemStrategy, TelemetryPolicy, Safe>::alloc(Args... args) noexcept
     {
         auto rawMemory = allocBytes(sizeof(T), alignof(T));
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (rawMemory == nullptr)
             {
@@ -229,7 +229,7 @@ namespace pmm
     PMM_INLINE std::span<T> Stack<Type, MemStrategy, TelemetryPolicy, Safe>::allocV(std::size_t count) noexcept
     {
         PMM_ASSERT_MSG(count > 0, "[Stack]: Cannot allocate an array of size 0");
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (_offset + sizeof(T) * count > _stackSize || count == 0)
             {
@@ -251,7 +251,7 @@ namespace pmm
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
         PMM_ASSERT_MSG(oldSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory."); // TODO: Add test
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (oldMemory == nullptr || newSize == 0 || oldSize == 0 || std::has_single_bit(alignment) || alignment < 2)
             {
@@ -267,7 +267,7 @@ namespace pmm
 
         // Else make new allocations
         auto newPtr = allocBytes(newSize, alignment);
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (newPtr == nullptr)
             {
@@ -289,7 +289,7 @@ namespace pmm
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
         PMM_ASSERT_MSG(oldSize != 0, "Cannot resize from 0 size.");
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (oldMemory == nullptr || newSize == 0 || oldSize == 0 || !std::has_single_bit(alignment) ||
                 alignment < 2)
@@ -321,9 +321,8 @@ namespace pmm
         // or provided with a new memory address
         if (isLatestAllocation)
         {
-            PMM_ASSERT_MSG(_offset + (newSize - oldSize) <= _stackSize != 0,
-                           "Insufficient memory for resize.");
-            if constexpr (Safe)
+            PMM_ASSERT_MSG(_offset + (newSize - oldSize) <= _stackSize != 0, "Insufficient memory for resize.");
+            if constexpr (Safe == true)
             {
                 if (_offset + (newSize - oldSize) > _stackSize)
                 {
@@ -339,7 +338,7 @@ namespace pmm
         }
 
         auto newPtr = allocBytes(newSize, alignment);
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (newPtr == nullptr)
             {
@@ -361,7 +360,7 @@ namespace pmm
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
         PMM_ASSERT_MSG(oldSize != 0, "Cannot resize from 0 size.");
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (oldMemory == nullptr || newSize == 0 || oldSize == 0 || std::has_single_bit(alignment) || alignment < 2)
             {
@@ -370,7 +369,7 @@ namespace pmm
         }
 
         auto newPtr = allocBytes(newSize, alignment);
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (newPtr == nullptr)
             {
@@ -393,7 +392,7 @@ namespace pmm
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
         PMM_ASSERT_MSG(oldSize != 0, "Cannot resize from 0 size.");
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (oldMemory == nullptr || newSize == 0 || oldSize == 0 ||
                 (newSize > oldSize && _offset + (newSize - oldSize) > _stackSize))
@@ -434,7 +433,7 @@ namespace pmm
         PMM_ASSERT_MSG(reinterpret_cast<uintptr_t>(oldMemory) ==
                            reinterpret_cast<uintptr_t>(_buffer) + _prevOffset + sizeof(StrictStackHeader),
                        "Out-of-order resize. resizeLast will only allow resizing the latest allocation.");
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (oldMemory == nullptr || newSize == 0 || oldSize == 0 ||
                 reinterpret_cast<uintptr_t>(oldMemory) !=
@@ -464,11 +463,18 @@ namespace pmm
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
-    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy, Safe>::freeBytes(void* ptr) noexcept
+    PMM_INLINE bool Stack<Type, MemStrategy, TelemetryPolicy, Safe>::freeBytes(void* ptr) noexcept
         requires std::same_as<Type, stack::Loose>
     {
         PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
-        PMM_ASSERT_MSG(ptr >= _buffer && ptr <= _buffer + _offset, "Out-of-bounds free!");
+        PMM_ASSERT_MSG(ptr >= _buffer + sizeof(LooseStackHeader) && ptr <= _buffer + _offset, "Out-of-bounds free!");
+        if constexpr (Safe == true)
+        {
+            if (ptr == nullptr || ptr < _buffer + sizeof(LooseStackHeader) || ptr > _buffer + _offset)
+            {
+                return false;
+            }
+        }
 
         const auto header = reinterpret_cast<LooseStackHeader*>(static_cast<char*>(ptr) - sizeof(LooseStackHeader));
         // Previous offset is the current ptr's position - whatever space we assigned for padding
@@ -485,22 +491,36 @@ namespace pmm
             _telemetry.decStackUsage(allocationSize, padding);
         }
         _offset = prevOffset;
+        return true;
     }
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
-    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy, Safe>::freeBytes(void* ptr) noexcept
+    PMM_INLINE bool Stack<Type, MemStrategy, TelemetryPolicy, Safe>::freeBytes(void* ptr) noexcept
         requires std::same_as<Type, stack::Strict>
     {
         PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
-        PMM_ASSERT_MSG(ptr >= _buffer && ptr <= _buffer + _offset, "Out-of-bounds free!");
-
+        PMM_ASSERT_MSG(ptr >= _buffer + sizeof(StrictStackHeader) && ptr <= _buffer + _offset, "Out-of-bounds free!");
+        if constexpr (Safe == true)
+        {
+            if (ptr == nullptr || ptr < _buffer + sizeof(StrictStackHeader) || ptr > _buffer + _offset)
+            {
+                return false;
+            }
+        }
         const auto header = reinterpret_cast<StrictStackHeader*>(static_cast<char*>(ptr) - sizeof(StrictStackHeader));
         // Previous offset is the current ptr's position - whatever space we assigned for padding
         const auto currentBlockStart =
             reinterpret_cast<uintptr_t>(ptr) - reinterpret_cast<uintptr_t>(_buffer) - header->padding;
 
         PMM_ASSERT_MSG(_prevOffset == currentBlockStart, "Out of order stack free!");
+        if constexpr (Safe == true)
+        {
+            if (_prevOffset != currentBlockStart)
+            {
+                return false;
+            }
+        }
         // Move the pointer back to the previous offset, and then by the header size.
         if constexpr (std::same_as<TelemetryPolicy, telemetry::Enabled>)
         {
@@ -508,24 +528,25 @@ namespace pmm
         }
         _offset     = currentBlockStart;
         _prevOffset = header->prevOffset;
+        return true;
     }
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
     template <typename T>
-    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy, Safe>::free(T* ptr) noexcept
+    PMM_INLINE bool Stack<Type, MemStrategy, TelemetryPolicy, Safe>::free(T* ptr) noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
             ptr->~T();
         }
-        freeBytes(ptr);
+        return freeBytes(ptr);
     }
 
 
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
     template <typename T>
-    PMM_INLINE void Stack<Type, MemStrategy, TelemetryPolicy, Safe>::freeV(std::span<T> vector) noexcept
+    PMM_INLINE bool Stack<Type, MemStrategy, TelemetryPolicy, Safe>::freeV(std::span<T> vector) noexcept
     {
         if constexpr (!std::is_trivially_destructible_v<T>)
         {
@@ -534,7 +555,7 @@ namespace pmm
                 item.~T();
             }
         }
-        freeBytes(vector.data());
+        return freeBytes(vector.data());
     }
 
 

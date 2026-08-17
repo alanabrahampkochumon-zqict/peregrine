@@ -290,7 +290,44 @@ TEST_F(ManagedLooseSafeStackTests, ResizeLast_PriorToLatestsAllocation_FullStack
     EXPECT_EQ(nullptr, resize);
 }
 
-// TODO: Add prior to last allocation returning nullptr in StrictStack
+
+TEST_F(ManagedLooseSafeStackTests, FreeBytes_Nullptr_ReturnsFalse) { EXPECT_FALSE(stack.freeBytes(nullptr)); }
+
+
+TEST_F(ManagedLooseSafeStackTests, FreeBytes_AddressGreaterThanStackSize_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.freeBytes(firstAllocation + stackSize));
+}
+
+
+TEST_F(ManagedLooseSafeStackTests, FreeBytes_AddressBelowFirstAllocation_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.freeBytes(firstAllocation - 1));
+}
+
+TEST_F(ManagedLooseSafeStackTests, Free_Nullptr_ReturnsFalse)
+{ EXPECT_FALSE(stack.free(static_cast<uint8_t*>(nullptr))); }
+
+
+TEST_F(ManagedLooseSafeStackTests, Free_AddressGreaterThanStackSize_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.free(firstAllocation + stackSize));
+}
+
+
+TEST_F(ManagedLooseSafeStackTests, Free_AddressBelowFirstAllocation_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.free(firstAllocation - 1));
+}
+
+
+TEST_F(ManagedLooseSafeStackTests, FreeV_EmptySpan_ReturnsFalse) { EXPECT_FALSE(stack.freeV(std::span<int>{})); }
+
+
 
 /**************************************
  *      UNMANAGED LOOSE STACK         *
@@ -500,6 +537,44 @@ TEST_F(UnmanagedLooseSafeStackTests, ResizeLast_PriorToLatestsAllocation_FullSta
     [[maybe_unused]] const auto resize = stack.resizeLast(firstAllocation, firstAllocSize, firstAllocSize + 120);
     EXPECT_EQ(nullptr, resize);
 }
+
+
+TEST_F(UnmanagedLooseSafeStackTests, FreeBytes_Nullptr_ReturnsFalse) { EXPECT_FALSE(stack.freeBytes(nullptr)); }
+
+
+TEST_F(UnmanagedLooseSafeStackTests, FreeBytes_AddressGreaterThanStackSize_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.freeBytes(firstAllocation + stackSize));
+}
+
+
+TEST_F(UnmanagedLooseSafeStackTests, FreeBytes_AddressBelowFirstAllocation_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.freeBytes(firstAllocation - 1));
+}
+
+TEST_F(UnmanagedLooseSafeStackTests, Free_Nullptr_ReturnsFalse)
+{ EXPECT_FALSE(stack.free(static_cast<uint8_t*>(nullptr))); }
+
+
+TEST_F(UnmanagedLooseSafeStackTests, Free_AddressGreaterThanStackSize_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.free(firstAllocation + stackSize));
+}
+
+
+TEST_F(UnmanagedLooseSafeStackTests, Free_AddressBelowFirstAllocation_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.free(firstAllocation - 1));
+}
+
+
+TEST_F(UnmanagedLooseSafeStackTests, FreeV_EmptySpan_ReturnsFalse) { EXPECT_FALSE(stack.freeV(std::span<int>{})); }
+
 
 
 /**************************************
@@ -726,6 +801,52 @@ TEST_F(ManagedStrictSafeStackTests, ResizeLast_PriorToLatestsAllocation_ReturnsN
 }
 
 
+TEST_F(ManagedStrictSafeStackTests, FreeBytes_Nullptr_ReturnsFalse) { EXPECT_FALSE(stack.freeBytes(nullptr)); }
+
+
+TEST_F(ManagedStrictSafeStackTests, FreeBytes_AddressGreaterThanStackSize_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.freeBytes(firstAllocation + stackSize));
+}
+
+
+TEST_F(ManagedStrictSafeStackTests, NonLatestAllocation_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation  = static_cast<uint8_t*>(stack.allocBytes(512));
+    [[maybe_unused]] const auto secondAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.freeBytes(firstAllocation));
+}
+
+
+TEST_F(ManagedStrictSafeStackTests, FreeBytes_AddressBelowFirstAllocation_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.freeBytes(firstAllocation - 1));
+}
+
+TEST_F(ManagedStrictSafeStackTests, Free_Nullptr_ReturnsFalse)
+{ EXPECT_FALSE(stack.free(static_cast<uint8_t*>(nullptr))); }
+
+
+TEST_F(ManagedStrictSafeStackTests, Free_AddressGreaterThanStackSize_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.free(firstAllocation + stackSize));
+}
+
+
+TEST_F(ManagedStrictSafeStackTests, Free_AddressBelowFirstAllocation_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.free(firstAllocation - 1));
+}
+
+
+TEST_F(ManagedStrictSafeStackTests, FreeV_EmptySpan_ReturnsFalse) { EXPECT_FALSE(stack.freeV(std::span<int>{})); }
+
+
+
 /**************************************
  *      UNMANAGED STRICT STACK        *
  **************************************/
@@ -947,5 +1068,52 @@ TEST_F(UnmanagedStrictSafeStackTests, ResizeLast_PriorToLatestsAllocation_Return
     [[maybe_unused]] const auto resize = stack.resizeLast(firstAllocation, allocationSize, allocationSize + 120);
     EXPECT_EQ(nullptr, resize);
 }
+
+
+TEST_F(UnmanagedStrictSafeStackTests, FreeBytes_Nullptr_ReturnsFalse) { EXPECT_FALSE(stack.freeBytes(nullptr)); }
+
+
+TEST_F(UnmanagedStrictSafeStackTests, FreeBytes_AddressGreaterThanStackSize_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.freeBytes(firstAllocation + stackSize));
+}
+
+
+TEST_F(UnmanagedStrictSafeStackTests, NonLatestAllocation_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation  = static_cast<uint8_t*>(stack.allocBytes(512));
+    [[maybe_unused]] const auto secondAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.freeBytes(firstAllocation));
+}
+
+
+TEST_F(UnmanagedStrictSafeStackTests, FreeBytes_AddressBelowFirstAllocation_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.freeBytes(firstAllocation - 1));
+}
+
+TEST_F(UnmanagedStrictSafeStackTests, Free_Nullptr_ReturnsFalse)
+{ EXPECT_FALSE(stack.free(static_cast<uint8_t*>(nullptr))); }
+
+
+TEST_F(UnmanagedStrictSafeStackTests, Free_AddressGreaterThanStackSize_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.free(firstAllocation + stackSize));
+}
+
+
+TEST_F(UnmanagedStrictSafeStackTests, Free_AddressBelowFirstAllocation_ReturnsFalse)
+{
+    [[maybe_unused]] const auto firstAllocation = static_cast<uint8_t*>(stack.allocBytes(512));
+    EXPECT_FALSE(stack.free(firstAllocation - 1));
+}
+
+
+TEST_F(UnmanagedStrictSafeStackTests, FreeV_EmptySpan_ReturnsFalse) { EXPECT_FALSE(stack.freeV(std::span<int>{})); }
+
+
 
 #endif

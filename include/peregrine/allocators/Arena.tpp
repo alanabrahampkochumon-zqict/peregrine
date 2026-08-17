@@ -148,7 +148,7 @@ namespace pmm
     {
         _alignForward(alignment);
         PMM_ASSERT_MSG(sizeInBytes > 0 && _arenaSize >= _offset + sizeInBytes, "Arena: Not Enough Memory");
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (sizeInBytes == 0 || _offset + sizeInBytes > _arenaSize)
             {
@@ -173,7 +173,7 @@ namespace pmm
     {
         // Allocate memory in the arena.
         void* raw = allocBytes(sizeof(T), alignof(T));
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (raw == nullptr)
             {
@@ -191,7 +191,7 @@ namespace pmm
     template <typename T>
     PMM_INLINE std::span<T> Arena<MemStrategy, TelPolicy, Safe>::allocV(std::size_t count) noexcept
     {
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (_offset + sizeof(T) * count > _arenaSize)
             {
@@ -226,7 +226,7 @@ namespace pmm
         PMM_ASSERT_MSG(oldSize != 0, "Cannot resize 0 bytes of memory.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 bytes. Arena does not support individual frees.");
 
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (oldMemory == nullptr || oldSize == 0 || newSize == 0 || !std::has_single_bit(alignment))
             {
@@ -247,7 +247,7 @@ namespace pmm
         const auto offsetDiff           = newSize - oldSize;
 
         // Lastest allocation safe check
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (allocationAddress == lastAllocatedAddress && _offset + offsetDiff > _arenaSize)
             {
@@ -271,7 +271,7 @@ namespace pmm
         // copy the existing data and return it
         // @note: This leaves a "hole" where the previous allocation was
         PMM_ASSERT_MSG(_arenaSize >= _offset + newSize, "Not enough memory for resize");
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (_offset + newSize > _arenaSize)
             {
@@ -295,7 +295,7 @@ namespace pmm
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(oldSize != 0, "Cannot resize 0 bytes of memory.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (oldMemory == nullptr || oldSize == 0 || newSize == 0 || !std::has_single_bit(alignment))
             {
@@ -304,7 +304,7 @@ namespace pmm
         }
 
         const auto newPtr = allocBytes(newSize, alignment);
-        if constexpr (Safe)
+        if constexpr (Safe == true)
         {
             if (newPtr == nullptr)
             {
