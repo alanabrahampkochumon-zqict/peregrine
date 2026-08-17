@@ -16,7 +16,6 @@
 
 #include <bit>
 #include <cstring>
-#include <intrin.h>
 #include <limits>
 #include <type_traits>
 
