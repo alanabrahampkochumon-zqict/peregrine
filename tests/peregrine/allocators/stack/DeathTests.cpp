@@ -158,6 +158,19 @@ TEST_F(LooseStackTests, Resize_ToZero_TriggersAssertion)
 }
 
 
+TEST_F(LooseStackTests, Resize_FromZero_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(address, 0, 256)), "");
+}
+
+
+TEST_F(LooseStackTests, Resize_LatestAllocation_ToAnInsufficentlyLargeSizeTriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(address, 128, stackSize)), "");
+}
+
 /**
  * @brief Verify that stack resize using resizeFast triggers assertion in *DEBUG MODE*,
  *        when trying to resize a nullptr.
@@ -174,6 +187,12 @@ TEST_F(LooseStackTests, ResizeFast_ToZero_TriggersAssertion)
 {
     const auto address = stack.allocBytes(128);
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(address, 128, 0)), "");
+}
+
+TEST_F(LooseStackTests, ResizeFast_FromZero_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(address, 0, 256)), "");
 }
 
 
@@ -195,6 +214,12 @@ TEST_F(LooseStackTests, ResizeLast_ToZero_TriggersAssertion)
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(address, 128, 0)), "");
 }
 
+
+TEST_F(LooseStackTests, ResizeLast_FromZero_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(address, 0, 256)), "");
+}
 
 
 /**************************************
@@ -345,6 +370,20 @@ TEST_F(StrictStackTests, Resize_ToZero_TriggersAssertion)
 }
 
 
+TEST_F(StrictStackTests, Resize_FromZero_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(address, 0, 256)), "");
+}
+
+
+TEST_F(StrictStackTests, Resize_LatestAllocation_ToAnInsufficentlyLargeSizeTriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(address, 128, stackSize)), "");
+}
+
+
 /**
  * @brief Verify that stack resize using resizeFast triggers assertion in *DEBUG MODE*,
  *        when trying to resize a nullptr.
@@ -363,6 +402,12 @@ TEST_F(StrictStackTests, ResizeFast_ToZero_TriggersAssertion)
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(address, 128, 0)), "");
 }
 
+
+TEST_F(StrictStackTests, ResizeFast_FromZero_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(address, 0, 256)), "");
+}
 
 /**
  * @brief Verify that stack resize using resizeLast triggers assertion in *DEBUG MODE*,
@@ -392,6 +437,13 @@ TEST_F(StrictStackTests, ResizeLast_OutOfOrder_TriggersAssertion)
     const auto address = stack.allocBytes(128);
     static_cast<void>(stack.allocBytes(20)); // Second allocation to trigger out of order
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(address, 128, 0)), "");
+}
+
+
+TEST_F(StrictStackTests, ResizeLast_FromZero_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(address, 0, 256)), "");
 }
 
 #endif

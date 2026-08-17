@@ -288,7 +288,7 @@ namespace pmm
             oldMemory != nullptr,
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
-        PMM_ASSERT_MSG(oldSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory."); // TODO: Add test
+        PMM_ASSERT_MSG(oldSize != 0, "Cannot resize from 0 size.");
         if constexpr (Safe)
         {
             if (oldMemory == nullptr || newSize == 0 || oldSize == 0 || !std::has_single_bit(alignment) ||
@@ -322,7 +322,7 @@ namespace pmm
         if (isLatestAllocation)
         {
             PMM_ASSERT_MSG(_offset + (newSize - oldSize) <= _stackSize != 0,
-                           "Cannot resize to 0 size. Use `free` to deallocate memory."); // TODO: Add test
+                           "Insufficient memory for resize.");
             if constexpr (Safe)
             {
                 if (_offset + (newSize - oldSize) > _stackSize)
@@ -360,7 +360,7 @@ namespace pmm
             oldMemory != nullptr,
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
-        PMM_ASSERT_MSG(oldSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory."); // TODO: Add test
+        PMM_ASSERT_MSG(oldSize != 0, "Cannot resize from 0 size.");
         if constexpr (Safe)
         {
             if (oldMemory == nullptr || newSize == 0 || oldSize == 0 || std::has_single_bit(alignment) || alignment < 2)
@@ -392,7 +392,7 @@ namespace pmm
             oldMemory != nullptr,
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
-        PMM_ASSERT_MSG(oldSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory."); // TODO: Add test
+        PMM_ASSERT_MSG(oldSize != 0, "Cannot resize from 0 size.");
         if constexpr (Safe)
         {
             if (oldMemory == nullptr || newSize == 0 || oldSize == 0 ||
@@ -430,6 +430,7 @@ namespace pmm
             oldMemory != nullptr,
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
+        PMM_ASSERT_MSG(oldSize != 0, "Cannot resize from 0 size.");
         PMM_ASSERT_MSG(reinterpret_cast<uintptr_t>(oldMemory) ==
                            reinterpret_cast<uintptr_t>(_buffer) + _prevOffset + sizeof(StrictStackHeader),
                        "Out-of-order resize. resizeLast will only allow resizing the latest allocation.");
