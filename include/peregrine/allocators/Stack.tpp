@@ -320,7 +320,7 @@ namespace pmm
         // or provided with a new memory address
         if (isLatestAllocation)
         {
-            PMM_ASSERT_MSG(_offset + (newSize - oldSize) <= _stackSize != 0, "Insufficient memory for resize.");
+            PMM_ASSERT_MSG(_offset + (newSize - oldSize) <= _stackSize, "Insufficient memory for resize.");
             if constexpr (Safe == true)
             {
                 if (_offset + (newSize - oldSize) > _stackSize)
