@@ -267,8 +267,14 @@ namespace pmm
 
         // Else make new allocations
         auto newPtr = allocBytes(newSize, alignment);
-        memmove(newPtr, oldMemory, oldSize);
-        return newPtr;
+        if constexpr (Safe)
+        {
+            if (newPtr == nullptr)
+            {
+                return nullptr;
+            }
+        }
+        return memmove(newPtr, oldMemory, oldSize);
     }
 
 
@@ -285,7 +291,8 @@ namespace pmm
         PMM_ASSERT_MSG(oldSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory."); // TODO: Add test
         if constexpr (Safe)
         {
-            if (oldMemory == nullptr || newSize == 0 || oldSize == 0)
+            if (oldMemory == nullptr || newSize == 0 || oldSize == 0 || !std::has_single_bit(alignment) ||
+                alignment < 2)
             {
                 return nullptr;
             }
@@ -332,6 +339,13 @@ namespace pmm
         }
 
         auto newPtr = allocBytes(newSize, alignment);
+        if constexpr (Safe)
+        {
+            if (newPtr == nullptr)
+            {
+                return nullptr;
+            }
+        }
         return memmove(newPtr, oldMemory, oldSize);
     }
 
