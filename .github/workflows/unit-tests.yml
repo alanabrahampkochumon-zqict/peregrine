@@ -59,6 +59,7 @@ jobs:
       - uses: actions/checkout@v5
 
       - name: Set reusable strings
+        # SDL builds on console only mode, if gui testing is need install the necessary packages
         # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
         id: strings
         shell: bash
@@ -78,6 +79,7 @@ jobs:
           -D PMM_DOCS=ON
           -D PMM_BENCHMARK=ON
           -D PMM_TESTS=ON
+          -D SDL_UNIX_CONSOLE_BUILD=ON
           -S ${{ github.workspace }}
 
       - name: Build
