@@ -196,9 +196,9 @@ namespace pmm
     };
 
     /**
-     * @brief Define the type of stack telemetry based on the current telemetry policy.
+     * @brief Define the type of pool telemetry based on the current telemetry policy.
      *
-     * @tparam Policy Telemetry Policy used by the stack.
+     * @tparam Policy Telemetry Policy used by the pool.
      */
     template <telemetry::TelemetryPolicy Policy>
     using PoolTelemetryType =
@@ -207,15 +207,15 @@ namespace pmm
 
 
     /**
-     * @brief Get a telemetry instance depending the telemetry policy in use by the target stack.
+     * @brief Get a telemetry instance depending the telemetry policy in use by the target pool.
      *
-     * @tparam Policy The Telemetry policy in use by the target stack.
+     * @tparam Policy The Telemetry policy in use by the target pool.
      *
      * @param[in] poolSize  The size of the Pool.
      * @param[in] chunkSize The size of the chunk prior to alignment.
      * @param[in] alignment The byte alignment of the pool.
      *
-     * @return A stack telemetry instance suited for the telemetry policy.
+     * @return A pool telemetry instance suited for the telemetry policy.
      */
     template <telemetry::TelemetryPolicy Policy>
     constexpr PoolTelemetryType<Policy> getTelemetryInstance(const std::size_t poolSize, const std::size_t chunkSize,

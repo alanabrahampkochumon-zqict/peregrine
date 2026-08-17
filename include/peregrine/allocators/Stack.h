@@ -17,7 +17,7 @@
 
 #include <cstdint>
 
-// TODO: Add stack safe mode
+
 namespace pmm
 {
     /**
@@ -25,7 +25,6 @@ namespace pmm
      * @{
      */
 
-    // TODO: Add a custom sizer that resizes footprint based on user preference. PAllocSize16?
     /**
      * @brief Header for storing *minimal* information about a stack entry.
      *
@@ -55,38 +54,51 @@ namespace pmm
         std::size_t padding{};    /// Target allocation's block size.
     };
 
-
+    /**
+     * @brief Linear memory allocator following LIFO principle.
+     *
+     * @tparam Type        The type of stack.
+     *                     stack::Loose takes up minimal header space but does not ensure full LIFO compliance.
+     *                     stack::Strict takes up twice the header space, but ensure LIFO compliance via asserts in
+     *                     Debug Mode and conditionals in Release Mode with @p Safe.
+     * @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
+     * @tparam TelPolicy   Flag indicating whether or not telemetry is enabled for this stack. See @ref pmm::telemetry.
+     * @tparam Safe        Flags an stack as safe, implying certain operations like resizing a `nullptr` are handled
+     *                     gracefully when assertions are disabled. `False` by default to prevent any performance
+     *                     stalls incurred by conditional checks.
+     */
     template <stack::StackType Type = stack::Loose, MemoryStrategy MemStrategy = ManagedMemory,
-              telemetry::TelemetryPolicy TelemetryPolicy = telemetry::Enabled>
+              telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled, bool Safe = false>
     class Stack
     {
     public:
         /**
          * @brief Allocate a new physical memory vault from the Operating System.
          *
-         * @param[in] sizeInBytes The total capacity of the stack in bytes.
+         * @note The memory block is zero-initialized.
+         *
+         * @param[in] stackSize The total capacity of the stack in bytes.
          *
          * @remarks API specialized for @ref pmm::ManagedMemory.
          *
-         * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        [[nodiscard]] explicit constexpr Stack(std::size_t sizeInBytes) noexcept
+        [[nodiscard]] explicit constexpr Stack(std::size_t stackSize) noexcept
             requires std::same_as<MemStrategy, ManagedMemory>;
 
 
         /**
          * @brief Allocate a new physical memory vault from the Operating System.
          *
-         * @param[in] sizeInBytes The total capacity of the stack in bytes.
-         * @param[in] buffer      The starting address to the backing buffer.
+         * @param[in,out] buffer The starting address to the backing buffer.
+         * @param[in] bufferSize The size of the backing buffer in bytes, which will directly
+         *                       translate into the stack size.
          *
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
          *
-         * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
-        [[nodiscard]] explicit constexpr Stack(std::size_t sizeInBytes, uint8_t* buffer) noexcept
+        [[nodiscard]] explicit constexpr Stack(uint8_t* buffer, std::size_t bufferSize) noexcept
             requires std::same_as<MemStrategy, UnmanagedMemory>;
 
 
@@ -156,13 +168,14 @@ namespace pmm
          *
          * @return A telemetry instance if telemetry policy is not Disabled, else an empty struct.
          */
-        [[nodiscard]] constexpr const StackTelemetryType<TelemetryPolicy>& getTelemetry() const noexcept;
+        [[nodiscard]] constexpr const StackTelemetryType<TelPolicy>& getTelemetry() const noexcept;
 
 
         /**
          * @brief Allocate @p size bytes of memory on the stack.
          *
          * @warning Does not check for invalid states in *Release Mode*.
+         * @warning The memory block may NOT be zero-initialized.
          *
          * @param[in] size      Number of bytes to allocate.
          * @param[in] alignment Base alignment of the allocation.
@@ -183,6 +196,7 @@ namespace pmm
          * @brief Allocate @p size bytes of memory on the stack.
          *
          * @warning Does not check for invalid states in *Release Mode*.
+         * @warning The memory block may NOT be zero-initialized.
          *
          * @param[in] size      Number of bytes to allocate.
          * @param[in] alignment Base alignment of the allocation.
@@ -332,13 +346,13 @@ namespace pmm
          * @note Passing `0` as @p newSize will not deallocate memory, and is undefined behavior in release mode.
          *
          * @warning In **Release Mode** safety checks for `nullptr`, and 0 sizes are disabled.
-         * @warning Recommended to use for latest allocations.
+         * @warning Use only on latest allocations.
          *
          * @param[in] oldMemory The pointer to the memory to resize.
          * @param[in] oldSize   The current size of @p oldMemory.
          * @param[in] newSize   The size to resize @p oldMemory to.
          *
-         * @return A reference to the new memory location in stack.
+         * @return A reference to the passed-in memory location.
          *
          * @remarks API specialized for @ref pmm::stack::Loose.
          *
@@ -357,13 +371,13 @@ namespace pmm
          * @note Performs assertion in *Debug Mode* to ensure that the latest allocation is being resized.
          *
          * @warning In **Release Mode** safety checks for `nullptr`, and 0 sizes are disabled.
-         * @warning Recommended to use for latest allocations, otherwise memory corruption can occur.
+         * @warning Use only on latest allocations, otherwise memory corruption can occur.
          *
          * @param[in] oldMemory The pointer to the memory to resize.
          * @param[in] oldSize   The current size of @p oldMemory.
          * @param[in] newSize   The size to resize @p oldMemory to.
          *
-         * @return A reference to the new memory location in stack.
+         * @return A reference to the passed-in memory location.
          *
          * @remarks API specialized for @ref pmm::stack::Strict.
          *
@@ -384,13 +398,16 @@ namespace pmm
          *
          * @param[in] ptr The pointer to free upto.
          *
+         * @return A boolean status indicating whether the free was valid.
+         *         **Validation is available ONLY for SafePool in Release Mode**
+         *
          * @remarks API specialized for @ref pmm::stack::Loose.
          *
          * @relatedalso free
          * @relatedalso freeV
          * @relatedalso clear
          */
-        void freeBytes(void* ptr) noexcept
+        bool freeBytes(void* ptr) noexcept
             requires std::same_as<Type, stack::Loose>;
 
 
@@ -404,13 +421,16 @@ namespace pmm
          *
          * @param[in] ptr The pointer to free upto.
          *
+         * @return A boolean status indicating whether the free was valid.
+         *         **Validation is available ONLY for SafePool in Release Mode**
+         *
          * @remarks API specialized for @ref pmm::stack::Strict.
          *
          * @relatedalso free
          * @relatedalso freeV
          * @relatedalso clear
          */
-        void freeBytes(void* ptr) noexcept
+        bool freeBytes(void* ptr) noexcept
             requires std::same_as<Type, stack::Strict>;
 
 
@@ -423,12 +443,15 @@ namespace pmm
          *
          * @param[in] ptr The object pointer to free.
          *
+         * @return A boolean status indicating whether the free was valid.
+         *         **Validation is available ONLY for SafePool in Release Mode**
+         *
          * @relatedalso freeV
          * @relatedalso freeBytes
          * @relatedalso clear
          */
         template <typename T>
-        void free(T* ptr) noexcept;
+        bool free(T* ptr) noexcept;
 
 
         /**
@@ -438,6 +461,9 @@ namespace pmm
          *
          * @tparam T  The data type of the memory pointer.
          *
+         * @return A boolean status indicating whether the free was valid.
+         *         **Validation is available ONLY for SafePool in Release Mode**
+         *
          * @param[in] vector The collection of objects to free.
          *
          * @relatedalso free
@@ -445,7 +471,7 @@ namespace pmm
          * @relatedalso clear
          */
         template <typename T>
-        void freeV(std::span<T> vector) noexcept;
+        bool freeV(std::span<T> vector) noexcept;
 
 
         /**
@@ -455,6 +481,15 @@ namespace pmm
          * @relatedalso  freeBytes
          */
         void clear();
+
+
+        /**
+         * @brief Zero out the stack's buffer.
+         *
+         * @warning This will completely overwrite the stack entire buffer with zeroes. Only call this method if you
+         *          want a zero-ed out stack after clearing.
+         */
+        void zeroOut() const noexcept;
 
 
         /**
@@ -498,9 +533,9 @@ namespace pmm
 
         /// Member Variables
         uint8_t* _buffer;
-        std::size_t _size, _offset{ 0 };
+        std::size_t _stackSize, _offset{ 0 };
         PMM_NO_UNIQUE_ADDR PreviousOffsetType _prevOffset;
-        PMM_NO_UNIQUE_ADDR StackTelemetryType<TelemetryPolicy> _telemetry;
+        PMM_NO_UNIQUE_ADDR StackTelemetryType<TelPolicy> _telemetry;
 
 
 
@@ -511,31 +546,33 @@ namespace pmm
 
 
 
-        FRIEND_TEST(StackMemoryManagement, LooseUnmanagedStack_UsesExternalBuffer);
-        FRIEND_TEST(StackMemoryManagement, StrictUnmanagedStack_UsesExternalBuffer);
+        FRIEND_TEST(StackMemoryManagementTests, LooseUnmanagedStack_UsesExternalBuffer);
+        FRIEND_TEST(StackMemoryManagementTests, StrictUnmanagedStack_UsesExternalBuffer);
 
-        FRIEND_TEST(StrictStackInitialization, InitializesDefaultStateAndBuffer);
-        FRIEND_TEST(StrictStack, Initialization_MovesOffsetAtleastByAllocationSize);
-        FRIEND_TEST(StrictStack, Clear_MovesOffsetAndPreviousOffsetToZero);
-        FRIEND_TEST(StrictStackResizeLast, ResizeLast_MovesOffsetInCorrectDirection);
-        FRIEND_TEST(StrictStack, MoveCtor_NullsOutInternalBuffer);
-        FRIEND_TEST(StrictStack, MoveCtor_MovesBufferIntoNewObject);
-        FRIEND_TEST(StrictStack, MoveOperator_NullsOutInternalBuffer);
-        FRIEND_TEST(StrictStack, MoveOperator_MovesBufferIntoNewObject);
-        FRIEND_TEST(StrictStack, MoveOperator_SelfAssignmentReturnsTheSameStack);
-        FRIEND_TEST(StrictStack, MoveOperator_DeletingOriginalStackDoNotDeleteTheNewStacksMemory);
+        FRIEND_TEST(StrictStackInitializationTests, InitializesDefaultStateAndBuffer);
+        FRIEND_TEST(StrictStackTests, Initialization_MovesOffsetAtleastByAllocationSize);
+        FRIEND_TEST(StrictStackTests, Clear_MovesOffsetAndPreviousOffsetToZero);
+        FRIEND_TEST(StrictStackResizeLastTests, ResizeLast_MovesOffsetInCorrectDirection);
+        FRIEND_TEST(StrictStackTests, MoveCtor_NullsOutInternalBuffer);
+        FRIEND_TEST(StrictStackTests, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(StrictStackTests, MoveOperator_NullsOutInternalBuffer);
+        FRIEND_TEST(StrictStackTests, MoveOperator_MovesBufferIntoNewObject);
+        FRIEND_TEST(StrictStackTests, MoveOperator_SelfAssignmentReturnsTheSameStack);
+        FRIEND_TEST(StrictStackTests, MoveOperator_DeletingOriginalStackDoNotDeleteTheNewStacksMemory);
+        FRIEND_TEST(StrictStackTests, ZeroOut_ZeroesOutTheInternalBuffer);
 
 
-        FRIEND_TEST(LooseStackInitialization, InitializesDefaultStateAndBuffer);
-        FRIEND_TEST(LooseStack, Initialization_MovesOffsetAtleastByAllocationSize);
-        FRIEND_TEST(LooseStack, Clear_MovesOffsetToZero);
-        FRIEND_TEST(LooseStackResizeLast, ResizeLast_MovesOffsetInCorrectDirection);
-        FRIEND_TEST(LooseStack, MoveCtor_NullsOutInternalBuffer);
-        FRIEND_TEST(LooseStack, MoveCtor_MovesBufferIntoNewObject);
-        FRIEND_TEST(LooseStack, MoveOperator_NullsOutInternalBuffer);
-        FRIEND_TEST(LooseStack, MoveOperator_MovesBufferIntoNewObject);
-        FRIEND_TEST(LooseStack, MoveOperator_SelfAssignmentReturnsTheSameStack);
-        FRIEND_TEST(LooseStack, MoveOperator_DeletingOriginalStackDoNotDeleteTheNewStacksMemory);
+        FRIEND_TEST(LooseStackInitializationTests, InitializesDefaultStateAndBuffer);
+        FRIEND_TEST(LooseStackTests, Initialization_MovesOffsetAtleastByAllocationSize);
+        FRIEND_TEST(LooseStackTests, Clear_MovesOffsetToZero);
+        FRIEND_TEST(LooseStackResizeLastTests, ResizeLast_MovesOffsetInCorrectDirection);
+        FRIEND_TEST(LooseStackTests, MoveCtor_NullsOutInternalBuffer);
+        FRIEND_TEST(LooseStackTests, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(LooseStackTests, MoveOperator_NullsOutInternalBuffer);
+        FRIEND_TEST(LooseStackTests, MoveOperator_MovesBufferIntoNewObject);
+        FRIEND_TEST(LooseStackTests, MoveOperator_SelfAssignmentReturnsTheSameStack);
+        FRIEND_TEST(LooseStackTests, MoveOperator_DeletingOriginalStackDoNotDeleteTheNewStacksMemory);
+        FRIEND_TEST(LooseStackTests, ZeroOut_ZeroesOutTheInternalBuffer);
 #endif
     };
 } // namespace pmm

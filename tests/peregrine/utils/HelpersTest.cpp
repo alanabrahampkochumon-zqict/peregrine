@@ -34,11 +34,11 @@ namespace
         size_t unAlignedSize{ 0 }, alignment{ 0 }, paddingRequired{ 0 };
     };
     /// @test Test fixture for alignment padding calculation.
-    class AlignmentPadding: public testing::TestWithParam<AlignmentPaddingParams>
+    class AlignmentPaddingTests: public testing::TestWithParam<AlignmentPaddingParams>
     {};
     // NOLINT(modernize-use-cxx17-variable-templates)
     INSTANTIATE_TEST_SUITE_P(
-        PowersOfTwoAlignment, AlignmentPadding,
+        PowersOfTwoAlignment, AlignmentPaddingTests,
         testing::Values(AlignmentPaddingParams{ .unAlignedSize = 13, .alignment = 8, .paddingRequired = 3 },
                         AlignmentPaddingParams{ .unAlignedSize = 15, .alignment = 128, .paddingRequired = 113 },
                         AlignmentPaddingParams{ .unAlignedSize = 128, .alignment = 128, .paddingRequired = 0 },
@@ -46,10 +46,10 @@ namespace
 
 
 #ifndef NDEBUG
-    class NonPowerOfTwoAlignment: public testing::TestWithParam<size_t>
+    class NonPowerOfTwoAlignmentTests: public testing::TestWithParam<size_t>
     {};
     // NOLINT(modernize-use-cxx17-variable-templates)
-    INSTANTIATE_TEST_SUITE_P(InvalidAlignment, NonPowerOfTwoAlignment, testing::Values(0, 3, 6, 127, 4092));
+    INSTANTIATE_TEST_SUITE_P(InvalidAlignment, NonPowerOfTwoAlignmentTests, testing::Values(0, 3, 6, 127, 4092));
 #endif
 
 
@@ -59,7 +59,7 @@ namespace
 
 
 
-TEST_P(AlignmentPadding, ReturnsValidPadding)
+TEST_P(AlignmentPaddingTests, ReturnsValidPadding)
 {
     const auto& [unAlignedSize, alignment, padding] = GetParam();
     ASSERT_EQ(padding, pmm::calcAlignmentPadding(unAlignedSize, alignment));
@@ -67,7 +67,7 @@ TEST_P(AlignmentPadding, ReturnsValidPadding)
 
 #ifndef NDEBUG
 
-TEST_P(NonPowerOfTwoAlignment, NonPowerOfTwoAlignment_TriggersAssertion_InDebugMode)
+TEST_P(NonPowerOfTwoAlignmentTests, NonPowerOfTwoAlignment_TriggersAssertion_InDebugMode)
 {
     const auto alignment = GetParam();
     ASSERT_DEBUG_DEATH(pmm::calcAlignmentPadding(2049, alignment), "");

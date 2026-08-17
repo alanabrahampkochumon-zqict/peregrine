@@ -22,7 +22,7 @@
 
 using namespace pmm::constants;
 constexpr auto STACK_SIZE = 5_KB;
-class LooseStack: public testing::Test
+class LooseStackTests: public testing::Test
 {
 
 public:
@@ -31,7 +31,7 @@ public:
 };
 
 
-class StrictStack: public testing::Test
+class StrictStackTests: public testing::Test
 {
 public:
     std::size_t stackSize{ STACK_SIZE };

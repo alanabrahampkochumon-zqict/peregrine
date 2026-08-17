@@ -10,11 +10,11 @@
  */
 
 
+#include "Policy.h"
 #include "peregrine/telemetry/ArenaTelemetry.h"
+#include "peregrine/utils/Preprocessors.h"
 
-#include <cstddef>
 #include <cstdint>
-#include <memory>
 #include <span>
 
 
@@ -26,68 +26,77 @@ namespace pmm
      * @{
      */
 
+    // Forward Declaration
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
+    struct TempArena;
+
+    /**
+     * @brief Linear memory allocator.
+     *
+     * @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
+     * @tparam TelPolicy   Flag indicating whether or not telemetry is enabled for this arena. See @ref pmm::telemetry.
+     * @tparam Safe        Flags an arena as safe, implying certain operations like resizing a `nullptr` are handled
+     *                     gracefully when assertions are disabled. `False` by default to prevent any performance
+     *                     stalls incurred by conditional checks.
+     */
+    template <MemoryStrategy MemStrategy = ManagedMemory, telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled,
+              bool Safe = false>
     struct Arena
     {
+
+        /**
+         * @brief Allocate a new physical memory vault from the Operating System.
+         *
+         * @note When telemetry is enabled, allocates a Telemetry instance on the **Heap**.
+         * @note The memory block is zero-initialized.
+         *
+         * @param[in] arenaSize The total capacity of the arena in bytes.
+         *
+         * @warning This allocator is Linear and is NOT thread-safe by default.
+         *
+         * @remarks API specialized for @ref pmm::ManagedMemory.
+         */
+        constexpr explicit Arena(size_t arenaSize) noexcept
+            requires std::same_as<MemStrategy, ManagedMemory>;
+
+
         /**
          * @brief Allocate a new physical memory vault from the Operating System.
          *
          * @note When telemetry is enabled, allocates a Telemetry instance on the **Heap**.
          *
-         * @param[in] bytes The total capacity of the arena in bytes.
+         * @param[in,out] backingBuffer The memory buffer to be used by the allocator.
+         * @param[in] bufferSize        The size of the backing buffer in bytes, which will directly
+         *                              translate into the arena size.
          *
-         * @warning The memory block is NOT zero-initialized.
          * @warning This allocator is Linear and is NOT thread-safe by default.
+         *
+         * @remarks API specialized for @ref pmm::UnmanagedMemory.
          */
-        constexpr explicit Arena(std::size_t bytes) noexcept;
-
-
-        /**
-         * @brief Allocate a new physical memory vault from the Operating System, with custom telemetry support.
-         *
-         * @param[in] bytes     The total capacity of the arena in bytes.
-         * @param[in] telemetry The telemetry instance to use for tracking arena allocation metrics.
-         *
-         * @warning The memory block is NOT zero-initialized.
-         * @warning This allocator is Linear and is NOT thread-safe by default.
-         */
-        constexpr explicit Arena(std::size_t bytes, ArenaTelemetry* telemetry) noexcept;
-
-
-        /**
-         * @brief Allocate a new physical memory vault from the Operating System with a base alignment of @p alignment.
-         *
-         * @note When telemetry is enabled, allocates a Telemetry instance on the **Heap**.
-         *
-         * @param[in] bytes     The total capacity of the arena in bytes.
-         * @param[in] alignment The base alignment of the arena.
-         *                      Must be a power of 2.
-         *
-         * @warning The memory block is NOT zero-initialized.
-         * @warning This allocator is Linear and is NOT thread-safe by default.
-         */
-        constexpr explicit Arena(std::size_t bytes, std::size_t alignment) noexcept;
-
-
-        /**
-         * @brief Allocate a new physical memory vault from the Operating System with a base alignment of @p alignment,
-         *        with custom telemetry support.
-         *
-         * @param[in] bytes     The total capacity of the arena in bytes.
-         * @param[in] alignment The base alignment of the arena.
-         *                      Must be a power of 2.
-         * @param[in] telemetry The telemetry instance to use for tracking arena allocation metrics.
-         *
-         * @warning The memory block is NOT zero-initialized.
-         * @warning This allocator is Linear and is NOT thread-safe by default.
-         */
-        constexpr explicit Arena(std::size_t bytes, std::size_t alignment, ArenaTelemetry* telemetry) noexcept;
+        constexpr explicit Arena(void* backingBuffer, size_t bufferSize) noexcept
+            requires std::same_as<MemStrategy, UnmanagedMemory>;
 
 
         /**
          * @brief Destroy Arena, freeing up any memory it holds.
-         * @note For clearing the Arena, use @ref freeAll.
+         *
+         * @note For clearing the Arena, use @ref clear.
+         *
+         * @remarks API specialized for @ref pmm::ManagedMemory.
          */
-        inline ~Arena() noexcept;
+        constexpr ~Arena() noexcept
+            requires std::same_as<MemStrategy, ManagedMemory>;
+
+
+        /**
+         * @brief Arena Destructor.
+         * @note User must free the buffer they provided.
+         *
+         * @remarks API specialized for @ref pmm::UnmanagedMemory.
+         */
+        constexpr ~Arena() noexcept
+            requires std::same_as<MemStrategy, UnmanagedMemory>
+        = default;
 
 
         /**
@@ -148,23 +157,24 @@ namespace pmm
         /**
          * @brief Allocate @p bytes of memory.
          *
-         * @param bytes     The memory in bytes to allocate from the Arena.
+         * @param sizeInBytes     The memory in bytes to allocate from the Arena.
          * @param alignment The alignment to use when allocating memory (in bytes).
          *                  Defaults to sizeof(void*) which is 8 bytes in 64-bit machines.
          *
          * @warning Can cause internal fragmentation, when aligning ill-aligned values.
+         * @warning Does not check for free space availability in *Release Mode*. // TODO
+         * @warning The memory block may NOT be zero-initialized.
          *
          * @return A void pointer to the start of allocated memory or
          *         `nullptr` if the arena cannot allocate memory of requested size.
          */
-        [[nodiscard]] void* allocBytes(std::size_t bytes, std::size_t alignment = sizeof(void*)) noexcept;
+        [[nodiscard]] void* allocBytes(std::size_t sizeInBytes, std::size_t alignment = sizeof(void*)) noexcept;
 
 
         /**
          * @brief Allocate an object of type @p T in the arena with natural alignment.
          *
          * @note Memory gets aligned to the default of alignment of @p T.
-         *       For finer control use @ref allocBytes or @ref allocAs.
          *
          * @tparam T    The type of object to allocate.
          * @tparam Args The type of arguments to instantiate the object.
@@ -175,21 +185,6 @@ namespace pmm
          */
         template <typename T, typename... Args>
         [[nodiscard]] T* alloc(Args... args) noexcept;
-
-
-        /**
-         * @brief Allocate an object of type @p T in the arena with @p alignment.
-         *
-         * @tparam T    The type of object to allocate.
-         * @tparam Args The type of arguments to instantiate the object.
-         *
-         * @param alignment The byte alignment of the object.
-         * @param args      The arguments to instantiate the object.
-         *
-         * @return A reference to the allocated memory.
-         */
-        template <typename T, typename... Args>
-        [[nodiscard]] T* allocAs(std::size_t alignment, Args... args) noexcept;
 
 
         /**
@@ -211,7 +206,57 @@ namespace pmm
 
 
         /**
+         * @brief Resize @p oldMemory block from @p oldSize to @p newSize.
+         *
+         * @note This does not resize the arena.
+         *
+         * @param oldMemory The pointer to the memory to resize.
+         * @param oldSize   The current size of the @p oldMemory.
+         * @param newSize   The size to resize @p oldMemory to.
+         * @param alignment The byte alignment of the @p oldMemory.
+         *                  Default: 8 bytes on a 64-bit machine.
+         *
+         * @return A reference to the new memory location in arena or nullptr if allocation fails.
+         *
+         * @relatedalso resizeFast
+         * @relatedalso resizeLast
+         */
+        [[nodiscard]] void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
+                                   std::size_t alignment = sizeof(void*)) noexcept;
+
+
+        /**
+         * @brief Resize @p oldMemory block from @p oldSize to @p newSize.
+         *
+         * @note Arena will not be resized.
+         * @note Passing `0` as @p newSize will not deallocate memory, and is undefined behavior in release mode.
+         * @note Doesn't optimize memory footprint, as allocation always reserves new memory.
+         *       If you want optimal memory usage use @ref resize, or for resizing lastest allocations
+         *       without overheads use @ref resizeLast
+         *
+         * @warning In **Release Mode** safety checks for `nullptr`, and 0 sizes are disabled.
+         * @warning Never use this for the latest allocations, as this method bypasses all checks and
+         *          allocate a new buffer.
+         *
+         * @param[in] oldMemory The pointer to the memory to resize.
+         * @param[in] oldSize   The current size of @p oldMemory.
+         * @param[in] newSize   The size to resize @p oldMemory to.
+         * @param[in] alignment The required alignment.
+         *                      Default: 8-bytes on 64-bit machine.
+         *
+         * @return A reference to the new memory location in arena.
+         *
+         * @relatedalso resize
+         * @relatedalso resizeLast
+         */
+        [[nodiscard]] void* resizeFast(const void* oldMemory, std::size_t oldSize, std::size_t newSize,
+                                       std::size_t alignment = sizeof(void*));
+
+
+        /**
          * @brief [NO-OP] Objects cannot be individually freed in an arena.
+         *
+         * @warning Any non-trivial types must be manually destroyed before clearing the arena.
          *
          * @tparam T  The type of allocated object.
          *
@@ -233,47 +278,36 @@ namespace pmm
 
 
         /**
-         * @brief Free the entire arena.
+         * @brief Reset the entire arena.
          *
          * @note This is not a hard reset.
          *       All memory states may/may not get erased.
          *
          */
-        void freeAll() noexcept;
+        void clear() noexcept;
 
 
         /**
-         * @brief Resize @p oldMemory block from @p oldSize to @p newSize.
+         * @brief Zero out the arena's buffer.
          *
-         * @note This does not resize the arena.
-         *
-         * @param oldMemory The pointer to the memory to resize.
-         * @param oldSize   The current size of the @p oldMemory.
-         * @param newSize   The size to resize @p oldMemory to.
-         * @param alignment The byte alignment of the @p oldMemory.
-         *
-         * @return A reference to the new memory location in arena or nullptr if allocation fails.
+         * @warning This will completely overwrite the arena entire buffer with zeroes. Only call this method if you
+         *          want a zero-ed out arena after clearing.
          */
-        [[nodiscard]] void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
-                                             std::size_t alignment) noexcept;
+        void zeroOut() const noexcept;
+
 
 
         /**
          * @brief Get the telemetry instance associated with this arena.
-         *
-         * @return A readonly @ref ArenaTelemetry instance.
+         * @return A const reference to the @ref ArenaTelemetry instance.
          */
-        [[nodiscard]] constexpr ArenaTelemetry getTelemetry() const noexcept;
+        [[nodiscard]] constexpr const ArenaTelemetryType<TelPolicy>& getTelemetry() const noexcept;
 
-
-        // TODO: Add namespace based new allocation eg: namespace arena { Mat3 mat = new Mat3(); // Uses arena new not
-        // C++ heap
 
     private:
         uint8_t* _buffer;
-        uint64_t _sizeInBytes, _offset, _prevOffset, _defaultAlignment;
-        ArenaTelemetry* _telemetry;
-        bool _ownedTelemetry; // Used for freeing the allocated telemetry if it was allocated by the Arena
+        uint64_t _arenaSize, _offset, _prevOffset;
+        PMM_NO_UNIQUE_ADDR ArenaTelemetryType<TelPolicy> _telemetry{ 0 };
 
         /**
          * @brief Align the internal buffer to @p alignment.
@@ -282,33 +316,45 @@ namespace pmm
         void _alignForward(std::size_t alignment) noexcept;
 
         // For internal variable access
-        friend struct TempArena;
+        friend struct TempArena<MemStrategy, TelPolicy, Safe>;
 
 #ifdef ENABLE_PMM_TESTS
     // FRIEND TEST macros for verifying internal states
     #include <gtest/gtest_prod.h>
-        FRIEND_TEST(ArenaInitialization, NoPassedInTelemetry_ArenaOwnsTelemetry);
-        FRIEND_TEST(ArenaInitialization, PassedInTelemetry_ArenaDoesNotOwnTelemetry);
-        FRIEND_TEST(ArenaInitialization, AlignedArena_NoPassedInTelemetry_ArenaOwnsTelemetry);
-        FRIEND_TEST(ArenaInitialization, AlignedArena_PassedInTelemetry_ArenaDoesNotOwnTelemetry);
-        FRIEND_TEST(AlignedArenaInitialization, InternalState_AlignBaseOffset);
-        FRIEND_TEST(ArenaMoveConstructor, NullsOutInternalBuffer);
-        FRIEND_TEST(ArenaMoveConstructor, MovesBufferIntoNewObject);
-        FRIEND_TEST(ArenaMoveAssignment, NullsOutInternalBuffer);
-        FRIEND_TEST(ArenaMoveAssignment, MovesBufferIntoNewObject);
-        FRIEND_TEST(ArenaMoveAssignment, SelfAssignmentReturnsTheSameArena);
-        FRIEND_TEST(ArenaMoveConstructor, AlignedArena_MovesBufferIntoNewObject);
-        FRIEND_TEST(ArenaMoveAssignment, DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
-        FRIEND_TEST(ArenaAllocBytes, OffsetMinusPrevOffsetGivesObjectSize);
-        FRIEND_TEST(ArenaAlloc, AlignsToTargetAlignment);
-        FRIEND_TEST(ArenaAlloc, OffsetMinusPrevOffsetGivesObjectSize);
-        FRIEND_TEST(ArenaAllocAs, AlignsToGivenAlignment);
-        FRIEND_TEST(ArenaAllocAs, OffsetMinusPrevOffsetGivesObjectSize);
-        FRIEND_TEST(ArenaFreeAll, ResetsOffsetToZero);
-        FRIEND_TEST(ArenaFreeAll, AlignedArena_ResetsOffsetToAlignedAddress);
-        FRIEND_TEST(ArenaResize, LatestAllocationResizeBuffer);
-        FRIEND_TEST(ArenaResize, LatestAllocationOnlyResizeByOffsetDifference);
-        FRIEND_TEST(ArenaResize, AllocationBeforePriorAllocationReturnNewBuffer);
+
+
+
+
+        FRIEND_TEST(ManagedArenaTests, MoveCtor_ClearsMovedArena);
+        FRIEND_TEST(ManagedArenaTests, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(ManagedArenaTests, MoveAssign_ClearsMovedArena);
+        FRIEND_TEST(ManagedArenaTests, MoveAssign_MovesBufferIntoNewObject);
+        FRIEND_TEST(ManagedArenaTests, MoveAssign_SelfAssignmentReturnsTheSameArena);
+        FRIEND_TEST(ManagedArenaTests, MoveAssign_DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
+        FRIEND_TEST(ManagedArenaTests, AllocBytes_MovesPrevOffset);
+        FRIEND_TEST(ManagedArenaTests, Alloc_MovesPrevOffset);
+        FRIEND_TEST(ManagedArenaTests, AllocBytes_UpdatesTelemetryPadding);
+        FRIEND_TEST(ManagedArenaTests, Alloc_UpdatesTelemetryPadding);
+        FRIEND_TEST(ManagedArenaTests, AllocV_UpdatesTelemetryPadding);
+        FRIEND_TEST(ManagedArenaTests, Resize_LatestAllocationResizeBuffer);
+        FRIEND_TEST(ManagedArenaTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
+        FRIEND_TEST(ManagedArenaTests, Clear_ResetsOffsetToZero);
+        FRIEND_TEST(ManagedArenaTests, ZeroOut_ZeroesOutTheInternalBuffer);
+
+        FRIEND_TEST(UnmanagedArenaTests, MoveCtor_ClearsMovedArena);
+        FRIEND_TEST(UnmanagedArenaTests, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(UnmanagedArenaTests, MoveAssign_ClearsMovedArena);
+        FRIEND_TEST(UnmanagedArenaTests, MoveAssign_MovesBufferIntoNewObject);
+        FRIEND_TEST(UnmanagedArenaTests, MoveAssign_SelfAssignmentReturnsTheSameArena);
+        FRIEND_TEST(UnmanagedArenaTests, MoveAssign_DeletingOriginalArenaDoNotDeleteTheNewArenasMemory);
+        FRIEND_TEST(UnmanagedArenaTests, AllocBytes_MovesPrevOffset);
+        FRIEND_TEST(UnmanagedArenaTests, Alloc_MovesPrevOffset);
+        FRIEND_TEST(UnmanagedArenaTests, AllocBytes_UpdatesTelemetryPadding);
+        FRIEND_TEST(UnmanagedArenaTests, Alloc_UpdatesTelemetryPadding);
+        FRIEND_TEST(UnmanagedArenaTests, AllocV_UpdatesTelemetryPadding);
+        FRIEND_TEST(UnmanagedArenaTests, Resize_LatestAllocationResizeBuffer);
+        FRIEND_TEST(UnmanagedArenaTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
+        FRIEND_TEST(UnmanagedArenaTests, Clear_ResetsOffsetToZero);
 #endif
     };
 

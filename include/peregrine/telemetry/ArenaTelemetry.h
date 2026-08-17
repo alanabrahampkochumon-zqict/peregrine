@@ -11,34 +11,24 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
-#include <cstddef>
+
+#include "../allocators/Policy.h"
 
 namespace pmm
 {
-    // TODO: Update to be a single interface regardless of telemetry usage
     /**
      * @addtogroup PMM_Telemetry
      * @{
      */
 
-#ifdef ENABLE_PMM_TELEMETRY
     struct ArenaTelemetry
     {
-
-        /**
-         * @brief Default construction of arena telemetry with no size is strictly prohibited.
-         *
-         * @note Use @ref Arena(std::size_t) to construct an ArenaTelemetry with an arena size.
-         */
-        ArenaTelemetry() = delete;
-
-
         /**
          * @brief Initialize a new Arena telemetry instance with the current arena size.
          *
          * @param[in] size The size of the Arena.
          */
-        [[nodiscard]] explicit constexpr ArenaTelemetry(std::size_t size) noexcept;
+        [[nodiscard]] explicit constexpr ArenaTelemetry(size_t size) noexcept;
 
 
         /**
@@ -46,24 +36,33 @@ namespace pmm
          *
          * @note The function expects the size of current allocation, not the size of the arena's buffer,
          *       or the current offset.
+         * @note The size is inclusive of padding.
          *
          * @param[in] allocatedByteSize The byte allocated in the current allocation call of the arena.
          */
-        constexpr void updateAllocationUsage(std::size_t allocatedByteSize) noexcept;
+        constexpr void logAllocationUsage(size_t allocatedByteSize) noexcept;
+
+
+        /**
+         * @brief Update the current arena padding usage.
+         *
+         * @param[in] padding The amount of padding used for the allocation.
+         */
+        constexpr void logPaddingUsage(size_t padding) noexcept;
 
 
         /**
          * @brief Update the current minimum usage with @p usage if it is lower than the recorded minimum.
          * @param usage The new minimum usage.
          */
-        constexpr void updateMinUsage(std::size_t usage) noexcept;
+        constexpr void logMinUsage(size_t usage) noexcept;
 
 
         /**
          * @brief Update the current peak usage with @p usage if it is higher than the recorded peak.
          * @param usage The new peak usage.
          */
-        constexpr void updatePeakUsage(std::size_t usage) noexcept;
+        constexpr void logPeakUsage(size_t usage) noexcept;
 
 
         /**
@@ -81,124 +80,103 @@ namespace pmm
         /**
          * @brief Get the size of the arena.
          */
-        [[nodiscard]] constexpr std::size_t getArenaSize() const noexcept;
+        [[nodiscard]] constexpr size_t getArenaSize() const noexcept;
+
+
+        /**
+         * @brief Get the free memory usage of the arena.
+         */
+        [[nodiscard]] constexpr size_t getFreeSize() const noexcept;
+
+
+        /**
+         * @brief Get the total padding used in the arena.
+         */
+        [[nodiscard]] constexpr size_t getTotalPadding() const noexcept;
+
 
         /**
          * @brief Get the current memory usage of the arena.
+         *
+         * @note Size is inclusive of padding.
          */
-        [[nodiscard]] constexpr std::size_t getCurrentUsage() const noexcept;
+        [[nodiscard]] constexpr size_t getUsedSize() const noexcept;
+
 
         /**
          * @brief Get the all-time minimum memory usage of the arena.
+         *
+         * @note Size is inclusive of padding.
          */
-        [[nodiscard]] constexpr std::size_t getMinUsage() const noexcept;
+        [[nodiscard]] constexpr size_t getMinUsage() const noexcept;
+
 
         /**
          * @brief Get the all-time maximum memory usage of the arena.
+         *
+         * @note Size is inclusive of padding.
          */
-        [[nodiscard]] constexpr std::size_t getPeakUsage() const noexcept;
-
-        bool enabled{ true };
+        [[nodiscard]] constexpr size_t getPeakUsage() const noexcept;
 
     private:
-        std::size_t _currentUsage;
-        std::size_t _peakUsage;
-        std::size_t _minUsage;
-        std::size_t _size;
+        size_t _currentUsage{ 0 };
+        size_t _peakUsage{ 0 };
+        size_t _totalPadding{ 0 };
+        size_t _minUsage;
+        size_t _arenaSize;
     };
-#else
-    struct ArenaTelemetry
+
+    /**
+     * @brief Dummy telemetry used when telemetry policy is set to @p pmm::telemetry::Disabled.
+     */
+    struct DummyArenaTelemetry
     {
-        /**
-         * @brief Default construction of arena telemetry with no size is strictly prohibited.
-         *
-         * @note Use @ref Arena(std::size_t) to construct an ArenaTelemetry with an arena size.
-         */
-        ArenaTelemetry() = delete;
-
-
-        /**
-         * @brief Initialize a dummy arena telemetry.
-         *
-         * @note STUB Method. Telemetry is disabled.
-         */
-        [[nodiscard]] explicit constexpr ArenaTelemetry(std::size_t) noexcept {}
-
-
-        /**
-         * @brief Update the current arena usage by updating with the current allocation byte size.
-         *
-         * @note STUB Method. Telemetry is disabled.
-         */
-        constexpr void updateAllocationUsage(std::size_t) noexcept {}
-
-
-        /**
-         * @brief Update the current minimum usage with @p usage if it is lower than the recorded minimum.
-         *
-         * @note STUB Method. Telemetry is disabled.
-         */
-        constexpr void updateMinUsage(std::size_t) noexcept {}
-
-
-        /**
-         * @brief Update the current peak usage with @p usage if it is higher than the recorded peak.
-         *
-         * @note STUB Method. Telemetry is disabled.
-         */
-        constexpr void updatePeakUsage(std::size_t) noexcept {}
-
-
-        /**
-         * @brief Reset the currentUsage, while preserving the peak and minimum usage.
-         *
-         * @note STUB Method. Telemetry is disabled.
-         */
+        [[nodiscard]] explicit constexpr DummyArenaTelemetry(size_t) noexcept {}
+        constexpr void logAllocationUsage(size_t) noexcept {}
+        constexpr void logMinUsage(size_t) noexcept {}
+        constexpr void logPeakUsage(size_t) noexcept {}
         constexpr void resetCurrentUsage() noexcept {}
-
-
-        /**
-         * @brief Update the telemetry usage statistics to zero.
-         *
-         * @note STUB Method. Telemetry is disabled.
-         */
         constexpr void resetTelemetry() noexcept {}
-
-
-        /**
-         * @brief Get the size of the arena that the telemetry is attached to.
-         * @note STUB Method. Telemetry is disabled.
-         *
-         * @return 0.
-         */
-        [[nodiscard]] constexpr std::size_t getArenaSize() const noexcept { return 0; }
-
-        /**
-         * @brief Get the current memory usage of the arena, the telemetry is attached to.
-         * @note STUB Method. Telemetry is disabled.
-         *
-         * @return 0.
-         */
-        [[nodiscard]] constexpr std::size_t getCurrentUsage() const noexcept { return 0; }
-
-        /**
-         * @brief Get the all-time minimum of memory used in the arena, that the telemetry is attached to.
-         * @note STUB Method. Telemetry is disabled.
-         *
-         * @return 0.
-         */
-        [[nodiscard]] constexpr std::size_t getMinUsage() const noexcept { return 0; }
-
-        /**
-         * @brief Get the all-time maximum of memory used in the arena, that the telemetry is attached to.
-         * @note STUB Method. Telemetry is disabled.
-         *
-         * @return 0.
-         */
-        [[nodiscard]] constexpr std::size_t getPeakUsage() const noexcept { return 0; }
+        [[nodiscard]] constexpr size_t getArenaSize() const noexcept { return 0; }
+        [[nodiscard]] constexpr size_t getFreeSize() const noexcept { return 0; }
+        [[nodiscard]] constexpr size_t getUsedSize() const noexcept { return 0; }
+        [[nodiscard]] constexpr size_t getMinUsage() const noexcept { return 0; }
+        [[nodiscard]] constexpr size_t getPeakUsage() const noexcept { return 0; }
     };
 
-#endif
+
+    /**
+     * @brief Define the type of arena telemetry based on the current telemetry policy.
+     *
+     * @tparam Policy Telemetry Policy used by the arena.
+     */
+    template <telemetry::TelemetryPolicy Policy>
+    using ArenaTelemetryType =
+        std::conditional_t<std::is_same_v<Policy, telemetry::Disabled>, DummyArenaTelemetry, ArenaTelemetry>;
+
+
+    /**
+     * @brief Get a telemetry instance depending the telemetry policy in use by the target arena.
+     *
+     * @tparam Policy The Telemetry policy in use by the target arena.
+     *
+     * @param[in] arenaSize  The size of the Arena.
+     *
+     * @return A arena telemetry instance suited for the telemetry policy.
+     */
+    template <telemetry::TelemetryPolicy Policy>
+    constexpr ArenaTelemetryType<Policy> getTelemetryInstance(const std::size_t arenaSize) noexcept
+    {
+        if constexpr (std::same_as<Policy, telemetry::Disabled>)
+        {
+            return DummyArenaTelemetry(arenaSize);
+        }
+        else
+        {
+            return ArenaTelemetry(arenaSize);
+        }
+    }
+
 
     /** @} */
 

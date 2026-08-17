@@ -5,13 +5,17 @@ add_library(AllocatorTests OBJECT)
 target_sources(
         AllocatorTests
         PRIVATE
-        ArenaTests.cpp
+        arena/ManagedArenaTests.cpp
+        arena/UnmanagedArenaTests.cpp
+        arena/SafeArenaTests.cpp
         stack/LooseStackTests.cpp
         stack/StrictStackTests.cpp
         stack/StackMemoryManagementTests.cpp
         stack/TelemetryIntegrationTests.cpp
+        stack/SafeStackTests.cpp
         pool/AllocatorTests.cpp
         pool/TelemetryIntegrationTests.cpp
+        pool/SafePoolTests.cpp
         TempArenaTests.cpp
 )
 
@@ -36,6 +40,7 @@ target_sources(
         PRIVATE
         pool/DeathTests.cpp
         stack/DeathTests.cpp
+        arena/DeathTests.cpp
 )
 
 target_include_directories(

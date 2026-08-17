@@ -28,8 +28,17 @@ namespace pmm
         PoolFreeNode* next;
     };
 
-
-    template <MemoryStrategy MemStrategy = ManagedMemory, telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled>
+    /**
+     *  @brief Pool/Chunk memory allocator.
+     *
+     *  @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
+     *  @tparam TelPolicy   Flag indicating whether or not telemetry is enabled for this pool. See @ref pmm::telemetry.
+     *  @tparam Safe        Flags an pool as safe, implying certain operations like freeing a `nullptr` are handled
+     *                      gracefully when assertions are disabled. `False` by default to prevent any performance
+     *                      stalls incurred by conditional checks.
+     */
+    template <MemoryStrategy MemStrategy = ManagedMemory, telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled,
+              bool Safe = false>
     class Pool
     {
     public:
@@ -51,10 +60,11 @@ namespace pmm
         /**
          * @brief Create a pool allocator with unmanaged memory.
          *
-         * @param[in,out] backingBuffer  The memory buffer to be used by the allocator.
-         * @param[in] bufferSize         The size of the backing buffer in bytes.
-         * @param[in] chuckSize          The per fragment/chunk size of the pool in bytes.
-         * @param[in] chunkAlignment     The base alignment for each fragment/chunk.
+         * @param[in,out] backingBuffer The memory buffer to be used by the allocator.
+         * @param[in] bufferSize         The size of the backing buffer in bytes, which will directly
+         *                              translate into the pool size.
+         * @param[in] chuckSize         The per fragment/chunk size of the pool in bytes.
+         * @param[in] chunkAlignment    The base alignment for each fragment/chunk.
          *
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
          *
@@ -78,6 +88,27 @@ namespace pmm
          */
         constexpr Pool& operator=(const Pool&) = delete;
 
+
+        /**
+         * @brief Transfer the current Pool's memory to a new object.
+         *
+         * @param[in,out] pool The pool to move into the new object.
+         */
+        constexpr Pool(Pool&& pool) noexcept;
+
+
+        /**
+         * @brief Transfer the current Pool's memory to another object.
+         *
+         * @warning This will delete any buffers held by the LHS object.
+         *
+         * @param[in,out] pool The pool to move into the object.
+         *
+         * @return The current pool instance.
+         */
+        constexpr Pool& operator=(Pool&& pool) noexcept;
+
+
         /**
          * @brief Get the maximum possible allocations in the pool.
          */
@@ -88,6 +119,7 @@ namespace pmm
          * @brief Allocate a chunk from the pool.
          *
          * @warning Does not check for free space availability in *Release Mode*.
+         * @warning The memory block may NOT be zero-initialized.
          *
          * @return A `void pointer` to starting memory address of the allocation.
          *
@@ -124,10 +156,13 @@ namespace pmm
          *
          * @param[in] ptr The pointer to free upto.
          *
+         * @return A boolean status indicating whether the free was valid.
+         *         **Validation is available ONLY for SafePool in Release Mode**
+         *
          * @relatedalso free
          * @relatedalso clear
          */
-        void freeChunk(void* ptr) noexcept;
+        bool freeChunk(void* ptr) noexcept;
 
 
         /**
@@ -139,11 +174,14 @@ namespace pmm
          *
          * @param[in] ptr The object pointer to free.
          *
+         * @return A boolean status indicating whether the free was valid.
+         *         **Validation is available ONLY for SafePool in Release Mode**
+         *
          * @relatedalso freeChunk
          * @relatedalso clear
          */
         template <typename T>
-        void free(T* ptr) noexcept;
+        bool free(T* ptr) noexcept;
 
 
         /**
@@ -211,24 +249,38 @@ namespace pmm
 
 
 
-        FRIEND_TEST(ManagedPoolAllocator, Ctor_InitializesMemberVariables);
-        FRIEND_TEST(ManagedPoolAllocator, Ctor_ClearsThePool);
-        FRIEND_TEST(ManagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes);
-        FRIEND_TEST(ManagedPoolAllocator, GetMaxAllocationCount_ReturnsChunkCount);
-        FRIEND_TEST(ManagedPoolAllocator, Ctor_InitializesTelemetryWithCorrectValues);
+        FRIEND_TEST(ManagedPoolAllocatorTests, Ctor_InitializesMemberVariables);
+        FRIEND_TEST(ManagedPoolAllocatorTests, Ctor_ClearsThePool);
+        FRIEND_TEST(ManagedPoolAllocatorTests, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes);
+        FRIEND_TEST(ManagedPoolAllocatorTests, GetMaxAllocationCount_ReturnsChunkCount);
+        FRIEND_TEST(ManagedPoolAllocatorTests, Ctor_InitializesTelemetryWithCorrectValues);
+        FRIEND_TEST(ManagedPoolAllocatorTests, MoveCtor_ClearsMovedPool);
+        FRIEND_TEST(ManagedPoolAllocatorTests, MoveCtor_ClearsMovedPool);
+        FRIEND_TEST(ManagedPoolAllocatorTests, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(ManagedPoolAllocatorTests, MoveAssign_ClearsMovedPool);
+        FRIEND_TEST(ManagedPoolAllocatorTests, MoveAssign_MovesBufferIntoNewObject);
+        FRIEND_TEST(ManagedPoolAllocatorTests, MoveAssign_SelfAssignmentReturnsTheSamePool);
+        FRIEND_TEST(ManagedPoolAllocatorTests, MoveAssign_DeletingOriginalPoolDoNotDeleteTheNewPoolsMemory);
 
-        FRIEND_TEST(PoolAllocatorAlignment, Managed_Ctor_AlignsBaseAddress);
-        FRIEND_TEST(PoolAllocatorAlignment, Managed_Ctor_AlignsChunksize);
+        FRIEND_TEST(PoolAllocatorAlignmentTests, Managed_Ctor_AlignsBaseAddress);
+        FRIEND_TEST(PoolAllocatorAlignmentTests, Managed_Ctor_AlignsChunksize);
 
 
-        FRIEND_TEST(UnmanagedPoolAllocator, Ctor_InitializesMemberVariables);
-        FRIEND_TEST(UnmanagedPoolAllocator, Ctor_ClearsThePool);
-        FRIEND_TEST(UnmanagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes);
-        FRIEND_TEST(UnmanagedPoolAllocator, GetMaxAllocationCount_ReturnsChunkCount);
-        FRIEND_TEST(UnmanagedPoolAllocator, Ctor_InitializesTelemetryWithCorrectValues);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, Ctor_InitializesMemberVariables);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, Ctor_ClearsThePool);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, GetMaxAllocationCount_ReturnsChunkCount);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, Ctor_InitializesTelemetryWithCorrectValues);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, MoveCtor_ClearsMovedPool);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, MoveCtor_ClearsMovedPool);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, MoveAssign_ClearsMovedPool);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, MoveAssign_MovesBufferIntoNewObject);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, MoveAssign_SelfAssignmentReturnsTheSamePool);
+        FRIEND_TEST(UnmanagedPoolAllocatorTests, MoveAssign_DeletingOriginalPoolDoNotDeleteTheNewPoolsMemory);
 
-        FRIEND_TEST(PoolAllocatorAlignment, Unmanaged_Ctor_AlignsBaseAddress);
-        FRIEND_TEST(PoolAllocatorAlignment, Unmanaged_Ctor_AlignsChunksize);
+        FRIEND_TEST(PoolAllocatorAlignmentTests, Unmanaged_Ctor_AlignsBaseAddress);
+        FRIEND_TEST(PoolAllocatorAlignmentTests, Unmanaged_Ctor_AlignsChunksize);
 
 #endif
     };

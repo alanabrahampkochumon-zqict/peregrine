@@ -43,10 +43,10 @@ namespace
 
 
     /// @brief Parameterized test fixture for @ref pmm::Pool<> base address and chunk size alignment.
-    class PoolAllocatorAlignment: public testing::TestWithParam<PoolAllocatorAlignmentParams>
+    class PoolAllocatorAlignmentTests: public testing::TestWithParam<PoolAllocatorAlignmentParams>
     {};
     INSTANTIATE_TEST_SUITE_P(
-        PoolAllocatorTests, PoolAllocatorAlignment,
+        PoolAllocatorTests, PoolAllocatorAlignmentTests,
         testing::Values(PoolAllocatorAlignmentParams{ .poolSize = 4_KB, .chunkSize = 24, .alignment = 8 },
                         PoolAllocatorAlignmentParams{ .poolSize = 5123, .chunkSize = 32, .alignment = 32 },
                         PoolAllocatorAlignmentParams{ .poolSize = 9582, .chunkSize = 127, .alignment = 64 },
@@ -87,7 +87,7 @@ namespace
  *            MANAGED POOL            *
  **************************************/
 
-TEST_F(ManagedPoolAllocator, AllocChunk_AllocatesDistinctBuffer)
+TEST_F(ManagedPoolAllocatorTests, AllocChunk_AllocatesDistinctBuffer)
 {
     constexpr auto expectedValue = 1230480231401234812;
     const auto integer           = static_cast<size_t*>(pool.allocChunk());
@@ -96,7 +96,7 @@ TEST_F(ManagedPoolAllocator, AllocChunk_AllocatesDistinctBuffer)
 }
 
 
-TEST_F(ManagedPoolAllocator, AllocChunk_CanAllocateMaximumPossibleChunkCountWithoutOverlap)
+TEST_F(ManagedPoolAllocatorTests, AllocChunk_CanAllocateMaximumPossibleChunkCountWithoutOverlap)
 {
     std::vector<size_t*> data;
 
@@ -114,7 +114,7 @@ TEST_F(ManagedPoolAllocator, AllocChunk_CanAllocateMaximumPossibleChunkCountWith
 }
 
 
-TEST_F(ManagedPoolAllocator, Alloc_AllocatesBufferOfSizeSize)
+TEST_F(ManagedPoolAllocatorTests, Alloc_AllocatesBufferOfSizeSize)
 {
     std::vector<size_t*> data;
 
@@ -131,7 +131,7 @@ TEST_F(ManagedPoolAllocator, Alloc_AllocatesBufferOfSizeSize)
 }
 
 
-TEST_F(ManagedPoolAllocator, FreeChunk_FreesBufferForNewerAllocations)
+TEST_F(ManagedPoolAllocatorTests, FreeChunk_FreesBufferForNewerAllocations)
 {
     std::vector<size_t*> data;
     // Allocate some buffer and fill it with data.
@@ -146,7 +146,7 @@ TEST_F(ManagedPoolAllocator, FreeChunk_FreesBufferForNewerAllocations)
         // Data[i] stores the address so free the current chunk
         // free order shouldn't matter as we are using an internal freelist
         // rather than a strict structure like LIFO or FIFO
-        pool.freeChunk(data[i]);
+        EXPECT_TRUE(pool.freeChunk(data[i]));
     }
 
     // clear the vector
@@ -165,7 +165,7 @@ TEST_F(ManagedPoolAllocator, FreeChunk_FreesBufferForNewerAllocations)
 }
 
 
-TEST_F(ManagedPoolAllocator, Free_FreesBufferForNewerAllocations)
+TEST_F(ManagedPoolAllocatorTests, Free_FreesBufferForNewerAllocations)
 {
     std::vector<size_t*> data;
     // Allocate some buffer and fill it with data.
@@ -180,7 +180,7 @@ TEST_F(ManagedPoolAllocator, Free_FreesBufferForNewerAllocations)
         // Data[i] stores the address so free the current chunk
         // free order shouldn't matter as we are using an internal freelist
         // rather than a strict structure like LIFO or FIFO
-        pool.free(data[i]);
+        EXPECT_TRUE(pool.free(data[i]));
     }
 
     // clear the vector
@@ -199,20 +199,82 @@ TEST_F(ManagedPoolAllocator, Free_FreesBufferForNewerAllocations)
 }
 
 
-TEST_F(ManagedPoolAllocator, Free_OnNonTrivialTypesCallsDtor)
+TEST_F(ManagedPoolAllocatorTests, Free_OnNonTrivialTypesCallsDtor)
 {
     int dtorInvocationCount = 0;
     const auto typedMemory  = pool.alloc<DestructionTracker>(&dtorInvocationCount);
-    pool.free(typedMemory);
+    EXPECT_TRUE(pool.free(typedMemory));
     EXPECT_EQ(1, dtorInvocationCount);
 }
+
+
+
+
+TEST_F(ManagedPoolAllocatorTests, MoveCtor_CopiesAttributesToNewObject)
+{
+    const auto prevAllocationCount = pool.getMaxAllocationCount();
+    const pmm::Pool<> pool2        = std::move(pool);
+    EXPECT_EQ(prevAllocationCount, pool2.getMaxAllocationCount());
+    EXPECT_EQ(poolSize, pool2.getTelemetry().getPoolSize());
+}
+
+
+TEST_F(ManagedPoolAllocatorTests, MoveCtor_MovesTelemetry)
+{
+    static_cast<void>(pool.allocChunk());
+    static_cast<void>(pool.allocChunk());
+    // Get the telemetry to ensure that the value is preserved when moving
+    // DON'T get by reference as it will change internally
+    const auto telemetry = pool.getTelemetry();
+
+    const pmm::Pool<> pool2 = std::move(pool);
+
+    // Checking for telemetry equality
+    EXPECT_EQ(telemetry.getUsedSize(), pool2.getTelemetry().getUsedSize());
+    EXPECT_EQ(telemetry.getFreeSize(), pool2.getTelemetry().getFreeSize());
+    EXPECT_EQ(telemetry.getUsedAllocationCount(), pool2.getTelemetry().getUsedAllocationCount());
+    EXPECT_EQ(telemetry.getMaxAllocationCount(), pool2.getTelemetry().getMaxAllocationCount());
+}
+
+
+TEST_F(ManagedPoolAllocatorTests, MoveAssign_CopiesAttributesToNewObject)
+{
+    const auto prevAllocationCount = pool.getMaxAllocationCount();
+
+    pmm::Pool<> pool2(256, 16, 16);
+
+    pool2 = std::move(pool);
+
+    EXPECT_EQ(prevAllocationCount, pool2.getMaxAllocationCount());
+    EXPECT_EQ(poolSize, pool2.getTelemetry().getPoolSize());
+}
+
+
+TEST_F(ManagedPoolAllocatorTests, MoveAssign_MovesTelemetry)
+{
+    static_cast<void>(pool.allocChunk());
+    static_cast<void>(pool.allocChunk());
+    // Get the telemetry to ensure that the value is preserved when moving
+    // DON'T get by reference as it will change internally
+    const auto telemetry = pool.getTelemetry();
+
+    pmm::Pool<> pool2(256, 16, 16);
+    pool2 = std::move(pool);
+
+    // Checking for telemetry equality
+    EXPECT_EQ(telemetry.getUsedSize(), pool2.getTelemetry().getUsedSize());
+    EXPECT_EQ(telemetry.getFreeSize(), pool2.getTelemetry().getFreeSize());
+    EXPECT_EQ(telemetry.getUsedAllocationCount(), pool2.getTelemetry().getUsedAllocationCount());
+    EXPECT_EQ(telemetry.getMaxAllocationCount(), pool2.getTelemetry().getMaxAllocationCount());
+}
+
 
 
 /**************************************
  *           UNMANAGED POOL           *
  **************************************/
 
-TEST_F(UnmanagedPoolAllocator, AllocChunk_AllocatesDistinctBuffer)
+TEST_F(UnmanagedPoolAllocatorTests, AllocChunk_AllocatesDistinctBuffer)
 {
     constexpr auto expectedValue = 1230480231401234812;
     const auto integer           = static_cast<size_t*>(pool.allocChunk());
@@ -221,7 +283,7 @@ TEST_F(UnmanagedPoolAllocator, AllocChunk_AllocatesDistinctBuffer)
 }
 
 
-TEST_F(UnmanagedPoolAllocator, AllocChunk_CanAllocateMaximumPossibleChunkCountWithoutOverlap)
+TEST_F(UnmanagedPoolAllocatorTests, AllocChunk_CanAllocateMaximumPossibleChunkCountWithoutOverlap)
 {
     std::vector<size_t*> data;
 
@@ -239,7 +301,7 @@ TEST_F(UnmanagedPoolAllocator, AllocChunk_CanAllocateMaximumPossibleChunkCountWi
 }
 
 
-TEST_F(UnmanagedPoolAllocator, Alloc_AllocatesBufferOfSizeSize)
+TEST_F(UnmanagedPoolAllocatorTests, Alloc_AllocatesBufferOfSizeSize)
 {
     std::vector<size_t*> data;
 
@@ -255,7 +317,7 @@ TEST_F(UnmanagedPoolAllocator, Alloc_AllocatesBufferOfSizeSize)
 }
 
 
-TEST_F(UnmanagedPoolAllocator, FreeChunk_FreesBufferForNewerAllocations)
+TEST_F(UnmanagedPoolAllocatorTests, FreeChunk_FreesBufferForNewerAllocations)
 {
     std::vector<size_t*> data;
     // Allocate some buffer and fill it with data.
@@ -270,7 +332,7 @@ TEST_F(UnmanagedPoolAllocator, FreeChunk_FreesBufferForNewerAllocations)
         // Data[i] stores the address so free the current chunk
         // free order shouldn't matter as we are using an internal freelist
         // rather than a strict structure like LIFO or FIFO
-        pool.freeChunk(data[i]);
+        EXPECT_TRUE(pool.freeChunk(data[i]));
     }
 
     // clear the vector
@@ -290,7 +352,7 @@ TEST_F(UnmanagedPoolAllocator, FreeChunk_FreesBufferForNewerAllocations)
 
 
 
-TEST_F(UnmanagedPoolAllocator, Free_FreesBufferForNewerAllocations)
+TEST_F(UnmanagedPoolAllocatorTests, Free_FreesBufferForNewerAllocations)
 {
     std::vector<size_t*> data;
     // Allocate some buffer and fill it with data.
@@ -305,7 +367,7 @@ TEST_F(UnmanagedPoolAllocator, Free_FreesBufferForNewerAllocations)
         // Data[i] stores the address so free the current chunk
         // free order shouldn't matter as we are using an internal freelist
         // rather than a strict structure like LIFO or FIFO
-        pool.free(data[i]);
+        EXPECT_TRUE(pool.free(data[i]));
     }
 
     // clear the vector
@@ -324,14 +386,78 @@ TEST_F(UnmanagedPoolAllocator, Free_FreesBufferForNewerAllocations)
 }
 
 
-TEST_F(UnmanagedPoolAllocator, Free_OnNonTrivialTypesCallsDtor)
+TEST_F(UnmanagedPoolAllocatorTests, Free_OnNonTrivialTypesCallsDtor)
 {
     int dtorInvocationCount = 0;
     const auto typedMemory  = pool.alloc<DestructionTracker>(&dtorInvocationCount);
-    pool.free(typedMemory);
+    EXPECT_TRUE(pool.free(typedMemory));
     EXPECT_EQ(1, dtorInvocationCount);
 }
 
+
+TEST_F(UnmanagedPoolAllocatorTests, MoveCtor_CopiesAttributesToNewObject)
+{
+    const auto prevAllocationCount              = pool.getMaxAllocationCount();
+    const pmm::Pool<pmm::UnmanagedMemory> pool2 = std::move(pool);
+
+    EXPECT_EQ(prevAllocationCount, pool2.getMaxAllocationCount());
+    EXPECT_EQ(bufferSize, pool2.getTelemetry().getPoolSize());
+}
+
+
+TEST_F(UnmanagedPoolAllocatorTests, MoveCtor_MovesTelemetry)
+{
+    static_cast<void>(pool.allocChunk());
+    static_cast<void>(pool.allocChunk());
+    // Get the telemetry to ensure that the value is preserved when moving
+    // DON'T get by reference as it will change internally
+    const auto telemetry = pool.getTelemetry();
+
+    const pmm::Pool<pmm::UnmanagedMemory> pool2 = std::move(pool);
+
+    // Checking for telemetry equality
+    EXPECT_EQ(telemetry.getUsedSize(), pool2.getTelemetry().getUsedSize());
+    EXPECT_EQ(telemetry.getFreeSize(), pool2.getTelemetry().getFreeSize());
+    EXPECT_EQ(telemetry.getUsedAllocationCount(), pool2.getTelemetry().getUsedAllocationCount());
+    EXPECT_EQ(telemetry.getMaxAllocationCount(), pool2.getTelemetry().getMaxAllocationCount());
+}
+
+
+TEST_F(UnmanagedPoolAllocatorTests, MoveAssign_CopiesAttributesToNewObject)
+{
+    const auto prevAllocationCount = pool.getMaxAllocationCount();
+    const auto backingBuffer       = new uint8_t[256];
+    pmm::Pool<pmm::UnmanagedMemory> pool2(backingBuffer, 256, 16, 16);
+
+    pool2 = std::move(pool);
+
+    EXPECT_EQ(prevAllocationCount, pool2.getMaxAllocationCount());
+    EXPECT_EQ(bufferSize, pool2.getTelemetry().getPoolSize());
+
+    delete[] backingBuffer;
+}
+
+
+TEST_F(UnmanagedPoolAllocatorTests, MoveAssign_MovesTelemetry)
+{
+    static_cast<void>(pool.allocChunk());
+    static_cast<void>(pool.allocChunk());
+    // Get the telemetry to ensure that the value is preserved when moving
+    // DON'T get by reference as it will change internally
+    const auto telemetry     = pool.getTelemetry();
+    const auto backingBuffer = new uint8_t[256];
+    pmm::Pool<pmm::UnmanagedMemory> pool2(backingBuffer, 256, 16, 16);
+
+    pool2 = std::move(pool);
+
+    // Checking for telemetry equality
+    EXPECT_EQ(telemetry.getUsedSize(), pool2.getTelemetry().getUsedSize());
+    EXPECT_EQ(telemetry.getFreeSize(), pool2.getTelemetry().getFreeSize());
+    EXPECT_EQ(telemetry.getUsedAllocationCount(), pool2.getTelemetry().getUsedAllocationCount());
+    EXPECT_EQ(telemetry.getMaxAllocationCount(), pool2.getTelemetry().getMaxAllocationCount());
+
+    delete[] backingBuffer;
+}
 
 
 /**************************************
@@ -347,7 +473,7 @@ namespace pmm
      *           MANAGED POOL             *
      **************************************/
 
-    TEST_F(ManagedPoolAllocator, Ctor_InitializesMemberVariables)
+    TEST_F(ManagedPoolAllocatorTests, Ctor_InitializesMemberVariables)
     {
         EXPECT_EQ(poolSize, pool._poolSize);
         EXPECT_EQ(chunkSize, pool._chunkSize);
@@ -360,7 +486,7 @@ namespace pmm
     }
 
 
-    TEST_F(ManagedPoolAllocator, Ctor_ClearsThePool)
+    TEST_F(ManagedPoolAllocatorTests, Ctor_ClearsThePool)
     {
         // Theoretically, If the pool is cleared then the base address must have the header
         // with its next pointing to the base of next address
@@ -374,9 +500,7 @@ namespace pmm
     }
 
 
-
-
-    TEST_P(PoolAllocatorAlignment, Managed_Ctor_AlignsBaseAddress)
+    TEST_P(PoolAllocatorAlignmentTests, Managed_Ctor_AlignsBaseAddress)
     {
         const auto [poolSize, chunkSize, alignment] = GetParam();
         const Pool<> pool{ poolSize, chunkSize, alignment };
@@ -386,7 +510,7 @@ namespace pmm
     }
 
 
-    TEST_P(PoolAllocatorAlignment, Managed_Ctor_AlignsChunksize)
+    TEST_P(PoolAllocatorAlignmentTests, Managed_Ctor_AlignsChunksize)
     {
         const auto [poolSize, chunkSize, alignment] = GetParam();
         const Pool<> pool{ poolSize, chunkSize, alignment };
@@ -394,12 +518,152 @@ namespace pmm
         EXPECT_EQ(0, pool._chunkSize % alignment);
     }
 
+    TEST_F(ManagedPoolAllocatorTests, MoveCtor_ClearsMovedPool)
+    {
+        const Pool<> pool2 = std::move(pool);
+        // NOLINT(bugprone-use-after-move)
+        EXPECT_EQ(nullptr, pool._buffer);
+        EXPECT_EQ(0, pool._poolSize);
+        EXPECT_EQ(0, pool._chunkSize);
+        EXPECT_EQ(0, pool._chunkAlignment);
+        EXPECT_EQ(0, pool._initialAlignmentPadding);
+        EXPECT_EQ(0, pool._chunkCount);
+        EXPECT_EQ(nullptr, pool._head);
+        EXPECT_EQ(0, pool.getTelemetry().getUsedAllocationCount());
+    }
 
-    TEST_F(ManagedPoolAllocator, GetMaxAllocationCount_ReturnsChunkCount)
+
+    TEST_F(ManagedPoolAllocatorTests, MoveCtor_MovesBufferIntoNewObject)
+    {
+        const auto initialBufferPtr               = pool._buffer;
+        const auto initialChunkSize               = pool._chunkSize;
+        const auto initialChunkAlignment          = pool._chunkAlignment;
+        const auto initialInitialAlignmentPadding = pool._initialAlignmentPadding;
+        const auto initialChunkCount              = pool._chunkCount;
+        const auto initialHeadPtr                 = pool._head;
+
+
+        const Pool<> pool2 = std::move(pool);
+
+        EXPECT_EQ(initialBufferPtr, pool2._buffer);
+        EXPECT_EQ(poolSize, pool2._poolSize);
+        EXPECT_EQ(initialChunkSize, pool2._chunkSize);
+        EXPECT_EQ(initialChunkAlignment, pool2._chunkAlignment);
+        EXPECT_EQ(initialInitialAlignmentPadding, pool2._initialAlignmentPadding);
+        EXPECT_EQ(initialChunkCount, pool2._chunkCount);
+        EXPECT_EQ(initialHeadPtr, pool2._head);
+        EXPECT_EQ(0, pool2.getTelemetry().getUsedAllocationCount());
+    }
+
+
+    TEST_F(ManagedPoolAllocatorTests, MoveAssign_ClearsMovedPool)
+    {
+        [[maybe_unused]] Pool<> pool2(256, 16, 16);
+
+        static_cast<void>(pool2 = std::move(pool));
+
+        EXPECT_EQ(nullptr, pool._buffer);
+        EXPECT_EQ(0, pool._poolSize);
+        EXPECT_EQ(0, pool._chunkSize);
+        EXPECT_EQ(0, pool._chunkAlignment);
+        EXPECT_EQ(0, pool._initialAlignmentPadding);
+        EXPECT_EQ(0, pool._chunkCount);
+        EXPECT_EQ(nullptr, pool._head);
+        EXPECT_EQ(0, pool.getTelemetry().getUsedAllocationCount());
+    }
+
+
+    TEST_F(ManagedPoolAllocatorTests, MoveAssign_MovesBufferIntoNewObject)
+    {
+        const auto initialBufferPtr               = pool._buffer;
+        const auto initialChunkSize               = pool._chunkSize;
+        const auto initialChunkAlignment          = pool._chunkAlignment;
+        const auto initialInitialAlignmentPadding = pool._initialAlignmentPadding;
+        const auto initialChunkCount              = pool._chunkCount;
+        const auto initialHeadPtr                 = pool._head;
+
+        Pool<> pool2(256, 16, 16);
+
+        pool2 = std::move(pool);
+
+
+        EXPECT_EQ(initialBufferPtr, pool2._buffer);
+        EXPECT_EQ(poolSize, pool2._poolSize);
+        EXPECT_EQ(initialChunkSize, pool2._chunkSize);
+        EXPECT_EQ(initialChunkAlignment, pool2._chunkAlignment);
+        EXPECT_EQ(initialInitialAlignmentPadding, pool2._initialAlignmentPadding);
+        EXPECT_EQ(initialChunkCount, pool2._chunkCount);
+        EXPECT_EQ(initialHeadPtr, pool2._head);
+        EXPECT_EQ(0, pool2.getTelemetry().getUsedAllocationCount());
+    }
+
+
+    TEST_F(ManagedPoolAllocatorTests, MoveAssign_SelfAssignmentReturnsTheSamePool)
+    {
+        const auto initialBufferPtr               = pool._buffer;
+        const auto initialChunkSize               = pool._chunkSize;
+        const auto initialChunkAlignment          = pool._chunkAlignment;
+        const auto initialInitialAlignmentPadding = pool._initialAlignmentPadding;
+        const auto initialChunkCount              = pool._chunkCount;
+        const auto initialHeadPtr                 = pool._head;
+#ifdef __clang__
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wself-move"
+#endif
+#ifdef __GNUC__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wself-move"
+#endif
+        pool = std::move(pool);
+#ifdef __GNUC__
+    #pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
+
+        EXPECT_EQ(initialBufferPtr, pool._buffer);
+        EXPECT_EQ(poolSize, pool._poolSize);
+        EXPECT_EQ(initialChunkSize, pool._chunkSize);
+        EXPECT_EQ(initialChunkAlignment, pool._chunkAlignment);
+        EXPECT_EQ(initialInitialAlignmentPadding, pool._initialAlignmentPadding);
+        EXPECT_EQ(initialChunkCount, pool._chunkCount);
+        EXPECT_EQ(initialHeadPtr, pool._head);
+    }
+
+
+    TEST_F(ManagedPoolAllocatorTests, MoveAssign_DeletingOriginalPoolDoNotDeleteTheNewPoolsMemory)
+    {
+        Pool<> pool2(256, 16, 16);
+        constexpr auto scopedPoolSize = 512;
+
+        // The pool being moved is scoped
+        {
+            Pool<> scopedPool(scopedPoolSize, 16, 16);
+            pool2 = std::move(scopedPool);
+        }
+        EXPECT_NE(nullptr, pool2._buffer);
+
+        // Write arbitrary data into the buffer
+        // NOTE: i % 255 ensures that uint8_t does not overflow
+        for (uint32_t i = 0; i < scopedPoolSize; ++i)
+        {
+            pool2._buffer[i] = i % 255;
+        }
+
+        // Read the value from buffer
+        for (uint32_t i = 0; i < scopedPoolSize / 4; i += 4)
+        {
+            EXPECT_EQ(i % 255, pool2._buffer[i]);
+        }
+    }
+
+
+    TEST_F(ManagedPoolAllocatorTests, GetMaxAllocationCount_ReturnsChunkCount)
     { EXPECT_EQ(pool._chunkCount, pool.getMaxAllocationCount()); }
 
 
-    TEST_F(ManagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes)
+    TEST_F(ManagedPoolAllocatorTests, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes)
     {
         const auto baseAddress = pool._buffer + pool._initialAlignmentPadding;
 
@@ -419,12 +683,12 @@ namespace pmm
     }
 
 
-    
+
     /**************************************
      *          UNMANAGED POOL            *
      **************************************/
 
-    TEST_F(UnmanagedPoolAllocator, Ctor_InitializesMemberVariables)
+    TEST_F(UnmanagedPoolAllocatorTests, Ctor_InitializesMemberVariables)
     {
         EXPECT_EQ(bufferSize, pool._poolSize);
         EXPECT_EQ(chunkSize, pool._chunkSize);
@@ -437,7 +701,7 @@ namespace pmm
     }
 
 
-    TEST_F(UnmanagedPoolAllocator, Ctor_ClearsThePool)
+    TEST_F(UnmanagedPoolAllocatorTests, Ctor_ClearsThePool)
     {
         // If the pool is cleared then the base address must have the header
         // with its next pointing to the base of next address
@@ -451,7 +715,7 @@ namespace pmm
     }
 
 
-    TEST_P(PoolAllocatorAlignment, Unmanaged_Ctor_AlignsBaseAddress)
+    TEST_P(PoolAllocatorAlignmentTests, Unmanaged_Ctor_AlignsBaseAddress)
     {
         const auto [poolSize, chunkSize, alignment] = GetParam();
         const auto buffer                           = new uint8_t[poolSize];
@@ -462,7 +726,7 @@ namespace pmm
     }
 
 
-    TEST_P(PoolAllocatorAlignment, Unmanaged_Ctor_AlignsChunksize)
+    TEST_P(PoolAllocatorAlignmentTests, Unmanaged_Ctor_AlignsChunksize)
     {
         const auto [poolSize, chunkSize, alignment] = GetParam();
         const auto buffer                           = new uint8_t[poolSize];
@@ -473,11 +737,162 @@ namespace pmm
     }
 
 
-    TEST_F(UnmanagedPoolAllocator, GetMaxAllocationCount_ReturnsChunkCount)
+    TEST_F(UnmanagedPoolAllocatorTests, MoveCtor_ClearsMovedPool)
+    {
+        [[maybe_unused]] const Pool<pmm::UnmanagedMemory> pool2 = std::move(pool);
+        // NOLINT(bugprone-use-after-move)
+        EXPECT_EQ(nullptr, pool._buffer);
+        EXPECT_EQ(0, pool._poolSize);
+        EXPECT_EQ(0, pool._chunkSize);
+        EXPECT_EQ(0, pool._chunkAlignment);
+        EXPECT_EQ(0, pool._initialAlignmentPadding);
+        EXPECT_EQ(0, pool._chunkCount);
+        EXPECT_EQ(nullptr, pool._head);
+        EXPECT_EQ(0, pool.getTelemetry().getUsedAllocationCount());
+    }
+
+
+    TEST_F(UnmanagedPoolAllocatorTests, MoveCtor_MovesBufferIntoNewObject)
+    {
+        const auto initialBufferPtr               = pool._buffer;
+        const auto initialChunkSize               = pool._chunkSize;
+        const auto initialChunkAlignment          = pool._chunkAlignment;
+        const auto initialInitialAlignmentPadding = pool._initialAlignmentPadding;
+        const auto initialChunkCount              = pool._chunkCount;
+        const auto initialHeadPtr                 = pool._head;
+
+
+        const Pool<pmm::UnmanagedMemory> pool2 = std::move(pool);
+
+        EXPECT_EQ(initialBufferPtr, pool2._buffer);
+        EXPECT_EQ(bufferSize, pool2._poolSize);
+        EXPECT_EQ(initialChunkSize, pool2._chunkSize);
+        EXPECT_EQ(initialChunkAlignment, pool2._chunkAlignment);
+        EXPECT_EQ(initialInitialAlignmentPadding, pool2._initialAlignmentPadding);
+        EXPECT_EQ(initialChunkCount, pool2._chunkCount);
+        EXPECT_EQ(initialHeadPtr, pool2._head);
+        EXPECT_EQ(0, pool2.getTelemetry().getUsedAllocationCount());
+    }
+
+
+    TEST_F(UnmanagedPoolAllocatorTests, MoveAssign_ClearsMovedPool)
+    {
+        const auto backingBuffer = new uint8_t[256];
+        [[maybe_unused]] Pool<pmm::UnmanagedMemory> pool2(backingBuffer, 256, 16, 16);
+
+        static_cast<void>(pool2 = std::move(pool));
+
+        EXPECT_EQ(nullptr, pool._buffer);
+        EXPECT_EQ(0, pool._poolSize);
+        EXPECT_EQ(0, pool._chunkSize);
+        EXPECT_EQ(0, pool._chunkAlignment);
+        EXPECT_EQ(0, pool._initialAlignmentPadding);
+        EXPECT_EQ(0, pool._chunkCount);
+        EXPECT_EQ(nullptr, pool._head);
+        EXPECT_EQ(0, pool.getTelemetry().getUsedAllocationCount());
+
+        delete[] backingBuffer;
+    }
+
+
+    TEST_F(UnmanagedPoolAllocatorTests, MoveAssign_MovesBufferIntoNewObject)
+    {
+        const auto initialBufferPtr               = pool._buffer;
+        const auto initialChunkSize               = pool._chunkSize;
+        const auto initialChunkAlignment          = pool._chunkAlignment;
+        const auto initialInitialAlignmentPadding = pool._initialAlignmentPadding;
+        const auto initialChunkCount              = pool._chunkCount;
+        const auto initialHeadPtr                 = pool._head;
+
+        const auto backingBuffer = new uint8_t[256];
+        Pool<pmm::UnmanagedMemory> pool2(backingBuffer, 256, 16, 16);
+
+        pool2 = std::move(pool);
+
+
+        EXPECT_EQ(initialBufferPtr, pool2._buffer);
+        EXPECT_EQ(bufferSize, pool2._poolSize);
+        EXPECT_EQ(initialChunkSize, pool2._chunkSize);
+        EXPECT_EQ(initialChunkAlignment, pool2._chunkAlignment);
+        EXPECT_EQ(initialInitialAlignmentPadding, pool2._initialAlignmentPadding);
+        EXPECT_EQ(initialChunkCount, pool2._chunkCount);
+        EXPECT_EQ(initialHeadPtr, pool2._head);
+        EXPECT_EQ(0, pool2.getTelemetry().getUsedAllocationCount());
+        delete[] backingBuffer;
+    }
+
+
+    TEST_F(UnmanagedPoolAllocatorTests, MoveAssign_SelfAssignmentReturnsTheSamePool)
+    {
+        const auto initialBufferPtr               = pool._buffer;
+        const auto initialChunkSize               = pool._chunkSize;
+        const auto initialChunkAlignment          = pool._chunkAlignment;
+        const auto initialInitialAlignmentPadding = pool._initialAlignmentPadding;
+        const auto initialChunkCount              = pool._chunkCount;
+        const auto initialHeadPtr                 = pool._head;
+#ifdef __clang__
+    #pragma clang diagnostic push
+    #pragma clang diagnostic ignored "-Wself-move"
+#endif
+#ifdef __GNUC__
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wself-move"
+#endif
+        pool = std::move(pool);
+#ifdef __GNUC__
+    #pragma GCC diagnostic pop
+#endif
+#if defined(__clang__)
+    #pragma clang diagnostic pop
+#endif
+
+        EXPECT_EQ(initialBufferPtr, pool._buffer);
+        EXPECT_EQ(bufferSize, pool._poolSize);
+        EXPECT_EQ(initialChunkSize, pool._chunkSize);
+        EXPECT_EQ(initialChunkAlignment, pool._chunkAlignment);
+        EXPECT_EQ(initialInitialAlignmentPadding, pool._initialAlignmentPadding);
+        EXPECT_EQ(initialChunkCount, pool._chunkCount);
+        EXPECT_EQ(initialHeadPtr, pool._head);
+    }
+
+
+    TEST_F(UnmanagedPoolAllocatorTests, MoveAssign_DeletingOriginalPoolDoNotDeleteTheNewPoolsMemory)
+    {
+        constexpr auto scopedPoolSize = 512;
+        const auto backingBuffer      = new uint8_t[256];
+        const auto backingBuffer2     = new uint8_t[scopedPoolSize];
+        Pool<pmm::UnmanagedMemory> pool2(backingBuffer, 256, 16, 16);
+
+        // The pool being moved is scoped
+        {
+            Pool<pmm::UnmanagedMemory> scopedPool(backingBuffer2, scopedPoolSize, 16, 16);
+            pool2 = std::move(scopedPool);
+        }
+        EXPECT_NE(nullptr, pool2._buffer);
+
+        // Write arbitrary data into the buffer
+        // NOTE: i % 255 ensures that uint8_t does not overflow
+        for (uint32_t i = 0; i < scopedPoolSize; ++i)
+        {
+            pool2._buffer[i] = i % 255;
+        }
+
+        // Read the value from buffer
+        for (uint32_t i = 0; i < scopedPoolSize / 4; i += 4)
+        {
+            EXPECT_EQ(i % 255, pool2._buffer[i]);
+        }
+        delete[] backingBuffer;
+        delete[] backingBuffer2;
+    }
+
+
+
+    TEST_F(UnmanagedPoolAllocatorTests, GetMaxAllocationCount_ReturnsChunkCount)
     { EXPECT_EQ(pool._chunkCount, pool.getMaxAllocationCount()); }
 
 
-    TEST_F(UnmanagedPoolAllocator, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes)
+    TEST_F(UnmanagedPoolAllocatorTests, Clear_FillsTheMemoryWithChunkCountPoolFreeNodes)
     {
         const auto baseAddress = pool._buffer + pool._initialAlignmentPadding;
 

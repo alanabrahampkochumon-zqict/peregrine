@@ -27,7 +27,7 @@ namespace
 
 
     /** @brief Test fixture for managed loose stack telemetry integration tests. */
-    class ManagedLooseStackTelemetryIntegration: public testing::Test
+    class ManagedLooseStackTelemetryIntegrationTests: public testing::Test
     {
     public:
         std::size_t size = 2_MB;
@@ -36,7 +36,7 @@ namespace
 
 
     /** @brief Test fixture for managed strict stack telemetry integration tests. */
-    class ManagedStrictStackTelemetryIntegration: public testing::Test
+    class ManagedStrictStackTelemetryIntegrationTests: public testing::Test
     {
     public:
         std::size_t size = 2_MB;
@@ -45,25 +45,27 @@ namespace
 
 
     /** @brief Test fixture for unmanaged loose stack telemetry integration tests. */
-    class UnmanagedLooseStackTelemetryIntegration: public testing::Test
+    class UnmanagedLooseStackTelemetryIntegrationTests: public testing::Test
     {
     public:
         static constexpr std::size_t size = 2_MB;
         uint8_t* buffer                   = new uint8_t[size];
-        pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory, pmm::telemetry::Enabled> stack{ size, buffer };
+        pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory, pmm::telemetry::Enabled> stack{ buffer, size };
 
+    protected:
         void TearDown() override { delete[] buffer; }
     };
 
 
     /** @brief Test fixture for unmanaged strict stack telemetry integration tests. */
-    class UnmanagedStrictStackTelemetryIntegration: public testing::Test
+    class UnmanagedStrictStackTelemetryIntegrationTests: public testing::Test
     {
     public:
         static constexpr std::size_t size = 2_MB;
         uint8_t* buffer                   = new uint8_t[size];
-        pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory, pmm::telemetry::Enabled> stack{ size, buffer };
+        pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory, pmm::telemetry::Enabled> stack{ buffer, size };
 
+    protected:
         void TearDown() override { delete[] buffer; }
     };
 
@@ -72,14 +74,31 @@ namespace
 
 
 /**************************************
- *         MANGED LOOSE STACK         *
+ *         MANAGED LOOSE STACK        *
  **************************************/
 
-TEST_F(ManagedLooseStackTelemetryIntegration, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, EnabledTelemetry_ReturnsRealTelemetry)
+{
+    [[maybe_unused]] auto telemetry = stack.getTelemetry();
+    const bool result               = std::is_same_v<decltype(telemetry), pmm::StackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
+
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, DisabledTelemetry_ReturnsDummyTelemetry)
+{
+    const pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ size };
+    [[maybe_unused]] const auto telemetry = noTelemetryStack.getTelemetry();
+    const bool result                     = std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
+
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)
 { EXPECT_TRUE(stack.isTelemetryEnabled()); }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, TelemetryEnabledStack_ReturnsTelemetryData)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, TelemetryEnabledStack_ReturnsTelemetryData)
 {
     const auto& telemetry = stack.getTelemetry();
     static_assert(std::is_same_v<decltype(telemetry), const pmm::StackTelemetry&> == true);
@@ -87,7 +106,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, TelemetryEnabledStack_ReturnsTelem
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
 {
     constexpr auto noTelStackSize = 2_KB;
     const pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
@@ -97,7 +116,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, TelemetryDisabled_IsTelemetryEnabl
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
 {
     constexpr auto noTelStackSize = 2_KB;
     const pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
@@ -109,7 +128,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, TelemetryDisabledStack_ReturnsZero
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, AllocationUsingAllocBytes_IncreasesMemoryUsage)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, AllocationUsingAllocBytes_IncreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 128_KB;
     constexpr auto alignment      = 1024;
@@ -130,7 +149,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, AllocationUsingAllocBytes_Increase
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, AllocationUsingAlloc_IncreasesMemoryUsage)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, AllocationUsingAlloc_IncreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 2_KB;
     const auto& telemetry         = stack.getTelemetry();
@@ -149,7 +168,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, AllocationUsingAlloc_IncreasesMemo
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, AllocationUsingAllocV_IncreasesMemoryUsage)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, AllocationUsingAllocV_IncreasesMemoryUsage)
 {
     constexpr auto count          = 1000;
     constexpr auto bytesAllocated = count * sizeof(int);
@@ -169,7 +188,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, AllocationUsingAllocV_IncreasesMem
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, FreeUsingFreeBytes_DecreasesMemoryUsage)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, FreeUsingFreeBytes_DecreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 128_KB;
     constexpr auto alignment      = 1024;
@@ -188,7 +207,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, FreeUsingFreeBytes_DecreasesMemory
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, FreeUsingFree_DecreasesMemoryUsage)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, FreeUsingFree_DecreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 2_KB;
     const auto& telemetry         = stack.getTelemetry();
@@ -206,7 +225,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, FreeUsingFree_DecreasesMemoryUsage
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, FreeUsingFreeV_DecreasesMemoryUsage)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, FreeUsingFreeV_DecreasesMemoryUsage)
 {
     constexpr auto count          = 1000;
     constexpr auto bytesAllocated = count * sizeof(int);
@@ -226,7 +245,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, FreeUsingFreeV_DecreasesMemoryUsag
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, ResizingToLargerSize_IncreasesMemoryUsage)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, ResizingToLargerSize_IncreasesMemoryUsage)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -244,7 +263,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, ResizingToLargerSize_IncreasesMemo
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, ResizingToSmallerSize_DoesNotIncreaseMemoryUsage)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, ResizingToSmallerSize_DoesNotIncreaseMemoryUsage)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -264,7 +283,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, ResizingToSmallerSize_DoesNotIncre
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, ResizeFast_ResizingToLargerSize_AlwaysIncreaseMemoryUsage)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, ResizeFast_ResizingToLargerSize_AlwaysIncreaseMemoryUsage)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -282,7 +301,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, ResizeFast_ResizingToLargerSize_Al
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, ResizeFast_ResizingToSmallerSize_AlwaysIncreaseMemoryUsage)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, ResizeFast_ResizingToSmallerSize_AlwaysIncreaseMemoryUsage)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -303,7 +322,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, ResizeFast_ResizingToSmallerSize_A
 /**
  * @test Verify that loose stack's resize last decreases memory usage when resized to a smaller size.
  */
-TEST_F(ManagedLooseStackTelemetryIntegration, ResizeLast_ResizingToLargerSize_DecreasesMemoryUsageToNewSize)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, ResizeLast_ResizingToLargerSize_DecreasesMemoryUsageToNewSize)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -320,7 +339,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, ResizeLast_ResizingToLargerSize_De
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, ResizeLast_ResizingToLargerSize_DoesNotChangePadding)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, ResizeLast_ResizingToLargerSize_DoesNotChangePadding)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -340,7 +359,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, ResizeLast_ResizingToLargerSize_Do
  * @test Verify that loose stack's resize last only increases memory usage by new size difference
  *       when resized to a larger size.
  */
-TEST_F(ManagedLooseStackTelemetryIntegration, ResizeFast_ResizingToSmallerSize_DecreasesMemoryUsageToNewSize)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, ResizeFast_ResizingToSmallerSize_DecreasesMemoryUsageToNewSize)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -357,7 +376,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, ResizeFast_ResizingToSmallerSize_D
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, ResizeLast_ResizingToSmallerSize_DoesNotChangePadding)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, ResizeLast_ResizingToSmallerSize_DoesNotChangePadding)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -373,7 +392,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, ResizeLast_ResizingToSmallerSize_D
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, Clear_ResetPaddingAndMemoryUsage)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, Clear_ResetPaddingAndMemoryUsage)
 {
     constexpr auto allocSize = 256_KB;
     const auto& telemetry    = stack.getTelemetry();
@@ -387,7 +406,7 @@ TEST_F(ManagedLooseStackTelemetryIntegration, Clear_ResetPaddingAndMemoryUsage)
 }
 
 
-TEST_F(ManagedLooseStackTelemetryIntegration, Clear_DoesNotResetPeakAndMinUsage)
+TEST_F(ManagedLooseStackTelemetryIntegrationTests, Clear_DoesNotResetPeakAndMinUsage)
 {
     constexpr auto allocSize = 256_KB;
     const auto& telemetry    = stack.getTelemetry();
@@ -406,11 +425,28 @@ TEST_F(ManagedLooseStackTelemetryIntegration, Clear_DoesNotResetPeakAndMinUsage)
  *        MANAGED STRICT STACK        *
  **************************************/
 
-TEST_F(ManagedStrictStackTelemetryIntegration, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, EnabledTelemetry_ReturnsRealTelemetry)
+{
+    [[maybe_unused]] auto telemetry = stack.getTelemetry();
+    const bool result               = std::is_same_v<decltype(telemetry), pmm::StackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
+
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, DisabledTelemetry_ReturnsDummyTelemetry)
+{
+    const pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ size };
+    [[maybe_unused]] const auto telemetry = noTelemetryStack.getTelemetry();
+    const bool result                     = std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
+
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)
 { EXPECT_TRUE(stack.isTelemetryEnabled()); }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, TelemetryEnabledStack_ReturnsTelemetryData)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, TelemetryEnabledStack_ReturnsTelemetryData)
 {
     const auto& telemetry = stack.getTelemetry();
     static_assert(std::is_same_v<decltype(telemetry), const pmm::StackTelemetry&> == true);
@@ -418,7 +454,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, TelemetryEnabledStack_ReturnsTele
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
 {
     constexpr auto noTelStackSize = 2_KB;
     const pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
@@ -428,7 +464,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, TelemetryDisabled_IsTelemetryEnab
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
 {
     constexpr auto noTelStackSize = 2_KB;
     const pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
@@ -440,7 +476,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, TelemetryDisabledStack_ReturnsZer
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, AllocationUsingAllocBytes_IncreasesMemoryUsage)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, AllocationUsingAllocBytes_IncreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 128_KB;
     constexpr auto alignment      = 1024;
@@ -461,7 +497,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, AllocationUsingAllocBytes_Increas
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, AllocationUsingAlloc_IncreasesMemoryUsage)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, AllocationUsingAlloc_IncreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 2_KB;
     const auto& telemetry         = stack.getTelemetry();
@@ -480,7 +516,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, AllocationUsingAlloc_IncreasesMem
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, AllocationUsingAllocV_IncreasesMemoryUsage)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, AllocationUsingAllocV_IncreasesMemoryUsage)
 {
     constexpr auto count          = 1000;
     constexpr auto bytesAllocated = count * sizeof(int);
@@ -500,7 +536,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, AllocationUsingAllocV_IncreasesMe
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, FreeUsingFreeBytes_DecreasesMemoryUsage)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, FreeUsingFreeBytes_DecreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 128_KB;
     constexpr auto alignment      = 1024;
@@ -519,7 +555,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, FreeUsingFreeBytes_DecreasesMemor
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, FreeUsingFree_DecreasesMemoryUsage)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, FreeUsingFree_DecreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 2_KB;
     const auto& telemetry         = stack.getTelemetry();
@@ -537,7 +573,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, FreeUsingFree_DecreasesMemoryUsag
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, FreeUsingFreeV_DecreasesMemoryUsage)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, FreeUsingFreeV_DecreasesMemoryUsage)
 {
     constexpr auto count          = 1000;
     constexpr auto bytesAllocated = count * sizeof(int);
@@ -560,7 +596,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, FreeUsingFreeV_DecreasesMemoryUsa
  * @test Verify that latest allocation in strict stack when resized to a larger size, increases memory footprint
  *       to the newer(larger) size, but not consuming both old size and new size.
  */
-TEST_F(ManagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToLargerSize_IncreasesMemoryUsageToNewSize)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, LatestAllocation_ResizingToLargerSize_IncreasesMemoryUsageToNewSize)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -576,7 +612,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToLarger
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToLargerSize_PaddingDoesNotChange)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, LatestAllocation_ResizingToLargerSize_PaddingDoesNotChange)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -595,7 +631,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToLarger
  * @test Verify that latest allocation in strict stack when resized to a smaller size, decreases memory footprint
  *       to the newer(smaller) size.
  */
-TEST_F(ManagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToSmallerSize_DecreasesMemoryUsageToSize)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, LatestAllocation_ResizingToSmallerSize_DecreasesMemoryUsageToSize)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -611,7 +647,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToSmalle
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToSmallerSize_PaddingDoesNotChange)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, LatestAllocation_ResizingToSmallerSize_PaddingDoesNotChange)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -626,7 +662,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToSmalle
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, AnyAllocation_ResizingToLargerSize_IncreasesMemoryUsage)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, AnyAllocation_ResizingToLargerSize_IncreasesMemoryUsage)
 {
     constexpr auto oldSize       = 128_KB;
     constexpr auto newSize       = 256_KB;
@@ -649,7 +685,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, AnyAllocation_ResizingToLargerSiz
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, AnyAllocation_ResizingToSmallerSize_DoesNotIncreaseMemoryUsage)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, AnyAllocation_ResizingToSmallerSize_DoesNotIncreaseMemoryUsage)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -674,7 +710,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, AnyAllocation_ResizingToSmallerSi
 /**
  * @test Verify that loose stack's resize last decreases memory usage when resized to a smaller size.
  */
-TEST_F(ManagedStrictStackTelemetryIntegration, ResizeLast_ResizingToLargerSize_DecreasesMemoryUsageToNewSize)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, ResizeLast_ResizingToLargerSize_DecreasesMemoryUsageToNewSize)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -691,7 +727,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, ResizeLast_ResizingToLargerSize_D
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, ResizeLast_ResizingToLargerSize_DoesNotChangePadding)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, ResizeLast_ResizingToLargerSize_DoesNotChangePadding)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -711,7 +747,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, ResizeLast_ResizingToLargerSize_D
  * @test Verify that loose stack's resize last only increases memory usage by new size difference
  *       when resized to a larger size.
  */
-TEST_F(ManagedStrictStackTelemetryIntegration, ResizeFast_ResizingToSmallerSize_DecreasesMemoryUsageToNewSize)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, ResizeFast_ResizingToSmallerSize_DecreasesMemoryUsageToNewSize)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -728,7 +764,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, ResizeFast_ResizingToSmallerSize_
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, ResizeLast_ResizingToSmallerSize_DoesNotChangePadding)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, ResizeLast_ResizingToSmallerSize_DoesNotChangePadding)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -744,7 +780,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, ResizeLast_ResizingToSmallerSize_
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, Clear_ResetPaddingAndMemoryUsage)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, Clear_ResetPaddingAndMemoryUsage)
 {
     constexpr auto allocSize = 256_KB;
     const auto& telemetry    = stack.getTelemetry();
@@ -758,7 +794,7 @@ TEST_F(ManagedStrictStackTelemetryIntegration, Clear_ResetPaddingAndMemoryUsage)
 }
 
 
-TEST_F(ManagedStrictStackTelemetryIntegration, Clear_DoesNotResetPeakAndMinUsage)
+TEST_F(ManagedStrictStackTelemetryIntegrationTests, Clear_DoesNotResetPeakAndMinUsage)
 {
     constexpr auto allocSize = 256_KB;
     const auto& telemetry    = stack.getTelemetry();
@@ -774,14 +810,32 @@ TEST_F(ManagedStrictStackTelemetryIntegration, Clear_DoesNotResetPeakAndMinUsage
 
 
 /**************************************
- *       UN-MANGED LOOSE STACK        *
+ *       UN-MANAGED LOOSE STACK       *
  **************************************/
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, EnabledTelemetry_ReturnsRealTelemetry)
+{
+    [[maybe_unused]] auto telemetry = stack.getTelemetry();
+    const bool result               = std::is_same_v<decltype(telemetry), pmm::StackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
+
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, DisabledTelemetry_ReturnsDummyTelemetry)
+{
+    const pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ buffer,
+                                                                                                          size };
+    [[maybe_unused]] const auto telemetry = noTelemetryStack.getTelemetry();
+    const bool result                     = std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
+
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)
 { EXPECT_TRUE(stack.isTelemetryEnabled()); }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, TelemetryEnabledStack_ReturnsTelemetryData)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, TelemetryEnabledStack_ReturnsTelemetryData)
 {
     const auto& telemetry = stack.getTelemetry();
     static_assert(std::is_same_v<decltype(telemetry), const pmm::StackTelemetry&> == true);
@@ -789,29 +843,25 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, TelemetryEnabledStack_ReturnsTel
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
 {
-    constexpr auto noTelStackSize = 2_KB;
-    const pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
-        noTelStackSize
-    };
+    const pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ buffer,
+                                                                                                          size };
     EXPECT_FALSE(noTelemetryStack.isTelemetryEnabled());
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
 {
-    constexpr auto noTelStackSize = 2_KB;
-    const pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
-        noTelStackSize
-    };
+    const pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ buffer,
+                                                                                                          size };
     const auto& telemetry = noTelemetryStack.getTelemetry();
     static_assert(std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry&> == true);
     EXPECT_EQ(0, telemetry.getStackSize());
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, AllocationUsingAllocBytes_IncreasesMemoryUsage)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, AllocationUsingAllocBytes_IncreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 128_KB;
     constexpr auto alignment      = 1024;
@@ -832,7 +882,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, AllocationUsingAllocBytes_Increa
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, AllocationUsingAlloc_IncreasesMemoryUsage)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, AllocationUsingAlloc_IncreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 2_KB;
     const auto& telemetry         = stack.getTelemetry();
@@ -851,7 +901,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, AllocationUsingAlloc_IncreasesMe
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, AllocationUsingAllocV_IncreasesMemoryUsage)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, AllocationUsingAllocV_IncreasesMemoryUsage)
 {
     constexpr auto count          = 1000;
     constexpr auto bytesAllocated = count * sizeof(int);
@@ -871,7 +921,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, AllocationUsingAllocV_IncreasesM
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, FreeUsingFreeBytes_DecreasesMemoryUsage)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, FreeUsingFreeBytes_DecreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 128_KB;
     constexpr auto alignment      = 1024;
@@ -890,7 +940,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, FreeUsingFreeBytes_DecreasesMemo
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, FreeUsingFree_DecreasesMemoryUsage)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, FreeUsingFree_DecreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 2_KB;
     const auto& telemetry         = stack.getTelemetry();
@@ -908,7 +958,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, FreeUsingFree_DecreasesMemoryUsa
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, FreeUsingFreeV_DecreasesMemoryUsage)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, FreeUsingFreeV_DecreasesMemoryUsage)
 {
     constexpr auto count          = 1000;
     constexpr auto bytesAllocated = count * sizeof(int);
@@ -928,7 +978,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, FreeUsingFreeV_DecreasesMemoryUs
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizingToLargerSize_IncreasesMemoryUsage)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, ResizingToLargerSize_IncreasesMemoryUsage)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -946,7 +996,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizingToLargerSize_IncreasesMe
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizingToSmallerSize_DoesNotIncreaseMemoryUsage)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, ResizingToSmallerSize_DoesNotIncreaseMemoryUsage)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -966,7 +1016,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizingToSmallerSize_DoesNotInc
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizeFast_ResizingToLargerSize_AlwaysIncreaseMemoryUsage)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, ResizeFast_ResizingToLargerSize_AlwaysIncreaseMemoryUsage)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -984,7 +1034,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizeFast_ResizingToLargerSize_
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizeFast_ResizingToSmallerSize_AlwaysIncreaseMemoryUsage)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, ResizeFast_ResizingToSmallerSize_AlwaysIncreaseMemoryUsage)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -1005,7 +1055,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizeFast_ResizingToSmallerSize
 /**
  * @test Verify that loose stack's resize last decreases memory usage when resized to a smaller size.
  */
-TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizeLast_ResizingToLargerSize_DecreasesMemoryUsageToNewSize)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, ResizeLast_ResizingToLargerSize_DecreasesMemoryUsageToNewSize)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -1022,7 +1072,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizeLast_ResizingToLargerSize_
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizeLast_ResizingToLargerSize_DoesNotChangePadding)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, ResizeLast_ResizingToLargerSize_DoesNotChangePadding)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -1042,7 +1092,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizeLast_ResizingToLargerSize_
  * @test Verify that loose stack's resize last only increases memory usage by new size difference
  *       when resized to a larger size.
  */
-TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizeFast_ResizingToSmallerSize_DecreasesMemoryUsageToNewSize)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, ResizeFast_ResizingToSmallerSize_DecreasesMemoryUsageToNewSize)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -1059,7 +1109,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizeFast_ResizingToSmallerSize
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizeLast_ResizingToSmallerSize_DoesNotChangePadding)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, ResizeLast_ResizingToSmallerSize_DoesNotChangePadding)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -1075,7 +1125,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, ResizeLast_ResizingToSmallerSize
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, Clear_ResetPaddingAndMemoryUsage)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, Clear_ResetPaddingAndMemoryUsage)
 {
     constexpr auto allocSize = 256_KB;
     const auto& telemetry    = stack.getTelemetry();
@@ -1089,7 +1139,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, Clear_ResetPaddingAndMemoryUsage
 }
 
 
-TEST_F(UnmanagedLooseStackTelemetryIntegration, Clear_DoesNotResetPeakAndMinUsage)
+TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, Clear_DoesNotResetPeakAndMinUsage)
 {
     constexpr auto allocSize = 256_KB;
     const auto& telemetry    = stack.getTelemetry();
@@ -1108,11 +1158,29 @@ TEST_F(UnmanagedLooseStackTelemetryIntegration, Clear_DoesNotResetPeakAndMinUsag
  *      UN-MANAGED STRICT STACK       *
  **************************************/
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, EnabledTelemetry_ReturnsRealTelemetry)
+{
+    [[maybe_unused]] auto telemetry = stack.getTelemetry();
+    const bool result               = std::is_same_v<decltype(telemetry), pmm::StackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
+
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, DisabledTelemetry_ReturnsDummyTelemetry)
+{
+    const pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ buffer,
+                                                                                                           size };
+    [[maybe_unused]] const auto telemetry = noTelemetryStack.getTelemetry();
+    const bool result                     = std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry>;
+    EXPECT_TRUE(result);
+}
+
+
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, TelemetryEnabled_IsTelemetryEnabled_ReturnsTrue)
 { EXPECT_TRUE(stack.isTelemetryEnabled()); }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, TelemetryEnabledStack_ReturnsTelemetryData)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, TelemetryEnabledStack_ReturnsTelemetryData)
 {
     const auto& telemetry = stack.getTelemetry();
     static_assert(std::is_same_v<decltype(telemetry), const pmm::StackTelemetry&> == true);
@@ -1120,29 +1188,26 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, TelemetryEnabledStack_ReturnsTe
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
 {
-    constexpr auto noTelStackSize = 2_KB;
-    const pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
-        noTelStackSize
-    };
+    const pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ buffer,
+                                                                                                           size };
     EXPECT_FALSE(noTelemetryStack.isTelemetryEnabled());
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
 {
-    constexpr auto noTelStackSize = 2_KB;
-    const pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory, pmm::telemetry::Disabled> noTelemetryStack{
-        noTelStackSize
-    };
+
+    const pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory, pmm::telemetry::Disabled> noTelemetryStack{ buffer,
+                                                                                                           size };
     const auto& telemetry = noTelemetryStack.getTelemetry();
     static_assert(std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry&> == true);
     EXPECT_EQ(0, telemetry.getStackSize());
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, AllocationUsingAllocBytes_IncreasesMemoryUsage)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, AllocationUsingAllocBytes_IncreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 128_KB;
     constexpr auto alignment      = 1024;
@@ -1163,7 +1228,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, AllocationUsingAllocBytes_Incre
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, AllocationUsingAlloc_IncreasesMemoryUsage)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, AllocationUsingAlloc_IncreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 2_KB;
     const auto& telemetry         = stack.getTelemetry();
@@ -1182,7 +1247,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, AllocationUsingAlloc_IncreasesM
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, AllocationUsingAllocV_IncreasesMemoryUsage)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, AllocationUsingAllocV_IncreasesMemoryUsage)
 {
     constexpr auto count          = 1000;
     constexpr auto bytesAllocated = count * sizeof(int);
@@ -1202,7 +1267,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, AllocationUsingAllocV_Increases
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, FreeUsingFreeBytes_DecreasesMemoryUsage)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, FreeUsingFreeBytes_DecreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 128_KB;
     constexpr auto alignment      = 1024;
@@ -1221,7 +1286,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, FreeUsingFreeBytes_DecreasesMem
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, FreeUsingFree_DecreasesMemoryUsage)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, FreeUsingFree_DecreasesMemoryUsage)
 {
     constexpr auto bytesAllocated = 2_KB;
     const auto& telemetry         = stack.getTelemetry();
@@ -1239,7 +1304,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, FreeUsingFree_DecreasesMemoryUs
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, FreeUsingFreeV_DecreasesMemoryUsage)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, FreeUsingFreeV_DecreasesMemoryUsage)
 {
     constexpr auto count          = 1000;
     constexpr auto bytesAllocated = count * sizeof(int);
@@ -1262,7 +1327,8 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, FreeUsingFreeV_DecreasesMemoryU
  * @test Verify that latest allocation in strict stack when resized to a larger size, increases memory footprint
  *       to the newer(larger) size, but not consuming both old size and new size.
  */
-TEST_F(UnmanagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToLargerSize_IncreasesMemoryUsageToNewSize)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests,
+       LatestAllocation_ResizingToLargerSize_IncreasesMemoryUsageToNewSize)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -1278,7 +1344,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToLarg
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToLargerSize_PaddingDoesNotChange)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, LatestAllocation_ResizingToLargerSize_PaddingDoesNotChange)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -1297,7 +1363,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToLarg
  * @test Verify that latest allocation in strict stack when resized to a smaller size, decreases memory footprint
  *       to the newer(smaller) size.
  */
-TEST_F(UnmanagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToSmallerSize_DecreasesMemoryUsageToSize)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, LatestAllocation_ResizingToSmallerSize_DecreasesMemoryUsageToSize)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -1313,7 +1379,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToSmal
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToSmallerSize_PaddingDoesNotChange)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, LatestAllocation_ResizingToSmallerSize_PaddingDoesNotChange)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -1328,7 +1394,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, LatestAllocation_ResizingToSmal
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, AnyAllocation_ResizingToLargerSize_IncreasesMemoryUsage)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, AnyAllocation_ResizingToLargerSize_IncreasesMemoryUsage)
 {
     constexpr auto oldSize       = 128_KB;
     constexpr auto newSize       = 256_KB;
@@ -1351,7 +1417,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, AnyAllocation_ResizingToLargerS
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, AnyAllocation_ResizingToSmallerSize_DoesNotIncreaseMemoryUsage)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, AnyAllocation_ResizingToSmallerSize_DoesNotIncreaseMemoryUsage)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -1376,7 +1442,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, AnyAllocation_ResizingToSmaller
 /**
  * @test Verify that loose stack's resize last decreases memory usage when resized to a smaller size.
  */
-TEST_F(UnmanagedStrictStackTelemetryIntegration, ResizeLast_ResizingToLargerSize_DecreasesMemoryUsageToNewSize)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, ResizeLast_ResizingToLargerSize_DecreasesMemoryUsageToNewSize)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -1393,7 +1459,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, ResizeLast_ResizingToLargerSize
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, ResizeLast_ResizingToLargerSize_DoesNotChangePadding)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, ResizeLast_ResizingToLargerSize_DoesNotChangePadding)
 {
     constexpr auto oldSize = 128_KB;
     constexpr auto newSize = 256_KB;
@@ -1413,7 +1479,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, ResizeLast_ResizingToLargerSize
  * @test Verify that loose stack's resize last only increases memory usage by new size difference
  *       when resized to a larger size.
  */
-TEST_F(UnmanagedStrictStackTelemetryIntegration, ResizeFast_ResizingToSmallerSize_DecreasesMemoryUsageToNewSize)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, ResizeFast_ResizingToSmallerSize_DecreasesMemoryUsageToNewSize)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -1430,7 +1496,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, ResizeFast_ResizingToSmallerSiz
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, ResizeLast_ResizingToSmallerSize_DoesNotChangePadding)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, ResizeLast_ResizingToSmallerSize_DoesNotChangePadding)
 {
     constexpr auto oldSize = 256_KB;
     constexpr auto newSize = 128_KB;
@@ -1446,7 +1512,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, ResizeLast_ResizingToSmallerSiz
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, Clear_ResetPaddingAndMemoryUsage)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, Clear_ResetPaddingAndMemoryUsage)
 {
     constexpr auto allocSize = 256_KB;
     const auto& telemetry    = stack.getTelemetry();
@@ -1460,7 +1526,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegration, Clear_ResetPaddingAndMemoryUsag
 }
 
 
-TEST_F(UnmanagedStrictStackTelemetryIntegration, Clear_DoesNotResetPeakAndMinUsage)
+TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, Clear_DoesNotResetPeakAndMinUsage)
 {
     constexpr auto allocSize = 256_KB;
     const auto& telemetry    = stack.getTelemetry();

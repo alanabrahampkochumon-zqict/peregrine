@@ -28,11 +28,27 @@ namespace
  *            LOOSE STACK             *
  **************************************/
 
+TEST(ManagedLooseStackCtorTests, ZeroSize_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory>(0)), ""); }
+
+
+TEST(UnmanagedLooseStackCtorTests, ZeroSize_TriggersAssertionInDebugMode)
+{
+    const auto buffer = new uint8_t[512];
+    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory>(buffer, 0)), "");
+    delete[] buffer;
+}
+
+
+TEST(UnmanagedLooseStackCtorTests, NullptrForBackingBuffer_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory>(nullptr, 512)), ""); }
+
+
 /**
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*, when allocating memory greater
  *        than the stack capacity.
  */
-TEST_F(LooseStack, Allocation_GreaterThanCapacity_TriggersAssertionInDebugMode)
+TEST_F(LooseStackTests, Allocation_GreaterThanCapacity_TriggersAssertionInDebugMode)
 { EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocBytes(stackSize + 10)), ""); }
 
 
@@ -40,7 +56,7 @@ TEST_F(LooseStack, Allocation_GreaterThanCapacity_TriggersAssertionInDebugMode)
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
  *        given a stack nearing its capacity(allocation > free).
  */
-TEST_F(LooseStack, Allocation_NearFullStack_TriggersAssertion)
+TEST_F(LooseStackTests, Allocation_NearFullStack_TriggersAssertion)
 {
     // Allocate a big chunk to fill the stack near capacity
     static_cast<void>(stack.allocBytes(stackSize - 50));
@@ -62,7 +78,7 @@ TEST_P(StackAlignmentNonPowersOfTwo, LooseStackAllocation_InFullStack_TriggersAs
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
  *        given alignment greater than 128.
  */
-TEST_F(LooseStack, Allocation_GreaterThanSize_TriggersAssertion)
+TEST_F(LooseStackTests, Allocation_GreaterThanSize_TriggersAssertion)
 { EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocBytes(500, 255)), ""); }
 
 
@@ -70,7 +86,7 @@ TEST_F(LooseStack, Allocation_GreaterThanSize_TriggersAssertion)
  * @brief Verify that stack allocV triggers assertion in *DEBUG MODE*,
  *        when trying to allocate a zero size buffer.
  */
-TEST_F(LooseStack, AllocV_SizeZero_TriggersAssertion)
+TEST_F(LooseStackTests, AllocV_SizeZero_TriggersAssertion)
 { EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocV<int>(0)), ""); }
 
 
@@ -78,14 +94,14 @@ TEST_F(LooseStack, AllocV_SizeZero_TriggersAssertion)
  * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing nullptr.
  */
-TEST_F(LooseStack, FreeBytes_Nullptr_TriggersAssertion) { EXPECT_DEBUG_DEATH(stack.freeBytes(nullptr), ""); }
+TEST_F(LooseStackTests, FreeBytes_Nullptr_TriggersAssertion) { EXPECT_DEBUG_DEATH(stack.freeBytes(nullptr), ""); }
 
 
 /**
  * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing unallocated valid memory space.
  */
-TEST_F(LooseStack, FreeBytes_UnallocatedMemoryAddress_TriggersAssertion)
+TEST_F(LooseStackTests, FreeBytes_UnallocatedMemoryAddress_TriggersAssertion)
 {
     constexpr auto size = 512;
     const auto memory   = static_cast<char*>(stack.allocBytes(size));
@@ -97,16 +113,15 @@ TEST_F(LooseStack, FreeBytes_UnallocatedMemoryAddress_TriggersAssertion)
  * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing memory space below the base memory address.
  */
-TEST_F(LooseStack, FreeBytes_BelowBufferMemoryAddress_TriggersAssertion)
+TEST_F(LooseStackTests, FreeBytes_BelowFirstAllocationAddress_TriggersAssertion)
 {
     constexpr auto size      = 512;
     constexpr auto alignment = 8;
-    // We are assuming worst case padding of 7 for alignment
-    constexpr auto assumedHeaderSize = sizeof(pmm::LooseStackHeader) + alignment - 1;
 
     const auto memory = static_cast<char*>(stack.allocBytes(size, alignment));
+    
     // Move 1 below assume header size
-    EXPECT_DEBUG_DEATH(stack.freeBytes(memory - assumedHeaderSize - 1), "");
+    EXPECT_DEBUG_DEATH(stack.freeBytes(memory - 1), "");
 }
 
 
@@ -114,7 +129,7 @@ TEST_F(LooseStack, FreeBytes_BelowBufferMemoryAddress_TriggersAssertion)
  * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing memory above maximum memory address.
  */
-TEST_F(LooseStack, FreeBytes_BeyondCapacity_TriggersAssertion)
+TEST_F(LooseStackTests, FreeBytes_BeyondCapacity_TriggersAssertion)
 {
     constexpr auto size = 512;
     const auto memory   = static_cast<char*>(stack.allocBytes(size, 8));
@@ -127,7 +142,7 @@ TEST_F(LooseStack, FreeBytes_BeyondCapacity_TriggersAssertion)
  * @brief Verify that stack resize triggers assertion in *DEBUG MODE*,
  *        when trying to resize a nullptr.
  */
-TEST_F(LooseStack, Resize_Nullptr_TriggersAssertion)
+TEST_F(LooseStackTests, Resize_Nullptr_TriggersAssertion)
 { EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(nullptr, 120, 256)), ""); }
 
 
@@ -135,18 +150,31 @@ TEST_F(LooseStack, Resize_Nullptr_TriggersAssertion)
  * @brief Verify that stack resize triggers assertion in *DEBUG MODE*,
  *        when trying to resize to 0.
  */
-TEST_F(LooseStack, Resize_ToZero_TriggersAssertion)
+TEST_F(LooseStackTests, Resize_ToZero_TriggersAssertion)
 {
     const auto address = stack.allocBytes(128);
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(address, 128, 0)), "");
 }
 
 
+TEST_F(LooseStackTests, Resize_FromZero_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(address, 0, 256)), "");
+}
+
+
+TEST_F(LooseStackTests, Resize_LatestAllocation_ToAnInsufficentlyLargeSizeTriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(address, 128, stackSize)), "");
+}
+
 /**
  * @brief Verify that stack resize using resizeFast triggers assertion in *DEBUG MODE*,
  *        when trying to resize a nullptr.
  */
-TEST_F(LooseStack, ResizeFast_Nullptr_TriggersAssertion)
+TEST_F(LooseStackTests, ResizeFast_Nullptr_TriggersAssertion)
 { EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(nullptr, 120, 256)), ""); }
 
 
@@ -154,10 +182,16 @@ TEST_F(LooseStack, ResizeFast_Nullptr_TriggersAssertion)
  * @brief Verify that stack resize using resizeFast triggers assertion in *DEBUG MODE*,
  *        when trying to resize to 0.
  */
-TEST_F(LooseStack, ResizeFast_ToZero_TriggersAssertion)
+TEST_F(LooseStackTests, ResizeFast_ToZero_TriggersAssertion)
 {
     const auto address = stack.allocBytes(128);
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(address, 128, 0)), "");
+}
+
+TEST_F(LooseStackTests, ResizeFast_FromZero_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(address, 0, 256)), "");
 }
 
 
@@ -165,7 +199,7 @@ TEST_F(LooseStack, ResizeFast_ToZero_TriggersAssertion)
  * @brief Verify that stack resize using resizeLast triggers assertion in *DEBUG MODE*,
  *        when trying to resize a nullptr.
  */
-TEST_F(LooseStack, ResizeLast_Nullptr_TriggersAssertion)
+TEST_F(LooseStackTests, ResizeLast_Nullptr_TriggersAssertion)
 { EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(nullptr, 120, 256)), ""); }
 
 
@@ -173,23 +207,45 @@ TEST_F(LooseStack, ResizeLast_Nullptr_TriggersAssertion)
  * @brief Verify that stack resize using resizeLast triggers assertion in *DEBUG MODE*,
  *        when trying to resize to 0.
  */
-TEST_F(LooseStack, ResizeLast_ToZero_TriggersAssertion)
+TEST_F(LooseStackTests, ResizeLast_ToZero_TriggersAssertion)
 {
     const auto address = stack.allocBytes(128);
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(address, 128, 0)), "");
 }
 
 
+TEST_F(LooseStackTests, ResizeLast_FromZero_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(address, 0, 256)), "");
+}
+
 
 /**************************************
  *            STRICT STACK            *
  **************************************/
 
+TEST(ManagedStrictStackCtorTests, ZeroSize_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory>(0)), ""); }
+
+
+TEST(UnmanagedStrictStackCtorTests, ZeroSize_TriggersAssertionInDebugMode)
+{
+    const auto buffer = new uint8_t[512];
+    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory>(buffer, 0)), "");
+    delete[] buffer;
+}
+
+
+TEST(UnmanagedStrictStackCtorTests, NullptrForBackingBuffer_TriggersAssertionInDebugMode)
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory>(nullptr, 512)), ""); }
+
+
 /**
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*, when allocating memory greater
  *        than the stack capacity.
  */
-TEST_F(StrictStack, Allocation_GreaterThanCapacity_TriggersAssertionInDebugMode)
+TEST_F(StrictStackTests, Allocation_GreaterThanCapacity_TriggersAssertionInDebugMode)
 { EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocBytes(stackSize + 10)), ""); }
 
 
@@ -197,7 +253,7 @@ TEST_F(StrictStack, Allocation_GreaterThanCapacity_TriggersAssertionInDebugMode)
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
  *        given a stack nearing its capacity(allocation > free).
  */
-TEST_F(StrictStack, Allocation_NearFullStack_TriggersAssertion)
+TEST_F(StrictStackTests, Allocation_NearFullStack_TriggersAssertion)
 {
     // Allocate a big chunk to fill the stack near capacity
     static_cast<void>(stack.allocBytes(stackSize - 50));
@@ -219,7 +275,7 @@ TEST_P(StackAlignmentNonPowersOfTwo, StrictStackAllocation_InFullStack_TriggersA
  * @brief Verify that stack allocation triggers assertion in *DEBUG MODE*,
  *        given alignment greater than 128.
  */
-TEST_F(StrictStack, Allocation_GreaterThanSize_TriggersAssertion)
+TEST_F(StrictStackTests, Allocation_GreaterThanSize_TriggersAssertion)
 { EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocBytes(500, 255)), ""); }
 
 
@@ -227,7 +283,7 @@ TEST_F(StrictStack, Allocation_GreaterThanSize_TriggersAssertion)
  * @brief Verify that stack allocV triggers assertion in *DEBUG MODE*,
  *        when trying to allocate a zero size buffer.
  */
-TEST_F(StrictStack, AllocV_SizeZero_TriggersAssertion)
+TEST_F(StrictStackTests, AllocV_SizeZero_TriggersAssertion)
 { EXPECT_DEBUG_DEATH(static_cast<void>(stack.allocV<int>(0)), ""); }
 
 
@@ -235,14 +291,14 @@ TEST_F(StrictStack, AllocV_SizeZero_TriggersAssertion)
  * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing nullptr.
  */
-TEST_F(StrictStack, FreeBytes_Nullptr_TriggersAssertion) { EXPECT_DEBUG_DEATH(stack.freeBytes(nullptr), ""); }
+TEST_F(StrictStackTests, FreeBytes_Nullptr_TriggersAssertion) { EXPECT_DEBUG_DEATH(stack.freeBytes(nullptr), ""); }
 
 
 /**
  * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing unallocated valid memory space.
  */
-TEST_F(StrictStack, FreeBytes_UnallocatedMemoryAddress_TriggersAssertion)
+TEST_F(StrictStackTests, FreeBytes_UnallocatedMemoryAddress_TriggersAssertion)
 {
     constexpr auto size = 512;
     const auto memory   = static_cast<char*>(stack.allocBytes(size));
@@ -254,16 +310,13 @@ TEST_F(StrictStack, FreeBytes_UnallocatedMemoryAddress_TriggersAssertion)
  * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing memory space below the base memory address.
  */
-TEST_F(StrictStack, FreeBytes_BelowBufferMemoryAddress_TriggersAssertion)
+TEST_F(StrictStackTests, FreeBytes_BelowFirstAllocationAddress_TriggersAssertion)
 {
     constexpr auto size      = 512;
     constexpr auto alignment = 8;
-    // We are assuming worst case padding of 7 for alignment
-    constexpr auto assumedHeaderSize = sizeof(pmm::StrictStackHeader) + alignment - 1;
-
     const auto memory = static_cast<char*>(stack.allocBytes(size, alignment));
     // Move 1 below assume header size
-    EXPECT_DEBUG_DEATH(stack.freeBytes(memory - assumedHeaderSize - 1), "");
+    EXPECT_DEBUG_DEATH(stack.freeBytes(memory - 1), "");
 }
 
 
@@ -271,7 +324,7 @@ TEST_F(StrictStack, FreeBytes_BelowBufferMemoryAddress_TriggersAssertion)
  * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when freeing memory above maximum memory address.
  */
-TEST_F(StrictStack, FreeBytes_BeyondCapacity_TriggersAssertion)
+TEST_F(StrictStackTests, FreeBytes_BeyondCapacity_TriggersAssertion)
 {
     constexpr auto size = 512;
     const auto memory   = static_cast<char*>(stack.allocBytes(size, 8));
@@ -283,7 +336,7 @@ TEST_F(StrictStack, FreeBytes_BeyondCapacity_TriggersAssertion)
  * @brief Verify that stack free triggers assertion in *DEBUG MODE*,
  *        when memory out of order of allocation.
  */
-TEST_F(StrictStack, FreeBytes_OutOfOrder_TriggersAssertion)
+TEST_F(StrictStackTests, FreeBytes_OutOfOrder_TriggersAssertion)
 {
     constexpr auto size = 512;
     const auto memory   = static_cast<char*>(stack.allocBytes(size, 8));
@@ -298,7 +351,7 @@ TEST_F(StrictStack, FreeBytes_OutOfOrder_TriggersAssertion)
  * @brief Verify that stack resize triggers assertion in *DEBUG MODE*,
  *        when trying to resize a nullptr.
  */
-TEST_F(StrictStack, Resize_Nullptr_TriggersAssertion)
+TEST_F(StrictStackTests, Resize_Nullptr_TriggersAssertion)
 { EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(nullptr, 120, 256)), ""); }
 
 
@@ -306,10 +359,24 @@ TEST_F(StrictStack, Resize_Nullptr_TriggersAssertion)
  * @brief Verify that stack resize triggers assertion in *DEBUG MODE*,
  *        when trying to resize to 0.
  */
-TEST_F(StrictStack, Resize_ToZero_TriggersAssertion)
+TEST_F(StrictStackTests, Resize_ToZero_TriggersAssertion)
 {
     const auto address = stack.allocBytes(128);
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(address, 128, 0)), "");
+}
+
+
+TEST_F(StrictStackTests, Resize_FromZero_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(address, 0, 256)), "");
+}
+
+
+TEST_F(StrictStackTests, Resize_LatestAllocation_ToAnInsufficentlyLargeSizeTriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resize(address, 128, stackSize)), "");
 }
 
 
@@ -317,7 +384,7 @@ TEST_F(StrictStack, Resize_ToZero_TriggersAssertion)
  * @brief Verify that stack resize using resizeFast triggers assertion in *DEBUG MODE*,
  *        when trying to resize a nullptr.
  */
-TEST_F(StrictStack, ResizeFast_Nullptr_TriggersAssertion)
+TEST_F(StrictStackTests, ResizeFast_Nullptr_TriggersAssertion)
 { EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(nullptr, 120, 256)), ""); }
 
 
@@ -325,18 +392,24 @@ TEST_F(StrictStack, ResizeFast_Nullptr_TriggersAssertion)
  * @brief Verify that stack resize using resizeFast triggers assertion in *DEBUG MODE*,
  *        when trying to resize to 0.
  */
-TEST_F(StrictStack, ResizeFast_ToZero_TriggersAssertion)
+TEST_F(StrictStackTests, ResizeFast_ToZero_TriggersAssertion)
 {
     const auto address = stack.allocBytes(128);
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(address, 128, 0)), "");
 }
 
 
+TEST_F(StrictStackTests, ResizeFast_FromZero_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeFast(address, 0, 256)), "");
+}
+
 /**
  * @brief Verify that stack resize using resizeLast triggers assertion in *DEBUG MODE*,
  *        when trying to resize a nullptr.
  */
-TEST_F(StrictStack, ResizeLast_Nullptr_TriggersAssertion)
+TEST_F(StrictStackTests, ResizeLast_Nullptr_TriggersAssertion)
 { EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(nullptr, 120, 256)), ""); }
 
 
@@ -344,7 +417,7 @@ TEST_F(StrictStack, ResizeLast_Nullptr_TriggersAssertion)
  * @brief Verify that stack resize using resizeLast triggers assertion in *DEBUG MODE*,
  *        when trying to resize to 0.
  */
-TEST_F(StrictStack, ResizeLast_ToZero_TriggersAssertion)
+TEST_F(StrictStackTests, ResizeLast_ToZero_TriggersAssertion)
 {
     const auto address = stack.allocBytes(128);
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(address, 128, 0)), "");
@@ -355,11 +428,18 @@ TEST_F(StrictStack, ResizeLast_ToZero_TriggersAssertion)
  * @brief Verify that stack resize using resizeLast triggers assertion in *DEBUG MODE*,
  *        when resizing allocation in out of order.
  */
-TEST_F(StrictStack, ResizeLast_OutOfOrder_TriggersAssertion)
+TEST_F(StrictStackTests, ResizeLast_OutOfOrder_TriggersAssertion)
 {
     const auto address = stack.allocBytes(128);
     static_cast<void>(stack.allocBytes(20)); // Second allocation to trigger out of order
     EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(address, 128, 0)), "");
+}
+
+
+TEST_F(StrictStackTests, ResizeLast_FromZero_TriggersAssertion)
+{
+    const auto address = stack.allocBytes(128);
+    EXPECT_DEBUG_DEATH(static_cast<void>(stack.resizeLast(address, 0, 256)), "");
 }
 
 #endif

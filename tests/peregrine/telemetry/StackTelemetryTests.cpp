@@ -26,7 +26,7 @@ namespace
      *                                    *
      **************************************/
 
-    class PoolTelemetry: public ::testing::Test
+    class StackTelemetryTests: public ::testing::Test
     {
     public:
         std::size_t size{ 10240 };
@@ -82,7 +82,7 @@ namespace
  **************************************/
 
 /** @test Verify that stack telemetry is initialized with size and usage defaults. */
-TEST_F(PoolTelemetry, IntializesWithSizeAndDefaultStats)
+TEST_F(StackTelemetryTests, IntializesWithSizeAndDefaultStats)
 {
     EXPECT_EQ(size, telemetry.getStackSize());
     EXPECT_EQ(0, telemetry.getTotalUsage());
@@ -98,7 +98,7 @@ TEST_F(PoolTelemetry, IntializesWithSizeAndDefaultStats)
 
 
 /** @test Verify that stack telemetry is incremented with correct usage values. */
-TEST_F(PoolTelemetry, IncTelemetryUsage_UpdatesWithCorrectUsage)
+TEST_F(StackTelemetryTests, IncTelemetryUsage_UpdatesWithCorrectUsage)
 {
 
     telemetry.incStackUsage(100, 8);
@@ -119,11 +119,11 @@ TEST_F(PoolTelemetry, IncTelemetryUsage_UpdatesWithCorrectUsage)
 }
 
 
-TEST(StackTelemetryHelpers, ManagedPolicy_ReturnRealStackTelemetry) {}
+TEST(StackTelemetryHelpersTests, ManagedPolicy_ReturnRealStackTelemetry) {}
 
 
 /** @test Verify that stack telemetry is decrement with correct usage values. */
-TEST_F(PoolTelemetry, DecTelemetryUsage_UpdatesWithCorrectUsage)
+TEST_F(StackTelemetryTests, DecTelemetryUsage_UpdatesWithCorrectUsage)
 {
 
     telemetry.incStackUsage(5000, 120);
@@ -142,7 +142,7 @@ TEST_F(PoolTelemetry, DecTelemetryUsage_UpdatesWithCorrectUsage)
  * @test Verify that stack telemetry updateMinMemoryUsage updates the minimum memory usage
  *       when passing in a smaller value.
  */
-TEST_F(PoolTelemetry, UpdateMinMemoryUsage_UpdateMinimumWhenPassingInASmallValue)
+TEST_F(StackTelemetryTests, UpdateMinMemoryUsage_UpdateMinimumWhenPassingInASmallValue)
 {
     constexpr std::size_t newMin = 5;
 
@@ -158,7 +158,7 @@ TEST_F(PoolTelemetry, UpdateMinMemoryUsage_UpdateMinimumWhenPassingInASmallValue
  * @test Verify that stack telemetry updateMinMemoryUsage does not update the minimum memory usage
  *       when passing in a larger value.
  */
-TEST_F(PoolTelemetry, UpdateMinMemoryUsage_DoesNotUpdateMinimumWhenPassingInALargerValue)
+TEST_F(StackTelemetryTests, UpdateMinMemoryUsage_DoesNotUpdateMinimumWhenPassingInALargerValue)
 {
     constexpr std::size_t newMin = 50;
 
@@ -176,7 +176,7 @@ TEST_F(PoolTelemetry, UpdateMinMemoryUsage_DoesNotUpdateMinimumWhenPassingInALar
  * @test Verify that stack telemetry updatePeakMemoryUsage updates the peak memory usage
  *       when passing in a larger value.
  */
-TEST_F(PoolTelemetry, UpdatePeakMemoryUsage_UpdatePeakUsageWhenPassingInALargerValue)
+TEST_F(StackTelemetryTests, UpdatePeakMemoryUsage_UpdatePeakUsageWhenPassingInALargerValue)
 {
     constexpr std::size_t newPeak = 500;
 
@@ -192,7 +192,7 @@ TEST_F(PoolTelemetry, UpdatePeakMemoryUsage_UpdatePeakUsageWhenPassingInALargerV
  * @test Verify that stack telemetry updatePeakMemoryUsage does not update the peak memory usage
  *       when passing in a smaller value.
  */
-TEST_F(PoolTelemetry, UpdatePeakMemoryUsage_DoesNotUpdatePeakUsageWhenPassingInASmallerValue)
+TEST_F(StackTelemetryTests, UpdatePeakMemoryUsage_DoesNotUpdatePeakUsageWhenPassingInASmallerValue)
 {
     constexpr std::size_t newPeak = 15;
 
@@ -210,7 +210,7 @@ TEST_F(PoolTelemetry, UpdatePeakMemoryUsage_DoesNotUpdatePeakUsageWhenPassingInA
  * @test Verify that stack telemetry updateMinPaddingUsage updates the minimum padding
  *       when passing in a smaller value.
  */
-TEST_F(PoolTelemetry, UpdateMinUsage_UpdateMinimumPaddingWhenPassingInASmallValue)
+TEST_F(StackTelemetryTests, UpdateMinUsage_UpdateMinimumPaddingWhenPassingInASmallValue)
 {
     constexpr std::size_t newMin = 5;
 
@@ -226,7 +226,7 @@ TEST_F(PoolTelemetry, UpdateMinUsage_UpdateMinimumPaddingWhenPassingInASmallValu
  * @test Verify that stack telemetry updateMinPaddingUsage does not update the minimum padding
  *       when passing in a larger value.
  */
-TEST_F(PoolTelemetry, UpdateMinUsage_DoesNotUpdateMinimumPaddingWhenPassingInALargerValue)
+TEST_F(StackTelemetryTests, UpdateMinUsage_DoesNotUpdateMinimumPaddingWhenPassingInALargerValue)
 {
     constexpr std::size_t newMin = 50;
 
@@ -244,7 +244,7 @@ TEST_F(PoolTelemetry, UpdateMinUsage_DoesNotUpdateMinimumPaddingWhenPassingInALa
  * @test Verify that stack telemetry updatePeakPaddingUsage updates the peak padding
  *       when passing in a larger value.
  */
-TEST_F(PoolTelemetry, UpdatePeakUsage_UpdatePeakPaddingUsageWhenPassingInALargerValue)
+TEST_F(StackTelemetryTests, UpdatePeakUsage_UpdatePeakPaddingUsageWhenPassingInALargerValue)
 {
     constexpr std::size_t newPeak = 500;
 
@@ -260,7 +260,7 @@ TEST_F(PoolTelemetry, UpdatePeakUsage_UpdatePeakPaddingUsageWhenPassingInALarger
  * @test Verify that stack telemetry updatePeakPaddingUsage does not update the peak padding
  *        when passing in a smaller value.
  */
-TEST_F(PoolTelemetry, UpdatePeakUsage_DoesNotUpdatePeakPaddingUsageWhenPassingInASmallerValue)
+TEST_F(StackTelemetryTests, UpdatePeakUsage_DoesNotUpdatePeakPaddingUsageWhenPassingInASmallerValue)
 {
     constexpr std::size_t newPeak = 12;
 
@@ -278,7 +278,7 @@ TEST_F(PoolTelemetry, UpdatePeakUsage_DoesNotUpdatePeakPaddingUsageWhenPassingIn
  * @test Verify that resetting the current usage resets current usage
  *       but preserves peak and minimum usage for both memory and padding.
  */
-TEST_F(PoolTelemetry, ResetCurrentUsage_OnlyResetsCurrentUsage)
+TEST_F(StackTelemetryTests, ResetCurrentUsage_OnlyResetsCurrentUsage)
 {
 
     telemetry.incStackUsage(10, 4);
@@ -304,7 +304,7 @@ TEST_F(PoolTelemetry, ResetCurrentUsage_OnlyResetsCurrentUsage)
 
 
 /** @test Verify that stack telemetry reset resets all values to default. */
-TEST_F(PoolTelemetry, Reset_ResetsUsages)
+TEST_F(StackTelemetryTests, Reset_ResetsUsages)
 {
 
     telemetry.incStackUsage(10, 4);

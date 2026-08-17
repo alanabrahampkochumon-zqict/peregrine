@@ -16,19 +16,24 @@
 #ifdef PMM_PLATFORM_GENERIC
 
     #include <cstdlib>
+    #include <cstring>
 
 namespace pmm
 {
-    void* malloc(const std::size_t byteSize) noexcept // NOLINT(bugprone-exception-escape)
+    void* memAlloc(const std::size_t byteSize) noexcept // NOLINT(bugprone-exception-escape)
     {
-        PMM_ASSERT_MSG(byteSize > 1, "Cannot allocate less than 1 byte!");
-        return std::malloc(byteSize);
+        PMM_ASSERT_MSG(byteSize > 0, "Cannot allocate 0 bytes!");
+        auto buffer = std::malloc(byteSize);
+        return memset(buffer, 0, byteSize);
     }
 
 
-    bool mfree(void* start, std::size_t) noexcept // NOLINT(bugprone-exception-escape)
+    bool memFree(void* start, std::size_t) noexcept // NOLINT(bugprone-exception-escape)
     {
-        PMM_ASSERT_MSG(start != nullptr, "Cannot free a nullptr!");
+        if (start == nullptr || size == 0)
+        {
+            return false;
+        }
         std::free(start);
         return true;
     }
