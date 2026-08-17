@@ -50,8 +50,8 @@ if (PMM_BENCHMARK)
 endif ()
 
 if (PMM_DEMO)
-    FetchContent_MakeAvailable(imgui)
     FetchContent_MakeAvailable(sdl3)
+    FetchContent_MakeAvailable(imgui)
     # Since ImGui doesn't have cmake support we need to create a custom target
     add_library(imgui STATIC
             ${imgui_SOURCE_DIR}/imgui.cpp

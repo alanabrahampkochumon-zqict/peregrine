@@ -43,15 +43,17 @@
                 "CMAKE_CXX_COMPILER": "cl",
                 "CMAKE_C_COMPILER": "cl"
             }
-        },
-        {
+        },        {
             "name": "Clang-Debug",
             "displayName": "Clang Debug",
             "inherits": "base-windows",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug",
                 "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_C_COMPILER": "clang-cl"
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_FLAGS": "-target x86_64-pc-windows-msvc",
+                "CMAKE_C_FLAGS": "-target x86_64-pc-windows-msvc",
+                "CMAKE_LINKER": "lld-link"
             }
         },
         {
@@ -61,7 +63,10 @@
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release",
                 "CMAKE_CXX_COMPILER": "clang++",
-                "CMAKE_C_COMPILER": "clang-cl"
+                "CMAKE_C_COMPILER": "clang",
+                "CMAKE_CXX_FLAGS": "-target x86_64-pc-windows-msvc",
+                "CMAKE_C_FLAGS": "-target x86_64-pc-windows-msvc",
+                "CMAKE_LINKER": "lld-link"
             }
         }
     ]

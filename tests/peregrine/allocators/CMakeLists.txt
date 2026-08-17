@@ -19,6 +19,9 @@ target_sources(
         TempArenaTests.cpp
 )
 
+# Disable padded warning for Mock.h
+target_compile_options(AllocatorTests PRIVATE $<$<CXX_COMPILER_ID:MSVC>:/wd4324>)
+
 target_include_directories(
         AllocatorTests PRIVATE
         ${ROOT_TEST_DIR}/include
