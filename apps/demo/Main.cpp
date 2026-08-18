@@ -28,22 +28,24 @@ int main()
     }
 
     // Create SDL window graphics context
-    const float mainScale             = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
+    const float mainScale                 = SDL_GetDisplayContentScale(SDL_GetPrimaryDisplay());
     constexpr SDL_WindowFlags windowFlags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIGH_PIXEL_DENSITY;
-    SDL_Window* window =
-        SDL_CreateWindow("Demo Application", static_cast<int>(1280 * mainScale), static_cast<int>(720 * mainScale), windowFlags);
-    
-    
+    SDL_Window* window                    = SDL_CreateWindow("Demo Application", static_cast<int>(1280 * mainScale),
+                                                             static_cast<int>(720 * mainScale), windowFlags);
+
+
     if (window == nullptr)
     {
         SDL_Log("Error: SDL_CreateWindow(): %s\n", SDL_GetError());
         return EXIT_FAILURE;
     }
 
+    SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
     // Create GPU Device
     SDL_GPUDevice* sdlGPU = SDL_CreateGPUDevice(SDL_GPU_SHADERFORMAT_SPIRV | SDL_GPU_SHADERFORMAT_DXIL |
-                                                        SDL_GPU_SHADERFORMAT_MSL | SDL_GPU_SHADERFORMAT_METALLIB,
-                                                    true, nullptr);
+                                                    SDL_GPU_SHADERFORMAT_MSL | SDL_GPU_SHADERFORMAT_METALLIB,
+                                                true, nullptr);
     if (sdlGPU == nullptr)
     {
         SDL_Log("Error: SDL_CreateGPUDevice(): %s\n", SDL_GetError());
@@ -109,7 +111,7 @@ int main()
     // Our state
     bool showDemoWindow    = true;
     bool showAnotherWindow = false;
-    ImVec4 clearColor       = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+    ImVec4 clearColor      = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
     // Main loop
     bool done = false;
@@ -164,12 +166,13 @@ int main()
 
             ImGui::Begin("Hello, world!"); // Create a window called "Hello, world!" and append into it.
 
-            ImGui::Text("This is some useful text.");          // Display some text (you can use a format strings too)
+            ImGui::Text("This is some useful text.");        // Display some text (you can use a format strings too)
             ImGui::Checkbox("Demo Window", &showDemoWindow); // Edit bools storing our window open/close state
             ImGui::Checkbox("Another Window", &showAnotherWindow);
 
-            ImGui::SliderFloat("float", &f, 0.0f, 1.0f);             // Edit 1 float using a slider from 0.0f to 1.0f
-            ImGui::ColorEdit3("clear color", reinterpret_cast<float*>(&clearColor)); // Edit 3 floats representing a color
+            ImGui::SliderFloat("float", &f, 0.0f, 1.0f); // Edit 1 float using a slider from 0.0f to 1.0f
+            ImGui::ColorEdit3("clear color",
+                              reinterpret_cast<float*>(&clearColor)); // Edit 3 floats representing a color
 
             if (ImGui::Button(
                     "Button")) // Buttons return true when clicked (most widgets return true when edited/activated)
@@ -188,7 +191,7 @@ int main()
         {
             ImGui::Begin("Another Window",
                          &showAnotherWindow); // Pass a pointer to our bool variable (the window will have a closing
-                                                // button that will clear the bool when clicked)
+                                              // button that will clear the bool when clicked)
             ImGui::Text("Hello from another window!");
             if (ImGui::Button("Close Me"))
             {
@@ -216,7 +219,8 @@ int main()
             // Setup and start a render pass
             SDL_GPUColorTargetInfo targetInfo = {};
             targetInfo.texture                = swapChainTexture;
-            targetInfo.clear_color          = SDL_FColor{ .r = clearColor.x, .g = clearColor.y, .b = clearColor.z, .a = clearColor.w };
+            targetInfo.clear_color =
+                SDL_FColor{ .r = clearColor.x, .g = clearColor.y, .b = clearColor.z, .a = clearColor.w };
             targetInfo.load_op              = SDL_GPU_LOADOP_CLEAR;
             targetInfo.store_op             = SDL_GPU_STOREOP_STORE;
             targetInfo.mip_level            = 0;

@@ -61,8 +61,9 @@ if (PMM_TESTS)
 endif ()
 
 if (PMM_DEMO)
-    message(STATUS "Demo application is enabled")
+    message(STATUS "Demo application are enabled")
     add_subdirectory(apps/demo)
+    add_subdirectory(apps/pong)
 endif ()
 
 if (PMM_BENCHMARK)
