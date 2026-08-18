@@ -10,6 +10,9 @@
 
 #include "Pong.h"
 
+#include <print>
+
+
 namespace pong
 {
 
@@ -21,14 +24,25 @@ namespace pong
             return false;
         }
 
-        _window = SDL_CreateWindow(GAME_NAME.c_str(), WINDOW_WIDTH, WINDOW_HEIGHT, 0);
 
+        _window = SDL_CreateWindow(GAME_NAME.c_str(), WINDOW_WIDTH, WINDOW_HEIGHT, 0);
         if (_window == nullptr)
         {
             SDL_Log("An error occurred while creating the window\n%s", SDL_GetError());
             return false;
         }
 
+
+        _renderer = SDL_CreateRenderer(_window, nullptr);
+        if (_renderer == nullptr)
+        {
+            SDL_Log("An error occurred while creating the renderer\n%s", SDL_GetError());
+            return false;
+        }
+
+
+        // After initializing all the subsystem signal that the game can start running.
+        _isRunning = true;
 
         return true;
     }
@@ -46,6 +60,7 @@ namespace pong
 
     void Game::shutdown() const noexcept
     {
+        SDL_DestroyRenderer(_renderer);
         SDL_DestroyWindow(_window);
         SDL_Quit();
     }
@@ -57,9 +72,44 @@ namespace pong
     // PRIVATE METHODS
     //-+-+-+-+-+-+-+-+-+-+-+
 
-    void Game::processInput() {}
+    void Game::processInput()
+    {
+        SDL_Event event;
+
+        while (SDL_PollEvent(&event))
+        {
+            switch (event.type)
+            {
+                case SDL_EVENT_QUIT:
+                    _isRunning = false;
+                    break;
+                default:
+                    break;
+            }
+        }
+
+        /// Get and process the keyboard state
+        const auto kbState = SDL_GetKeyboardState(nullptr);
+
+        // Quit the application if ESC key is pressed
+        if (kbState[SDL_SCANCODE_ESCAPE])
+        {
+            _isRunning = false;
+        }
+    }
+
 
     void Game::updateGame() {}
 
-    void Game::generateOutput() {}
+    void Game::generateOutput()
+    {
+        // Set the draw color
+        SDL_SetRenderDrawColor(_renderer, 0, 60, 120, 255);
+
+        // Render the clear color
+        SDL_RenderClear(_renderer);
+
+        // Swap buffers
+        SDL_RenderPresent(_renderer);
+    }
 } // namespace pong

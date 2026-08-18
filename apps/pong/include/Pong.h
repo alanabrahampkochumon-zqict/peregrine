@@ -45,6 +45,7 @@ namespace pong
         //-+-+-+-+-+-+-+-+-+-+-+-+
 
         SDL_Window* _window{ nullptr };
+        SDL_Renderer* _renderer{ nullptr };
         bool _isRunning{ false };
 
 
