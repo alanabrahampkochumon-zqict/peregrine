@@ -101,13 +101,35 @@ namespace pong
 
     void Game::updateGame() {}
 
-    void Game::generateOutput()
+    void Game::generateOutput() const
     {
         // Set the draw color
         SDL_SetRenderDrawColor(_renderer, 0, 60, 120, 255);
 
         // Render the clear color
         SDL_RenderClear(_renderer);
+
+        // Wall
+        SDL_SetRenderDrawColor(_renderer, 255, 255, 255, 255);
+        const SDL_FRect wallTop{ .x = 0, .y = 0, .w = WINDOW_WIDTH, .h = WALL_THICKNESS };
+        const SDL_FRect wallRight{
+            .x = WINDOW_WIDTH - WALL_THICKNESS, .y = 0, .w = WALL_THICKNESS, .h = WINDOW_HEIGHT
+        };
+        const SDL_FRect wallBottom{
+            .x = 0, .y = WINDOW_HEIGHT - WALL_THICKNESS, .w = WINDOW_WIDTH, .h = WALL_THICKNESS
+        };
+        SDL_RenderFillRect(_renderer, &wallTop);
+        SDL_RenderFillRect(_renderer, &wallRight);
+        SDL_RenderFillRect(_renderer, &wallBottom);
+
+
+        // Paddle
+        const SDL_FRect paddle{ .x = INITIAL_PADDLE_X, .y = INITIAL_PADDLE_Y, .w = PADDLE_WIDTH, .h = PADDLE_HEIGHT };
+        SDL_RenderFillRect(_renderer, &paddle);
+
+        // Ball
+        const SDL_FRect ball{ .x = INITIAL_BALL_X, .y = INITIAL_BALL_Y, .w = BALL_SIZE, .h = BALL_SIZE };
+        SDL_RenderFillRect(_renderer, &ball);
 
         // Swap buffers
         SDL_RenderPresent(_renderer);

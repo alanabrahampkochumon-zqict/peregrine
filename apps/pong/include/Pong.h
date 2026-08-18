@@ -36,7 +36,7 @@ namespace pong
         void updateGame();
 
         /// Create game output, displaying it on screen or sending signals to other output devices
-        void generateOutput();
+        void generateOutput() const;
 
 
 
@@ -52,8 +52,16 @@ namespace pong
         //-+-+-+-+-+-+-+-+-+-+-+-+
         // CONSTANTS
         //-+-+-+-+-+-+-+-+-+-+-+-+
-        static constexpr std::string GAME_NAME = "Pong";
-        static constexpr size_t WINDOW_WIDTH   = 1280;
-        static constexpr size_t WINDOW_HEIGHT  = 720;
+        static constexpr std::string GAME_NAME   = "Pong";
+        static constexpr size_t WINDOW_WIDTH     = 1280;
+        static constexpr size_t WINDOW_HEIGHT    = 720;
+        static constexpr size_t WALL_THICKNESS   = 16;
+        static constexpr size_t PADDLE_WIDTH     = 16;
+        static constexpr size_t PADDLE_HEIGHT    = 120;
+        static constexpr size_t INITIAL_PADDLE_X = 16;
+        static constexpr size_t INITIAL_PADDLE_Y = static_cast<size_t>(WINDOW_HEIGHT * 0.5 - PADDLE_HEIGHT * 0.5);
+        static constexpr size_t BALL_SIZE = 24;
+        static constexpr size_t INITIAL_BALL_X = static_cast<size_t>(WINDOW_WIDTH * 0.5);
+        static constexpr size_t INITIAL_BALL_Y = static_cast<size_t>(WINDOW_HEIGHT * 0.5);
     };
 } // namespace pong

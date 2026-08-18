@@ -8,6 +8,9 @@ target_sources(
 
         include/Pong.cpp
         include/Pong.h
+
+        # TODO: Group into a math lib
+        include/Vec2.h
 )
 
 target_link_libraries(
