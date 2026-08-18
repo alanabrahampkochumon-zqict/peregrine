@@ -14,7 +14,9 @@
 int main()
 {
     pong::Game game;
-    game.initialize();
-    game.run();
+    if (game.initialize())
+    {
+        game.run();
+    }
     game.shutdown();
 }
