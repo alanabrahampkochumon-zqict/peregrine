@@ -96,10 +96,55 @@ namespace pong
         {
             _isRunning = false;
         }
+
+        // Update paddle direction
+        if (kbState[SDL_SCANCODE_W])
+        {
+            _paddleDir = 1;
+        }
+        if (kbState[SDL_SCANCODE_S])
+        {
+            _paddleDir = -1;
+        }
     }
 
 
-    void Game::updateGame() {}
+    void Game::updateGame()
+    {
+        // Frame Limiting
+        // Run the looping until the latest frame time is greater than or equals
+        // our previous frame time + the frame time difference, which locks
+        // the delta time at the frame limiter delta time(eg: 16ms).
+        while (SDL_GetTicks() < _tickCount + FRAME_LIMITER_DELTA) {}
+
+        // Get the delta time(time between frames)
+        // Delta time is in ms
+        uint64_t currentTick = SDL_GetTicks();
+        float deltaTime      = static_cast<float>(currentTick - _tickCount) / 1000.0f;
+        _tickCount           = currentTick;
+
+        // Clamp maximum delta time (useful for debug breaks)
+        deltaTime = deltaTime > 0.05f ? 0.05f : deltaTime;
+
+        // If the padding direction is non zero move the padding
+        if (_paddleDir != 0)
+        {
+            _paddlePos.y += static_cast<float>(_paddleDir) * PADDLE_SPEED * deltaTime;
+
+            // Lock the paddle between wall boundaries
+            // Top position
+            if (_paddlePos.y < WALL_THICKNESS)
+            {
+                _paddlePos.y = WALL_THICKNESS;
+            }
+            // Bottom position
+            else if (_paddlePos.y > WINDOW_HEIGHT - PADDLE_HEIGHT - WALL_THICKNESS)
+            {
+                _paddlePos.y = WINDOW_HEIGHT - PADDLE_HEIGHT - WALL_THICKNESS;
+            }
+        }
+        // SDL_Log("%0.05f ms", deltaTime);
+    }
 
     void Game::generateOutput() const
     {
@@ -124,7 +169,7 @@ namespace pong
 
 
         // Paddle
-        const SDL_FRect paddle{ .x = INITIAL_PADDLE_X, .y = INITIAL_PADDLE_Y, .w = PADDLE_WIDTH, .h = PADDLE_HEIGHT };
+        const SDL_FRect paddle{ .x = _paddlePos.x, .y = _paddlePos.y, .w = PADDLE_WIDTH, .h = PADDLE_HEIGHT };
         SDL_RenderFillRect(_renderer, &paddle);
 
         // Ball

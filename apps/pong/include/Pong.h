@@ -9,6 +9,8 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
+#include "Vec2.h"
+
 #include <SDL3/SDL.h>
 #include <string>
 
@@ -47,6 +49,9 @@ namespace pong
         SDL_Window* _window{ nullptr };
         SDL_Renderer* _renderer{ nullptr };
         bool _isRunning{ false };
+        uint64_t _tickCount{ 0 };
+        int _paddleDir{ 0 };
+        math::Vec2 _paddlePos{ INITIAL_PADDLE_X, INITIAL_PADDLE_Y };
 
 
         //-+-+-+-+-+-+-+-+-+-+-+-+
@@ -60,8 +65,11 @@ namespace pong
         static constexpr size_t PADDLE_HEIGHT    = 120;
         static constexpr size_t INITIAL_PADDLE_X = 16;
         static constexpr size_t INITIAL_PADDLE_Y = static_cast<size_t>(WINDOW_HEIGHT * 0.5 - PADDLE_HEIGHT * 0.5);
-        static constexpr size_t BALL_SIZE = 24;
-        static constexpr size_t INITIAL_BALL_X = static_cast<size_t>(WINDOW_WIDTH * 0.5);
-        static constexpr size_t INITIAL_BALL_Y = static_cast<size_t>(WINDOW_HEIGHT * 0.5);
+        static constexpr size_t BALL_SIZE        = 20;
+        static constexpr size_t INITIAL_BALL_X   = static_cast<size_t>(WINDOW_WIDTH * 0.5);
+        static constexpr size_t INITIAL_BALL_Y   = static_cast<size_t>(WINDOW_HEIGHT * 0.5);
+        static constexpr float PADDLE_SPEED      = 300.0f;
+
+        static constexpr size_t FRAME_LIMITER_DELTA = 16;
     };
 } // namespace pong
