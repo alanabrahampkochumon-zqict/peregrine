@@ -32,13 +32,13 @@ namespace pong
 
     private:
         /// Process user input
-        void processInput();
+        void _processInput();
 
         /// Update game state
-        void updateGame();
+        void _updateGame();
 
         /// Create game output, displaying it on screen or sending signals to other output devices
-        void generateOutput() const;
+        void _generateOutput() const;
 
 
 

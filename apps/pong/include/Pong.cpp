@@ -51,9 +51,9 @@ namespace pong
     {
         while (_isRunning)
         {
-            processInput();
-            updateGame();
-            generateOutput();
+            _processInput();
+            _updateGame();
+            _generateOutput();
         }
     }
 
@@ -72,7 +72,7 @@ namespace pong
     // PRIVATE METHODS
     //-+-+-+-+-+-+-+-+-+-+-+
 
-    void Game::processInput()
+    void Game::_processInput()
     {
         SDL_Event event;
 
@@ -113,7 +113,7 @@ namespace pong
     }
 
 
-    void Game::updateGame()
+    void Game::_updateGame()
     {
         // Frame Limiting
         // Run the looping until the latest frame time is greater than or equals
@@ -186,7 +186,7 @@ namespace pong
         // SDL_Log("%0.05f ms", deltaTime);
     }
 
-    void Game::generateOutput() const
+    void Game::_generateOutput() const
     {
         // Set the draw color
         SDL_SetRenderDrawColor(_renderer, 0, 60, 120, 255);
