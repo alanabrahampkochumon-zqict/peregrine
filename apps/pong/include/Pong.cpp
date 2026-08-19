@@ -98,13 +98,17 @@ namespace pong
         }
 
         // Update paddle direction
+        // Since our screen y-coordinate increase top to bottom
+        // we need to swap direction in the opposite way
+        // i.e W(UP) should decrease the coordinate
+        // and S(DOWN) should increase the coordinate
         if (kbState[SDL_SCANCODE_W])
         {
-            _paddleDir = 1;
+            _paddleDir = -1;
         }
         if (kbState[SDL_SCANCODE_S])
         {
-            _paddleDir = -1;
+            _paddleDir = 1;
         }
     }
 
@@ -143,6 +147,42 @@ namespace pong
                 _paddlePos.y = WINDOW_HEIGHT - PADDLE_HEIGHT - WALL_THICKNESS;
             }
         }
+
+        // Update the ball position
+        _ballPos.x += _ballVel.x * deltaTime;
+        _ballPos.y += _ballVel.y * deltaTime;
+
+
+        // Ball-Wall Collision
+        // Top wall
+        // The second expression prevents the double negation on subsequent frame when the ball appears stationary
+        if (_ballPos.y < WALL_THICKNESS && _ballVel.y < 0.0f)
+        {
+            _ballVel.y *= -1.0f;
+        }
+        // Right Wall
+        if (_ballPos.x > WINDOW_WIDTH - WALL_THICKNESS - BALL_SIZE)
+        {
+            _ballVel.x *= -1.0f;
+        }
+        // Bottom Wall
+        if (_ballPos.y > WINDOW_HEIGHT - WALL_THICKNESS - BALL_SIZE)
+        {
+            _ballVel.y *= -1.0f;
+        }
+
+        // Ball Paddle Collision
+        // For paddle we need to check if the x-coordinate crosses the paddle
+        // and if the y position is within the paddle height coordinate
+        if (_ballPos.x < PADDLE_WIDTH + INITIAL_PADDLE_X && // Ball is near the paddle boundary
+            _ballPos.y > _paddlePos.y &&                    // Ball's y is below paddle's top
+            _ballPos.y < _paddlePos.y + PADDLE_HEIGHT &&    // Ball's y is above paddle's bottom
+            _ballVel.x < 0.0f                               // Ball is moving toward the paddle
+        )
+        {
+            _ballVel.x *= -1.0f;
+        }
+
         // SDL_Log("%0.05f ms", deltaTime);
     }
 
@@ -173,7 +213,7 @@ namespace pong
         SDL_RenderFillRect(_renderer, &paddle);
 
         // Ball
-        const SDL_FRect ball{ .x = INITIAL_BALL_X, .y = INITIAL_BALL_Y, .w = BALL_SIZE, .h = BALL_SIZE };
+        const SDL_FRect ball{ .x = _ballPos.x, .y = _ballPos.y, .w = BALL_SIZE, .h = BALL_SIZE };
         SDL_RenderFillRect(_renderer, &ball);
 
         // Swap buffers
