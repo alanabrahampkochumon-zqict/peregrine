@@ -10,8 +10,6 @@
 
 #include "Pong.h"
 
-#include <print>
-
 
 namespace pong
 {

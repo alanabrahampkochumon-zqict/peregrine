@@ -16,7 +16,6 @@
 #include <iostream>
 #include <peregrine/allocators/Arena.h>
 #include <peregrine/utils/Constants.h>
-#include <print>
 
 
 int main()
