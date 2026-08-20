@@ -61,7 +61,7 @@ namespace pong
         //-+-+-+-+-+-+-+-+-+-+-+-+
         // CONSTANTS
         //-+-+-+-+-+-+-+-+-+-+-+-+
-        static constexpr std::string GAME_NAME = "Pong";
+        static constexpr auto GAME_NAME = "Pong";
         static constexpr size_t WINDOW_WIDTH   = 1280;
         static constexpr size_t WINDOW_HEIGHT  = 720;
 

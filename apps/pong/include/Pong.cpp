@@ -23,7 +23,7 @@ namespace pong
         }
 
 
-        _window = SDL_CreateWindow(GAME_NAME.c_str(), WINDOW_WIDTH, WINDOW_HEIGHT, 0);
+        _window = SDL_CreateWindow(GAME_NAME, WINDOW_WIDTH, WINDOW_HEIGHT, 0);
         if (_window == nullptr)
         {
             SDL_Log("An error occurred while creating the window\n%s", SDL_GetError());
