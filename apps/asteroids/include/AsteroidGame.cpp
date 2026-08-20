@@ -9,12 +9,14 @@
  */
 
 #include "AsteroidGame.h"
+#include "SDL3/SDL.h"
 
 namespace asteroids
 {
 
     bool AsteroidGame::initialize() noexcept
     {
+        // if (!SDL_Init)
         _isRunning = true;
         return true;
     }
