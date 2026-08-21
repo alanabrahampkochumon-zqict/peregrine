@@ -9,7 +9,7 @@
  */
 
 
-#include "include/AsteroidGame.h"
+#include "game/AsteroidGame.h"
 
 #include <stdlib.h>
 
