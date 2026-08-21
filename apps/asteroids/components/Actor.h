@@ -10,10 +10,11 @@
  */
 
 
-#include "../../math/vec/Vec2.h"
 #include "Component.h"
+#include "psm/PSMath.h"
 
 #include <cstdint>
+#include <unordered_set>
 
 namespace asteroids::comp
 {
@@ -49,8 +50,34 @@ namespace asteroids::comp
         /// Removes a component from the actor.
         void removeComponent(Component* comp);
 
-    public:
+
+        //+=+=+=+=+=
+        // GETTERS
+        //+=+=+=+=+=
+
+        [[nodiscard]] psm::Vec2 getPosition() const noexcept { return _position; }
+        [[nodiscard]] float getScale() const noexcept { return _scale; }
+        [[nodiscard]] float getRotation() const noexcept { return _rotation; }
+
+
+
+        //+=+=+=+=+=
+        // SETTERS
+        //+=+=+=+=+=
+
+        /// @internal Vec2 is 8-bytes, we can pass it by value.
+        void setPosition(const psm::Vec2 position) { _position = position; }
+        void setScale(const float scale) { _scale = scale; }
+        void setRotation(const float rotation) { _rotation = rotation; }
+
+
+
+    private:
         State _state;
-        // psm::Vec2
+        psm::Vec2 _position;
+        float _scale, _rotation;
+
+        std::unordered_set<Component*> _components;
+        class Game* _game;
     };
 } // namespace asteroids::comp
