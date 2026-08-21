@@ -1,14 +1,17 @@
-add_executable(Asteroids)
-target_compile_features(Asteroids PRIVATE cxx_std_23)
-
-target_sources(
+add_executable(
         Asteroids
-        PRIVATE
 
-        include/AsteroidGame.h
-        include/AsteroidGame.cpp
+        components/Actor.h
+
+        game/AsteroidGame.h
+        game/AsteroidGame.cpp
         Main.cpp
+        components/GameObject.h
+        components/Component.h
 )
+
+target_compile_features(Asteroids PRIVATE cxx_std_20)
+
 
 target_link_libraries(
         Asteroids PRIVATE

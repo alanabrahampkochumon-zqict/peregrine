@@ -1,5 +1,7 @@
 add_library(PSMath INTERFACE
-        PSMath.h vec/Vec3.h
+        psm/PSMath.h
+        psm/vec/Vec2.h
+        psm/vec/Vec3.h
 )
 
-#target_include_directories(PSMath ${CMAKE_CURRENT_SOURCE_DIR})
+target_include_directories(PSMath INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
