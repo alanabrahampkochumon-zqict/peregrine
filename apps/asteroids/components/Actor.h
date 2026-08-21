@@ -29,7 +29,7 @@ namespace asteroids::comp
             Dead
         };
 
-        explicit Actor(class Game* game);
+        explicit Actor(class AsteroidGame* game);
 
         virtual ~Actor() = 0;
 
@@ -78,6 +78,6 @@ namespace asteroids::comp
         float _scale, _rotation;
 
         std::unordered_set<Component*> _components;
-        class Game* _game;
+        class AsteroidGame* _game;
     };
 } // namespace asteroids::comp
