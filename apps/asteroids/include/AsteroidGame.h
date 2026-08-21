@@ -1,4 +1,5 @@
 #pragma once
+#include "../../../out/build/Clang-Debug/_deps/sdl3-src/include/SDL3/SDL_video.h"
 /**
  * @file AsteroidGame.h
  * @author Alan Abraham P Kochumon
@@ -46,5 +47,18 @@ namespace asteroids
         // MEMBER VARIABLES
         //+=+=+=+=+=+=+=+=+=
         bool _isRunning{ false };
+        SDL_Window* _window{ nullptr };
+        uint64_t lastFrameTick{ 0 };
+
+
+
+        //+=+=+=+=+=+=+=+=+=
+        // CONSTANTS
+        //+=+=+=+=+=+=+=+=+=
+        static constexpr auto GAME_NAME       = "Asteroids";
+        static constexpr auto GAME_VERSION    = "1.0";
+        static constexpr auto GAME_ID         = "com.peregrine.asteroids";
+        static constexpr size_t WINDOW_WIDTH  = 1280;
+        static constexpr size_t WINDOW_HEIGHT = 720;
     };
 } // namespace asteroids
