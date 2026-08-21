@@ -1,5 +1,4 @@
 #pragma once
-#include "../../../out/build/Clang-Debug/_deps/sdl3-src/include/SDL3/SDL_video.h"
 /**
  * @file AsteroidGame.h
  * @author Alan Abraham P Kochumon
@@ -9,6 +8,8 @@
  *
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
+
+#include "SDL3/SDL.h"
 
 namespace asteroids
 {
