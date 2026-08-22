@@ -31,14 +31,18 @@ namespace asteroids::graphics
             return;
         }
         _texture = SDL_CreateTextureFromSurface(&renderer, image);
-
-        // We need to free the surface/image
-        SDL_DestroySurface(image);
-
         if (!_texture)
         {
             SDL_Log("There was an error creating the texture");
         }
+        else
+        {
+            _width  = _texture->w;
+            _height = _texture->h;
+        }
+
+        // We need to free the surface/image
+        SDL_DestroySurface(image);
     }
 
 

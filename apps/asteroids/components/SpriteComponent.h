@@ -40,8 +40,6 @@ namespace asteroids
             Actor* _owner;
 
             int _drawOrder;
-            int _textureWidth;
-            int _textureHeight;
         };
     } // namespace comp
 } // namespace asteroids

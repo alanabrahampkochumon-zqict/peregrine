@@ -43,7 +43,16 @@ namespace asteroids::graphics
         /// @note User should check for nullptr.
         [[nodiscard]] SDL_Texture* getSDLTexture() const { return _texture; }
 
+
+        //+=+=+=+=+=+=+=+=+=+=
+        //     GETTERS
+        //+=+=+=+=+=+=+=+=+=+=
+
+        [[nodiscard]] int getWidth() const { return _width; }
+        [[nodiscard]] int getHeight() const { return _height; }
+
     private:
         SDL_Texture* _texture{};
+        int _width{}, _height{};
     };
 } // namespace asteroids::graphics

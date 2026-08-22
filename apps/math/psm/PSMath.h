@@ -9,5 +9,6 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
+#include "Rotations.h"
 #include "vec/Vec2.h"
 #include "vec/Vec3.h"
