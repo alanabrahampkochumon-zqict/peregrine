@@ -20,7 +20,8 @@ namespace asteroids::comp
          * @param owner       The actor that owns this component.
          * @param updateOrder The order for update. Lower order indicates earlier updates. Default: 100
          */
-        constexpr Component(class Actor* owner, int updateOrder = 100) noexcept;
+        explicit constexpr Component(class Actor* owner, const int updateOrder = 100) noexcept
+            : _owner{ owner }, _updateOrder{ updateOrder } {};
 
         virtual ~Component();
 
@@ -30,9 +31,9 @@ namespace asteroids::comp
         int getUpdateOrder() const { return _updateOrder; }
 
     private:
-        int _updateOrder{};
+        class Actor* _owner{ nullptr };
 
-        class Actor* owner{ nullptr };
+        int _updateOrder{};
     };
 
 } // namespace asteroids::comp

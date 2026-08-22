@@ -29,7 +29,8 @@ namespace asteroids::comp
             Dead
         };
 
-        explicit Actor(class AsteroidGame* game);
+        constexpr explicit Actor(class AsteroidGame* game) noexcept
+            : _state{ State::Paused }, _position{}, _scale{ 1 }, _rotation{ 0 }, _game{ game } {};
 
         virtual ~Actor() = 0;
 
@@ -45,10 +46,10 @@ namespace asteroids::comp
 
 
         /// Adds a component to the actor.
-        void addComponent(Component* comp);
+        void addComponent(Component* comp) noexcept;
 
         /// Removes a component from the actor.
-        void removeComponent(Component* comp);
+        void removeComponent(Component* comp) noexcept;
 
 
         //+=+=+=+=+=

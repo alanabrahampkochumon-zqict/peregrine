@@ -8,6 +8,7 @@ add_executable(
         Main.cpp
         components/GameObject.h
         components/Component.h
+        components/Actor.cpp
 )
 
 target_compile_features(Asteroids PRIVATE cxx_std_20)
