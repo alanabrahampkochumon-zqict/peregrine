@@ -9,7 +9,9 @@ add_executable(
         components/GameObject.h
         components/Component.h
         components/Actor.cpp
-        components/Texture.h
+
+        graphics/Texture.h
+        graphics/Texture.cpp
 )
 
 target_compile_features(Asteroids PRIVATE cxx_std_20)
