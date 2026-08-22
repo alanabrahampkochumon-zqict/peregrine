@@ -14,6 +14,11 @@
 
 namespace asteroids::comp
 {
+    /// Actor addition and deletion is managed in the actor component itself.
+    Actor::Actor(AsteroidGame* game) noexcept
+        : _state{ State::Paused }, _position{}, _scale{ 1 }, _rotation{ 0 }, _game{ game }
+    { game->addActor(this); }
+
     Actor::~Actor() { _game->removeActor(this); }
 
 

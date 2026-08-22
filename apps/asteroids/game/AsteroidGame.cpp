@@ -51,6 +51,15 @@ namespace asteroids
 
     void AsteroidGame::shutdown() const noexcept
     {
+        /// Remove the actors
+        while (!_actors.empty())
+        {
+            // This calls the actor's dtor which pops the actor from the game's
+            // actors.
+            // delete actors.back() -> ~Actor() -> game._actors.pop_back()
+            delete _actors.back();
+        }
+
         SDL_DestroyWindow(_window);
         SDL_Quit();
     }

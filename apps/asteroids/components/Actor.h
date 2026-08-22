@@ -36,8 +36,7 @@ namespace asteroids::comp
             Dead
         };
 
-        explicit Actor(AsteroidGame* game) noexcept
-            : _state{ State::Paused }, _position{}, _scale{ 1 }, _rotation{ 0 }, _game{ game } {};
+        explicit Actor(AsteroidGame* game) noexcept;
 
         virtual ~Actor();
 
