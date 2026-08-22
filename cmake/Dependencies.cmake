@@ -30,6 +30,13 @@ FetchContent_Declare(
 )
 
 FetchContent_Declare(
+        sdl3_image
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL_image.git
+        GIT_TAG release-3.4.4
+        SYSTEM
+)
+
+FetchContent_Declare(
         imgui
         GIT_REPOSITORY https://github.com/ocornut/imgui.git
         GIT_TAG f1cc2ae15e53a861a874c3034aae6798fde194ab
@@ -51,6 +58,7 @@ endif ()
 
 if (PMM_DEMO)
     FetchContent_MakeAvailable(sdl3)
+    FetchContent_MakeAvailable(sdl3_image)
     FetchContent_MakeAvailable(imgui)
     # Since ImGui doesn't have cmake support we need to create a custom target
     add_library(imgui STATIC

@@ -441,3 +441,5 @@ docs/
 
 # CLion
 .idea/
+
+external/

@@ -9,6 +9,7 @@ add_executable(
         components/GameObject.h
         components/Component.h
         components/Actor.cpp
+        components/Texture.h
 )
 
 target_compile_features(Asteroids PRIVATE cxx_std_20)
@@ -23,5 +24,6 @@ target_link_libraries(
 
         imgui
         SDL3::SDL3
+        SDL3_image::SDL3_image
 )
 
