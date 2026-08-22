@@ -16,6 +16,13 @@
 #include <cstdint>
 #include <unordered_set>
 
+
+/// Forward declaration
+namespace asteroids
+{
+    class AsteroidGame;
+}
+
 namespace asteroids::comp
 {
     class Actor
@@ -29,10 +36,10 @@ namespace asteroids::comp
             Dead
         };
 
-        constexpr explicit Actor(class AsteroidGame* game) noexcept
+        explicit Actor(AsteroidGame* game) noexcept
             : _state{ State::Paused }, _position{}, _scale{ 1 }, _rotation{ 0 }, _game{ game } {};
 
-        virtual ~Actor() = 0;
+        virtual ~Actor();
 
 
         /// Update called from game.
@@ -59,6 +66,7 @@ namespace asteroids::comp
         [[nodiscard]] psm::Vec2 getPosition() const noexcept { return _position; }
         [[nodiscard]] float getScale() const noexcept { return _scale; }
         [[nodiscard]] float getRotation() const noexcept { return _rotation; }
+        [[nodiscard]] State getState() const noexcept { return _state; }
 
 
 
@@ -79,6 +87,6 @@ namespace asteroids::comp
         float _scale, _rotation;
 
         std::unordered_set<Component*> _components;
-        class AsteroidGame* _game;
+        AsteroidGame* _game;
     };
 } // namespace asteroids::comp

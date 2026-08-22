@@ -9,7 +9,11 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
-#include "SDL3/SDL.h"
+#include "components/Actor.h"
+
+#include <SDL3/SDL.h>
+#include <vector>
+
 
 namespace asteroids
 {
@@ -27,6 +31,12 @@ namespace asteroids
 
         /// @brief Perform game deallocations and cleanup
         void shutdown() const noexcept;
+
+        /// @brief Add an actor to the game
+        void addActor(comp::Actor* actor) noexcept;
+
+        /// @brief Remove an actor from the game
+        void removeActor(const comp::Actor* actor) noexcept;
 
 
     private:
@@ -47,9 +57,16 @@ namespace asteroids
         //+=+=+=+=+=+=+=+=+=
         // MEMBER VARIABLES
         //+=+=+=+=+=+=+=+=+=
-        bool _isRunning{ false };
         SDL_Window* _window{ nullptr };
+
+        bool _isRunning{ false };
         uint64_t lastFrameTick{ 0 };
+        bool _isUpdatingActors{ false };
+
+        // Actors are the collection of all active actors.
+        // Pending actors is used to add actors to the game while
+        // it is in the middle of an update loop.
+        std::vector<comp::Actor*> _actors{}, _pendingActors{};
 
 
 

@@ -2,8 +2,9 @@ include_guard()
 
 message(STATUS "Configuring Strict Warnings")
 if (MSVC AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+    # 4324 -> Extra padding added due to alignment specifier
     target_compile_options(StrictWarnings INTERFACE
-            $<$<COMPILE_LANGUAGE:CXX>:/WX;/W4;/permissive-;/fp:strict;/wd4723;>
+            $<$<COMPILE_LANGUAGE:CXX>:/WX;/W4;/permissive-;/fp:strict;/wd4723;/wd4324>
     )
 elseif (MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     target_compile_options(StrictWarnings INTERFACE

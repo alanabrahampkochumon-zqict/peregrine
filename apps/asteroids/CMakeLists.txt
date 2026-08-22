@@ -13,6 +13,7 @@ add_executable(
 
 target_compile_features(Asteroids PRIVATE cxx_std_20)
 
+target_include_directories(Asteroids PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 
 target_link_libraries(
         Asteroids PRIVATE

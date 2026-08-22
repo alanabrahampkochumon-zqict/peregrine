@@ -10,20 +10,29 @@
 
 #include "Actor.h"
 
+#include "game/AsteroidGame.h"
+
 namespace asteroids::comp
 {
-    void Actor::update(float deltaTime)
+    Actor::~Actor() { _game->removeActor(this); }
+
+
+    void Actor::update([[maybe_unused]] float deltaTime)
+    {
+        // TODO: Impl remove maybe unused
+    }
+
+    void Actor::updateComponents([[maybe_unused]] float deltaTime)
+    {
+        // TODO: Impl
+    }
+    void Actor::updateActor([[maybe_unused]] float deltaTime)
     {
         // TODO: Impl
     }
 
-    void Actor::updateComponents(float deltaTime)
-    {
-        // TODO: Impl
-    }
 
+    void Actor::addComponent(Component* comp) noexcept { _components.insert(comp); }
 
-    void Actor::addComponent(Component* comp) { _components.insert(comp); }
-
-    void Actor::removeComponent(Component* comp) { _components.erase(comp); }
+    void Actor::removeComponent(Component* comp) noexcept { _components.erase(comp); }
 } // namespace asteroids::comp

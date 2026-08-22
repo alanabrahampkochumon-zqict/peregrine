@@ -10,7 +10,9 @@
 
 #include "AsteroidGame.h"
 
-#include "SDL3/SDL.h"
+#include <SDL3/SDL.h>
+#include <algorithm>
+#include <ranges>
 
 namespace asteroids
 {
@@ -53,6 +55,40 @@ namespace asteroids
         SDL_Quit();
     }
 
+
+    void AsteroidGame::addActor(comp::Actor* actor) noexcept
+    {
+        // Add the actor to pending list if the game is in an update state
+        // else to the actors list.
+        if (_isUpdatingActors)
+        {
+            _pendingActors.emplace_back(actor);
+        }
+        else
+        {
+            _actors.emplace_back(actor);
+        }
+    }
+
+
+    void AsteroidGame::removeActor(const comp::Actor* actor) noexcept
+    {
+        // Remove the actor by first searching pending actors
+        // and if it's not there remove it from the actors vector.
+        auto actorToRemove = std::ranges::find(_pendingActors, actor);
+        if (actorToRemove != std::ranges::end(_pendingActors))
+        {
+            std::ranges::iter_swap(*actorToRemove, _pendingActors.back());
+            _pendingActors.pop_back();
+        }
+        else if (actorToRemove = std::ranges::find(_actors, actor); actorToRemove != std::ranges::end(_actors))
+        {
+            std::ranges::iter_swap(*actorToRemove, _pendingActors.back());
+            _actors.pop_back();
+        }
+    }
+
+
     void AsteroidGame::_handleInput()
     {
         SDL_Event event;
@@ -74,13 +110,47 @@ namespace asteroids
         while (SDL_GetTicks() < lastFrameTick + 16) {} // Frame Limiting to 60 FPS
 
         const auto currentTick = SDL_GetTicks();
-        float deltaTime  = static_cast<float>(currentTick - lastFrameTick) * 0.001f;
-        lastFrameTick = currentTick;
+        float deltaTime        = static_cast<float>(currentTick - lastFrameTick) * 0.001f;
+        lastFrameTick          = currentTick;
 
 #ifndef NDEBUG
         // Clamp maximum delta time (useful for debug breaks)
         deltaTime = deltaTime > 0.05f ? 0.05f : deltaTime;
 #endif
+
+        // Update the actors
+        _isUpdatingActors = true;
+        for (const auto actor : _actors)
+        {
+            actor->update(deltaTime);
+        }
+        _isUpdatingActors = false;
+
+        // Move any actors from pending actors to actors vector.
+        for (auto pendingActor : _pendingActors)
+        {
+            _actors.emplace_back(pendingActor);
+        }
+        _pendingActors.clear(); // Clear the pending actors
+
+
+        // Create a temporary list for dead actors
+        std::vector<comp::Actor*> deadActors;
+        for (const auto actor : _actors)
+        {
+            if (actor->getState() == comp::Actor::State::Dead)
+            {
+                deadActors.emplace_back(actor);
+            }
+        }
+
+        // Delete the dead actors
+        for (const auto actor : deadActors)
+        {
+            // This invokes the dtor and removes it from the actors as well
+            delete actor;
+        }
+
 
         SDL_Log("Delta time: %0.03f", deltaTime);
     }
