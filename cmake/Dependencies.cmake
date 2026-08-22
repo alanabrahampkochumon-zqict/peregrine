@@ -7,6 +7,13 @@ set(VENDORS_DIR "Vendors")
 # https://wiki.libsdl.org/SDL3/README-cmake
 set(SDL_SHARED OFF CACHE BOOL "Build shared library" FORCE)
 set(SDL_STATIC ON CACHE BOOL "Build static library" FORCE)
+# Build SDL3_image as a static lib
+set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build SDL3_image shared" FORCE)
+# Enable these if necessary as some of them have extra dependencies like nasm and perl
+set(SDLIMAGE_AVIF OFF CACHE BOOL "Disable AVIF support" FORCE)
+set(SDLIMAGE_WEBP OFF CACHE BOOL "Disable WebP support" FORCE)
+set(SDLIMAGE_TIF OFF CACHE BOOL "Disable TIFF support" FORCE)
+set(SDLIMAGE_JXL OFF CACHE BOOL "Disable JPEG-XL support" FORCE)
 
 FetchContent_Declare(
         googletest
@@ -26,6 +33,7 @@ FetchContent_Declare(
         sdl3
         GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
         GIT_TAG d9d5536704d585616d4db3c8ba3c4ff6fc2757e1
+        OVERRIDE_FIND_PACKAGE
         SYSTEM
 )
 
@@ -58,6 +66,7 @@ endif ()
 
 if (PMM_DEMO)
     FetchContent_MakeAvailable(sdl3)
+    set(SDL3_DIR "${sdl3_BINARY_DIR}" CACHE PATH "Path to SDL3 build" FORCE)
     FetchContent_MakeAvailable(sdl3_image)
     FetchContent_MakeAvailable(imgui)
     # Since ImGui doesn't have cmake support we need to create a custom target

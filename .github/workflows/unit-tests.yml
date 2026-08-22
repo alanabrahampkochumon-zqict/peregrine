@@ -68,6 +68,7 @@ jobs:
 
       - name: Configure CMake
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+        # AOM_TARGET_CPU=generic Disable SDL_image optimizations
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
         run: >
           cmake -B ${{ steps.strings.outputs.build-output-dir }}
@@ -79,6 +80,7 @@ jobs:
           -D PMM_DOCS=ON
           -D PMM_BENCHMARK=ON
           -D PMM_TESTS=ON
+          -D AOM_TARGET_CPU=generic
           -D SDL_UNIX_CONSOLE_BUILD=ON
           -S ${{ github.workspace }}
 
