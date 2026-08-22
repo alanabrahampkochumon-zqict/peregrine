@@ -10,8 +10,10 @@
  */
 
 #include "components/Actor.h"
+#include "components/SpriteComponent.h"
 
 #include <SDL3/SDL.h>
+#include <array>
 #include <vector>
 
 
@@ -38,6 +40,12 @@ namespace asteroids
         /// @brief Remove an actor from the game
         void removeActor(const comp::Actor* actor) noexcept;
 
+        /// @brief Add a sprite to the game
+        void addSprite(comp::SpriteComponent* sprite) noexcept;
+
+        /// @brief Remove a sprite from the game
+        void removeSprite(const comp::SpriteComponent* sprite) noexcept;
+
 
     private:
         //+=+=+=+=+=+=+=+=+=
@@ -58,6 +66,7 @@ namespace asteroids
         // MEMBER VARIABLES
         //+=+=+=+=+=+=+=+=+=
         SDL_Window* _window{ nullptr };
+        SDL_Renderer* _renderer{ nullptr };
 
         bool _isRunning{ false };
         uint64_t lastFrameTick{ 0 };
@@ -68,6 +77,7 @@ namespace asteroids
         // it is in the middle of an update loop.
         std::vector<comp::Actor*> _actors{}, _pendingActors{};
 
+        std::vector<comp::SpriteComponent*> _spriteComponents{};
 
 
         //+=+=+=+=+=+=+=+=+=
@@ -78,5 +88,7 @@ namespace asteroids
         static constexpr auto GAME_ID         = "com.peregrine.asteroids";
         static constexpr size_t WINDOW_WIDTH  = 1280;
         static constexpr size_t WINDOW_HEIGHT = 720;
+
+        static constexpr std::array<uint8_t, 4> CLEAR_COLOR{ 255, 255, 255, 255 }; // RGBA
     };
 } // namespace asteroids

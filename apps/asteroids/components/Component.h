@@ -14,6 +14,7 @@ namespace asteroids::comp
 
     class Component
     {
+    public:
         /**
          * @brief Create a component for a given actor.
          *
@@ -23,12 +24,15 @@ namespace asteroids::comp
         explicit constexpr Component(class Actor* owner, const int updateOrder = 100) noexcept
             : _owner{ owner }, _updateOrder{ updateOrder } {};
 
-        virtual ~Component();
 
         /// Update this component by delta time.
-        virtual void update(float deltaTime) noexcept;
+        virtual void update(float deltaTime) noexcept = 0;
+
 
         int getUpdateOrder() const { return _updateOrder; }
+
+
+        virtual ~Component() {};
 
     private:
         class Actor* _owner{ nullptr };

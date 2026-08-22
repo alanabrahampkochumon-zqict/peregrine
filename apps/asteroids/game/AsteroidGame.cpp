@@ -34,6 +34,13 @@ namespace asteroids
             return false;
         }
 
+        _renderer = SDL_CreateRenderer(_window, nullptr);
+        if (!_renderer)
+        {
+            SDL_Log("There was an error creating renderer.\n%s", SDL_GetError());
+            return false;
+        }
+
 
         _isRunning = true;
         return true;
@@ -95,6 +102,30 @@ namespace asteroids
             std::ranges::iter_swap(*actorToRemove, _pendingActors.back());
             _actors.pop_back();
         }
+    }
+
+
+    void AsteroidGame::addSprite(comp::SpriteComponent* sprite) noexcept
+    {
+        // We need to insert sprite while preserving the order
+        const int drawOrder = sprite->getDrawOrder();
+        auto iterator       = _spriteComponents.begin();
+
+        for (; iterator != _spriteComponents.end(); ++iterator)
+        {
+            if (drawOrder < (*iterator)->getDrawOrder())
+            {
+                break;
+            }
+        }
+
+        _spriteComponents.insert(iterator, sprite);
+    }
+
+
+    void AsteroidGame::removeSprite([[maybe_unused]] const comp::SpriteComponent* sprite) noexcept
+    {
+        // TODO: Impl
     }
 
 
@@ -164,6 +195,17 @@ namespace asteroids
         SDL_Log("Delta time: %0.03f", deltaTime);
     }
 
-    void AsteroidGame::_draw() {}
+    void AsteroidGame::_draw()
+    {
+        SDL_SetRenderDrawColor(_renderer, CLEAR_COLOR[0], CLEAR_COLOR[1], CLEAR_COLOR[2], CLEAR_COLOR[3]);
+
+        for (const auto sprite : _spriteComponents)
+        {
+            sprite->draw(_renderer);
+        }
+
+        SDL_RenderClear(_renderer);
+        SDL_RenderPresent(_renderer); // Swap buffers
+    }
 
 } // namespace asteroids

@@ -66,6 +66,7 @@ namespace asteroids::comp
         [[nodiscard]] float getScale() const noexcept { return _scale; }
         [[nodiscard]] float getRotation() const noexcept { return _rotation; }
         [[nodiscard]] State getState() const noexcept { return _state; }
+        [[nodiscard]] AsteroidGame* getGame() const noexcept { return _game; }
 
 
 
