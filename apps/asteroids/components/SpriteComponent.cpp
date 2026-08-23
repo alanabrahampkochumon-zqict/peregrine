@@ -40,7 +40,9 @@ namespace asteroids::comp
         spriteRect.x = _owner->getPosition().x - (spriteRect.w * 0.5f);
         spriteRect.y = _owner->getPosition().y - (spriteRect.h * 0.5f);
 
-        const auto rotationRad = -_owner->getRotation() * std::numbers::inv_pi * 180;
+        /// The rotation in radians. Negated to represent anticlockwise rotation since SDL rotates in clockwise
+        /// direction for a positive angle.
+        const auto rotationRad = -toRad(_owner->getRotation());
         const int renderStatus = SDL_RenderTextureRotated(renderer, _texture->getSDLTexture(), nullptr, &spriteRect,
                                                           rotationRad, nullptr, SDL_FLIP_NONE);
         if (!renderStatus)
