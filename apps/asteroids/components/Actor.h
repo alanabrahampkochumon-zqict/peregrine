@@ -68,6 +68,12 @@ namespace asteroids::comp
         [[nodiscard]] State getState() const noexcept { return _state; }
         [[nodiscard]] AsteroidGame* getGame() const noexcept { return _game; }
 
+        /// @brief Get the forward direction vector.
+        /// @note Since SDL have a positive y-axis in the bottom
+        ///       direction, the y-axis is negated.
+        [[nodiscard]] psm::Vec3 getForward() const noexcept
+        { return psm::Vec3{ std::cos(_rotation), -std::sin(_rotation), 0.0f }; }
+
 
 
         //+=+=+=+=+=

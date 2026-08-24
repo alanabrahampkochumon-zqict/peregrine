@@ -37,7 +37,7 @@ namespace asteroids::comp
 
         virtual ~Component() = default;
 
-    private:
+    protected:
         [[maybe_unused]] Actor* _owner{ nullptr };
         int _updateOrder{};
     };

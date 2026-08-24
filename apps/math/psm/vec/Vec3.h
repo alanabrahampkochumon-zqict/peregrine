@@ -9,6 +9,11 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
+#include "Vec2.h"
+
+#include <cmath>
+
+
 // Peregrine Simple Math
 namespace psm
 {
@@ -23,6 +28,9 @@ namespace psm
 
         /// @brief Add two vector together and return a new vector containing the vector sum.
         [[nodiscard]] constexpr Vec3 operator+(const Vec3& other) const noexcept;
+
+        /// @brief Add two vector together and return a new vector containing the vector sum.
+        constexpr Vec3 operator+=(const Vec3& other) noexcept;
 
         /// @brief Subtract a vector from this vector and return a new vector containing the vector difference.
         [[nodiscard]] constexpr Vec3 operator-(const Vec3& other) const noexcept;
@@ -55,6 +63,9 @@ namespace psm
 
         /// @brief Normalize this vector and return a new vector.
         [[nodiscard]] Vec3 normalize() const noexcept;
+
+        /// @brief Get the xy component of the vector as a 2D vector.
+        [[nodiscard]] constexpr Vec2 xy() const noexcept;
     };
 
 
@@ -67,6 +78,13 @@ namespace psm
 
     constexpr Vec3 Vec3::operator+(const Vec3& other) const noexcept
     { return Vec3{ x + other.x, y + other.y, z + other.z }; }
+
+
+    constexpr Vec3 Vec3::operator+=(const Vec3& other) noexcept
+    {
+        *this = *this + other;
+        return *this;
+    }
 
     constexpr Vec3 Vec3::operator-(const Vec3& other) const noexcept
     { return Vec3{ x - other.x, y - other.y, z - other.z }; }
@@ -103,10 +121,10 @@ namespace psm
         return dx * dx + dy * dy + dz * dz;
     }
 
-    inline float Vec3::dist(const Vec3& other) const noexcept
-    {
-        return std::sqrt(distSq(other));
-    }
+
+    constexpr Vec2 Vec3::xy() const noexcept { return Vec2{ x, y }; }
+
+    inline float Vec3::dist(const Vec3& other) const noexcept { return std::sqrt(distSq(other)); }
 
     inline Vec3 Vec3::normalize() const noexcept { return *this / mag(); }
 

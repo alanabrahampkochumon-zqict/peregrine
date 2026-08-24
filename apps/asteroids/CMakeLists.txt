@@ -18,6 +18,8 @@ add_executable(
         components/AnimSpriteComponent.h
         components/BGSpriteComponent.cpp
         components/BGSpriteComponent.h
+        components/MoveComponent.cpp
+        components/MoveComponent.h
 )
 
 target_compile_features(Asteroids PRIVATE cxx_std_20)

@@ -26,6 +26,9 @@ namespace psm
         /// @brief Add two vector together and return a new vector containing the vector sum.
         [[nodiscard]] constexpr Vec2 operator+(const Vec2& other) const noexcept;
 
+        /// @brief Add two vector together in-place.
+        constexpr Vec2& operator+=(const Vec2& other) noexcept;
+
         /// @brief Subtract a vector from this vector and return a new vector containing the vector difference.
         [[nodiscard]] constexpr Vec2 operator-(const Vec2& other) const noexcept;
 
@@ -68,6 +71,12 @@ namespace psm
     constexpr Vec2::Vec2(const float x, const float y) noexcept: x{ x }, y{ y } {}
 
     constexpr Vec2 Vec2::operator+(const Vec2& other) const noexcept { return Vec2{ x + other.x, y + other.y }; }
+
+    constexpr Vec2& Vec2::operator+=(const Vec2& other) noexcept
+    {
+        *this = *this + other;
+        return *this;
+    }
 
     constexpr Vec2 Vec2::operator-(const Vec2& other) const noexcept { return Vec2{ x - other.x, y - other.y }; }
 
