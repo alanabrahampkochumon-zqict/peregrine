@@ -33,7 +33,7 @@ namespace asteroids::comp
     }
 
 
-    void BGSpriteComponent::draw(SDL_Renderer* renderer)
+    void BGSpriteComponent::draw(SDL_Renderer* renderer) noexcept
     {
         SpriteComponent ::draw(renderer);
     }

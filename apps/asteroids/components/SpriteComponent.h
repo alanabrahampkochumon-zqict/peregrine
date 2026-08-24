@@ -14,32 +14,30 @@
 
 #include <SDL3/SDL.h>
 
-namespace asteroids
+namespace asteroids::comp
 {
+    /// Forward declaration
     class Actor;
 
-    namespace comp
+    class SpriteComponent: Component
     {
-        class SpriteComponent: Component
-        {
-        public:
-            explicit SpriteComponent(Actor* owner, int drawOrder = 100);
+    public:
+        explicit SpriteComponent(Actor* owner, int drawOrder = 100) noexcept;
 
-            ~SpriteComponent() override;
+        ~SpriteComponent() override;
 
-            virtual void draw(SDL_Renderer* renderer);
+        virtual void draw(SDL_Renderer* renderer) noexcept;
 
-            virtual void setTexture(graphics::Texture<>* texture);
+        virtual void setTexture(graphics::Texture<>* texture) noexcept;
 
-            void update(float deltaTime) noexcept override;
+        void update(float deltaTime) noexcept override;
 
-            int getDrawOrder() const noexcept { return _drawOrder; }
+        [[nodiscard]] int getDrawOrder() const noexcept { return _drawOrder; }
 
-        private:
-            graphics::Texture<>* _texture{ nullptr };
-            Actor* _owner;
+    private:
+        graphics::Texture<>* _texture{ nullptr };
+        Actor* _owner;
 
-            int _drawOrder;
-        };
-    } // namespace comp
-} // namespace asteroids
+        int _drawOrder;
+    };
+} // namespace asteroids::comp

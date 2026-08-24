@@ -9,39 +9,37 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
-namespace asteroids
+namespace asteroids::comp
 {
     /// Forward declaration
     class Actor;
 
-    namespace comp
+    class Component
     {
-        class Component
-        {
-        public:
-            /**
-             * @brief Create a component for a given actor.
-             *
-             * @param owner       The actor that owns this component.
-             * @param updateOrder The order for update. Lower order indicates earlier updates. Default: 100
-             */
-            explicit constexpr Component(Actor* owner, const int updateOrder = 100) noexcept
-                : _owner{ owner }, _updateOrder{ updateOrder } {}
+    public:
+        /**
+         * @brief Create a component for a given actor.
+         *
+         * @param owner       The actor that owns this component.
+         * @param updateOrder The order for update. Lower order indicates earlier updates. Default: 100
+         */
+        explicit constexpr Component(Actor* owner, const int updateOrder = 100) noexcept
+            : _owner{ owner }, _updateOrder{ updateOrder }
+        {}
 
 
-            /// Update this component by delta time.
-            virtual void update(float deltaTime) noexcept = 0;
+        /// Update this component by delta time.
+        virtual void update(float deltaTime) noexcept = 0;
 
 
-            [[nodiscard]] int getUpdateOrder() const { return _updateOrder; }
+        [[nodiscard]] int getUpdateOrder() const { return _updateOrder; }
 
 
-            virtual ~Component() = default;
+        virtual ~Component() = default;
 
-        private:
-            [[maybe_unused]] Actor* _owner{ nullptr };
-            int _updateOrder{};
-        };
-    } // namespace comp
+    private:
+        [[maybe_unused]] Actor* _owner{ nullptr };
+        int _updateOrder{};
+    };
 
-} // namespace asteroids
+} // namespace asteroids::comp

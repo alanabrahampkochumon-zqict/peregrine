@@ -39,7 +39,7 @@ namespace asteroids
 
             void update(float deltaTime) noexcept override;
 
-            void draw(SDL_Renderer* renderer) override;
+            void draw(SDL_Renderer* renderer) noexcept override;
 
             void setBGTexture(const std::vector<graphics::Texture<>*>& textures) noexcept;
 

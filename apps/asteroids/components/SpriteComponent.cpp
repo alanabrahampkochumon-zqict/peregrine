@@ -5,6 +5,7 @@
 #include "SpriteComponent.h"
 
 #include "../game/AsteroidGame.h"
+#include "Actor.h"
 #include "psm/PSMath.h"
 
 
@@ -13,8 +14,8 @@ namespace asteroids::comp
     using namespace math;
 
     // TODO: Check whether draw order and update order refer to the same thing
-    SpriteComponent::SpriteComponent(Actor* owner, const int drawOrder)
-        : Component{ owner }, _owner{ owner }, _drawOrder{ drawOrder }
+    SpriteComponent::SpriteComponent(Actor* owner, const int drawOrder) noexcept
+        : Component{ owner, drawOrder }, _owner{ owner }, _drawOrder{ drawOrder }
     {
         _owner->getGame()->addSprite(this);
         _owner->addComponent(this);
@@ -24,7 +25,7 @@ namespace asteroids::comp
     SpriteComponent::~SpriteComponent() {}
 
 
-    void SpriteComponent::draw(SDL_Renderer* renderer)
+    void SpriteComponent::draw(SDL_Renderer* renderer) noexcept
     {
         if (_texture == nullptr)
         {
@@ -52,10 +53,7 @@ namespace asteroids::comp
     }
 
 
-    void SpriteComponent::setTexture(graphics::Texture<>* texture)
-    {
-        _texture = texture;
-    }
+    void SpriteComponent::setTexture(graphics::Texture<>* texture) noexcept { _texture = texture; }
 
 
     void SpriteComponent::update([[maybe_unused]] float deltaTime) noexcept
