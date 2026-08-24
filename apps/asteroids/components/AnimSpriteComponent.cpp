@@ -26,9 +26,9 @@ namespace asteroids::comp
             // TODO: Change the conditional to modulo evaluation
             // which can be sped up by using rem = _currentFrame - _fps * _fpsQuotient(this can calculated in the
             // setter)
-            while (_currentFrame >= _textures.size())
+            while (_currentFrame >= static_cast<float>(_textures.size()))
             {
-                _currentFrame -= _textures.size();
+                _currentFrame -= static_cast<float>(_textures.size());
             }
 
             // Set the current sprite texture

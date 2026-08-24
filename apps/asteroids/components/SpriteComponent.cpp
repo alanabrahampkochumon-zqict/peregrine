@@ -26,7 +26,7 @@ namespace asteroids::comp
 
     void SpriteComponent::draw(SDL_Renderer* renderer)
     {
-        if (!_texture)
+        if (_texture == nullptr)
         {
             return; // If there are no textures then don't use the draw call.
         }
@@ -51,10 +51,12 @@ namespace asteroids::comp
         }
     }
 
-    void SpriteComponent::setTexture([[maybe_unused]] graphics::Texture<>* texture)
+
+    void SpriteComponent::setTexture(graphics::Texture<>* texture)
     {
-        // TODO: Impl
+        _texture = texture;
     }
+
 
     void SpriteComponent::update([[maybe_unused]] float deltaTime) noexcept
     {
