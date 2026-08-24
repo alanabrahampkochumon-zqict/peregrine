@@ -37,3 +37,12 @@ target_link_libraries(
         SDL3_image::SDL3_image
 )
 
+add_custom_command(
+        TARGET Asteroids
+        POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E
+        copy_directory
+        "${CMAKE_CURRENT_SOURCE_DIR}/assets"
+        "$<TARGET_FILE_DIR:Asteroids>/assets"
+        COMMENT "Copying assets to build directory..."
+)
