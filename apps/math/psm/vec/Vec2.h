@@ -9,6 +9,8 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
+#include <cmath>
+
 // Peregrine Simple Math
 namespace psm
 {
@@ -32,6 +34,20 @@ namespace psm
 
         /// @brief Divide this vector by a scalar and return a new inverse scaled vector.
         [[nodiscard]] constexpr Vec2 operator/(float scalar) const noexcept;
+
+        /// @brief Compute the dot product of this vector with @p other.
+        [[nodiscard]] constexpr float dot(const Vec2& other) const noexcept;
+
+        /// @brief Compute the pseudo-cross product of this vector with @p other.
+        [[nodiscard]] constexpr float cross(const Vec2& other) const noexcept;
+
+        /// @brief Compute the magnitude of this vector.
+        /// @relatedalso magSq()
+        [[nodiscard]] constexpr float mag() const noexcept;
+
+        /// @brief Compute the squared magnitude of this vector.
+        /// @relatedalso mag()
+        [[nodiscard]] constexpr float magSq() const noexcept;
     };
 
 
@@ -53,6 +69,19 @@ namespace psm
         const float factor = 1.0f / scalar;
         return *this * factor;
     }
+
+
+    constexpr float Vec2::dot(const Vec2& other) const noexcept { return x * other.x + y * other.y; }
+
+    constexpr float Vec2::cross(const Vec2& other) const noexcept
+    {
+        // Ax * By - Ay * Bx
+        return x * other.y - y * other.x;
+    }
+
+    constexpr float Vec2::mag() const noexcept { return std::sqrt(dot(*this)); }
+
+    constexpr float Vec2::magSq() const noexcept { return dot(*this); }
 
 
 } // namespace psm

@@ -26,7 +26,7 @@ namespace asteroids
              * @param updateOrder The order for update. Lower order indicates earlier updates. Default: 100
              */
             explicit constexpr Component(Actor* owner, const int updateOrder = 100) noexcept
-                : _owner{ owner }, _updateOrder{ updateOrder } {};
+                : _owner{ owner }, _updateOrder{ updateOrder } {}
 
 
             /// Update this component by delta time.

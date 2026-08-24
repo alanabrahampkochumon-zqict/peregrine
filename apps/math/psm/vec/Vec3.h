@@ -32,6 +32,20 @@ namespace psm
 
         /// @brief Divide this vector by a scalar and return a new inverse scaled vector.
         [[nodiscard]] constexpr Vec3 operator/(float scalar) const noexcept;
+
+        /// @brief Compute the dot product of this vector with @p other.
+        [[nodiscard]] constexpr float dot(const Vec3& other) const noexcept;
+
+        /// @brief Compute the cross product of this vector with @p other.
+        [[nodiscard]] constexpr Vec3 cross(const Vec3& other) const noexcept;
+
+        /// @brief Compute the magnitude of this vector.
+        /// @relatedalso magSq()
+        [[nodiscard]] constexpr float mag() const noexcept;
+
+        /// @brief Compute the squared magnitude of this vector.
+        /// @relatedalso mag()
+        [[nodiscard]] constexpr float magSq() const noexcept;
     };
 
 
@@ -56,6 +70,21 @@ namespace psm
         const float factor = 1.0f / scalar;
         return *this * factor;
     }
+
+
+    constexpr float Vec3::dot(const Vec3& other) const noexcept { return x * other.x + y * other.y + z * other.z; }
+
+    constexpr Vec3 Vec3::cross(const Vec3& other) const noexcept
+    {
+        // x -> A_y * B_z - A_z * B_y
+        // y -> A_z * B_x - A_x * B_z
+        // z -> A_x * B_y - A_y * B_z
+        return Vec3{ y * other.z - z * other.y, z * other.x - x * other.z, x * other.y - y * other.z };
+    }
+
+    constexpr float Vec3::mag() const noexcept { return std::sqrt(dot(*this)); }
+
+    constexpr float Vec3::magSq() const noexcept { return dot(*this); }
 
 
 } // namespace psm
