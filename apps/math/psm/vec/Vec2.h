@@ -10,6 +10,7 @@
  */
 
 #include <cmath>
+#include <random>
 
 // Peregrine Simple Math
 namespace psm
@@ -60,6 +61,17 @@ namespace psm
 
         /// @brief Normalize this vector and return a new vector.
         [[nodiscard]] Vec2 normalize() const noexcept;
+
+        /**
+         * Get a random vector between @p from and @p to.
+         *
+         * @note Both ranges are inclusive.
+         *
+         * @param from The lower limit for the random vector.
+         * @param to   The upper limit for the random vector.
+         * @return A 2D vector with random values between @p from and @p to.
+         */
+        [[nodiscard]] static Vec2 getRandom(Vec2 from, Vec2 to) noexcept;
     };
 
 
@@ -107,6 +119,19 @@ namespace psm
         const auto dy = other.y - y;
         return dx * dx + dy * dy;
     }
+
+
+    inline Vec2 Vec2::getRandom(const Vec2 from, const Vec2 to) noexcept
+    {
+        std::random_device rd;
+        std::mt19937 generator(rd());
+
+        std::uniform_real_distribution xDistribution(from.x, to.x);
+        std::uniform_real_distribution yDistribution(from.y, to.y);
+
+        return Vec2{ xDistribution(generator), yDistribution(generator) };
+    }
+
 
     inline float Vec2::dist(const Vec2& other) const noexcept
     {
