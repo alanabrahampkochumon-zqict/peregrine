@@ -22,7 +22,7 @@ namespace psm
 
         Vec2() = default;
 
-        [[nodiscard]] constexpr explicit Vec2(float x, float y) noexcept;
+        [[nodiscard]] constexpr explicit Vec2(const float x, const float y) noexcept: x{ x }, y{ y } {};
 
         /// @brief Add two vector together and return a new vector containing the vector sum.
         [[nodiscard]] constexpr Vec2 operator+(const Vec2& other) const noexcept;
@@ -74,13 +74,12 @@ namespace psm
         [[nodiscard]] static Vec2 getRandom(Vec2 from, Vec2 to) noexcept;
     };
 
+    static constexpr Vec2 ZERO{ 0.0f, 0.0f };
 
 
     //+=+=+=+=+=+=+=+=+=
     // IMPLEMENTATIONS
     //+=+=+=+=+=+=+=+=+=
-
-    constexpr Vec2::Vec2(const float x, const float y) noexcept: x{ x }, y{ y } {}
 
     constexpr Vec2 Vec2::operator+(const Vec2& other) const noexcept { return Vec2{ x + other.x, y + other.y }; }
 
