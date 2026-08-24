@@ -41,13 +41,22 @@ namespace psm
         /// @brief Compute the pseudo-cross product of this vector with @p other.
         [[nodiscard]] constexpr float cross(const Vec2& other) const noexcept;
 
-        /// @brief Compute the magnitude of this vector.
-        /// @relatedalso magSq()
-        [[nodiscard]] constexpr float mag() const noexcept;
-
         /// @brief Compute the squared magnitude of this vector.
         /// @relatedalso mag()
         [[nodiscard]] constexpr float magSq() const noexcept;
+
+        /// @brief Compute the magnitude of this vector.
+        /// @relatedalso magSq()
+        [[nodiscard]] float mag() const noexcept;
+
+        /// @brief Compute the squared distance between two vector.
+        [[nodiscard]] constexpr float distSq(const Vec2& other) const noexcept;
+
+        /// @brief Compute the distance between two vector.
+        [[nodiscard]] float dist(const Vec2& other) const noexcept;
+
+        /// @brief Normalize this vector and return a new vector.
+        [[nodiscard]] Vec2 normalize() const noexcept;
     };
 
 
@@ -79,9 +88,25 @@ namespace psm
         return x * other.y - y * other.x;
     }
 
-    constexpr float Vec2::mag() const noexcept { return std::sqrt(dot(*this)); }
-
     constexpr float Vec2::magSq() const noexcept { return dot(*this); }
+
+    inline float Vec2::mag() const noexcept { return std::sqrt(magSq()); }
+
+    constexpr float Vec2::distSq(const Vec2& other) const noexcept
+    {
+        const auto dx = other.x - x;
+        const auto dy = other.y - y;
+        return dx * dx + dy * dy;
+    }
+
+    inline float Vec2::dist(const Vec2& other) const noexcept
+    {
+        // Note: This can be written as as (a - b).mag()
+        return std::sqrt(distSq(other));
+    }
+
+    inline Vec2 Vec2::normalize() const noexcept { return *this / mag(); }
+
 
 
 } // namespace psm

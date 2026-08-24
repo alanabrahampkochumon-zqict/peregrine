@@ -39,13 +39,22 @@ namespace psm
         /// @brief Compute the cross product of this vector with @p other.
         [[nodiscard]] constexpr Vec3 cross(const Vec3& other) const noexcept;
 
-        /// @brief Compute the magnitude of this vector.
-        /// @relatedalso magSq()
-        [[nodiscard]] constexpr float mag() const noexcept;
-
         /// @brief Compute the squared magnitude of this vector.
         /// @relatedalso mag()
         [[nodiscard]] constexpr float magSq() const noexcept;
+
+        /// @brief Compute the magnitude of this vector.
+        /// @relatedalso magSq()
+        [[nodiscard]] float mag() const noexcept;
+
+        /// @brief Compute the squared distance between two vector.
+        [[nodiscard]] constexpr float distSq(const Vec3& other) const noexcept;
+
+        /// @brief Compute the distance between two vector.
+        [[nodiscard]] float dist(const Vec3& other) const noexcept;
+
+        /// @brief Normalize this vector and return a new vector.
+        [[nodiscard]] Vec3 normalize() const noexcept;
     };
 
 
@@ -82,9 +91,25 @@ namespace psm
         return Vec3{ y * other.z - z * other.y, z * other.x - x * other.z, x * other.y - y * other.z };
     }
 
-    constexpr float Vec3::mag() const noexcept { return std::sqrt(dot(*this)); }
-
     constexpr float Vec3::magSq() const noexcept { return dot(*this); }
+
+    inline float Vec3::mag() const noexcept { return std::sqrt(magSq()); }
+
+    constexpr float Vec3::distSq(const Vec3& other) const noexcept
+    {
+        const auto dx = other.x - x;
+        const auto dy = other.y - y;
+        const auto dz = other.z - z;
+        return dx * dx + dy * dy + dz * dz;
+    }
+
+    inline float Vec3::dist(const Vec3& other) const noexcept
+    {
+        return std::sqrt(distSq(other));
+    }
+
+    inline Vec3 Vec3::normalize() const noexcept { return *this / mag(); }
+
 
 
 } // namespace psm
