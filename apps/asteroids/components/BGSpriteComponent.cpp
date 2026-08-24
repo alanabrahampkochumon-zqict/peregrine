@@ -36,7 +36,6 @@ namespace asteroids::comp
     void BGSpriteComponent::draw(SDL_Renderer* renderer)
     {
         SpriteComponent::draw(renderer);
-
     }
 
 
