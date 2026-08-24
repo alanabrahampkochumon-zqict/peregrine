@@ -11,6 +11,8 @@
 
 #include <concepts>
 #include <limits>
+#include <random>
+
 
 namespace psm
 {
@@ -27,6 +29,27 @@ namespace psm
         else
         {
             return num > 0;
+        }
+    }
+
+
+    /// @brief Generate a random number between @p from and @p to inclusive.
+    /// @tparam T The numeric type of the number to generate.
+    template <typename T>
+    inline T genRand(const T from, const T to)
+    {
+        std::random_device rd;
+        std::mt19937 engine{ rd() };
+
+        if constexpr (std::is_floating_point_v<T>)
+        {
+            const std::uniform_real_distribution<T> dist{ from, to };
+            return dist(engine);
+        }
+        else
+        {
+            const std::uniform_int_distribution<T> dist{ from, to };
+            return dist(engine);
         }
     }
 } // namespace psm
