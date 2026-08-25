@@ -227,13 +227,13 @@ namespace asteroids
     void AsteroidGame::_draw()
     {
         SDL_SetRenderDrawColor(_renderer, CLEAR_COLOR[0], CLEAR_COLOR[1], CLEAR_COLOR[2], CLEAR_COLOR[3]);
+        SDL_RenderClear(_renderer);
+
 
         for (const auto sprite : _spriteComponents)
         {
             sprite->draw(_renderer);
         }
-
-        SDL_RenderClear(_renderer);
         SDL_RenderPresent(_renderer); // Swap buffers
     }
 
