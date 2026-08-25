@@ -10,7 +10,8 @@
 
 #include "AsteroidGame.h"
 
-#include "../graphics/Texture.h"
+#include "graphics/Texture.h"
+#include "components/Asteroid.h"
 
 #include <SDL3/SDL.h>
 #include <algorithm>
@@ -42,8 +43,8 @@ namespace asteroids
             SDL_Log("There was an error creating renderer.\n%s", SDL_GetError());
             return false;
         }
-        //
-        // _loadData();
+
+        _loadData();
 
 
         _isRunning = true;
@@ -141,9 +142,18 @@ namespace asteroids
         }
         else
         {
-            const auto texture          = new graphics::Texture<>(_renderer, filename);
+            const auto texture    = new graphics::Texture<>(_renderer, filename);
             _textureSet[filename] = texture;
             return texture;
+        }
+    }
+
+
+    void AsteroidGame::_loadData()
+    {
+        for (size_t i = 0; i < 20; ++i)
+        {
+            new actor::Asteroid(this);
         }
     }
 

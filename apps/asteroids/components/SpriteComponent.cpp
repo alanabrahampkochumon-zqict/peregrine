@@ -22,7 +22,7 @@ namespace asteroids::comp
     }
 
 
-    SpriteComponent::~SpriteComponent() {}
+    SpriteComponent::~SpriteComponent() = default;
 
 
     void SpriteComponent::draw(SDL_Renderer* renderer) noexcept
@@ -34,8 +34,8 @@ namespace asteroids::comp
 
         SDL_FRect spriteRect;
         // Scale the rect to the actors width and height
-        spriteRect.w = _texture->getWidth() * _owner->getScale();
-        spriteRect.h = _texture->getHeight() * _owner->getScale();
+        spriteRect.w = static_cast<float>(_texture->getWidth()) * _owner->getScale();
+        spriteRect.h = static_cast<float>(_texture->getHeight()) * _owner->getScale();
 
         // Center the rectangle around the position of the owner
         spriteRect.x = _owner->getPosition().x - (spriteRect.w * 0.5f);

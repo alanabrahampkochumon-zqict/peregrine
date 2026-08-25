@@ -62,6 +62,9 @@ namespace asteroids
         // INTERNAL HELPERS
         //+=+=+=+=+=+=+=+=+=
 
+        /// @brief Loads the game data
+        void _loadData();
+
         /// @brief Handles game input.
         void _handleInput();
 
