@@ -104,7 +104,7 @@ namespace asteroids
         }
         else if (actorToRemove = std::ranges::find(_actors, actor); actorToRemove != std::ranges::end(_actors))
         {
-            std::ranges::iter_swap(*actorToRemove, _pendingActors.back());
+            std::ranges::iter_swap(*actorToRemove, _actors.back());
             _actors.pop_back();
         }
     }

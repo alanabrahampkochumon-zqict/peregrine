@@ -19,7 +19,10 @@ namespace asteroids::comp
         : _state{ State::PAUSED }, _position{}, _scale{ 1 }, _rotation{ 0 }, _game{ game }
     { game->addActor(this); }
 
-    Actor::~Actor() { _game->removeActor(this); }
+    Actor::~Actor()
+    {
+        _game->removeActor(this);
+    }
 
 
     void Actor::update([[maybe_unused]] float deltaTime)
