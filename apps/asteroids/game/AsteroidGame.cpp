@@ -10,6 +10,8 @@
 
 #include "AsteroidGame.h"
 
+#include "../graphics/Texture.h"
+
 #include <SDL3/SDL.h>
 #include <algorithm>
 #include <ranges>
@@ -40,6 +42,8 @@ namespace asteroids
             SDL_Log("There was an error creating renderer.\n%s", SDL_GetError());
             return false;
         }
+        //
+        // _loadData();
 
 
         _isRunning = true;
@@ -129,6 +133,21 @@ namespace asteroids
     }
 
 
+    graphics::Texture<>* AsteroidGame::getTexture(const std::string& filename) noexcept
+    {
+        if (_textureSet.contains(filename))
+        {
+            return _textureSet.at(filename);
+        }
+        else
+        {
+            const auto texture          = new graphics::Texture<>(_renderer, filename);
+            _textureSet[filename] = texture;
+            return texture;
+        }
+    }
+
+
     void AsteroidGame::_handleInput()
     {
         SDL_Event event;
@@ -147,11 +166,11 @@ namespace asteroids
 
     void AsteroidGame::_update()
     {
-        while (SDL_GetTicks() < lastFrameTick + 16) {} // Frame Limiting to 60 FPS
+        while (SDL_GetTicks() < _lastFrameTick + 16) {} // Frame Limiting to 60 FPS
 
         const auto currentTick = SDL_GetTicks();
-        float deltaTime        = static_cast<float>(currentTick - lastFrameTick) * 0.001f;
-        lastFrameTick          = currentTick;
+        float deltaTime        = static_cast<float>(currentTick - _lastFrameTick) * 0.001f;
+        _lastFrameTick         = currentTick;
 
 #ifndef NDEBUG
         // Clamp maximum delta time (useful for debug breaks)
@@ -178,7 +197,7 @@ namespace asteroids
         std::vector<comp::Actor*> deadActors;
         for (const auto actor : _actors)
         {
-            if (actor->getState() == comp::Actor::State::Dead)
+            if (actor->getState() == comp::Actor::State::DEAD)
             {
                 deadActors.emplace_back(actor);
             }

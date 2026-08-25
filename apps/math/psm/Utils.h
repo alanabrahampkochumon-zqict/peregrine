@@ -39,17 +39,18 @@ namespace psm
     inline T genRand(const T from, const T to)
     {
         std::random_device rd;
-        std::mt19937 engine{ rd() };
+        std::mt19937 generator{ rd() };
 
         if constexpr (std::is_floating_point_v<T>)
         {
-            const std::uniform_real_distribution<T> dist{ from, to };
-            return dist(engine);
+            std::uniform_real_distribution<T> dist{ from, to };
+            return dist(generator);
         }
         else
         {
-            const std::uniform_int_distribution<T> dist{ from, to };
-            return dist(engine);
+            // const std::uniform_real_distribution<float> dist{ 0.0f, 12.0f };
+            std::uniform_int_distribution dist{ from, to };
+            return dist(generator);
         }
     }
 } // namespace psm

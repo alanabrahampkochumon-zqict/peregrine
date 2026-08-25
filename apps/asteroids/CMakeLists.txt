@@ -11,7 +11,7 @@ add_executable(
         components/Actor.cpp
 
         graphics/Texture.h
-        graphics/Texture.cpp
+        graphics/Texture.tpp
         components/SpriteComponent.cpp
         components/SpriteComponent.h
         components/AnimSpriteComponent.cpp
@@ -20,6 +20,8 @@ add_executable(
         components/BGSpriteComponent.h
         components/MoveComponent.cpp
         components/MoveComponent.h
+        components/Asteroid.cpp
+        components/Asteroid.h
 )
 
 target_compile_features(Asteroids PRIVATE cxx_std_20)

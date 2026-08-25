@@ -31,9 +31,9 @@ namespace asteroids::comp
         /// Actor state
         enum class State : uint8_t
         {
-            Active,
-            Paused,
-            Dead
+            ACTIVE,
+            PAUSED,
+            DEAD
         };
 
         explicit Actor(AsteroidGame* game) noexcept;

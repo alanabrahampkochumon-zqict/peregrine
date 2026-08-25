@@ -35,7 +35,7 @@ namespace asteroids::graphics
          * @param renderer The renderer used.
          * @param path     The path to the texture file.
          */
-        explicit Texture(SDL_Renderer& renderer, const std::string& path) noexcept;
+        explicit Texture(SDL_Renderer* renderer, const std::string& path) noexcept;
 
         ~Texture() noexcept;
 
@@ -56,3 +56,5 @@ namespace asteroids::graphics
         int _width{}, _height{};
     };
 } // namespace asteroids::graphics
+
+#include "Texture.tpp"

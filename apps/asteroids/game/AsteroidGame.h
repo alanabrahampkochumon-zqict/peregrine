@@ -15,6 +15,7 @@
 #include <SDL3/SDL.h>
 #include <array>
 #include <vector>
+#include <unordered_map>
 
 
 namespace asteroids
@@ -46,6 +47,15 @@ namespace asteroids
         /// @brief Remove a sprite from the game
         void removeSprite(const comp::SpriteComponent* sprite) noexcept;
 
+        /// @brief Read and return a texture with the given path/filename.
+        graphics::Texture<>* getTexture(const std::string& filename) noexcept;
+
+        //+=+=+=+=+=
+        // GETTERS
+        //+=+=+=+=+=
+
+        [[nodiscard]] constexpr size_t getWindowHeight() const noexcept { return WINDOW_HEIGHT; }
+        [[nodiscard]] constexpr size_t getWindowWidth() const noexcept { return WINDOW_WIDTH; }
 
     private:
         //+=+=+=+=+=+=+=+=+=
@@ -69,7 +79,7 @@ namespace asteroids
         SDL_Renderer* _renderer{ nullptr };
 
         bool _isRunning{ false };
-        uint64_t lastFrameTick{ 0 };
+        uint64_t _lastFrameTick{ 0 };
         bool _isUpdatingActors{ false };
 
         // Actors are the collection of all active actors.
@@ -78,6 +88,7 @@ namespace asteroids
         std::vector<comp::Actor*> _actors{}, _pendingActors{};
 
         std::vector<comp::SpriteComponent*> _spriteComponents{};
+        std::unordered_map<std::string, graphics::Texture<>*> _textureSet{};
 
 
         //+=+=+=+=+=+=+=+=+=

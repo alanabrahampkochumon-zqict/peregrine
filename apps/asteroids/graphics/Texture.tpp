@@ -8,13 +8,11 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
-#include "Texture.h"
-
 
 namespace asteroids::graphics
 {
     template <ImageType Type>
-    Texture<Type>::Texture(SDL_Renderer& renderer, const std::string& path) noexcept
+    Texture<Type>::Texture(SDL_Renderer* renderer, const std::string& path) noexcept
     {
         SDL_Surface* image;
         if constexpr (Type == ImageType::BMP)
@@ -30,7 +28,7 @@ namespace asteroids::graphics
             SDL_Log("Unsupported Texture Format");
             return;
         }
-        _texture = SDL_CreateTextureFromSurface(&renderer, image);
+        _texture = SDL_CreateTextureFromSurface(renderer, image);
         if (!_texture)
         {
             SDL_Log("There was an error creating the texture");
