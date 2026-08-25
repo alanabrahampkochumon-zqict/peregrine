@@ -17,7 +17,7 @@ namespace asteroids::comp
     SpriteComponent::SpriteComponent(Actor* owner, const int drawOrder) noexcept
         : Component{ owner, drawOrder }, _owner{ owner }, _drawOrder{ drawOrder }
     {
-        _owner->getGame()->addSprite(this);
+        // _owner->getGame()->addSprite(this);
         _owner->addComponent(this);
     }
 

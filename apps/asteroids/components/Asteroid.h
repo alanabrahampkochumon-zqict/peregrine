@@ -22,4 +22,9 @@ namespace asteroids::actor
     public:
         explicit Asteroid(AsteroidGame* game) noexcept;
     };
+
+    static constexpr size_t SPRITE_WIDTH  = 64;
+    static constexpr size_t SPRITE_HEIGHT = 64;
+    static constexpr size_t SPRITE_COUNT_X = 4;
+    static constexpr size_t SPRITE_COUNT_Y = 1;
 } // namespace asteroids::actor

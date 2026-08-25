@@ -110,7 +110,7 @@ namespace asteroids
     }
 
 
-    void AsteroidGame::addSprite(comp::SpriteComponent* sprite) noexcept
+    void AsteroidGame::addSprite(comp::SpriteSheetComponent* sprite) noexcept
     {
         // We need to insert sprite while preserving the order
         const int drawOrder = sprite->getDrawOrder();
@@ -128,7 +128,7 @@ namespace asteroids
     }
 
 
-    void AsteroidGame::removeSprite([[maybe_unused]] const comp::SpriteComponent* sprite) noexcept
+    void AsteroidGame::removeSprite([[maybe_unused]] const comp::SpriteSheetComponent* sprite) noexcept
     {
         // TODO: Impl
     }

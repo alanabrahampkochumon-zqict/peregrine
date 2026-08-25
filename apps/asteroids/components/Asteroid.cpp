@@ -5,7 +5,7 @@
 #include "Asteroid.h"
 
 #include "MoveComponent.h"
-#include "SpriteComponent.h"
+#include "SpriteSheetComponent.h"
 
 namespace asteroids::actor
 {
@@ -17,8 +17,11 @@ namespace asteroids::actor
         setPosition(position);
         setRotation(psm::genRand(0.0f, std::numbers::pi_v<float>));
 
-        auto* sprite = new comp::SpriteComponent(this);
-        sprite->setTexture(game->getTexture("assets/Asteroids_Foreground.png"));
+        auto* sprite = new comp::SpriteSheetComponent(this);
+        sprite->setSpritesheetTexture(game->getTexture("assets/Asteroids_Foreground.png"), SPRITE_WIDTH, SPRITE_HEIGHT);
+        // Select an active sprite index at random
+        sprite->setActiveIndex(
+            { .x = psm::genRand(0ull, SPRITE_COUNT_X - 1), .y = psm::genRand(0ull, SPRITE_COUNT_Y - 1) });
 
         auto* moveComp = new comp::MoveComponent(this);
         moveComp->setForwardSpeed(150.0f);

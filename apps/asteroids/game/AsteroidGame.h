@@ -10,12 +10,12 @@
  */
 
 #include "components/Actor.h"
-#include "components/SpriteComponent.h"
+#include "components/SpriteSheetComponent.h"
 
 #include <SDL3/SDL.h>
 #include <array>
-#include <vector>
 #include <unordered_map>
+#include <vector>
 
 
 namespace asteroids
@@ -42,10 +42,10 @@ namespace asteroids
         void removeActor(const comp::Actor* actor) noexcept;
 
         /// @brief Add a sprite to the game
-        void addSprite(comp::SpriteComponent* sprite) noexcept;
+        void addSprite(comp::SpriteSheetComponent* sprite) noexcept;
 
         /// @brief Remove a sprite from the game
-        void removeSprite(const comp::SpriteComponent* sprite) noexcept;
+        void removeSprite(const comp::SpriteSheetComponent* sprite) noexcept;
 
         /// @brief Read and return a texture with the given path/filename.
         graphics::Texture<>* getTexture(const std::string& filename) noexcept;
@@ -90,7 +90,7 @@ namespace asteroids
         // it is in the middle of an update loop.
         std::vector<comp::Actor*> _actors{}, _pendingActors{};
 
-        std::vector<comp::SpriteComponent*> _spriteComponents{};
+        std::vector<comp::SpriteSheetComponent*> _spriteComponents{};
         std::unordered_map<std::string, graphics::Texture<>*> _textureSet{};
 
 
@@ -103,6 +103,6 @@ namespace asteroids
         static constexpr size_t WINDOW_WIDTH  = 1280;
         static constexpr size_t WINDOW_HEIGHT = 720;
 
-        static constexpr std::array<uint8_t, 4> CLEAR_COLOR{ 255, 255, 255, 255 }; // RGBA
+        static constexpr std::array<uint8_t, 4> CLEAR_COLOR{ 0, 16, 32, 255 }; // RGBA
     };
 } // namespace asteroids
