@@ -18,11 +18,7 @@
 namespace asteroids::comp
 {
 
-    InputComponent::InputComponent(Actor* owner) noexcept: MoveComponent{ owner }
-    {
-        _owner->getGame()->addInputComponent(this);
-        _owner->addComponent(this);
-    }
+    InputComponent::InputComponent(Actor* owner) noexcept: MoveComponent{ owner } { _owner->addComponent(this); }
 
 
     void InputComponent::processInput(const bool* keyState) noexcept
@@ -52,6 +48,6 @@ namespace asteroids::comp
         setAngularSpeed(angularSpeed);
     }
 
-    InputComponent::~InputComponent() noexcept { _owner->getGame()->removeInputComponent(this); }
+    InputComponent::~InputComponent() noexcept { _owner->removeComponent(this); }
 
 } // namespace asteroids::comp

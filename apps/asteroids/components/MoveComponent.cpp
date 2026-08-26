@@ -19,10 +19,7 @@
 namespace asteroids::comp
 {
     MoveComponent::MoveComponent(Actor* owner, const int updateOrder): Component{ owner, updateOrder }
-    {
-        owner->getGame()->addMoveComponent(this);
-        _owner->addComponent(this);
-    }
+    { _owner->addComponent(this); }
 
     void MoveComponent::update(const float deltaTime) noexcept
     {
@@ -44,6 +41,6 @@ namespace asteroids::comp
         }
     }
 
-    MoveComponent::~MoveComponent() noexcept { _owner->getGame()->removeMoveComponent(this); }
+    MoveComponent::~MoveComponent() noexcept { _owner->removeComponent(this); }
 
 } // namespace asteroids::comp

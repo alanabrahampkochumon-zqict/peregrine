@@ -139,30 +139,6 @@ namespace asteroids
         }
     }
 
-    void AsteroidGame::addMoveComponent(comp::MoveComponent* comp) noexcept { _moveComponents.emplace_back(comp); }
-
-    void AsteroidGame::removeMoveComponent(comp::MoveComponent* comp) noexcept
-    {
-        const auto componentToRemove = std::ranges::find(_moveComponents, comp);
-        if (componentToRemove != _moveComponents.end())
-        {
-            std::ranges::iter_swap(*componentToRemove, _moveComponents.back());
-            _moveComponents.pop_back();
-        }
-    }
-
-    void AsteroidGame::addInputComponent(comp::InputComponent* comp) noexcept { _inputComponents.emplace_back(comp); }
-
-    void AsteroidGame::removeInputComponent(comp::InputComponent* comp) noexcept
-    {
-        const auto componentToRemove = std::ranges::find(_inputComponents, comp);
-        if (componentToRemove != _inputComponents.end())
-        {
-            std::ranges::iter_swap(*componentToRemove, _inputComponents.back());
-            _inputComponents.pop_back();
-        }
-    }
-
 
     graphics::Texture<>* AsteroidGame::getTexture(const std::string& filename) noexcept
     {
@@ -236,17 +212,6 @@ namespace asteroids
         {
             actor->update(deltaTime);
         }
-
-        for (const auto comp: _moveComponents)
-        {
-            comp->update(deltaTime);
-        }
-
-        for (const auto comp: _inputComponents)
-        {
-            comp->update(deltaTime);
-        }
-
         _isUpdatingActors = false;
 
         // Move any actors from pending actors to actors vector.

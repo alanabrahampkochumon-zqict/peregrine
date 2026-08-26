@@ -106,8 +106,6 @@ namespace asteroids
         std::vector<comp::Actor*> _actors{}, _pendingActors{};
 
         std::vector<comp::SpriteSheetComponent*> _spriteComponents{};
-        std::vector<comp::MoveComponent*> _moveComponents{};
-        std::vector<comp::InputComponent*> _inputComponents{};
         std::unordered_map<std::string, graphics::Texture<>*> _textureSet{};
 
 
