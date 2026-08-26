@@ -175,6 +175,9 @@ namespace asteroids
 
         const auto kbState = SDL_GetKeyboardState(nullptr);
 
+        // We are setting isUpdating to true to ensure that if any process
+        // creates or destroys actors, then they are added to pending actors
+        // and not the actors to be processed in the current game loop.
         _isUpdatingActors = true;
         for (const auto& actor : _actors)
         {

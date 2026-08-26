@@ -24,6 +24,8 @@ add_executable(
         components/Asteroid.h
         components/SpriteSheetComponent.cpp
         components/SpriteSheetComponent.h
+        components/InputComponent.cpp
+        components/InputComponent.h
 )
 
 target_compile_features(Asteroids PRIVATE cxx_std_20)
