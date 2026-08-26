@@ -58,6 +58,17 @@ namespace asteroids::comp
         void removeComponent(Component* comp) noexcept;
 
 
+        /// Process the input.
+        /// @param keyState The keycode to process. 1-to-1 mapping to SDL3 keycodes.
+        void processInput(const bool* keyState) noexcept;
+
+
+        /// Process the actor input.
+        /// Overridable to provide additional functionality to deriving actors.
+        /// @param keyState The keycode to process. 1-to-1 mapping to SDL3 keycodes.
+        virtual void actorInput([[maybe_unused]] const bool* keyState) noexcept {}
+
+
         //+=+=+=+=+=
         // GETTERS
         //+=+=+=+=+=

@@ -10,8 +10,8 @@
 
 #include "AsteroidGame.h"
 
-#include "graphics/Texture.h"
 #include "components/Asteroid.h"
+#include "graphics/Texture.h"
 
 #include <SDL3/SDL.h>
 #include <algorithm>
@@ -172,6 +172,15 @@ namespace asteroids
                     break;
             }
         }
+
+        const auto kbState = SDL_GetKeyboardState(nullptr);
+
+        _isUpdatingActors = true;
+        for (const auto& actor : _actors)
+        {
+            actor->processInput(kbState);
+        }
+        _isUpdatingActors = false;
     }
 
     void AsteroidGame::_update()

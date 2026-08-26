@@ -19,10 +19,7 @@ namespace asteroids::comp
         : _state{ State::PAUSED }, _position{}, _scale{ 1 }, _rotation{ 0 }, _game{ game }
     { game->addActor(this); }
 
-    Actor::~Actor()
-    {
-        _game->removeActor(this);
-    }
+    Actor::~Actor() { _game->removeActor(this); }
 
 
     void Actor::update([[maybe_unused]] float deltaTime)
@@ -43,4 +40,17 @@ namespace asteroids::comp
     void Actor::addComponent(Component* comp) noexcept { _components.insert(comp); }
 
     void Actor::removeComponent(Component* comp) noexcept { _components.erase(comp); }
+
+
+    void Actor::processInput(const bool* keyState) noexcept
+    {
+        if (_state == State::ACTIVE)
+        {
+            for (const auto& comp : _components)
+            {
+                comp->processInput(keyState);
+            }
+            actorInput(keyState);
+        }
+    }
 } // namespace asteroids::comp

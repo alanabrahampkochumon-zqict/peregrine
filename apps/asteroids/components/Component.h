@@ -9,6 +9,10 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
+
+#include <cstdint>
+
+
 namespace asteroids::comp
 {
     /// Forward declaration
@@ -34,6 +38,9 @@ namespace asteroids::comp
 
         [[nodiscard]] int getUpdateOrder() const { return _updateOrder; }
 
+        /// Process the input.
+        /// @param keyState The keycode to process. 1-to-1 mapping to SDL3 keycodes.
+        virtual void processInput([[maybe_unused]] const bool* keyState) noexcept{};
 
         virtual ~Component() = default;
 
