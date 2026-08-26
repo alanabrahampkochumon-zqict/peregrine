@@ -236,6 +236,17 @@ namespace asteroids
         {
             actor->update(deltaTime);
         }
+
+        for (const auto comp: _moveComponents)
+        {
+            comp->update(deltaTime);
+        }
+
+        for (const auto comp: _inputComponents)
+        {
+            comp->update(deltaTime);
+        }
+
         _isUpdatingActors = false;
 
         // Move any actors from pending actors to actors vector.

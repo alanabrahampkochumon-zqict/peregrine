@@ -24,7 +24,7 @@ namespace psm
     {
         if constexpr (std::is_floating_point_v<T>)
         {
-            return num > std::numeric_limits<T>::epsilon();
+            return num < std::numeric_limits<T>::epsilon();
         }
         else
         {

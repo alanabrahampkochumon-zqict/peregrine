@@ -17,7 +17,7 @@ namespace asteroids::comp
     /// Forward declaration
     class Actor;
 
-    class InputComponent: MoveComponent
+    class InputComponent: public MoveComponent
     {
     public:
         explicit InputComponent(Actor* owner) noexcept;
