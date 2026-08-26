@@ -11,6 +11,7 @@
 
 
 #include "../graphics/Texture.h"
+#include "Actor.h"
 #include "SpriteComponent.h"
 
 #include <vector>
@@ -37,7 +38,7 @@ namespace asteroids
              * @param drawOrder The drawing order or z-index.
              */
             [[nodiscard]] explicit AnimSpriteComponent(Actor* owner, const int drawOrder = 100)
-                : SpriteComponent{ owner, drawOrder }, _currentFrame{ 0 }, _fps{ DEFAULT_SPRITE_ANIM_FPS }
+                : SpriteComponent{ owner, drawOrder }
             {}
 
 
@@ -64,11 +65,17 @@ namespace asteroids
             constexpr void setFPS(const float fps) noexcept { _fps = fps; }
 
             /// @brief Get the current animation frame rate.
-            constexpr float getFPS() const noexcept { return _fps; }
+            [[nodiscard]] constexpr float getFPS() const noexcept { return _fps; }
+
+
+            ~AnimSpriteComponent() noexcept override
+            {
+                // _owner->getGame().remove
+            }
 
         private:
             std::vector<graphics::Texture<>*> _textures;
-            float _currentFrame, _fps;
+            float _currentFrame{ 0 }, _fps{ DEFAULT_SPRITE_ANIM_FPS };
         };
     } // namespace comp
 

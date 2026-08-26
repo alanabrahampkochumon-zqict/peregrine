@@ -22,9 +22,9 @@ namespace asteroids::comp
     class SpriteSheetComponent: public Component
     {
     public:
-        explicit SpriteSheetComponent(Actor* owner, const int drawOrder = 100);
+        explicit SpriteSheetComponent(Actor* owner, int drawOrder = 100);
 
-        ~SpriteSheetComponent() override = default;
+        ~SpriteSheetComponent() noexcept override;
 
         void update(float deltaTime) noexcept override;
 

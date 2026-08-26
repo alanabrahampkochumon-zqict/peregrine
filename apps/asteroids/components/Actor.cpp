@@ -22,14 +22,19 @@ namespace asteroids::comp
     Actor::~Actor() { _game->removeActor(this); }
 
 
-    void Actor::update([[maybe_unused]] float deltaTime)
+    void Actor::update(const float deltaTime)
     {
         // TODO: Impl remove maybe unused
+        updateComponents(deltaTime);
+        updateActor(deltaTime);
     }
 
-    void Actor::updateComponents([[maybe_unused]] float deltaTime)
+    void Actor::updateComponents(const float deltaTime) const
     {
-        // TODO: Impl
+        for (const auto comp : _components)
+        {
+            comp->update(deltaTime);
+        }
     }
     void Actor::updateActor([[maybe_unused]] float deltaTime)
     {

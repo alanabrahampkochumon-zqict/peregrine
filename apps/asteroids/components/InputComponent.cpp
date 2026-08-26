@@ -11,9 +11,16 @@
 
 #include "InputComponent.h"
 
+#include "Actor.h"
+#include "game/AsteroidGame.h"
+
 
 namespace asteroids::comp
 {
+
+    InputComponent::InputComponent(Actor* owner) noexcept: MoveComponent{ owner }
+    { _owner->getGame()->addInputComponent(this); }
+
 
     void InputComponent::processInput(const bool* keyState) noexcept
     {
@@ -41,5 +48,7 @@ namespace asteroids::comp
         }
         setAngularSpeed(angularSpeed);
     }
+
+    InputComponent::~InputComponent() noexcept { _owner->getGame()->removeInputComponent(this); }
 
 } // namespace asteroids::comp

@@ -29,6 +29,8 @@ namespace asteroids::comp
         constexpr void setForwardSpeed(const float forwardSpeed) noexcept { _forwardSpeed = forwardSpeed; }
         constexpr void setAngularSpeed(const float angularSpeed) noexcept { _angularSpeed = angularSpeed; }
 
+        ~MoveComponent() noexcept override;
+
 
     private:
         /// ForwardSpeed -> Translation speed in unit/s

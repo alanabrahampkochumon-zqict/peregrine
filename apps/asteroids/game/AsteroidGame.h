@@ -10,6 +10,8 @@
  */
 
 #include "components/Actor.h"
+#include "components/InputComponent.h"
+#include "components/MoveComponent.h"
 #include "components/SpriteSheetComponent.h"
 
 #include <SDL3/SDL.h>
@@ -46,6 +48,19 @@ namespace asteroids
 
         /// @brief Remove a sprite from the game
         void removeSprite(const comp::SpriteSheetComponent* sprite) noexcept;
+
+        /// @brief Add a move component
+        void addMoveComponent(comp::MoveComponent* comp) noexcept;
+
+        /// @brief Remove a move componet
+        void removeMoveComponent(comp::MoveComponent* comp) noexcept;
+
+        /// @brief Add a move component
+        void addInputComponent(comp::InputComponent* comp) noexcept;
+
+        /// @brief Remove a move component
+        void removeInputComponent(comp::InputComponent* comp) noexcept;
+
 
         /// @brief Read and return a texture with the given path/filename.
         graphics::Texture<>* getTexture(const std::string& filename) noexcept;
@@ -91,6 +106,8 @@ namespace asteroids
         std::vector<comp::Actor*> _actors{}, _pendingActors{};
 
         std::vector<comp::SpriteSheetComponent*> _spriteComponents{};
+        std::vector<comp::MoveComponent*> _moveComponents{};
+        std::vector<comp::InputComponent*> _inputComponents{};
         std::unordered_map<std::string, graphics::Texture<>*> _textureSet{};
 
 

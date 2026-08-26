@@ -20,9 +20,11 @@ namespace asteroids::comp
     class InputComponent: MoveComponent
     {
     public:
-        explicit InputComponent(Actor* owner) noexcept: MoveComponent{ owner } {};
+        explicit InputComponent(Actor* owner) noexcept;
 
         void processInput(const bool* keyState) noexcept override;
+
+        ~InputComponent() noexcept override;
 
 
         //+=+=+=+=+=+=+=+=+=

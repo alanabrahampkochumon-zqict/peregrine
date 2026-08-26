@@ -45,7 +45,7 @@ namespace asteroids::comp
         void update(float deltaTime);
 
         /// Update all components of the actor.
-        void updateComponents(float deltaTime);
+        void updateComponents(float deltaTime) const;
 
         /// Actor specific update code (can be overridden).
         virtual void updateActor(float deltaTime);

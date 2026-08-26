@@ -131,7 +131,36 @@ namespace asteroids
 
     void AsteroidGame::removeSprite([[maybe_unused]] const comp::SpriteSheetComponent* sprite) noexcept
     {
-        // TODO: Impl
+        const auto componentToRemove = std::ranges::find(_spriteComponents, sprite);
+        if (componentToRemove != _spriteComponents.end())
+        {
+            std::ranges::iter_swap(*componentToRemove, _spriteComponents.back());
+            _spriteComponents.pop_back();
+        }
+    }
+
+    void AsteroidGame::addMoveComponent(comp::MoveComponent* comp) noexcept { _moveComponents.emplace_back(comp); }
+
+    void AsteroidGame::removeMoveComponent(comp::MoveComponent* comp) noexcept
+    {
+        const auto componentToRemove = std::ranges::find(_moveComponents, comp);
+        if (componentToRemove != _moveComponents.end())
+        {
+            std::ranges::iter_swap(*componentToRemove, _moveComponents.back());
+            _moveComponents.pop_back();
+        }
+    }
+
+    void AsteroidGame::addInputComponent(comp::InputComponent* comp) noexcept { _inputComponents.emplace_back(comp); }
+
+    void AsteroidGame::removeInputComponent(comp::InputComponent* comp) noexcept
+    {
+        const auto componentToRemove = std::ranges::find(_inputComponents, comp);
+        if (componentToRemove != _inputComponents.end())
+        {
+            std::ranges::iter_swap(*componentToRemove, _inputComponents.back());
+            _inputComponents.pop_back();
+        }
     }
 
 

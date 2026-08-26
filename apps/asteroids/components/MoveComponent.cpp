@@ -11,13 +11,15 @@
 #include "MoveComponent.h"
 
 #include "Actor.h"
+#include "game/AsteroidGame.h"
 
 #include <psm/PSMath.h>
 
 
 namespace asteroids::comp
 {
-    MoveComponent::MoveComponent(Actor* owner, const int updateOrder): Component{ owner, updateOrder } {}
+    MoveComponent::MoveComponent(Actor* owner, const int updateOrder): Component{ owner, updateOrder }
+    { owner->getGame()->addMoveComponent(this); }
 
     void MoveComponent::update(const float deltaTime) noexcept
     {
@@ -38,5 +40,7 @@ namespace asteroids::comp
             _owner->setRotation(rotation);
         }
     }
+
+    MoveComponent::~MoveComponent() noexcept { _owner->getGame()->removeMoveComponent(this); }
 
 } // namespace asteroids::comp

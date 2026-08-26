@@ -26,6 +26,8 @@ namespace asteroids::comp
         _owner->addComponent(this);
     }
 
+    SpriteSheetComponent::~SpriteSheetComponent() noexcept { _owner->getGame()->removeSprite(this); }
+
 
     void SpriteSheetComponent::update([[maybe_unused]] const float deltaTime) noexcept
     {
