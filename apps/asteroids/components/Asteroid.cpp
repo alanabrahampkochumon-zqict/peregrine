@@ -21,7 +21,7 @@ namespace asteroids::actor
         sprite->setSpritesheetTexture(game->getTexture("assets/Asteroids_Foreground.png"), SPRITE_WIDTH, SPRITE_HEIGHT);
         // Select an active sprite index at random
         sprite->setActiveIndex(
-            { .x = psm::genRand(0ull, SPRITE_COUNT_X - 1), .y = psm::genRand(0ull, SPRITE_COUNT_Y - 1) });
+            { .x = psm::genRand<size_t>(0, SPRITE_COUNT_X - 1), .y = psm::genRand<size_t>(0, SPRITE_COUNT_Y - 1) });
 
         auto* moveComp = new comp::MoveComponent(this);
         moveComp->setForwardSpeed(150.0f);
