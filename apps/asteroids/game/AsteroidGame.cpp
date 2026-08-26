@@ -11,6 +11,7 @@
 #include "AsteroidGame.h"
 
 #include "components/Asteroid.h"
+#include "components/Ship.h"
 #include "graphics/Texture.h"
 
 #include <SDL3/SDL.h>
@@ -155,6 +156,7 @@ namespace asteroids
         {
             new actor::Asteroid(this);
         }
+        new actor::Ship(this);
     }
 
 

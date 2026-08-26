@@ -26,6 +26,8 @@ add_executable(
         components/SpriteSheetComponent.h
         components/InputComponent.cpp
         components/InputComponent.h
+        components/Ship.cpp
+        components/Ship.h
 )
 
 target_compile_features(Asteroids PRIVATE cxx_std_20)

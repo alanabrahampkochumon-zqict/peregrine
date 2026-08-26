@@ -20,7 +20,7 @@ namespace asteroids::comp
     class InputComponent: MoveComponent
     {
     public:
-        explicit InputComponent(Actor* owner) noexcept;
+        explicit InputComponent(Actor* owner) noexcept: MoveComponent{ owner } {};
 
         void processInput(const bool* keyState) noexcept override;
 
@@ -31,24 +31,24 @@ namespace asteroids::comp
 
         [[nodiscard]] float getMaxForwardSpeed() const noexcept { return _maxForwardSpeed; }
         [[nodiscard]] float getMaxAngularSpeed() const noexcept { return _maxAngularSpeed; }
-        [[nodiscard]] int getForwardKey() const noexcept { return _forwardKey; }
-        [[nodiscard]] int getBackwardKey() const noexcept { return _backwardKey; }
-        [[nodiscard]] int getClockwiseKey() const noexcept { return _clockwiseKey; }
-        [[nodiscard]] int getAnticlockwiseKey() const noexcept { return _anticlockwiseKey; }
+        [[nodiscard]] uint32_t getForwardKey() const noexcept { return _forwardKey; }
+        [[nodiscard]] uint32_t getBackwardKey() const noexcept { return _backwardKey; }
+        [[nodiscard]] uint32_t getClockwiseKey() const noexcept { return _clockwiseKey; }
+        [[nodiscard]] uint32_t getAnticlockwiseKey() const noexcept { return _anticlockwiseKey; }
 
 
         void setMaxForwardSpeed(const float forwardSpeed) noexcept { _maxForwardSpeed = forwardSpeed; }
         void setMaxAngularSpeed(const float angularSpeed) noexcept { _maxAngularSpeed = angularSpeed; }
-        void setForwardKey(const int key) noexcept { _forwardKey = key; }
-        void setBackwardKey(const int key) noexcept { _backwardKey = key; }
-        void setClockwiseKey(const int key) noexcept { _clockwiseKey = key; }
-        void setAnticlockwiseKey(const int key) noexcept { _anticlockwiseKey = key; }
+        void setForwardKey(const uint32_t key) noexcept { _forwardKey = key; }
+        void setBackwardKey(const uint32_t key) noexcept { _backwardKey = key; }
+        void setClockwiseKey(const uint32_t key) noexcept { _clockwiseKey = key; }
+        void setAnticlockwiseKey(const uint32_t key) noexcept { _anticlockwiseKey = key; }
 
     private:
         // Maximum speeds
-        float _maxForwardSpeed, _maxAngularSpeed;
+        float _maxForwardSpeed{}, _maxAngularSpeed{};
         // Key bindings
-        int _forwardKey{}, _backwardKey{};
-        int _clockwiseKey{}, _anticlockwiseKey{};
+        uint32_t _forwardKey{}, _backwardKey{};
+        uint32_t _clockwiseKey{}, _anticlockwiseKey{};
     };
 } // namespace asteroids::comp

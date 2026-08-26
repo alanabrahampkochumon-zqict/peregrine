@@ -25,6 +25,8 @@ namespace asteroids::actor
 
         auto* moveComp = new comp::MoveComponent(this);
         moveComp->setForwardSpeed(150.0f);
+
+        setState(State::ACTIVE);
     }
 
 } // namespace asteroids::actor

@@ -95,6 +95,7 @@ namespace asteroids::comp
         void setPosition(const psm::Vec2 position) { _position = position; }
         void setScale(const float scale) { _scale = scale; }
         void setRotation(const float rotation) { _rotation = rotation; }
+        void setState(const State state) { _state = state; }
 
 
 
