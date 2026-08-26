@@ -27,11 +27,13 @@ namespace asteroids
             static constexpr size_t SPRITE_HEIGHT       = 64;
             static constexpr size_t SPRITE_COUNT_X      = 5;
             static constexpr size_t SPRITE_COUNT_Y      = 3;
-            static constexpr size_t SHIP_SCALE          = 2;
-            static constexpr uint32_t FORWARD_KEY       = SDLK_W;
-            static constexpr uint32_t BACKWARD_KEY      = SDLK_S;
-            static constexpr uint32_t CLOCKWISE_KEY     = SDLK_D;
-            static constexpr uint32_t ANTICLOCKWISE_KEY = SDLK_A;
+            static constexpr float SHIP_SCALE          = 1.2f;
+            static constexpr float SHIP_FORWARD_SPEED   = 100.0f;
+            static constexpr float SHIP_ROTATION_SPEED  = 1.0f;
+            static constexpr uint32_t FORWARD_KEY       = SDL_SCANCODE_W;
+            static constexpr uint32_t BACKWARD_KEY      = SDL_SCANCODE_S;
+            static constexpr uint32_t CLOCKWISE_KEY     = SDL_SCANCODE_D;
+            static constexpr uint32_t ANTICLOCKWISE_KEY = SDL_SCANCODE_A;
             static constexpr auto SPRITE_PATH           = "assets/Spaceships.png";
         };
 

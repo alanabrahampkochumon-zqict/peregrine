@@ -20,15 +20,15 @@ namespace psm
     /// @note For integrals evaluation is based on whether is greater than zero.
     /// @tparam T The numeric type of number.
     template <typename T>
-    constexpr bool nearZero(const T num) noexcept
+    bool nearZero(const T num) noexcept
     {
         if constexpr (std::is_floating_point_v<T>)
         {
-            return num < std::numeric_limits<T>::epsilon();
+            return std::abs(num) < std::numeric_limits<T>::epsilon();
         }
         else
         {
-            return num > 0;
+            return num != 0;
         }
     }
 

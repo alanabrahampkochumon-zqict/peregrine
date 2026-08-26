@@ -19,7 +19,10 @@ namespace asteroids::comp
 {
 
     InputComponent::InputComponent(Actor* owner) noexcept: MoveComponent{ owner }
-    { _owner->getGame()->addInputComponent(this); }
+    {
+        _owner->getGame()->addInputComponent(this);
+        _owner->addComponent(this);
+    }
 
 
     void InputComponent::processInput(const bool* keyState) noexcept
@@ -40,11 +43,11 @@ namespace asteroids::comp
         float angularSpeed = 0.0f;
         if (keyState[_clockwiseKey])
         {
-            angularSpeed += _maxAngularSpeed;
+            angularSpeed -= _maxAngularSpeed;
         }
         if (keyState[_anticlockwiseKey])
         {
-            angularSpeed -= _maxAngularSpeed;
+            angularSpeed += _maxAngularSpeed;
         }
         setAngularSpeed(angularSpeed);
     }

@@ -18,13 +18,13 @@ namespace asteroids::actor
         setRotation(psm::genRand(0.0f, std::numbers::pi_v<float>));
 
         auto* sprite = new comp::SpriteSheetComponent(this);
-        sprite->setSpritesheetTexture(game->getTexture("assets/Asteroids_Foreground.png"), SPRITE_WIDTH, SPRITE_HEIGHT);
+        sprite->setSpritesheetTexture(game->getTexture(SPRITE_PATH), SPRITE_WIDTH, SPRITE_HEIGHT);
         // Select an active sprite index at random
         sprite->setActiveIndex(
             { .x = psm::genRand<size_t>(0, SPRITE_COUNT_X - 1), .y = psm::genRand<size_t>(0, SPRITE_COUNT_Y - 1) });
 
         auto* moveComp = new comp::MoveComponent(this);
-        moveComp->setForwardSpeed(150.0f);
+        moveComp->setForwardSpeed(psm::genRand(MIN_FORWARD_SPEED, MAX_FORWARD_SPEED));
 
         setState(State::ACTIVE);
     }

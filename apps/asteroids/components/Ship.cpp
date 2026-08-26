@@ -41,6 +41,9 @@ namespace asteroids::actor
         inputComp->setClockwiseKey(CLOCKWISE_KEY);
         inputComp->setAnticlockwiseKey(ANTICLOCKWISE_KEY);
 
+        inputComp->setMaxForwardSpeed(SHIP_FORWARD_SPEED);
+        inputComp->setMaxAngularSpeed(SHIP_ROTATION_SPEED);
+
         setState(State::ACTIVE);
     }
 } // namespace asteroids::actor
