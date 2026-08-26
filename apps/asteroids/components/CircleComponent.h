@@ -26,14 +26,24 @@ namespace asteroids
         public:
             explicit CircleComponent(Actor* owner) noexcept;
 
-            void setRadius(float radius) noexcept;
+            constexpr void setRadius(const float radius) noexcept { _radius = radius; };
+            constexpr void setCenter(const psm::Vec2& center) noexcept { _center = center; };
 
-            [[nodiscard]] float getRadius() noexcept;
-            [[nodiscard]] psm::Vec2 getCenter() noexcept;
+            [[nodiscard]] constexpr float getRadius() const noexcept { return _radius; };
+            [[nodiscard]] psm::Vec2 getCenter() const noexcept { return _center; }
+
+            /**
+             * Check whether this component is intersecting with @p other.
+             *
+             * @param other The component to check the intersection with.
+             * @return True if this component intersects with @p other, false otherwise.
+             */
+            [[nodiscard]] bool intersect(const CircleComponent& other) const noexcept;
 
 
         private:
             float _radius{};
+            psm::Vec2 _center{};
         };
     } // namespace comp
 } // namespace asteroids

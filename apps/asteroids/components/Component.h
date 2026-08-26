@@ -33,14 +33,14 @@ namespace asteroids::comp
 
 
         /// Update this component by delta time.
-        virtual void update(float deltaTime) noexcept = 0;
+        virtual void update([[maybe_unused]] float deltaTime) noexcept {};
 
 
         [[nodiscard]] int getUpdateOrder() const { return _updateOrder; }
 
         /// Process the input.
         /// @param keyState The keycode to process. 1-to-1 mapping to SDL3 keycodes.
-        virtual void processInput([[maybe_unused]] const bool* keyState) noexcept{};
+        virtual void processInput([[maybe_unused]] const bool* keyState) noexcept {};
 
         virtual ~Component() = default;
 
