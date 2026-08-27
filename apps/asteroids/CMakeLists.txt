@@ -30,6 +30,8 @@ add_executable(
         components/Ship.h
         components/CircleComponent.cpp
         components/CircleComponent.h
+        components/Bullet.cpp
+        components/Bullet.h
 )
 
 target_compile_features(Asteroids PRIVATE cxx_std_20)

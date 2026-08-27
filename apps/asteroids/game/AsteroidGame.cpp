@@ -243,11 +243,10 @@ namespace asteroids
         SDL_Log("Delta time: %0.03f", deltaTime);
     }
 
-    void AsteroidGame::_draw()
+    void AsteroidGame::_draw() const
     {
         SDL_SetRenderDrawColor(_renderer, CLEAR_COLOR[0], CLEAR_COLOR[1], CLEAR_COLOR[2], CLEAR_COLOR[3]);
         SDL_RenderClear(_renderer);
-
 
         for (const auto sprite : _spriteComponents)
         {

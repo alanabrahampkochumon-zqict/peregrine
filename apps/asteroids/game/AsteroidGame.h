@@ -87,7 +87,7 @@ namespace asteroids
         void _update();
 
         /// @brief Draw the current game state to screen.
-        void _draw();
+        void _draw() const;
 
 
         //+=+=+=+=+=+=+=+=+=
