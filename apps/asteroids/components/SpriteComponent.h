@@ -16,13 +16,10 @@
 
 namespace asteroids::comp
 {
-    /// Forward declaration
-    class Actor;
-
     class SpriteComponent: Component
     {
     public:
-        explicit SpriteComponent(Actor* owner, int drawOrder = 100) noexcept;
+        explicit SpriteComponent(actors::Actor* owner, int drawOrder = 100) noexcept;
 
         ~SpriteComponent() override;
 
@@ -36,7 +33,7 @@ namespace asteroids::comp
 
     private:
         graphics::Texture<>* _texture{ nullptr };
-        Actor* _owner;
+        actors::Actor* _owner;
 
         int _drawOrder;
     };

@@ -11,13 +11,13 @@
 
 #include "Ship.h"
 
-#include "InputComponent.h"
+#include "components/InputComponent.h"
 #include "game/AsteroidGame.h"
 
 #include <psm/PSMath.h>
 
 
-namespace asteroids::actor
+namespace asteroids::actors
 {
 
     Ship::Ship(AsteroidGame* game) noexcept: Actor{ game }
@@ -46,4 +46,4 @@ namespace asteroids::actor
 
         setState(State::ACTIVE);
     }
-} // namespace asteroids::actor
+} // namespace asteroids::actors

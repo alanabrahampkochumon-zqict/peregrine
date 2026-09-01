@@ -12,7 +12,7 @@
 
 #include "game/AsteroidGame.h"
 
-namespace asteroids::comp
+namespace asteroids::actors
 {
     /// Actor addition and deletion is managed in the actor component itself.
     Actor::Actor(AsteroidGame* game) noexcept
@@ -38,9 +38,9 @@ namespace asteroids::comp
 
     void Actor::updateActor([[maybe_unused]] float deltaTime) {}
 
-    void Actor::addComponent(Component* comp) noexcept { _components.insert(comp); }
+    void Actor::addComponent(comp::Component* comp) noexcept { _components.insert(comp); }
 
-    void Actor::removeComponent(Component* comp) noexcept { _components.erase(comp); }
+    void Actor::removeComponent(comp::Component* comp) noexcept { _components.erase(comp); }
 
 
     void Actor::processInput(const bool* keyState) noexcept
@@ -54,4 +54,4 @@ namespace asteroids::comp
             actorInput(keyState);
         }
     }
-} // namespace asteroids::comp
+} // namespace asteroids::actors

@@ -14,10 +14,7 @@
 #include "game/AsteroidGame.h"
 
 
-namespace asteroids::actor
+namespace asteroids::actors
 {
-    Bullet::Bullet(AsteroidGame* game) noexcept: Actor{game}
-    {
-        
-    }
-} // namespace asteroids::actor
+    Bullet::Bullet(AsteroidGame* game) noexcept: Actor{ game } {}
+} // namespace asteroids::actors

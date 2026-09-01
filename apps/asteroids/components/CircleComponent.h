@@ -14,36 +14,30 @@
 
 #include <psm/PSMath.h>
 
-namespace asteroids
+namespace asteroids::comp
 {
-    /// Forward declaration
-    class Actor;
-
-    namespace comp
+    class CircleComponent: public Component
     {
-        class CircleComponent: public Component
-        {
-        public:
-            explicit CircleComponent(Actor* owner) noexcept;
+    public:
+        explicit CircleComponent(actors::Actor* owner) noexcept;
 
-            constexpr void setRadius(const float radius) noexcept { _radius = radius; };
-            constexpr void setCenter(const psm::Vec2& center) noexcept { _center = center; };
+        constexpr void setRadius(const float radius) noexcept { _radius = radius; };
+        constexpr void setCenter(const psm::Vec2& center) noexcept { _center = center; };
 
-            [[nodiscard]] constexpr float getRadius() const noexcept { return _radius; };
-            [[nodiscard]] psm::Vec2 getCenter() const noexcept { return _center; }
+        [[nodiscard]] constexpr float getRadius() const noexcept { return _radius; };
+        [[nodiscard]] psm::Vec2 getCenter() const noexcept { return _center; }
 
-            /**
-             * Check whether this component is intersecting with @p other.
-             *
-             * @param other The component to check the intersection with.
-             * @return True if this component intersects with @p other, false otherwise.
-             */
-            [[nodiscard]] bool intersect(const CircleComponent& other) const noexcept;
+        /**
+         * Check whether this component is intersecting with @p other.
+         *
+         * @param other The component to check the intersection with.
+         * @return True if this component intersects with @p other, false otherwise.
+         */
+        [[nodiscard]] bool intersect(const CircleComponent& other) const noexcept;
 
 
-        private:
-            float _radius{};
-            psm::Vec2 _center{};
-        };
-    } // namespace comp
-} // namespace asteroids
+    private:
+        float _radius{};
+        psm::Vec2 _center{};
+    };
+} // namespace asteroids::comp

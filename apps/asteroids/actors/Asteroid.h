@@ -9,15 +9,14 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
-#include "../game/AsteroidGame.h"
 #include "Actor.h"
 
 #include <numbers>
 #include <psm/PSMath.h>
 
-namespace asteroids::actor
+namespace asteroids::actors
 {
-    class Asteroid: public comp::Actor
+    class Asteroid: public Actor
     {
     public:
         explicit Asteroid(AsteroidGame* game) noexcept;
@@ -30,4 +29,4 @@ namespace asteroids::actor
     static constexpr float MIN_FORWARD_SPEED = 4.0f;
     static constexpr float MAX_FORWARD_SPEED = 30.0f;
     static constexpr auto SPRITE_PATH        = "assets/Asteroids_Foreground.png";
-} // namespace asteroids::actor
+} // namespace asteroids::actors

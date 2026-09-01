@@ -13,40 +13,47 @@
 #include <cstdint>
 
 
-namespace asteroids::comp
+namespace asteroids
 {
-    /// Forward declaration
-    class Actor;
-
-    class Component
+    namespace actors
     {
-    public:
-        /**
-         * @brief Create a component for a given actor.
-         *
-         * @param owner       The actor that owns this component.
-         * @param updateOrder The order for update. Lower order indicates earlier updates. Default: 100
-         */
-        explicit constexpr Component(Actor* owner, const int updateOrder = 100) noexcept
-            : _owner{ owner }, _updateOrder{ updateOrder }
-        {}
+        /// Forward declaration
+        class Actor;
+    } // namespace actors
+
+    namespace comp
+    {
+
+        class Component
+        {
+        public:
+            /**
+             * @brief Create a component for a given actor.
+             *
+             * @param owner       The actor that owns this component.
+             * @param updateOrder The order for update. Lower order indicates earlier updates. Default: 100
+             */
+            explicit constexpr Component(actors::Actor* owner, const int updateOrder = 100) noexcept
+                : _owner{ owner }, _updateOrder{ updateOrder }
+            {}
 
 
-        /// Update this component by delta time.
-        virtual void update([[maybe_unused]] float deltaTime) noexcept {};
+            /// Update this component by delta time.
+            virtual void update([[maybe_unused]] float deltaTime) noexcept {};
 
 
-        [[nodiscard]] int getUpdateOrder() const { return _updateOrder; }
+            [[nodiscard]] int getUpdateOrder() const { return _updateOrder; }
 
-        /// Process the input.
-        /// @param keyState The keycode to process. 1-to-1 mapping to SDL3 keycodes.
-        virtual void processInput([[maybe_unused]] const bool* keyState) noexcept {};
+            /// Process the input.
+            /// @param keyState The keycode to process. 1-to-1 mapping to SDL3 keycodes.
+            virtual void processInput([[maybe_unused]] const bool* keyState) noexcept {};
 
-        virtual ~Component() = default;
+            virtual ~Component() = default;
 
-    protected:
-        [[maybe_unused]] Actor* _owner{ nullptr };
-        int _updateOrder{};
-    };
+        protected:
+            [[maybe_unused]] actors::Actor* _owner;
+            int _updateOrder;
+        };
+    } // namespace comp
 
-} // namespace asteroids::comp
+} // namespace asteroids

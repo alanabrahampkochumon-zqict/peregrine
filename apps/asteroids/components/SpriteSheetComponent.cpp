@@ -10,7 +10,7 @@
 
 #include "SpriteSheetComponent.h"
 
-#include "Actor.h"
+#include "../actors/Actor.h"
 #include "game/AsteroidGame.h"
 
 #include <cassert>
@@ -19,7 +19,7 @@
 namespace asteroids::comp
 {
 
-    SpriteSheetComponent::SpriteSheetComponent(Actor* owner, const int drawOrder)
+    SpriteSheetComponent::SpriteSheetComponent(actors::Actor* owner, const int drawOrder)
         : Component{ owner }, _drawOrder{ drawOrder }
     {
         _owner->getGame()->addSprite(this);

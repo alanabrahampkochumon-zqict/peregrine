@@ -4,10 +4,11 @@
 
 #include "Asteroid.h"
 
-#include "MoveComponent.h"
-#include "SpriteSheetComponent.h"
+#include "components/MoveComponent.h"
+#include "components/SpriteSheetComponent.h"
+#include "game/AsteroidGame.h"
 
-namespace asteroids::actor
+namespace asteroids::actors
 {
     Asteroid::Asteroid(AsteroidGame* game) noexcept: Actor{ game }
     {
@@ -29,4 +30,4 @@ namespace asteroids::actor
         setState(State::ACTIVE);
     }
 
-} // namespace asteroids::actor
+} // namespace asteroids::actors

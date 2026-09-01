@@ -10,8 +10,8 @@
 
 #include "AsteroidGame.h"
 
-#include "components/Asteroid.h"
-#include "components/Ship.h"
+#include "actors/Asteroid.h"
+#include "actors/Ship.h"
 #include "graphics/Texture.h"
 
 #include <SDL3/SDL.h>
@@ -78,7 +78,7 @@ namespace asteroids
     }
 
 
-    void AsteroidGame::addActor(comp::Actor* actor) noexcept
+    void AsteroidGame::addActor(actors::Actor* actor) noexcept
     {
         // Add the actor to pending list if the game is in an update state
         // else to the actors list.
@@ -93,7 +93,7 @@ namespace asteroids
     }
 
 
-    void AsteroidGame::removeActor(const comp::Actor* actor) noexcept
+    void AsteroidGame::removeActor(const actors::Actor* actor) noexcept
     {
         // Remove the actor by first searching pending actors
         // and if it's not there remove it from the actors vector.
@@ -159,9 +159,9 @@ namespace asteroids
     {
         for (size_t i = 0; i < 20; ++i)
         {
-            new actor::Asteroid(this);
+            new actors::Asteroid(this);
         }
-        new actor::Ship(this);
+        new actors::Ship(this);
     }
 
 
@@ -223,10 +223,10 @@ namespace asteroids
 
 
         // Create a temporary list for dead actors
-        std::vector<comp::Actor*> deadActors;
+        std::vector<actors::Actor*> deadActors;
         for (const auto actor : _actors)
         {
-            if (actor->getState() == comp::Actor::State::DEAD)
+            if (actor->getState() == actors::Actor::State::DEAD)
             {
                 deadActors.emplace_back(actor);
             }

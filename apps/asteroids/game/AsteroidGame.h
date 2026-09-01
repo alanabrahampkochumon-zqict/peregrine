@@ -9,7 +9,7 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
-#include "components/Actor.h"
+#include "actors/Actor.h"
 #include "components/InputComponent.h"
 #include "components/MoveComponent.h"
 #include "components/SpriteSheetComponent.h"
@@ -38,10 +38,10 @@ namespace asteroids
         void shutdown() const noexcept;
 
         /// @brief Add an actor to the game
-        void addActor(comp::Actor* actor) noexcept;
+        void addActor(actors::Actor* actor) noexcept;
 
         /// @brief Remove an actor from the game
-        void removeActor(const comp::Actor* actor) noexcept;
+        void removeActor(const actors::Actor* actor) noexcept;
 
         /// @brief Add a sprite to the game
         void addSprite(comp::SpriteSheetComponent* sprite) noexcept;
@@ -103,7 +103,7 @@ namespace asteroids
         // Actors are the collection of all active actors.
         // Pending actors is used to add actors to the game while
         // it is in the middle of an update loop.
-        std::vector<comp::Actor*> _actors{}, _pendingActors{};
+        std::vector<actors::Actor*> _actors{}, _pendingActors{};
 
         std::vector<comp::SpriteSheetComponent*> _spriteComponents{};
         std::unordered_map<std::string, graphics::Texture<>*> _textureSet{};

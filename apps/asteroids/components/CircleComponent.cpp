@@ -10,13 +10,13 @@
 
 #include "CircleComponent.h"
 
-#include "Actor.h"
+#include "actors/Actor.h"
 
 
 namespace asteroids::comp
 {
 
-    CircleComponent::CircleComponent(Actor* owner) noexcept: Component{ owner } { _owner->addComponent(this); }
+    CircleComponent::CircleComponent(actors::Actor* owner) noexcept: Component{ owner } { _owner->addComponent(this); }
 
 
     bool CircleComponent::intersect(const CircleComponent& other) const noexcept
