@@ -10,8 +10,8 @@
  */
 
 // Enable sprite bounding boxes
-#define ENABLE_SPRITE_DEBUG
-#define ENABLE_COLLISION_DEBUG
+// #define ENABLE_SPRITE_DEBUG
+// #define ENABLE_COLLISION_DEBUG
 
 
 #include "actors/Actor.h"

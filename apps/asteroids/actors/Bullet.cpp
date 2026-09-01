@@ -20,7 +20,7 @@
 
 namespace asteroids::actors
 {
-    Bullet::Bullet(AsteroidGame* game) noexcept: Actor{ game }
+    Bullet::Bullet(AsteroidGame* game) noexcept: Actor{ game }, _lifetime{ BULLET_LIFETIME }
     {
         // Create the sprite component
         _sprite = new comp::SpriteSheetComponent(this);
@@ -48,6 +48,8 @@ namespace asteroids::actors
     {
         // Update the collider center(position)
         _collider->setCenter(getPosition());
+        // Update the bullet lifetime
+        _lifetime -= deltaTime;
 
         // Test for intersection with asteroids
         // Update the state to be dead and this will be cleaned up
@@ -64,8 +66,13 @@ namespace asteroids::actors
 
         // If the bullet goes out of bounds then
         // we update it as dead
-        if (getPosition().x < 0 || getPosition().y < 0 || getPosition().x > getGame()->getWindowWidth() ||
-            getPosition().y > getGame()->getWindowHeight())
+        // DEPRECATED SINCE WE HAVE ADDED WRAP AROUND AND POSITION WILL NEVER HIT THESE VALUES
+        // if (getPosition().x < 0 || getPosition().y < 0 || getPosition().x > getGame()->getWindowWidth() ||
+        //     getPosition().y > getGame()->getWindowHeight())
+        // {
+        //     setState(State::DEAD);
+        // }
+        if (_lifetime <= 0.0f)
         {
             setState(State::DEAD);
         }

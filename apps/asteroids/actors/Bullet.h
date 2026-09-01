@@ -28,6 +28,7 @@ namespace asteroids::actors
     private:
         comp::CircleComponent* _collider{};
         comp::SpriteSheetComponent* _sprite{};
+        float _lifetime;
 
     public:
         static constexpr size_t SPRITE_WIDTH   = 64;
@@ -41,5 +42,6 @@ namespace asteroids::actors
         // For bullet we need a custom collision radius since the sprite dimensions are very large
         // compared to the actual size of the bullet.
         static constexpr auto COLLISION_BOX_RADIUS = 10.0f; // 20 diameter
+        static constexpr auto BULLET_LIFETIME      = 3.0f;  // 3 seconds
     };
 } // namespace asteroids::actors
