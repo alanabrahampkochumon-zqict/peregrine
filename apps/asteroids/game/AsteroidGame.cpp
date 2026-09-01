@@ -164,9 +164,6 @@ namespace asteroids
         }
         new actors::Ship(this);
         new actors::Bullet(this);
-#ifndef _NDEBUG
-        assert(false);
-#endif
     }
 
 
