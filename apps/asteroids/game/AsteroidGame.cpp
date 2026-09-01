@@ -11,6 +11,7 @@
 #include "AsteroidGame.h"
 
 #include "actors/Asteroid.h"
+#include "actors/Bullet.h"
 #include "actors/Ship.h"
 #include "graphics/Texture.h"
 
@@ -154,7 +155,7 @@ namespace asteroids
         }
     }
 
-
+#include <cassert>
     void AsteroidGame::_loadData()
     {
         for (size_t i = 0; i < 20; ++i)
@@ -162,6 +163,10 @@ namespace asteroids
             new actors::Asteroid(this);
         }
         new actors::Ship(this);
+        new actors::Bullet(this);
+#ifndef _NDEBUG
+        assert(false);
+#endif
     }
 
 

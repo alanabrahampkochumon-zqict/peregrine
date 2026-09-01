@@ -49,17 +49,17 @@ namespace asteroids
         /// @brief Remove a sprite from the game
         void removeSprite(const comp::SpriteSheetComponent* sprite) noexcept;
 
-        /// @brief Add a move component
-        void addMoveComponent(comp::MoveComponent* comp) noexcept;
-
-        /// @brief Remove a move componet
-        void removeMoveComponent(comp::MoveComponent* comp) noexcept;
-
-        /// @brief Add a move component
-        void addInputComponent(comp::InputComponent* comp) noexcept;
-
-        /// @brief Remove a move component
-        void removeInputComponent(comp::InputComponent* comp) noexcept;
+        // /// @brief Add a move component
+        // void addMoveComponent(comp::MoveComponent* comp) noexcept;
+        //
+        // /// @brief Remove a move component
+        // void removeMoveComponent(comp::MoveComponent* comp) noexcept;
+        //
+        // /// @brief Add a move component
+        // void addInputComponent(comp::InputComponent* comp) noexcept;
+        //
+        // /// @brief Remove a move component
+        // void removeInputComponent(comp::InputComponent* comp) noexcept;
 
 
         /// @brief Read and return a texture with the given path/filename.

@@ -16,6 +16,7 @@ namespace asteroids::actors
 {
     class Bullet: public Actor
     {
+    public:
         explicit Bullet(AsteroidGame* game) noexcept;
 
 
