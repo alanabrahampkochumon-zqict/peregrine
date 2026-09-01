@@ -23,11 +23,15 @@ namespace asteroids::actors
     public:
         explicit Asteroid(AsteroidGame* game) noexcept;
 
+        void updateActor(float deltaTime) override;
+
         [[nodiscard]] comp::CircleComponent* getCollider() const noexcept { return _collider; }
+
 
     private:
         comp::CircleComponent* _collider{};
 
+    public:
         static constexpr size_t SPRITE_WIDTH     = 64;
         static constexpr size_t SPRITE_HEIGHT    = 64;
         static constexpr size_t SPRITE_COUNT_X   = 4;

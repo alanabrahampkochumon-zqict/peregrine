@@ -26,6 +26,7 @@ namespace asteroids::actors
     private:
         comp::CircleComponent* _collider{};
 
+    public:
         static constexpr size_t SPRITE_WIDTH   = 64;
         static constexpr size_t SPRITE_HEIGHT  = 64;
         static constexpr size_t SPRITE_COUNT_X = 4;
@@ -36,6 +37,6 @@ namespace asteroids::actors
 
         // For bullet we need a custom collision radius since the sprite dimensions are very large
         // compared to the actual size of the bullet.
-        static constexpr auto COLLISION_BOX_RADIUS = 8.0f; // 16 diameter
+        static constexpr auto COLLISION_BOX_RADIUS = 10.0f; // 20 diameter
     };
 } // namespace asteroids::actors

@@ -54,7 +54,7 @@ namespace asteroids::actors
 
     void Ship::updateActor(const float deltaTime)
     {
-        // Update reduce the cooldown by the deltatime
+        // Update reduce the cooldown by the delta time
         _bulletCooldown -= deltaTime;
     }
 
@@ -67,7 +67,7 @@ namespace asteroids::actors
             bullet->setPosition(getPosition());
             bullet->setRotation(getRotation());
 
-            // TODO: Add cooldown
+            // Reset the cooldown
             _bulletCooldown = BULLET_COOLDOWN;
         }
     }

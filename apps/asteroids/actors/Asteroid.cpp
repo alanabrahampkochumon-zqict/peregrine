@@ -32,5 +32,11 @@ namespace asteroids::actors
         _collider->setRadius(COLLISION_BOX_RADIUS);
     }
 
+    void Asteroid::updateActor([[maybe_unused]] float deltaTime)
+    {
+        // Update the collider center(position)
+        _collider->setCenter(getPosition());
+    }
+
 
 } // namespace asteroids::actors

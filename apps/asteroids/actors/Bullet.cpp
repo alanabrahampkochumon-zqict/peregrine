@@ -15,6 +15,8 @@
 #include "components/SpriteSheetComponent.h"
 #include "game/AsteroidGame.h"
 
+#include <format>
+#include <iostream>
 
 namespace asteroids::actors
 {
@@ -37,6 +39,9 @@ namespace asteroids::actors
 
     void Bullet::updateActor([[maybe_unused]] float deltaTime)
     {
+        // Update the collider center(position)
+        _collider->setCenter(getPosition());
+
         // Test for intersection with asteroids
         // Update the state to be dead and this will be cleaned up
         // by the game class on next update

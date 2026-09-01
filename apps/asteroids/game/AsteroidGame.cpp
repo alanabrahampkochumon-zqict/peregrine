@@ -17,6 +17,7 @@
 
 #include <SDL3/SDL.h>
 #include <algorithm>
+#include <format>
 #include <ranges>
 
 namespace asteroids
@@ -240,8 +241,8 @@ namespace asteroids
             delete actor;
         }
 
-
-        SDL_Log("Delta time: %0.03f", deltaTime);
+        SDL_SetWindowTitle(_window,
+                           std::format("{} ({} FPS)", GAME_NAME, static_cast<size_t>(1000.0f / deltaTime)).c_str());
     }
 
     void AsteroidGame::_draw() const
