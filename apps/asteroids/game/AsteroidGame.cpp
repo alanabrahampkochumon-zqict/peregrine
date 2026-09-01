@@ -130,7 +130,7 @@ namespace asteroids
     }
 
 
-    void AsteroidGame::removeSprite([[maybe_unused]] const comp::SpriteSheetComponent* sprite) noexcept
+    void AsteroidGame::removeSprite(const comp::SpriteSheetComponent* sprite) noexcept
     {
         const auto componentToRemove = std::ranges::find(_spriteComponents, sprite);
         if (componentToRemove != _spriteComponents.end())
@@ -155,15 +155,14 @@ namespace asteroids
         }
     }
 
-#include <cassert>
+
     void AsteroidGame::_loadData()
     {
-        for (size_t i = 0; i < 20; ++i)
+        for (size_t i = 0; i < ASTEROID_SPAWN_COUNT; ++i)
         {
-            new actors::Asteroid(this);
+            _asteroids.emplace_back(new actors::Asteroid(this));
         }
         new actors::Ship(this);
-        new actors::Bullet(this);
     }
 
 

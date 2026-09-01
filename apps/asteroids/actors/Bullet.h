@@ -11,6 +11,8 @@
 
 
 #include "Actor.h"
+#include "components/CircleComponent.h"
+#include "components/SpriteSheetComponent.h"
 
 namespace asteroids::actors
 {
@@ -19,12 +21,21 @@ namespace asteroids::actors
     public:
         explicit Bullet(AsteroidGame* game) noexcept;
 
+        void updateActor(float deltaTime) override;
+
+    private:
+        comp::CircleComponent* _collider{};
 
         static constexpr size_t SPRITE_WIDTH   = 64;
         static constexpr size_t SPRITE_HEIGHT  = 64;
         static constexpr size_t SPRITE_COUNT_X = 4;
         static constexpr size_t SPRITE_COUNT_Y = 1;
-        static constexpr float FORWARD_SPEED   = 4.0f;
+        static constexpr float BULLET_SPEED    = 250.0f;
+        static constexpr float BULLET_COOLDOWN = 0.5f;
         static constexpr auto SPRITE_PATH      = "assets/Missiles.png";
+
+        // For bullet we need a custom collision radius since the sprite dimensions are very large
+        // compared to the actual size of the bullet.
+        static constexpr auto COLLISION_BOX_RADIUS = 8.0f; // 16 diameter
     };
 } // namespace asteroids::actors

@@ -10,6 +10,8 @@
  */
 
 #include "actors/Actor.h"
+#include "components/CircleComponent.h"
+#include "components/SpriteSheetComponent.h"
 
 #include <SDL3/SDL.h>
 
@@ -19,6 +21,16 @@ namespace asteroids::actors
     {
     public:
         explicit Ship(AsteroidGame* game) noexcept;
+
+        [[nodiscard]] comp::CircleComponent* getCollider() const noexcept { return _collider; }
+
+        void updateActor(float deltaTime) override;
+
+        void actorInput(const bool* keyState) noexcept override;
+
+    private:
+        comp::CircleComponent* _collider{};
+        float _bulletCooldown;
 
         static constexpr size_t SPRITE_WIDTH        = 64;
         static constexpr size_t SPRITE_HEIGHT       = 64;
@@ -32,6 +44,12 @@ namespace asteroids::actors
         static constexpr uint32_t CLOCKWISE_KEY     = SDL_SCANCODE_D;
         static constexpr uint32_t ANTICLOCKWISE_KEY = SDL_SCANCODE_A;
         static constexpr auto SPRITE_PATH           = "assets/Spaceships.png";
+
+        // For the ship we can set the collision component to be the size of the bounding box length / 2
+        // which equals the sprite height/width, since both are the same, and sprite is a square
+        // the diameter of circle that fits in the length of side
+        static constexpr size_t COLLISION_BOX_RADIUS = SPRITE_HEIGHT / 2;
+        static constexpr float BULLET_COOLDOWN       = 0.5f;
     };
 
 } // namespace asteroids::actors

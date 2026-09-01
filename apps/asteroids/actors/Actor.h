@@ -39,7 +39,7 @@ namespace asteroids
 
             explicit Actor(AsteroidGame* game) noexcept;
 
-            virtual ~Actor();
+            virtual ~Actor() noexcept;
 
 
             /// Update called from game.

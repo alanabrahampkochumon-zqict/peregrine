@@ -10,7 +10,6 @@
  */
 
 #include "SpriteComponent.h"
-
 namespace asteroids::comp
 {
     struct SpriteIndex

@@ -18,7 +18,7 @@ namespace asteroids::actors
         setPosition(position);
         setRotation(psm::genRand(0.0f, std::numbers::pi_v<float>));
 
-        auto* sprite = new comp::SpriteSheetComponent(this);
+        const auto sprite = new comp::SpriteSheetComponent(this);
         sprite->setSpritesheetTexture(game->getTexture(SPRITE_PATH), SPRITE_WIDTH, SPRITE_HEIGHT);
         // Select an active sprite index at random
         sprite->setActiveIndex(
@@ -27,7 +27,10 @@ namespace asteroids::actors
         auto* moveComp = new comp::MoveComponent(this);
         moveComp->setForwardSpeed(psm::genRand(MIN_FORWARD_SPEED, MAX_FORWARD_SPEED));
 
-        setState(State::ACTIVE);
+        _collider = new comp::CircleComponent(this);
+        _collider->setCenter(getPosition());
+        _collider->setRadius(COLLISION_BOX_RADIUS);
     }
+
 
 } // namespace asteroids::actors

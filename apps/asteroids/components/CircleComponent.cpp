@@ -12,6 +12,7 @@
 
 #include "actors/Actor.h"
 
+#include <SDL3/SDL.h>
 
 namespace asteroids::comp
 {

@@ -9,7 +9,13 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
+// Enable sprite bounding boxes
+#define ENABLE_SPRITE_DEBUG
+#define ENABLE_COLLISION_DEBUG
+
+
 #include "actors/Actor.h"
+#include "actors/Asteroid.h"
 #include "components/InputComponent.h"
 #include "components/MoveComponent.h"
 #include "components/SpriteSheetComponent.h"
@@ -71,6 +77,7 @@ namespace asteroids
 
         [[nodiscard]] constexpr size_t getWindowHeight() const noexcept { return WINDOW_HEIGHT; }
         [[nodiscard]] constexpr size_t getWindowWidth() const noexcept { return WINDOW_WIDTH; }
+        [[nodiscard]] const std::vector<actors::Asteroid*>& getAsteroids() const noexcept { return _asteroids; }
 
     private:
         //+=+=+=+=+=+=+=+=+=
@@ -104,6 +111,7 @@ namespace asteroids
         // Pending actors is used to add actors to the game while
         // it is in the middle of an update loop.
         std::vector<actors::Actor*> _actors{}, _pendingActors{};
+        std::vector<actors::Asteroid*> _asteroids{};
 
         std::vector<comp::SpriteSheetComponent*> _spriteComponents{};
         std::unordered_map<std::string, graphics::Texture<>*> _textureSet{};
@@ -112,11 +120,12 @@ namespace asteroids
         //+=+=+=+=+=+=+=+=+=
         // CONSTANTS
         //+=+=+=+=+=+=+=+=+=
-        static constexpr auto GAME_NAME       = "Asteroids";
-        static constexpr auto GAME_VERSION    = "1.0";
-        static constexpr auto GAME_ID         = "com.peregrine.asteroids";
-        static constexpr size_t WINDOW_WIDTH  = 1280;
-        static constexpr size_t WINDOW_HEIGHT = 720;
+        static constexpr auto GAME_NAME              = "Asteroids";
+        static constexpr auto GAME_VERSION           = "1.0";
+        static constexpr auto GAME_ID                = "com.peregrine.asteroids";
+        static constexpr size_t WINDOW_WIDTH         = 1280;
+        static constexpr size_t WINDOW_HEIGHT        = 720;
+        static constexpr size_t ASTEROID_SPAWN_COUNT = 20;
 
         static constexpr std::array<uint8_t, 4> CLEAR_COLOR{ 0, 16, 32, 255 }; // RGBA
     };

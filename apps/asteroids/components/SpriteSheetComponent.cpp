@@ -54,6 +54,11 @@ namespace asteroids::comp
         srcTarget.x = static_cast<float>(_spriteWidth * _activeSpriteIndex.x);
         srcTarget.y = static_cast<float>(_spriteHeight * _activeSpriteIndex.y);
 
+#ifdef ENABLE_SPRITE_DEBUG
+        SDL_SetRenderDrawColor(renderer, 0x00, 0xff, 0x00, 0xff);
+        SDL_RenderRect(renderer, &drawTarget);
+#endif
+
 
         const auto rotation     = -math::toRad(_owner->getRotation());
         const auto renderStatus = SDL_RenderTextureRotated(renderer, _spriteSheetTexture->getSDLTexture(), &srcTarget,

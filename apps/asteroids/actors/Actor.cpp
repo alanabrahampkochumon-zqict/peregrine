@@ -19,7 +19,7 @@ namespace asteroids::actors
         : _state{ State::ACTIVE }, _position{}, _scale{ 1 }, _rotation{ 0 }, _game{ game }
     { game->addActor(this); }
 
-    Actor::~Actor() { _game->removeActor(this); }
+    Actor::~Actor() noexcept { _game->removeActor(this); }
 
 
     void Actor::update(const float deltaTime)
