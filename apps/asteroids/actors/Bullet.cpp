@@ -61,6 +61,14 @@ namespace asteroids::actors
                 break;
             }
         }
+
+        // If the bullet goes out of bounds then
+        // we update it as dead
+        if (getPosition().x < 0 || getPosition().y < 0 || getPosition().x > getGame()->getWindowWidth() ||
+            getPosition().y > getGame()->getWindowHeight())
+        {
+            setState(State::DEAD);
+        }
     }
 
 } // namespace asteroids::actors
