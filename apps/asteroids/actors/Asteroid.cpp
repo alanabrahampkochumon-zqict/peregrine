@@ -18,10 +18,10 @@ namespace asteroids::actors
         setPosition(position);
         setRotation(psm::genRand(0.0f, std::numbers::pi_v<float>));
 
-        const auto sprite = new comp::SpriteSheetComponent(this);
-        sprite->setSpritesheetTexture(game->getTexture(SPRITE_PATH), SPRITE_WIDTH, SPRITE_HEIGHT);
+        _sprite = new comp::SpriteSheetComponent(this);
+        _sprite->setSpritesheetTexture(game->getTexture(SPRITE_PATH), SPRITE_WIDTH, SPRITE_HEIGHT);
         // Select an active sprite index at random
-        sprite->setActiveIndex(
+        _sprite->setActiveIndex(
             { .x = psm::genRand<size_t>(0, SPRITE_COUNT_X - 1), .y = psm::genRand<size_t>(0, SPRITE_COUNT_Y - 1) });
 
         auto* moveComp = new comp::MoveComponent(this);
@@ -30,6 +30,13 @@ namespace asteroids::actors
         _collider = new comp::CircleComponent(this);
         _collider->setCenter(getPosition());
         _collider->setRadius(COLLISION_BOX_RADIUS);
+    }
+
+    Asteroid::~Asteroid() noexcept
+    {
+        // Remove the sprite as well as the asteroid
+        getGame()->removeSprite(_sprite);
+        getGame()->removeAsteroid(this);
     }
 
     void Asteroid::updateActor([[maybe_unused]] float deltaTime)

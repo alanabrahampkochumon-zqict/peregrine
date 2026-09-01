@@ -23,9 +23,9 @@ namespace asteroids::actors
     Bullet::Bullet(AsteroidGame* game) noexcept: Actor{ game }
     {
         // Create the sprite component
-        const auto sprite = new comp::SpriteSheetComponent(this);
-        sprite->setSpritesheetTexture(game->getTexture(SPRITE_PATH), SPRITE_WIDTH, SPRITE_HEIGHT);
-        sprite->setActiveIndex({ .x = SPRITE_COUNT_X - 1, .y = SPRITE_COUNT_Y - 1 });
+        _sprite = new comp::SpriteSheetComponent(this);
+        _sprite->setSpritesheetTexture(game->getTexture(SPRITE_PATH), SPRITE_WIDTH, SPRITE_HEIGHT);
+        _sprite->setActiveIndex({ .x = SPRITE_COUNT_X - 1, .y = SPRITE_COUNT_Y - 1 });
 
         // Add a move component
         const auto moveComp = new comp::MoveComponent(this);
@@ -35,6 +35,13 @@ namespace asteroids::actors
         _collider = new comp::CircleComponent(this);
         _collider->setCenter(getPosition());
         _collider->setRadius(COLLISION_BOX_RADIUS);
+    }
+
+    Bullet::~Bullet() noexcept
+    {
+        // Since sprite is a separate component we need to remove it from the game
+        // when this entity is removed
+        getGame()->removeSprite(_sprite);
     }
 
     void Bullet::updateActor([[maybe_unused]] float deltaTime)

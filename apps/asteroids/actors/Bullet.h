@@ -21,10 +21,13 @@ namespace asteroids::actors
     public:
         explicit Bullet(AsteroidGame* game) noexcept;
 
+        ~Bullet() noexcept override;
+
         void updateActor(float deltaTime) override;
 
     private:
         comp::CircleComponent* _collider{};
+        comp::SpriteSheetComponent* _sprite{};
 
     public:
         static constexpr size_t SPRITE_WIDTH   = 64;

@@ -23,6 +23,8 @@ namespace asteroids::actors
     public:
         explicit Asteroid(AsteroidGame* game) noexcept;
 
+        ~Asteroid() noexcept override;
+
         void updateActor(float deltaTime) override;
 
         [[nodiscard]] comp::CircleComponent* getCollider() const noexcept { return _collider; }
@@ -30,6 +32,7 @@ namespace asteroids::actors
 
     private:
         comp::CircleComponent* _collider{};
+        comp::SpriteSheetComponent* _sprite{};
 
     public:
         static constexpr size_t SPRITE_WIDTH     = 64;

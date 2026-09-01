@@ -21,6 +21,7 @@ namespace asteroids::actors
     {
     public:
         explicit Ship(AsteroidGame* game) noexcept;
+        ~Ship() noexcept override;
 
         [[nodiscard]] comp::CircleComponent* getCollider() const noexcept { return _collider; }
 
@@ -30,6 +31,7 @@ namespace asteroids::actors
 
     private:
         comp::CircleComponent* _collider{};
+        comp::SpriteSheetComponent* _sprite{};
         float _bulletCooldown;
 
         static constexpr size_t SPRITE_WIDTH        = 64;

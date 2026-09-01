@@ -55,6 +55,9 @@ namespace asteroids
         /// @brief Remove a sprite from the game
         void removeSprite(const comp::SpriteSheetComponent* sprite) noexcept;
 
+        /// @brief Remove a sprite from the game
+        void removeAsteroid(const actors::Asteroid* asteroid) noexcept;
+
         // /// @brief Add a move component
         // void addMoveComponent(comp::MoveComponent* comp) noexcept;
         //

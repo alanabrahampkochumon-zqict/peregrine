@@ -102,12 +102,12 @@ namespace asteroids
         auto actorToRemove = std::ranges::find(_pendingActors, actor);
         if (actorToRemove != std::ranges::end(_pendingActors))
         {
-            std::ranges::iter_swap(*actorToRemove, _pendingActors.back());
+            std::swap(*actorToRemove, _pendingActors.back());
             _pendingActors.pop_back();
         }
         else if (actorToRemove = std::ranges::find(_actors, actor); actorToRemove != std::ranges::end(_actors))
         {
-            std::ranges::iter_swap(*actorToRemove, _actors.back());
+            std::ranges::swap(*actorToRemove, _actors.back());
             _actors.pop_back();
         }
     }
@@ -136,8 +136,17 @@ namespace asteroids
         const auto componentToRemove = std::ranges::find(_spriteComponents, sprite);
         if (componentToRemove != _spriteComponents.end())
         {
-            std::ranges::iter_swap(*componentToRemove, _spriteComponents.back());
+            std::swap(*componentToRemove, _spriteComponents.back());
             _spriteComponents.pop_back();
+        }
+    }
+
+    void AsteroidGame::removeAsteroid(const actors::Asteroid* asteroid) noexcept
+    {
+        if (const auto ast = std::ranges::find(_asteroids, asteroid); ast != _asteroids.end())
+        {
+            std::swap(*ast, _asteroids.back());
+            _asteroids.pop_back();
         }
     }
 
@@ -235,7 +244,7 @@ namespace asteroids
         }
 
         // Delete the dead actors
-        for (const auto actor : deadActors)
+        for (const auto& actor : deadActors)
         {
             // This invokes the dtor and removes it from the actors as well
             delete actor;

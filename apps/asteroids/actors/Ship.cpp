@@ -30,11 +30,11 @@ namespace asteroids::actors
         setScale(SHIP_SCALE);
 
         // Create a sprite component
-        const auto sprite  = new comp::SpriteSheetComponent(this);
+        _sprite            = new comp::SpriteSheetComponent(this);
         const auto texture = game->getTexture(SPRITE_PATH);
-        sprite->setSpritesheetTexture(texture, SPRITE_WIDTH, SPRITE_HEIGHT);
+        _sprite->setSpritesheetTexture(texture, SPRITE_WIDTH, SPRITE_HEIGHT);
         // NOTE: Update sprite sheet index
-        sprite->setActiveIndex({ .x = 4, .y = 0 });
+        _sprite->setActiveIndex({ .x = 4, .y = 0 });
 
         const auto inputComp = new comp::InputComponent(this);
         inputComp->setForwardKey(FORWARD_KEY);
@@ -50,6 +50,9 @@ namespace asteroids::actors
         _collider->setCenter(getPosition());
         _collider->setRadius(COLLISION_BOX_RADIUS);
     }
+
+
+    Ship::~Ship() noexcept { getGame()->removeSprite(_sprite); }
 
 
     void Ship::updateActor(const float deltaTime)
