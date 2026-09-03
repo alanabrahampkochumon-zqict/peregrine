@@ -32,8 +32,6 @@ add_executable(
 
         graphics/Texture.h
         graphics/Texture.tpp
-        graphics/Renderer.cpp
-        graphics/Renderer.h
 )
 
 target_compile_features(Asteroids PRIVATE cxx_std_20)
