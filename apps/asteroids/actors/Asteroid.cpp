@@ -1,0 +1,49 @@
+//
+// Created by Admin on 8/25/2026.
+//
+
+#include "Asteroid.h"
+
+#include "components/MoveComponent.h"
+#include "components/SpriteSheetComponent.h"
+#include "game/AsteroidGame.h"
+
+namespace asteroids::actors
+{
+    Asteroid::Asteroid(AsteroidGame* game) noexcept: Actor{ game }
+    {
+        const auto position = psm::Vec2::getRandom(
+            psm::ZERO,
+            psm::Vec2{ static_cast<float>(game->getWindowWidth()), static_cast<float>(game->getWindowHeight()) });
+        setPosition(position);
+        setRotation(psm::genRand(0.0f, std::numbers::pi_v<float>));
+
+        _sprite = new comp::SpriteSheetComponent(this);
+        _sprite->setSpritesheetTexture(game->getTexture(SPRITE_PATH), SPRITE_WIDTH, SPRITE_HEIGHT);
+        // Select an active sprite index at random
+        _sprite->setActiveIndex(
+            { .x = psm::genRand<size_t>(0, SPRITE_COUNT_X - 1), .y = psm::genRand<size_t>(0, SPRITE_COUNT_Y - 1) });
+
+        auto* moveComp = new comp::MoveComponent(this);
+        moveComp->setForwardSpeed(psm::genRand(MIN_FORWARD_SPEED, MAX_FORWARD_SPEED));
+
+        _collider = new comp::CircleComponent(this);
+        _collider->setCenter(getPosition());
+        _collider->setRadius(COLLISION_BOX_RADIUS);
+    }
+
+    Asteroid::~Asteroid() noexcept
+    {
+        // Remove the sprite as well as the asteroid
+        getGame()->removeSprite(_sprite);
+        getGame()->removeAsteroid(this);
+    }
+
+    void Asteroid::updateActor([[maybe_unused]] float deltaTime)
+    {
+        // Update the collider center(position)
+        _collider->setCenter(getPosition());
+    }
+
+
+} // namespace asteroids::actors

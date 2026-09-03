@@ -13,13 +13,10 @@
 
 namespace asteroids::comp
 {
-    /// Forward declaration
-    class Actor;
-
     class MoveComponent: public Component
     {
     public:
-        explicit MoveComponent(Actor* owner, int updateOrder = 10);
+        explicit MoveComponent(actors::Actor* owner, int updateOrder = 10);
 
         void update(float deltaTime) noexcept override;
 

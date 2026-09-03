@@ -10,7 +10,7 @@
 
 #include "MoveComponent.h"
 
-#include "Actor.h"
+#include "../actors/Actor.h"
 #include "game/AsteroidGame.h"
 
 #include <psm/PSMath.h>
@@ -18,7 +18,7 @@
 
 namespace asteroids::comp
 {
-    MoveComponent::MoveComponent(Actor* owner, const int updateOrder): Component{ owner, updateOrder }
+    MoveComponent::MoveComponent(actors::Actor* owner, const int updateOrder): Component{ owner, updateOrder }
     { _owner->addComponent(this); }
 
     void MoveComponent::update(const float deltaTime) noexcept
@@ -30,6 +30,10 @@ namespace asteroids::comp
             psm::Vec2 position = _owner->getPosition();
             const auto forward = _owner->getForward().xy();
             position += forward * _forwardSpeed * deltaTime;
+            // Rudimentary wrap around
+            position.x = position.x > _owner->getGame()->getWindowWidth() ? 0.0f : position.x;
+            position.y = position.y > _owner->getGame()->getWindowHeight() ? 0.0f : position.y;
+
             _owner->setPosition(position);
         }
         // Update the actor's orientation if the angular speed is non-zero

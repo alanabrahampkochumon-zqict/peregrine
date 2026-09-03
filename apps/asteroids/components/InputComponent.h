@@ -14,13 +14,10 @@
 
 namespace asteroids::comp
 {
-    /// Forward declaration
-    class Actor;
-
     class InputComponent: public MoveComponent
     {
     public:
-        explicit InputComponent(Actor* owner) noexcept;
+        explicit InputComponent(actors::Actor* owner) noexcept;
 
         void processInput(const bool* keyState) noexcept override;
 

@@ -4,8 +4,8 @@
 
 #include "SpriteComponent.h"
 
+#include "../actors/Actor.h"
 #include "../game/AsteroidGame.h"
-#include "Actor.h"
 #include "psm/PSMath.h"
 
 
@@ -14,7 +14,7 @@ namespace asteroids::comp
     using namespace math;
 
     // TODO: Check whether draw order and update order refer to the same thing
-    SpriteComponent::SpriteComponent(Actor* owner, const int drawOrder) noexcept
+    SpriteComponent::SpriteComponent(actors::Actor* owner, const int drawOrder) noexcept
         : Component{ owner, drawOrder }, _owner{ owner }, _drawOrder{ drawOrder }
     {
         // _owner->getGame()->addSprite(this);
@@ -38,8 +38,8 @@ namespace asteroids::comp
         spriteRect.h = static_cast<float>(_texture->getHeight()) * _owner->getScale();
 
         // Center the rectangle around the position of the owner
-        spriteRect.x = _owner->getPosition().x - (spriteRect.w * 0.5f);
-        spriteRect.y = _owner->getPosition().y - (spriteRect.h * 0.5f);
+        spriteRect.x = _owner->getPosition().x - spriteRect.w * 0.5f;
+        spriteRect.y = _owner->getPosition().y - spriteRect.h * 0.5f;
 
         /// The rotation in radians. Negated to represent anticlockwise rotation since SDL rotates in clockwise
         /// direction for a positive angle.

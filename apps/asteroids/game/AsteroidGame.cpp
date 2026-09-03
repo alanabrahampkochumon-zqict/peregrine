@@ -10,12 +10,14 @@
 
 #include "AsteroidGame.h"
 
-#include "components/Asteroid.h"
-#include "components/Ship.h"
+#include "actors/Asteroid.h"
+#include "actors/Bullet.h"
+#include "actors/Ship.h"
 #include "graphics/Texture.h"
 
 #include <SDL3/SDL.h>
 #include <algorithm>
+#include <format>
 #include <ranges>
 
 namespace asteroids
@@ -78,7 +80,7 @@ namespace asteroids
     }
 
 
-    void AsteroidGame::addActor(comp::Actor* actor) noexcept
+    void AsteroidGame::addActor(actors::Actor* actor) noexcept
     {
         // Add the actor to pending list if the game is in an update state
         // else to the actors list.
@@ -93,19 +95,19 @@ namespace asteroids
     }
 
 
-    void AsteroidGame::removeActor(const comp::Actor* actor) noexcept
+    void AsteroidGame::removeActor(const actors::Actor* actor) noexcept
     {
         // Remove the actor by first searching pending actors
         // and if it's not there remove it from the actors vector.
         auto actorToRemove = std::ranges::find(_pendingActors, actor);
         if (actorToRemove != std::ranges::end(_pendingActors))
         {
-            std::ranges::iter_swap(*actorToRemove, _pendingActors.back());
+            std::swap(*actorToRemove, _pendingActors.back());
             _pendingActors.pop_back();
         }
         else if (actorToRemove = std::ranges::find(_actors, actor); actorToRemove != std::ranges::end(_actors))
         {
-            std::ranges::iter_swap(*actorToRemove, _actors.back());
+            std::ranges::swap(*actorToRemove, _actors.back());
             _actors.pop_back();
         }
     }
@@ -129,13 +131,22 @@ namespace asteroids
     }
 
 
-    void AsteroidGame::removeSprite([[maybe_unused]] const comp::SpriteSheetComponent* sprite) noexcept
+    void AsteroidGame::removeSprite(const comp::SpriteSheetComponent* sprite) noexcept
     {
         const auto componentToRemove = std::ranges::find(_spriteComponents, sprite);
         if (componentToRemove != _spriteComponents.end())
         {
-            std::ranges::iter_swap(*componentToRemove, _spriteComponents.back());
+            std::swap(*componentToRemove, _spriteComponents.back());
             _spriteComponents.pop_back();
+        }
+    }
+
+    void AsteroidGame::removeAsteroid(const actors::Asteroid* asteroid) noexcept
+    {
+        if (const auto ast = std::ranges::find(_asteroids, asteroid); ast != _asteroids.end())
+        {
+            std::swap(*ast, _asteroids.back());
+            _asteroids.pop_back();
         }
     }
 
@@ -157,11 +168,11 @@ namespace asteroids
 
     void AsteroidGame::_loadData()
     {
-        for (size_t i = 0; i < 20; ++i)
+        for (size_t i = 0; i < ASTEROID_SPAWN_COUNT; ++i)
         {
-            new actor::Asteroid(this);
+            _asteroids.emplace_back(new actors::Asteroid(this));
         }
-        new actor::Ship(this);
+        new actors::Ship(this);
     }
 
 
@@ -223,24 +234,24 @@ namespace asteroids
 
 
         // Create a temporary list for dead actors
-        std::vector<comp::Actor*> deadActors;
+        std::vector<actors::Actor*> deadActors;
         for (const auto actor : _actors)
         {
-            if (actor->getState() == comp::Actor::State::DEAD)
+            if (actor->getState() == actors::Actor::State::DEAD)
             {
                 deadActors.emplace_back(actor);
             }
         }
 
         // Delete the dead actors
-        for (const auto actor : deadActors)
+        for (const auto& actor : deadActors)
         {
             // This invokes the dtor and removes it from the actors as well
             delete actor;
         }
 
-
-        SDL_Log("Delta time: %0.03f", deltaTime);
+        SDL_SetWindowTitle(_window,
+                           std::format("{} ({} FPS)", GAME_NAME, static_cast<size_t>(1000.0f / deltaTime)).c_str());
     }
 
     void AsteroidGame::_draw() const

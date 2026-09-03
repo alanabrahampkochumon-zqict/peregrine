@@ -10,10 +10,8 @@
  */
 
 #include "SpriteComponent.h"
-
 namespace asteroids::comp
 {
-
     struct SpriteIndex
     {
         size_t x, y;
@@ -22,7 +20,7 @@ namespace asteroids::comp
     class SpriteSheetComponent: public Component
     {
     public:
-        explicit SpriteSheetComponent(Actor* owner, int drawOrder = 100);
+        explicit SpriteSheetComponent(actors::Actor* owner, int drawOrder = 100);
 
         ~SpriteSheetComponent() noexcept override;
 

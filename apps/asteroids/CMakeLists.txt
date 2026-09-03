@@ -1,17 +1,20 @@
 add_executable(
         Asteroids
 
-        components/Actor.h
+        actors/Actor.h
+        actors/Actor.cpp
+        actors/Asteroid.cpp
+        actors/Asteroid.h
+        actors/Ship.cpp
+        actors/Ship.h
+        actors/Bullet.cpp
+        actors/Bullet.h
 
         game/AsteroidGame.h
         game/AsteroidGame.cpp
         Main.cpp
-        components/GameObject.h
-        components/Component.h
-        components/Actor.cpp
 
-        graphics/Texture.h
-        graphics/Texture.tpp
+        components/Component.h
         components/SpriteComponent.cpp
         components/SpriteComponent.h
         components/AnimSpriteComponent.cpp
@@ -20,18 +23,15 @@ add_executable(
         components/BGSpriteComponent.h
         components/MoveComponent.cpp
         components/MoveComponent.h
-        components/Asteroid.cpp
-        components/Asteroid.h
         components/SpriteSheetComponent.cpp
         components/SpriteSheetComponent.h
         components/InputComponent.cpp
         components/InputComponent.h
-        components/Ship.cpp
-        components/Ship.h
         components/CircleComponent.cpp
         components/CircleComponent.h
-        components/Bullet.cpp
-        components/Bullet.h
+
+        graphics/Texture.h
+        graphics/Texture.tpp
 )
 
 target_compile_features(Asteroids PRIVATE cxx_std_20)

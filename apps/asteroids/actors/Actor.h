@@ -1,0 +1,112 @@
+#pragma once
+/**
+ * @file Actor.h
+ * @author Alan Abraham
+ * @date Created on: August 21, 2026
+ *
+ * @brief Actor interface for component system.
+ *
+ * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
+ */
+
+
+#include "components/Component.h"
+#include "psm/PSMath.h"
+
+#include <cstdint>
+#include <unordered_set>
+
+
+
+
+namespace asteroids
+{
+    /// Forward declaration
+    class AsteroidGame;
+
+    namespace actors
+    {
+        class Actor
+        {
+        public:
+            /// Actor state
+            enum class State : uint8_t
+            {
+                ACTIVE,
+                PAUSED,
+                DEAD
+            };
+
+            explicit Actor(AsteroidGame* game) noexcept;
+
+            virtual ~Actor() noexcept;
+
+
+            /// Update called from game.
+            void update(float deltaTime);
+
+            /// Update all components of the actor.
+            void updateComponents(float deltaTime) const;
+
+            /// Actor specific update code (can be overridden).
+            virtual void updateActor(float deltaTime);
+
+
+            /// Adds a component to the actor.
+            void addComponent(comp::Component* comp) noexcept;
+
+            /// Removes a component from the actor.
+            void removeComponent(comp::Component* comp) noexcept;
+
+
+            /// Process the input.
+            /// @param keyState The keycode to process. 1-to-1 mapping to SDL3 keycodes.
+            void processInput(const bool* keyState) noexcept;
+
+
+            /// Process the actor input.
+            /// Overridable to provide additional functionality to deriving actors.
+            /// @param keyState The keycode to process. 1-to-1 mapping to SDL3 keycodes.
+            virtual void actorInput([[maybe_unused]] const bool* keyState) noexcept {}
+
+
+            //+=+=+=+=+=
+            // GETTERS
+            //+=+=+=+=+=
+
+            [[nodiscard]] psm::Vec2 getPosition() const noexcept { return _position; }
+            [[nodiscard]] float getScale() const noexcept { return _scale; }
+            [[nodiscard]] float getRotation() const noexcept { return _rotation; }
+            [[nodiscard]] State getState() const noexcept { return _state; }
+            [[nodiscard]] AsteroidGame* getGame() const noexcept { return _game; }
+
+            /// @brief Get the forward direction vector.
+            /// @note Since SDL have a positive y-axis in the bottom
+            ///       direction, the y-axis is negated.
+            [[nodiscard]] psm::Vec3 getForward() const noexcept
+            { return psm::Vec3{ std::cos(_rotation), -std::sin(_rotation), 0.0f }; }
+
+
+
+            //+=+=+=+=+=
+            // SETTERS
+            //+=+=+=+=+=
+
+            /// @internal Vec2 is 8-bytes, we can pass it by value.
+            void setPosition(const psm::Vec2 position) { _position = position; }
+            void setScale(const float scale) { _scale = scale; }
+            void setRotation(const float rotation) { _rotation = rotation; }
+            void setState(const State state) { _state = state; }
+
+
+
+        private:
+            State _state;
+            psm::Vec2 _position;
+            float _scale, _rotation;
+
+            std::unordered_set<comp::Component*> _components;
+            AsteroidGame* _game;
+        };
+    } // namespace actors
+} // namespace asteroids

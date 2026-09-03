@@ -11,14 +11,15 @@
 
 #include "InputComponent.h"
 
-#include "Actor.h"
+#include "actors/Actor.h"
 #include "game/AsteroidGame.h"
 
 
 namespace asteroids::comp
 {
 
-    InputComponent::InputComponent(Actor* owner) noexcept: MoveComponent{ owner } { _owner->addComponent(this); }
+    InputComponent::InputComponent(actors::Actor* owner) noexcept: MoveComponent{ owner }
+    { _owner->addComponent(this); }
 
 
     void InputComponent::processInput(const bool* keyState) noexcept

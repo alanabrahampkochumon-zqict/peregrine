@@ -10,7 +10,8 @@
 
 #include "SpriteSheetComponent.h"
 
-#include "Actor.h"
+#include "../actors/Actor.h"
+#include "actors/Bullet.h"
 #include "game/AsteroidGame.h"
 
 #include <cassert>
@@ -19,7 +20,7 @@
 namespace asteroids::comp
 {
 
-    SpriteSheetComponent::SpriteSheetComponent(Actor* owner, const int drawOrder)
+    SpriteSheetComponent::SpriteSheetComponent(actors::Actor* owner, const int drawOrder)
         : Component{ owner }, _drawOrder{ drawOrder }
     {
         _owner->getGame()->addSprite(this);
@@ -53,6 +54,34 @@ namespace asteroids::comp
         srcTarget.h = static_cast<float>(_spriteHeight);
         srcTarget.x = static_cast<float>(_spriteWidth * _activeSpriteIndex.x);
         srcTarget.y = static_cast<float>(_spriteHeight * _activeSpriteIndex.y);
+
+#ifdef ENABLE_SPRITE_DEBUG
+        SDL_SetRenderDrawColor(renderer, 0x00, 0xff, 0x00, 0xff);
+        SDL_RenderRect(renderer, &drawTarget);
+
+#endif
+
+#ifdef ENABLE_COLLISION_DEBUG
+        // Assumption: Every actor except bullet have the same collision radius
+        auto collisionRad = typeid(*_owner) == typeid(actors::Bullet) ? actors::Bullet::COLLISION_BOX_RADIUS
+                                                                      : actors::Asteroid::COLLISION_BOX_RADIUS;
+        // Since the collider is a circle(and hence the radius), we need to double to
+        // to make it equal to the diameter which is the side length of a rect
+        collisionRad *= 2;
+
+        SDL_FRect collisionBox{};
+
+        // Scale the target rect to be scaled by the sprite's width and height
+        collisionBox.w = collisionRad * _owner->getScale();
+        collisionBox.h = collisionRad * _owner->getScale();
+
+        // Center the sprite
+        collisionBox.x = _owner->getPosition().x - collisionBox.w * 0.5f;
+        collisionBox.y = _owner->getPosition().y - collisionBox.h * 0.5f;
+
+        SDL_SetRenderDrawColor(renderer, 0xff, 0x23, 0x00, 0xff);
+        SDL_RenderRect(renderer, &collisionBox);
+#endif
 
 
         const auto rotation     = -math::toRad(_owner->getRotation());
