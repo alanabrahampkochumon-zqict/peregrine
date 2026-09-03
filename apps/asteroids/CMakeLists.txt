@@ -14,7 +14,6 @@ add_executable(
         game/AsteroidGame.cpp
         Main.cpp
 
-        components/GameObject.h
         components/Component.h
         components/SpriteComponent.cpp
         components/SpriteComponent.h
@@ -33,6 +32,8 @@ add_executable(
 
         graphics/Texture.h
         graphics/Texture.tpp
+        graphics/Renderer.cpp
+        graphics/Renderer.h
 )
 
 target_compile_features(Asteroids PRIVATE cxx_std_20)
