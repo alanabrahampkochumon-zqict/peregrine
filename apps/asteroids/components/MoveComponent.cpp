@@ -23,7 +23,6 @@ namespace asteroids::comp
 
     void MoveComponent::update(const float deltaTime) noexcept
     {
-        // TODO: Add screen warping when the point moves outside screen bounds.
         // Update the actor's position if the speed is non-zero
         if (!psm::nearZero(_forwardSpeed))
         {
