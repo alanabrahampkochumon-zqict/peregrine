@@ -54,8 +54,28 @@
     */
 
     /**
-    * @defgroup T_PMM_Stack_Tel_Int Stack Telemetry Integration
+    * @defgroup T_PMM_Stack_Tel_Int Stack Telemetry Integration Tests
     * @brief Verifies stack telemetry integration across different policies.
+    * @ingroup T_PMM_Lib
+    */
+
+// TODO: Add groupings
+
+    /**
+    * @defgroup T_PMM_TLSF_Header TLSF Header Tests
+    * @brief Verifies TLSF header member functions.
+    * @ingroup T_PMM_Lib
+    */
+
+    /**
+    * @defgroup T_PMM_TLSF_Core TLSF Allocator Tests
+    * @brief Verifies TLSF allocator logic.
+    * @ingroup T_PMM_Lib
+    */
+
+    /**
+    * @defgroup T_PMM_TLSF_Tel_Int TLSF Telemetry Integration Tests
+    * @brief Verifies TLSF telemetry integration across different policies.
     * @ingroup T_PMM_Lib
     */
 

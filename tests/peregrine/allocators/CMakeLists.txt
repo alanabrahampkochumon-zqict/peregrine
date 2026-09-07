@@ -5,17 +5,23 @@ add_library(AllocatorTests OBJECT)
 target_sources(
         AllocatorTests
         PRIVATE
+
         arena/ManagedArenaTests.cpp
         arena/UnmanagedArenaTests.cpp
         arena/SafeArenaTests.cpp
+
         stack/LooseStackTests.cpp
         stack/StrictStackTests.cpp
         stack/StackMemoryManagementTests.cpp
         stack/TelemetryIntegrationTests.cpp
         stack/SafeStackTests.cpp
+
         pool/AllocatorTests.cpp
         pool/TelemetryIntegrationTests.cpp
         pool/SafePoolTests.cpp
+
+        tlsf/HeaderTests.cpp
+
         TempArenaTests.cpp
 )
 

@@ -65,12 +65,12 @@ namespace pmm
 
 
             /// Return whether the current block is free.
-            [[nodiscard]] PMM_INLINE constexpr bool isFree() const noexcept { return sizeWithFlags & MASK_FREE == 0; }
+            [[nodiscard]] PMM_INLINE constexpr bool isFree() const noexcept { return (sizeWithFlags & MASK_FREE) == 0; }
             /// Return whether the previous block is free.
             [[nodiscard]] PMM_INLINE constexpr bool isPrevFree() const noexcept
-            { return sizeWithFlags & MASK_PREV_FREE == 0; }
+            { return (sizeWithFlags & MASK_PREV_FREE) == 0; }
             /// Return the true size of the block.
-            [[nodiscard]] PMM_INLINE constexpr bool getSize() const noexcept { return sizeWithFlags & MASK_SIZE; }
+            [[nodiscard]] PMM_INLINE constexpr size_t getSize() const noexcept { return sizeWithFlags & MASK_SIZE; }
 
             /// Set the size of the block to @p size.
             PMM_INLINE constexpr void setSize(const size_t size) noexcept
