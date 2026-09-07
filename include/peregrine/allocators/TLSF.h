@@ -15,6 +15,8 @@
 #include "Policy.h"
 #include "peregrine/utils/Preprocessors.h"
 
+#include <array>
+
 namespace pmm
 {
 
@@ -27,9 +29,10 @@ namespace pmm
      * @tparam Safe        Flags an arena as safe, implying certain operations like resizing a `nullptr` are handled
      *                     gracefully when assertions are disabled. `False` by default to prevent any performance
      *                     stalls incurred by conditional checks.
+     * @tparam MTPolicy    Flag hinting the instance handle multithreading safety. Default: @ref mt::NonThreadSafe.
      */
     template <MemoryStrategy MemStrategy = ManagedMemory, telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled,
-              bool Safe = false>
+              bool Safe = false, mt::MTPolicy MTPolicy = mt::NonThreadSafe>
     class TLSF
     {
     public:
@@ -107,6 +110,14 @@ namespace pmm
                 // 1 such that 0bxxxx...xxxx1x & 0b1111...111101 -> 0bxxxx...xxxx0x
                 sizeWithFlags &= PREV_USED_MAN_BIT;
             }
+
+            /// Internal doubly linked list node used for storing memory blocks of similar size in the
+            /// same FL_SL bitmask.
+            struct FreeNode
+            {
+                FreeNode* prev;
+                FreeNode* next;
+            };
         };
 
     private:

@@ -11,7 +11,7 @@
 
 
 #include <concepts>
-
+#include <mutex>
 
 namespace pmm
 {
@@ -133,7 +133,7 @@ namespace pmm
 
 
         /**
-         * @brief Telemetry policy indicating that the telemetry is enabled and managed by the allocator.
+         * @brief Telemetry policy indicating that the telemetry is enabled.
          *
          * @relatedalso Disabled
          */
@@ -154,6 +154,46 @@ namespace pmm
         };
 
     } // namespace telemetry
+
+
+    /**************************************
+     *           MULTITHREADING           *
+     **************************************/
+    namespace mt
+    {
+        /**
+         * @brief Concept defining the requirements for multithreading safety.
+         *
+         * @relatedalso ThreadSafe
+         * @relatedalso NonThreadSafe
+         */
+        template <typename T>
+        concept MTPolicy = requires(T) {
+            { T::getPolicyName() } -> std::same_as<std::string>;
+        };
+
+
+        /**
+         * @brief Multithreading policy indicating that the allocator is thread-safe.
+         *
+         * @relatedalso NonThreadSafe
+         */
+        struct ThreadSafe
+        {
+            static constexpr std::string getPolicyName() noexcept { return "Thread safe(Mutex Locked)"; }
+        };
+
+
+        /**
+         * @brief Multithreading policy indicating that the allocator is *not* thread-safe.
+         *
+         * @relatedalso ThreadSafe
+         */
+        struct NonThreadSafe
+        {
+            static constexpr std::string getPolicyName() noexcept { return "Thread Unsafe"; }
+        };
+    } // namespace mt
 
     /** @} */
 
