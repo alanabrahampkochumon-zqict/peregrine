@@ -1122,8 +1122,6 @@ namespace pmm
         [[maybe_unused]] const Stack<> stack2 = std::move(stack);
         // NOLINT(bugprone-use-after-move)
         EXPECT_EQ(nullptr, stack._buffer);
-        EXPECT_EQ(0, stack._offset);
-        EXPECT_EQ(0, stack._stackSize);
     }
 
     /**
@@ -1146,8 +1144,6 @@ namespace pmm
         [[maybe_unused]] Stack<> stack2(256);
         static_cast<void>(stack2 = std::move(stack));
         EXPECT_EQ(nullptr, stack._buffer);
-        EXPECT_EQ(0, stack._offset);
-        EXPECT_EQ(0, stack._stackSize);
     }
 
 

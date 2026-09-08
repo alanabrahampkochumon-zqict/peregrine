@@ -56,8 +56,8 @@ namespace
     {
         /** @test Verify that unmanaged arena does not free memory.
          *  @note Since we cant really confirm confirm if a buffer is freed and we only delete[] buffer in the dtor of
-         *        Arena, we can check if it is trivially destructible to ensure memory is freed in the arena in unmanaged
-         *        mode and opposite otherwise.
+         *        Arena, we can check if it is trivially destructible to ensure memory is freed in the arena in
+         * unmanaged mode and opposite otherwise.
          */
         static_assert(std::is_trivially_destructible_v<pmm::Arena<pmm::UnmanagedMemory>> == true);
     } // namespace static_tests
@@ -768,9 +768,6 @@ namespace pmm
         const Arena<pmm::UnmanagedMemory> arena2 = std::move(arena);
         // NOLINT(bugprone-use-after-move)
         EXPECT_EQ(nullptr, arena._buffer);
-        EXPECT_EQ(0, arena._offset);
-        EXPECT_EQ(0, arena._prevOffset);
-        EXPECT_EQ(0, arena._arenaSize);
         EXPECT_EQ(0, arena.getTelemetry().getUsedSize());
     }
 
@@ -796,9 +793,6 @@ namespace pmm
 
         static_cast<void>(arena2 = std::move(arena));
         EXPECT_EQ(nullptr, arena._buffer);
-        EXPECT_EQ(0, arena._offset);
-        EXPECT_EQ(0, arena._prevOffset);
-        EXPECT_EQ(0, arena._arenaSize);
         delete[] buffer2;
     }
 

@@ -87,11 +87,11 @@ namespace pmm
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE constexpr Pool<MemStrategy, TelPolicy, Safe>::Pool(Pool&& pool) noexcept
         : _buffer{ std::exchange(pool._buffer, nullptr) },
-          _poolSize{ std::exchange(pool._poolSize, 0) },
-          _chunkSize{ std::exchange(pool._chunkSize, 0) },
-          _chunkAlignment{ std::exchange(pool._chunkAlignment, 0) },
-          _initialAlignmentPadding{ std::exchange(pool._initialAlignmentPadding, 0) },
-          _chunkCount{ std::exchange(pool._chunkCount, 0) },
+          _poolSize{ pool._poolSize },
+          _chunkSize{ pool._chunkSize },
+          _chunkAlignment{ pool._chunkAlignment },
+          _initialAlignmentPadding{ pool._initialAlignmentPadding },
+          _chunkCount{ pool._chunkCount },
           _head{ std::exchange(pool._head, nullptr) },
           _telemetry{ std::exchange(pool._telemetry,
                                     getTelemetryInstance<TelPolicy>(_poolSize, _chunkSize, _chunkAlignment)) }
@@ -116,11 +116,11 @@ namespace pmm
 
         // Move the data members and null-out the moved data members.
         _buffer                  = std::exchange(pool._buffer, nullptr);
-        _poolSize                = std::exchange(pool._poolSize, 0);
-        _chunkSize               = std::exchange(pool._chunkSize, 0);
-        _chunkAlignment          = std::exchange(pool._chunkAlignment, 0);
-        _initialAlignmentPadding = std::exchange(pool._initialAlignmentPadding, 0);
-        _chunkCount              = std::exchange(pool._chunkCount, 0);
+        _poolSize                = pool._poolSize;
+        _chunkSize               = pool._chunkSize;
+        _chunkAlignment          = pool._chunkAlignment;
+        _initialAlignmentPadding = pool._initialAlignmentPadding;
+        _chunkCount              = pool._chunkCount;
         _head                    = std::exchange(pool._head, nullptr);
         _telemetry =
             std::exchange(pool._telemetry, getTelemetryInstance<TelPolicy>(_poolSize, _chunkSize, _chunkAlignment));

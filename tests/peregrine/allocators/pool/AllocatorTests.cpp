@@ -523,11 +523,6 @@ namespace pmm
         const Pool<> pool2 = std::move(pool);
         // NOLINT(bugprone-use-after-move)
         EXPECT_EQ(nullptr, pool._buffer);
-        EXPECT_EQ(0, pool._poolSize);
-        EXPECT_EQ(0, pool._chunkSize);
-        EXPECT_EQ(0, pool._chunkAlignment);
-        EXPECT_EQ(0, pool._initialAlignmentPadding);
-        EXPECT_EQ(0, pool._chunkCount);
         EXPECT_EQ(nullptr, pool._head);
         EXPECT_EQ(0, pool.getTelemetry().getUsedAllocationCount());
     }
@@ -563,11 +558,6 @@ namespace pmm
         static_cast<void>(pool2 = std::move(pool));
 
         EXPECT_EQ(nullptr, pool._buffer);
-        EXPECT_EQ(0, pool._poolSize);
-        EXPECT_EQ(0, pool._chunkSize);
-        EXPECT_EQ(0, pool._chunkAlignment);
-        EXPECT_EQ(0, pool._initialAlignmentPadding);
-        EXPECT_EQ(0, pool._chunkCount);
         EXPECT_EQ(nullptr, pool._head);
         EXPECT_EQ(0, pool.getTelemetry().getUsedAllocationCount());
     }
@@ -742,11 +732,6 @@ namespace pmm
         [[maybe_unused]] const Pool<pmm::UnmanagedMemory> pool2 = std::move(pool);
         // NOLINT(bugprone-use-after-move)
         EXPECT_EQ(nullptr, pool._buffer);
-        EXPECT_EQ(0, pool._poolSize);
-        EXPECT_EQ(0, pool._chunkSize);
-        EXPECT_EQ(0, pool._chunkAlignment);
-        EXPECT_EQ(0, pool._initialAlignmentPadding);
-        EXPECT_EQ(0, pool._chunkCount);
         EXPECT_EQ(nullptr, pool._head);
         EXPECT_EQ(0, pool.getTelemetry().getUsedAllocationCount());
     }
@@ -783,11 +768,6 @@ namespace pmm
         static_cast<void>(pool2 = std::move(pool));
 
         EXPECT_EQ(nullptr, pool._buffer);
-        EXPECT_EQ(0, pool._poolSize);
-        EXPECT_EQ(0, pool._chunkSize);
-        EXPECT_EQ(0, pool._chunkAlignment);
-        EXPECT_EQ(0, pool._initialAlignmentPadding);
-        EXPECT_EQ(0, pool._chunkCount);
         EXPECT_EQ(nullptr, pool._head);
         EXPECT_EQ(0, pool.getTelemetry().getUsedAllocationCount());
 

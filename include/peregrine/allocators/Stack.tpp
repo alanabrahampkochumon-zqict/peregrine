@@ -50,13 +50,13 @@ namespace pmm
     template <stack::StackType Type, MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelemetryPolicy, bool Safe>
     PMM_INLINE constexpr Stack<Type, MemStrategy, TelemetryPolicy, Safe>::Stack(Stack&& stack) noexcept
         : _buffer{ std::exchange(stack._buffer, nullptr) },
-          _stackSize{ std::exchange(stack._stackSize, 0) },
-          _offset{ std::exchange(stack._offset, 0) },
+          _stackSize{ stack._stackSize },
+          _offset{ stack._offset },
           _telemetry{ std::exchange(stack._telemetry, getTelemetryInstance<TelemetryPolicy>(_stackSize)) }
     {
         if constexpr (std::same_as<Type, stack::Strict>)
         {
-            _prevOffset = std::exchange(stack._prevOffset, 0);
+            _prevOffset = stack._prevOffset;
         }
     }
 
@@ -81,12 +81,12 @@ namespace pmm
 
         // Move the data members and null-out the moved data members.
         _buffer    = std::exchange(stack._buffer, nullptr);
-        _offset    = std::exchange(stack._offset, 0);
-        _stackSize = std::exchange(stack._stackSize, 0);
+        _offset    = stack._offset;
+        _stackSize = stack._stackSize;
         _telemetry = std::exchange(stack._telemetry, getTelemetryInstance<TelemetryPolicy>(_stackSize));
         if constexpr (std::same_as<Type, stack::Strict>)
         {
-            _prevOffset = std::exchange(stack._prevOffset, 0);
+            _prevOffset = stack._prevOffset;
         }
 
         return *this;

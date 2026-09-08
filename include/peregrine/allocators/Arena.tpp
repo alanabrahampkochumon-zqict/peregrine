@@ -33,9 +33,7 @@ namespace pmm
           _offset(0),
           _prevOffset(0),
           _telemetry{ getTelemetryInstance<TelPolicy>(arenaSize) }
-    {
-        PMM_ASSERT_MSG(arenaSize > 0, "Cannot allocate zero size arena");
-    }
+    { PMM_ASSERT_MSG(arenaSize > 0, "Cannot allocate zero size arena"); }
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
@@ -62,9 +60,9 @@ namespace pmm
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
     PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::Arena(Arena&& arena) noexcept
         : _buffer{ std::exchange(arena._buffer, nullptr) },
-          _arenaSize{ std::exchange(arena._arenaSize, 0) },
-          _offset{ std::exchange(arena._offset, 0) },
-          _prevOffset{ std::exchange(arena._prevOffset, 0) },
+          _arenaSize{ arena._arenaSize },
+          _offset{ arena._offset },
+          _prevOffset{ arena._prevOffset },
           _telemetry{ std::exchange(arena._telemetry, getTelemetryInstance<TelPolicy>(_arenaSize)) }
     {}
 
@@ -86,9 +84,9 @@ namespace pmm
 
         // Move the data members and null-out the moved data members.
         _buffer     = std::exchange(arena._buffer, nullptr);
-        _offset     = std::exchange(arena._offset, 0);
-        _prevOffset = std::exchange(arena._prevOffset, 0);
-        _arenaSize  = std::exchange(arena._arenaSize, 0);
+        _offset     = arena._offset;
+        _prevOffset = arena._prevOffset;
+        _arenaSize  = arena._arenaSize;
         _telemetry  = std::exchange(arena._telemetry, getTelemetryInstance<TelPolicy>(_arenaSize));
 
         return *this;
