@@ -16,6 +16,7 @@
 #include "peregrine/utils/Preprocessors.h"
 
 #include <array>
+#include <bit>
 
 namespace pmm
 {
@@ -39,7 +40,8 @@ namespace pmm
         using Bitmask_t = uint64_t; /// Data type used for bitmasks
         /// The offset used for LSB(Least Significant Bit) of FL.
         /// Since we are using 64-bit integrals for SL, the difference between each
-        static constexpr size_t offset = 10;
+        /// This is the L value in the TLSF paper.
+        static constexpr size_t LSB_OFFSET = 10;
 
         struct Header
         {
@@ -229,6 +231,34 @@ namespace pmm
         size_t _size, _usedSize;
         Bitmask_t _flBitmask;                                 /// First level bitmap
         std::array<Bitmask_t, sizeof(_flBitmask)> _slBitmask; /// Second Level Bitmaps
+
+        /// Structure used for exchanging bit mask indices internally.
+        struct BitmapIndices
+        {
+            Bitmask_t flIndex{}, slIndex{};
+        };
+
+
+        constexpr Bitmask_t findFL(const size_t blockSize) const noexcept
+        {
+            // floor(log_2(x)) which is the first one in the set
+            // i.ie for 13(1011) -> 4
+            // + 1 is required since countr_zero is zero indexed
+            std::countr_zero(blockSize) + 1;
+        }
+
+        constexpr BitmapIndices mappingInsert(const size_t blockSize) const noexcept
+        {
+            BitmapIndices indices;
+            // TODO: One question what if look into the SL map with fl index and if the map is zero then
+            // return the next free index? Test after implementation since that will prevent a
+            // branching in allocBytes.
+            indices.flIndex = findFL(blockSize);
+            // sl := (r right_shift (fl-L)) - 2^L
+            indices.slIndex = blockSize >> (indices.flIndex - LSB_OFFSET) - (2 << LSB_OFFSET);
+
+            return indices;
+        }
 
 
 
