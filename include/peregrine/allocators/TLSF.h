@@ -127,12 +127,151 @@ namespace pmm
             };
         };
 
+
+        /**
+         * @brief Create a TLSF allocator with user managed memory.
+         *
+         * @param buffer     The buffer to use for allocations.
+         * @param memorySize The size of the buffer, which will also acts as the allocator's size.
+         *
+         * @remarks API specialized for @ref pmm::UnmanagedMemory.
+         */
+        constexpr TLSF(uint8_t* buffer, size_t memorySize) noexcept
+            requires std::same_as<MemStrategy, UnmanagedMemory>;
+
+
+        /**
+         * @brief Create a TLSF allocator with internally managed memory.
+         *
+         * @param allocatorSize The size of the allocator's size.
+         *                      Will not be the true usable size due internal paddings
+         *                      for headers and alignment.
+         *
+         * @remarks API specialized for @ref pmm::ManagedMemory.
+         */
+        explicit constexpr TLSF(size_t allocatorSize) noexcept
+            requires std::same_as<MemStrategy, ManagedMemory>;
+
+
+        /**
+         * @brief Copying is strictly prohibited to prevent double-free crashes.
+         * @note Use std::move() to transfer ownership of the TLSF allocator.
+         */
+        constexpr TLSF(const TLSF&) = delete;
+
+
+        /**
+         * @brief Copying is strictly prohibited to prevent double-free crashes.
+         * @note Use std::move() to transfer ownership of the TLSF allocator.
+         */
+        constexpr TLSF& operator=(const TLSF&) = delete;
+
+
+        /**
+         * @brief Transfer a TLSF allocator's memory to a this object.
+         *
+         * @param[in,out] tlsf The TLSF allocator to move into this object.
+         */
+        constexpr TLSF(TLSF&& tlsf) noexcept;
+
+
+        /**
+         * @brief Transfer a TLSF allocator's memory to this object.
+         *
+         * @warning This will delete any buffers held by the allocator on the left hand side of the assingment.
+         *
+         * @param[in,out] tlsf The TLSF allocator to move into this object.
+         *
+         * @return The current TLSF allocator instance.
+         */
+        constexpr TLSF& operator=(TLSF&& tlsf) noexcept;
+
+
+        /**
+         * @brief TLSF Destructor.
+         *
+         * @note TODO: For clearing the TLSF allocator use @ref clear or
+         *       use @ref free to free individual allocations.
+         *
+         * @warning Will not free the backing buffer since it is managed by the user.
+         *
+         * @remarks API specialized for @ref pmm::UnmanagedMemory.
+         */
+        constexpr ~TLSF() noexcept
+            requires std::same_as<MemStrategy, UnmanagedMemory>
+        = default;
+
+
+        /**
+         * @brief TLSF Destructor. Frees the internal buffer.
+         *
+         * @note TODO: For clearing the TLSF allocator use @ref clear or
+         *       use @ref free to free individual allocations.
+         *
+         * @remarks API specialized for @ref pmm::ManagedMemory.
+         */
+        constexpr ~TLSF() noexcept
+            requires std::same_as<MemStrategy, ManagedMemory>;
+
+
+        /// Get the size of the allocator in bytes.
+        constexpr size_t size() const noexcept;
+
+        /// Get the amount of memory in use in bytes.
+        constexpr size_t usedSize() const noexcept;
+
+        /// Get the amount of free memory in bytes.
+        constexpr size_t freeSize() const noexcept;
+
+
     private:
-        uint8_t* buffer;
-        size_t memorySize;
-        Bitmask_t flBitmask;                                /// First level bitmap
-        std::array<Bitmask_t, sizeof(flBitmask)> slBitmask; /// Second Level Bitmaps
+        uint8_t* _buffer;
+        size_t _size, _usedSize;
+        Bitmask_t _flBitmask;                                 /// First level bitmap
+        std::array<Bitmask_t, sizeof(_flBitmask)> _slBitmask; /// Second Level Bitmaps
+
+
+
+#ifdef ENABLE_PMM_TESTS
+    // FRIEND TEST macros for verifying internal states
+    #include <gtest/gtest_prod.h>
+
+
+
+
+        FRIEND_TEST(ManagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer);
+        FRIEND_TEST(ManagedTLSFTests, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(ManagedTLSFTests, MoveAssign_ClearsMovedTLSF);
+        FRIEND_TEST(ManagedTLSFTests, MoveAssign_MovesBufferIntoNewObject);
+        FRIEND_TEST(ManagedTLSFTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF);
+        FRIEND_TEST(ManagedTLSFTests, MoveAssign_DeletingOriginalTLSFDoNotDeleteTheNewTLSFsMemory);
+        FRIEND_TEST(ManagedTLSFTests, AllocBytes_MovesPrevOffset);
+        FRIEND_TEST(ManagedTLSFTests, Alloc_MovesPrevOffset);
+        FRIEND_TEST(ManagedTLSFTests, AllocBytes_UpdatesTelemetryPadding);
+        FRIEND_TEST(ManagedTLSFTests, Alloc_UpdatesTelemetryPadding);
+        FRIEND_TEST(ManagedTLSFTests, AllocV_UpdatesTelemetryPadding);
+        FRIEND_TEST(ManagedTLSFTests, Resize_LatestAllocationResizeBuffer);
+        FRIEND_TEST(ManagedTLSFTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
+        FRIEND_TEST(ManagedTLSFTests, Clear_ResetsOffsetToZero);
+        FRIEND_TEST(ManagedTLSFTests, ZeroOut_ZeroesOutTheInternalBuffer);
+
+        FRIEND_TEST(UnmanagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer);
+        FRIEND_TEST(UnmanagedTLSFTests, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(UnmanagedTLSFTests, MoveAssign_ClearsMovedTLSF);
+        FRIEND_TEST(UnmanagedTLSFTests, MoveAssign_MovesBufferIntoNewObject);
+        FRIEND_TEST(UnmanagedTLSFTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF);
+        FRIEND_TEST(UnmanagedTLSFTests, MoveAssign_DeletingOriginalTLSFDoNotDeleteTheNewTLSFsMemory);
+        FRIEND_TEST(UnmanagedTLSFTests, AllocBytes_MovesPrevOffset);
+        FRIEND_TEST(UnmanagedTLSFTests, Alloc_MovesPrevOffset);
+        FRIEND_TEST(UnmanagedTLSFTests, AllocBytes_UpdatesTelemetryPadding);
+        FRIEND_TEST(UnmanagedTLSFTests, Alloc_UpdatesTelemetryPadding);
+        FRIEND_TEST(UnmanagedTLSFTests, AllocV_UpdatesTelemetryPadding);
+        FRIEND_TEST(UnmanagedTLSFTests, Resize_LatestAllocationResizeBuffer);
+        FRIEND_TEST(UnmanagedTLSFTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
+        FRIEND_TEST(UnmanagedTLSFTests, Clear_ResetsOffsetToZero);
+#endif
     };
+
 
 } // namespace pmm
 

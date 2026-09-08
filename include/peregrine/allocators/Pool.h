@@ -77,14 +77,14 @@ namespace pmm
 
         /**
          * @brief Copying is strictly prohibited to prevent double-free crashes.
-         * @note Use std::move() to transfer ownership of the stack.
+         * @note Use std::move() to transfer ownership of the pool.
          */
         constexpr Pool(const Pool&) = delete;
 
 
         /**
          * @brief Copying is strictly prohibited to prevent double-free crashes.
-         * @note Use std::move() to transfer ownership of the stack.
+         * @note Use std::move() to transfer ownership of the pool.
          */
         constexpr Pool& operator=(const Pool&) = delete;
 
@@ -209,7 +209,7 @@ namespace pmm
          *
          * @note For clearing the Stack, use @ref clear, or to move free individual frames use @ref free.
          *
-         * @warning Will not clear free the backing buffer since its managed by the user.
+         * @warning Will not free the backing buffer since it is managed by the user.
          *
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
          */

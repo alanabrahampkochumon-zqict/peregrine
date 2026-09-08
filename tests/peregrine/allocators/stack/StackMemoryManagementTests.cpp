@@ -24,7 +24,7 @@ namespace
     {
         /** @test Verify that unmanaged stack does not free memory.
          *  @note Since we cant really confirm confirm if a buffer is freed and we only delete[] buffer in the dtor of
-         * Stack, we can check if its trivially destructible to ensure memory is freed in the stack in unmanaged mode
+         * Stack, we can check if it is trivially destructible to ensure memory is freed in the stack in unmanaged mode
          *        and opposite otherwise.
          */
         static_assert(std::is_trivially_destructible_v<pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory>> == true);

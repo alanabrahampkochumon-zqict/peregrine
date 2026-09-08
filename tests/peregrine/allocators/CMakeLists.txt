@@ -21,6 +21,8 @@ target_sources(
         pool/SafePoolTests.cpp
 
         tlsf/HeaderTests.cpp
+        tlsf/ManagedTLSFTests.cpp
+        tlsf/UnmanagedTLSFTests.cpp
 
         TempArenaTests.cpp
 )
