@@ -65,10 +65,17 @@ namespace pmm
 
 
             /// Return whether the current block is free.
-            [[nodiscard]] PMM_INLINE constexpr bool isFree() const noexcept { return (sizeWithFlags & MASK_FREE) == 0; }
+            [[nodiscard]] PMM_INLINE constexpr bool isFree() const noexcept
+            {
+                // Block is free if the LSB is set to 1.
+                return (sizeWithFlags & MASK_FREE) == MASK_FREE;
+            }
             /// Return whether the previous block is free.
             [[nodiscard]] PMM_INLINE constexpr bool isPrevFree() const noexcept
-            { return (sizeWithFlags & MASK_PREV_FREE) == 0; }
+            {
+                // Previous block is free if bit before LSB is 1
+                return (sizeWithFlags & MASK_PREV_FREE) == MASK_PREV_FREE;
+            }
             /// Return the true size of the block.
             [[nodiscard]] PMM_INLINE constexpr size_t getSize() const noexcept { return sizeWithFlags & MASK_SIZE; }
 
@@ -94,7 +101,7 @@ namespace pmm
             /// Mark the block previous as free.
             /// @note This doesn't manipulate the previous memory address, but only updates
             ///       internal state of current block.
-            PMM_INLINE constexpr void markPreviousFree() noexcept
+            PMM_INLINE constexpr void markPrevFree() noexcept
             {
                 // We can't directly manipulate the free bits so we need to mask that bit and update it to
                 // 1 such that 0bxxxx...xxxx0x | 0b0000...000010 -> 0bxxxx...xxxx1x
@@ -104,7 +111,7 @@ namespace pmm
             /// Mark the block as used.
             /// @note This doesn't manipulate the previous memory address, but only updates
             ///       internal state of current block.
-            PMM_INLINE constexpr void markPreviousUsed() noexcept
+            PMM_INLINE constexpr void markPrevUsed() noexcept
             {
                 // We can't directly manipulate the free bits so we need to mask that bit and update it to
                 // 1 such that 0bxxxx...xxxx1x & 0b1111...111101 -> 0bxxxx...xxxx0x
