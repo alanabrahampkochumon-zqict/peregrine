@@ -11,5 +11,7 @@ set(AllocatorHeaders
         TempArena.tpp
         Pool.h
         Pool.tpp
+        TLSF.h
+        TLSF.tpp
 )
 list(TRANSFORM AllocatorHeaders PREPEND ${AllocatorDir})

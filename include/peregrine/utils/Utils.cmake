@@ -6,6 +6,7 @@ set(UtilHeaders
         Preprocessors.h
         Helpers.h
         Helpers.tpp
+        Bit.h
 )
 
 list(TRANSFORM UtilHeaders PREPEND ${UtilsDir})

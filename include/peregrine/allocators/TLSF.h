@@ -12,6 +12,7 @@
  */
 
 
+#include "../utils/Bit.h"
 #include "Policy.h"
 #include "peregrine/utils/Preprocessors.h"
 
@@ -239,23 +240,19 @@ namespace pmm
         };
 
 
-        constexpr Bitmask_t findFL(const size_t blockSize) const noexcept
-        {
-            // floor(log_2(x)) which is the first one in the set
-            // i.ie for 13(1011) -> 4
-            // + 1 is required since countr_zero is zero indexed
-            std::countr_zero(blockSize) + 1;
-        }
 
+// TODO: Add tests
         constexpr BitmapIndices mappingInsert(const size_t blockSize) const noexcept
         {
             BitmapIndices indices;
             // TODO: One question what if look into the SL map with fl index and if the map is zero then
             // return the next free index? Test after implementation since that will prevent a
             // branching in allocBytes.
-            indices.flIndex = findFL(blockSize);
+            // The flIndex can be found using floor(log_2(blockSize)) and fls(First Last Set)
+            // can be used to get the value using bit manipulation.
+            indices.flIndex = utils::fls(blockSize);
             // sl := (r right_shift (fl-L)) - 2^L
-            indices.slIndex = blockSize >> (indices.flIndex - LSB_OFFSET) - (2 << LSB_OFFSET);
+            indices.slIndex = (blockSize >> (indices.flIndex - LSB_OFFSET)) - (2 << LSB_OFFSET);
 
             return indices;
         }

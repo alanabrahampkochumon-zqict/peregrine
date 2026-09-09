@@ -1,8 +1,6 @@
 include(peregrine/Peregrine.cmake)
 
-add_library(Peregrine STATIC ${HeaderFiles}
-        peregrine/allocators/TLSF.h
-        peregrine/allocators/TLSF.tpp)
+add_library(Peregrine STATIC ${HeaderFiles})
 
 set_target_properties(Peregrine PROPERTIES LINKER_LANGUAGE CXX)
 target_compile_features(Peregrine PUBLIC cxx_std_20)

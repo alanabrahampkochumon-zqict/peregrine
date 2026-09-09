@@ -1,6 +1,9 @@
 add_library(
         UtilsTests OBJECT
+        BitTests.cpp
 )
+
+target_compile_features(UtilsTests PUBLIC cxx_std_20)
 
 target_sources(
         UtilsTests PRIVATE
