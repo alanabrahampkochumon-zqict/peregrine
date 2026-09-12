@@ -127,7 +127,16 @@ namespace pmm
     PMM_INLINE constexpr typename TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::BitmapIndices TLSF<
         MemStrategy, TelPolicy, Safe, MTPolicy>::mappingSearch(size_t blockSize) noexcept
     {
-        // Round to the next block size
+        // When allocating a block, we typically round to the next nearest bucket,
+        // To make it work we need to add an offset of 2^(log_2(r) - L) - 1 which
+        // cause the division in mapping insert to rounded fl/sl to the next block.
+        // SL: [1024, 1040), [1040, 1056)...
+        // Since the blockSize is not perfectly aligned to the bounds, we will expect it to be
+        // rounded to 1040 or have an sl index of 1. So we increment the block size by the sl block width - 1
+        // blockSize + (2^(10-6)) - 1 = blockSize + 15 (which will make the values round to [1040,1056) sl-index
+        // if the value is not 1024(1025->1040, 1026->1041...)
+        // which when divided by block width 1041/16 yields 65 which when subtracted from our bucket size(2^6 or 64)
+        // gets us 1, which is the [1040, 1056) sl bucket.
         blockSize = blockSize + (1ULL << (utils::fls(blockSize) - L)) - 1;
         // Since after rounding its pretty much the same as mapping insert.
         return mappingInsert(blockSize);
