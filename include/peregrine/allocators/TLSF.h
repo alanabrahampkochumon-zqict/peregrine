@@ -38,12 +38,7 @@ namespace pmm
     class TLSF
     {
     public:
-        using Bitmask_t = uint64_t; /// Data type used for bitmasks
-        /// The offset used for LSB(Least Significant Bit) of FL.
-        /// Since we are using 64-bit integrals for SL, the difference between each
-        /// This is the L value in the TLSF paper.
-        static constexpr size_t LSB_OFFSET = 10;
-
+        /// TLSF Block Header
         struct Header
         {
             size_t sizeWithFlags; /// The size of the memory block with 2 LSB used for flags.
@@ -129,6 +124,19 @@ namespace pmm
                 FreeNode* next;
             };
         };
+
+        using Bitmask_t = uint64_t; /// Data type used for bitmasks
+        /// The offset used for LSB(Least Significant Bit) of FL.
+        /// Since we are using an offset of 64, which means that our initial SL indices start
+        /// at [64, 128) rather than [1, 2).
+        static constexpr size_t FL_OFFSET = 6;
+        /// 2^L gives the number of buckets, which in our case is 64 since we are using a uint64_t per
+        /// SL bucket.
+        static constexpr size_t L = 6;
+
+        static constexpr size_t FL_SIZE        = sizeof(Bitmask_t); // 64-bytes
+        static constexpr size_t SL_SIZE        = 1 << L;            // 2^L = 64 slots per FL
+        static constexpr size_t MIN_BLOCK_SIZE = 1ULL << FL_OFFSET; // 64-bytes
 
 
         /**
@@ -233,6 +241,7 @@ namespace pmm
         Bitmask_t _flBitmask;                                 /// First level bitmap
         std::array<Bitmask_t, sizeof(_flBitmask)> _slBitmask; /// Second Level Bitmaps
 
+        Header* freeList[FL_SIZE][SL_SIZE]; /// Free-list
         /// Structure used for exchanging bit mask indices internally.
         struct BitmapIndices
         {
@@ -240,22 +249,34 @@ namespace pmm
         };
 
 
-
-// TODO: Add tests
-        constexpr BitmapIndices mappingInsert(const size_t blockSize) const noexcept
+        static constexpr BitmapIndices mappingInsert(size_t blockSize) noexcept
         {
+            // The allocator always hands out memory in 64-byte boundary allocate chunk
+            // so the minimum chunk size we can insert is 64-byte so we always round up
+            // the blocksize to 64 bytes or greater, for indexing, but ideally
             BitmapIndices indices;
-            // TODO: One question what if look into the SL map with fl index and if the map is zero then
-            // return the next free index? Test after implementation since that will prevent a
-            // branching in allocBytes.
-            // The flIndex can be found using floor(log_2(blockSize)) and fls(First Last Set)
+            // TODO: Move rounding to safe mode only and introduce and assert for debug safety in
+            //       non-safe mode.
+            blockSize = std::max(MIN_BLOCK_SIZE, blockSize);
+            // The flIndex can be found using floor(log_2(size)) and fls(First Last Set)
             // can be used to get the value using bit manipulation.
-            indices.flIndex = utils::fls(blockSize);
+            const auto rawFL = utils::fls(blockSize);
+            // The flIndex that we want to use needs to be offset by our fl_offset.
+            indices.flIndex = rawFL > FL_OFFSET ? (rawFL - FL_OFFSET) : 0;
             // sl := (r right_shift (fl-L)) - 2^L
-            indices.slIndex = (blockSize >> (indices.flIndex - LSB_OFFSET)) - (2 << LSB_OFFSET);
-
+            indices.slIndex = (blockSize >> (rawFL - L)) - (1 << L);
             return indices;
         }
+
+        // TODO: Add test
+        static constexpr BitmapIndices mappingSearch(size_t blockSize) noexcept
+        {
+            // Round to the next block size
+            blockSize = blockSize + (1ULL << (utils::fls(blockSize) - L)) - 1;
+            // Since after rounding its pretty much the same as mapping insert.
+            return mappingInsert(blockSize);
+        }
+
 
 
 
@@ -282,6 +303,9 @@ namespace pmm
         FRIEND_TEST(ManagedTLSFTests, Clear_ResetsOffsetToZero);
         FRIEND_TEST(ManagedTLSFTests, ZeroOut_ZeroesOutTheInternalBuffer);
 
+        FRIEND_TEST(ManagedTLSF_MappingInsertTests, ReturnsValidFLAndSLIndices);
+        FRIEND_TEST(ManagedTLSF_MappingSearchTests, ReturnsValidFLAndSLIndices);
+
         FRIEND_TEST(UnmanagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer);
         FRIEND_TEST(UnmanagedTLSFTests, MoveCtor_MovesBufferIntoNewObject);
         FRIEND_TEST(UnmanagedTLSFTests, MoveAssign_ClearsMovedTLSF);
@@ -296,6 +320,8 @@ namespace pmm
         FRIEND_TEST(UnmanagedTLSFTests, Resize_LatestAllocationResizeBuffer);
         FRIEND_TEST(UnmanagedTLSFTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
         FRIEND_TEST(UnmanagedTLSFTests, Clear_ResetsOffsetToZero);
+
+        FRIEND_TEST(UnmanagedTLSF_MappingInsertTests, ReturnsValidFLAndSLIndices);
 #endif
     };
 

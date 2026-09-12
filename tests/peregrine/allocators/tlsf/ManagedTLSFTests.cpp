@@ -12,11 +12,12 @@
 #include "Utils.h"
 
 #include <array>
+#include <format>
 #include <gtest/gtest.h>
+#include <iostream>
 #include <peregrine/allocators/TLSF.h>
 #include <peregrine/utils/Constants.h>
 #include <utility>
-
 
 
 /**
@@ -42,6 +43,74 @@ namespace
     };
 
 
+    struct TLSFMappingInsertParams
+    {
+        size_t allocationSize, flIndex, slIndex;
+
+        friend std::ostream& operator<<(std::ostream& os, const TLSFMappingInsertParams& params)
+        {
+            os << std::format("Size: {}, Expected FL: {}, Expected SL: {}", params.allocationSize, params.flIndex,
+                              params.slIndex);
+            return os;
+        }
+    };
+
+
+    /// @brief Test fixture for TLSF mapping insert function.
+    class ManagedTLSF_MappingInsertTests: public testing::TestWithParam<TLSFMappingInsertParams>
+    {};
+
+    INSTANTIATE_TEST_SUITE_P(
+        TLSF_InternalMappingTests, ManagedTLSF_MappingInsertTests,
+        ::testing::Values(TLSFMappingInsertParams{ .allocationSize = 0, .flIndex = 0, .slIndex = 0 },
+                          // Values that are clamped to the minimum allocation size of 64 bytes(2^6)
+                          TLSFMappingInsertParams{ .allocationSize = 15, .flIndex = 0, .slIndex = 0 },
+                          TLSFMappingInsertParams{ .allocationSize = 64, .flIndex = 0, .slIndex = 0 },
+                          TLSFMappingInsertParams{ .allocationSize = 65, .flIndex = 0, .slIndex = 1 },
+                          TLSFMappingInsertParams{ .allocationSize = 66, .flIndex = 0, .slIndex = 2 },
+                          TLSFMappingInsertParams{ .allocationSize = 127, .flIndex = 0, .slIndex = 63 },
+                          TLSFMappingInsertParams{ .allocationSize = 128, .flIndex = 1, .slIndex = 0 },
+                          TLSFMappingInsertParams{ .allocationSize = 256, .flIndex = 2, .slIndex = 0 },
+                          TLSFMappingInsertParams{ .allocationSize = 512, .flIndex = 3, .slIndex = 0 },
+                          TLSFMappingInsertParams{ .allocationSize = 1024, .flIndex = 4, .slIndex = 0 },
+                          TLSFMappingInsertParams{ .allocationSize = 513, .flIndex = 3, .slIndex = 0 },
+                          TLSFMappingInsertParams{ .allocationSize = 520, .flIndex = 3, .slIndex = 1 },
+                          TLSFMappingInsertParams{ .allocationSize = 1000, .flIndex = 3, .slIndex = 61 },
+                          TLSFMappingInsertParams{ .allocationSize = 1_MB, .flIndex = 14, .slIndex = 0 },
+                          TLSFMappingInsertParams{ .allocationSize = 1_MB + 16_KB, .flIndex = 14, .slIndex = 1 },
+                          TLSFMappingInsertParams{ .allocationSize = 1_GB, .flIndex = 24, .slIndex = 0 }));
+
+
+    /// @brief Test fixture for TLSF mapping search function.
+    class ManagedTLSF_MappingSearchTests: public testing::TestWithParam<TLSFMappingInsertParams>
+    {};
+
+    INSTANTIATE_TEST_SUITE_P(TLSF_InternalMappingTests, ManagedTLSF_MappingSearchTests,
+                             ::testing::Values(
+                                 // Minimum value index (our LSB is considered to be 64 or 2^6)
+                                 // 0000 0001 -> <FL=0, SL=0>
+                                 TLSFMappingInsertParams{ .allocationSize = 64, .flIndex = 0, .slIndex = 0 },
+                                 // Values that are clamped to the minimum allocation size of 64 bytes(2^6)
+                                 // 0000 0100 -> <FL=2, SL=0>
+                                 TLSFMappingInsertParams{ .allocationSize = 256, .flIndex = 2, .slIndex = 0 },
+                                 // 0000 0101 -> <FL=2, SL=1>
+                                 TLSFMappingInsertParams{ .allocationSize = 257, .flIndex = 2, .slIndex = 1 },
+                                 // 0000 0111 Rounded to next block(0000 1000)-> <FL=3, SL=0>
+                                 TLSFMappingInsertParams{ .allocationSize = 511, .flIndex = 3, .slIndex = 0 },
+                                 TLSFMappingInsertParams{ .allocationSize = 66, .flIndex = 0, .slIndex = 2 },
+                                 // FL-4, SL-61 as the buckets are 61 [1000, 1008), 62 [1008, 1016), 63 [1016, 1024)
+                                 TLSFMappingInsertParams{ .allocationSize = 1000, .flIndex = 3, .slIndex = 61 },
+                                 TLSFMappingInsertParams{ .allocationSize = 1018, .flIndex = 4, .slIndex = 0 },
+                                 TLSFMappingInsertParams{ .allocationSize = 1024, .flIndex = 4, .slIndex = 0 },
+                                 TLSFMappingInsertParams{ .allocationSize = 1025, .flIndex = 4, .slIndex = 1 },
+                                 TLSFMappingInsertParams{ .allocationSize = 1_MB, .flIndex = 14, .slIndex = 0 },
+                                 // 1 MB nicely packs into the 14nth fl index
+                                 // And our sl index range at than size is 2^20(1MB) / 64(buckets) = 16KB(2^14)
+                                 // so it will fall into the [1MB_16KB, 1MB_32KB) bucket at index 1, due to rounding.
+                                 TLSFMappingInsertParams{ .allocationSize = 1_MB + 15_KB, .flIndex = 14, .slIndex = 1 },
+                                 TLSFMappingInsertParams{ .allocationSize = 1_MB + 16_KB, .flIndex = 14, .slIndex = 1 },
+                                 TLSFMappingInsertParams{ .allocationSize = 1_MB + 17_KB, .flIndex = 14, .slIndex = 2 },
+                                 TLSFMappingInsertParams{ .allocationSize = 1_GB, .flIndex = 24, .slIndex = 0 }));
 
     /**************************************
      *           STATIC TESTS             *
@@ -832,6 +901,24 @@ namespace pmm
         {
             EXPECT_EQ(i % 255, tlsf2._buffer[i]);
         }
+    }
+
+    TEST_P(ManagedTLSF_MappingInsertTests, ReturnsValidFLAndSLIndices)
+    {
+        const auto [size, expectedFl, expectedSl] = GetParam();
+        const auto [fl, sl]                       = TLSF<>::mappingInsert(size);
+        EXPECT_EQ(expectedFl, fl);
+        EXPECT_EQ(expectedSl, sl);
+    }
+
+
+
+    TEST_P(ManagedTLSF_MappingSearchTests, ReturnsValidFLAndSLIndices)
+    {
+        const auto [size, expectedFl, expectedSl] = GetParam();
+        const auto [fl, sl]                       = TLSF<>::mappingSearch(size);
+        EXPECT_EQ(expectedFl, fl);
+        EXPECT_EQ(expectedSl, sl);
     }
 
 
