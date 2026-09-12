@@ -249,33 +249,25 @@ namespace pmm
         };
 
 
-        static constexpr BitmapIndices mappingInsert(size_t blockSize) noexcept
-        {
-            // The allocator always hands out memory in 64-byte boundary allocate chunk
-            // so the minimum chunk size we can insert is 64-byte so we always round up
-            // the blocksize to 64 bytes or greater, for indexing, but ideally
-            BitmapIndices indices;
-            // TODO: Move rounding to safe mode only and introduce and assert for debug safety in
-            //       non-safe mode.
-            blockSize = std::max(MIN_BLOCK_SIZE, blockSize);
-            // The flIndex can be found using floor(log_2(size)) and fls(First Last Set)
-            // can be used to get the value using bit manipulation.
-            const auto rawFL = utils::fls(blockSize);
-            // The flIndex that we want to use needs to be offset by our fl_offset.
-            indices.flIndex = rawFL > FL_OFFSET ? (rawFL - FL_OFFSET) : 0;
-            // sl := (r right_shift (fl-L)) - 2^L
-            indices.slIndex = (blockSize >> (rawFL - L)) - (1 << L);
-            return indices;
-        }
+        static constexpr BitmapIndices mappingInsert(size_t blockSize) noexcept;
 
-        // TODO: Add test
-        static constexpr BitmapIndices mappingSearch(size_t blockSize) noexcept
-        {
-            // Round to the next block size
-            blockSize = blockSize + (1ULL << (utils::fls(blockSize) - L)) - 1;
-            // Since after rounding its pretty much the same as mapping insert.
-            return mappingInsert(blockSize);
-        }
+        /**
+         * @brief Get the FL and SL index for the given @p blockSize.
+         *
+         * @note The function rounds @p blockSize to the nearest sl-block range.
+         *
+         * @code
+         * // FL: 3 [512, 1024)  SL: [1000, 1008), [1008, 1016), [1016, 1024)
+         * // FL: 4 [1024, 2048) SL: [1024, 1040), [1040, 1056)...
+         * mappingSearch(1015); // {.fl = 3, .sl = 63} since the block is rounded to 1016.
+         * mappingSearch(1023); // {.fl = 4, .sl = 0} since the block is rounded to 1024.
+         * mappingSearch(1025); // {.fl = 4, .sl = 1} since the block is rounded to 1032.
+         * @endcode
+         *
+         * @param blockSize The block to search a match for.
+         * @return The FL, and SL index for the rounded block size.
+         */
+        static constexpr BitmapIndices mappingSearch(size_t blockSize) noexcept;
 
 
 

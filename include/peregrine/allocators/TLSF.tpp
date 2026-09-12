@@ -90,4 +90,47 @@ namespace pmm
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
     PMM_INLINE constexpr size_t TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::freeSize() const noexcept
     { return _size - _usedSize; }
+
+
+
+    /**************************************
+     *         INTERNAL HELPERS           *
+     **************************************/
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
+    PMM_INLINE constexpr typename TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::BitmapIndices TLSF<
+        MemStrategy, TelPolicy, Safe, MTPolicy>::mappingInsert(size_t blockSize) noexcept
+    {
+        // The allocator always hands out memory in 64-byte chunks.
+        // And the minimum chunk size we can insert into the freelist is 64-bytes
+        // so, we assert that minimal value with debug asserts in unsafe mode or
+        // round up it up to 64-bytes in safe mode.
+        BitmapIndices indices;
+        // TODO: Move rounding to safe mode only and introduce and assert for debug safety in
+        //       non-safe mode.
+        blockSize = std::max(MIN_BLOCK_SIZE, blockSize);
+        // The flIndex can be found using floor(log_2(size)) and fls(First Last Set)
+        // can be used to get the value using bit manipulation.
+        const auto rawFL = utils::fls(blockSize);
+        // The flIndex that we want to use needs to be offset by our FL_OFFSET.
+        // This ensures that flIndex starts at FL_OFFSET(6 in our case) since going below that doesn't make sense for
+        // SL-array boundary which is also 2^6 or 64 buckets (since gap between
+        // the next lowest SL index is only 32, 32-64).
+        indices.flIndex = rawFL > FL_OFFSET ? (rawFL - FL_OFFSET) : 0;
+        // sl := (r right_shift (fl-L)) - 2^L
+        indices.slIndex = (blockSize >> (rawFL - L)) - (1 << L);
+        return indices;
+    }
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
+    PMM_INLINE constexpr typename TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::BitmapIndices TLSF<
+        MemStrategy, TelPolicy, Safe, MTPolicy>::mappingSearch(size_t blockSize) noexcept
+    {
+        // Round to the next block size
+        blockSize = blockSize + (1ULL << (utils::fls(blockSize) - L)) - 1;
+        // Since after rounding its pretty much the same as mapping insert.
+        return mappingInsert(blockSize);
+    }
+
 } // namespace pmm
