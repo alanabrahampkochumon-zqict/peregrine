@@ -291,4 +291,40 @@ namespace pmm
         return static_cast<Header*>(static_cast<uint8_t*>(node) + sizeof(TLSFFreeNode));
     }
 
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
+    constexpr void* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mergePrevious(void* block) const noexcept
+    {
+        // prev_offset := sizeof(block) - padding(block) - sizeof(size_t)
+        // [[Header][...][size_t]] + [[padding][Header][....]] =COALESCED=> [[Header][....]]
+        // ^             ^                     ^
+        // |             |                     |
+        // start       offset                block
+        const Header* header = static_cast<Header*>(block);
+        size_t totalSize     = header->getSize() + header->padding;
+        if (header->isPrevFree())
+        {
+            // Get the previous block's size from it's footer.
+            const size_t* prevBlockSize = static_cast<size_t*>(block - (header->padding + sizeof(size_t)));
+            totalSize += *prevBlockSize;
+
+            // Get the start of previous header.
+            // Assumption: Since the block is already freed, the padding has been removed.
+            // Note: This can be written as a single line(startAddress and newHeader) but left as two for clarity.
+            uint8_t* startAddress = static_cast<uint8_t*>(block) - totalSize;
+
+            // Write the new header and return the start address
+            Header* newHeader = static_cast<Header*>(startAddress);
+            newHeader->setSize(totalSize);
+            newHeader->markFree();
+
+            return startAddress;
+        }
+        else
+        {
+            return block;
+        }
+    }
+
 } // namespace pmm

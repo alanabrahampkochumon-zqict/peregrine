@@ -323,6 +323,19 @@ namespace pmm
         static constexpr Header* getHeader(TLSFFreeNode* node) noexcept;
 
 
+        /**
+         * @brief Merge this block with previous block if it's free.
+         *
+         * @note The function expects the header to be placed at the start of @p block.
+         *
+         * @param block The block to join with the previous block.
+         *
+         * @return The starting address of the previous block if it's free.
+         * @return The given @p block address, otherwise.
+         */
+        constexpr void* mergePrevious(void* block) const noexcept;
+
+
 
 #ifdef ENABLE_PMM_TESTS
     // FRIEND TEST macros for verifying internal states
