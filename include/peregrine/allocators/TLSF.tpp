@@ -11,6 +11,7 @@
 
 #include "../memory/Memory.h"
 
+#include <format>
 
 namespace pmm
 {
@@ -18,7 +19,7 @@ namespace pmm
     PMM_INLINE constexpr TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::TLSF(uint8_t* buffer,
                                                                             const size_t memorySize) noexcept
         requires std::same_as<MemStrategy, UnmanagedMemory>
-        : _buffer{ buffer }, _size{ memorySize }, _usedSize{ 0 }, _flBitmask{ 0 }, _slBitmask{}
+        : _buffer{ buffer }, _size{ memorySize }, _usedSize{ 0 }, _flBitmask{ 0 }, _slBitmap{}
     {}
 
 
@@ -29,7 +30,7 @@ namespace pmm
           _size{ allocatorSize },
           _usedSize{ 0 },
           _flBitmask{ 0 },
-          _slBitmask{}
+          _slBitmap{}
     {}
 
 
@@ -39,7 +40,7 @@ namespace pmm
           _size{ tlsf._size },
           _usedSize{ tlsf._usedSize },
           _flBitmask{ tlsf._flBitmask }
-    { std::move(tlsf._slBitmask.begin(), tlsf._slBitmask.end(), _slBitmask.begin()); }
+    { std::move(tlsf._slBitmap.begin(), tlsf._slBitmap.end(), _slBitmap.begin()); }
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
@@ -62,7 +63,7 @@ namespace pmm
         _size      = tlsf._size;
         _usedSize  = tlsf._usedSize;
         _flBitmask = tlsf._flBitmask;
-        std::move(tlsf._slBitmask.begin(), tlsf._slBitmask.end(), _slBitmask.begin());
+        std::move(tlsf._slBitmap.begin(), tlsf._slBitmap.end(), _slBitmap.begin());
 
         return *this;
     }
@@ -140,6 +141,54 @@ namespace pmm
         blockSize = blockSize + (1ULL << (utils::fls(blockSize) - L)) - 1;
         // Since after rounding its pretty much the same as mapping insert.
         return mappingInsert(blockSize);
+    }
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
+    PMM_INLINE constexpr uint8_t* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::searchSuitableBlock(
+        const BitmapIndices index) const noexcept
+    {
+        // For finding the suitable block we first get the SL-bitmask for the given fl index and
+        // mask out all the values that are less than our sl index.
+        // Eg: _slBitmask[indices.flIndex] = 0010 1100, SL = 1, then
+        //     bitTemp = 0010 1100 & 1111 1111 << 1
+        //             = 0010 1100 & 1111 1110
+        //             = 0010 1100
+        // Then, we use ffs(bitTemp) to get the non-empty SL, ie 2 in our case.
+        // But if our SL index returns a zero, we mask out of flBitmap and get the ffs of that.
+        // Eg: _flIndex = 0010 1100, and our FL = 1, then bitmapTemp will return 0
+        // so we take 0010 1100 & 1111 1111 << 2(FL + 1, since our slBitmap at FL is empty)
+        //          = 0010 1100 & 1111 1100
+        //          = 0010 1100
+        //    newFL = ffs(00101100) which returns 2.
+        // and taking the ffs(_slBitmap[newFL]), gives the correct sl index since block are arranged in order.
+        // TODO: Update to branchless variant(exploiting ?: which compiles down to cmovcc)
+        //       after adding allocation and tests
+        PMM_ASSERT_MSG(
+            index.flIndex < FL_SIZE && index.slIndex < SL_SIZE,
+            std::format("FL and/or SL indices out-of-range. FL: {} and SL: {}.", index.flIndex, index.slIndex));
+        auto bitmapTemp = _slBitmap[index.flIndex] & (~0ULL << index.slIndex);
+        size_t nonEmptyFL, nonEmptySL;
+        if (bitmapTemp == 0)
+        {
+            nonEmptyFL = index.flIndex;
+            nonEmptySL = utils::ffs(bitmapTemp);
+        }
+        else
+        {
+            bitmapTemp = index.flIndex & (~0ULL << (index.flIndex + 1));
+            nonEmptyFL = utils::ffs(bitmapTemp);
+            nonEmptySL = utils::ffs(bitmapTemp);
+        }
+        // Out of range FL and SL index indicate that there is no memory left with
+        // that satisfies the FL and SL requirements.
+        PMM_ASSERT_MSG(
+            nonEmptyFL < FL_SIZE && nonEmptySL < SL_SIZE,
+            std::format(
+                "FL and/or SL indices out-of-range.\nProvided\n\tFL: {} and SL: {}.\nDeduced\n\tFL: {} and SL: {}.\n",
+                index.flIndex, index.slIndex, nonEmptyFL, nonEmptySL));
+
+        return freeList[nonEmptyFL][nonEmptySL];
     }
 
 } // namespace pmm

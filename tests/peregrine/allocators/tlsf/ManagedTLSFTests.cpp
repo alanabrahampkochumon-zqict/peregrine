@@ -810,14 +810,14 @@ namespace pmm
         const auto initialUsedSize = tlsf._usedSize;
         const auto initialSize     = tlsf._size;
         const auto initialFLMask   = tlsf._flBitmask;
-        const auto initialSLMask   = tlsf._slBitmask;
+        const auto initialSLMask   = tlsf._slBitmap;
 
         const TLSF<pmm::ManagedMemory> tlsf2 = std::move(tlsf);
         EXPECT_EQ(initialPointer, tlsf2._buffer);
         EXPECT_EQ(initialUsedSize, tlsf2._usedSize);
         EXPECT_EQ(initialSize, tlsf2._size);
         EXPECT_EQ(initialFLMask, tlsf2._flBitmask);
-        EXPECT_EQ(initialSLMask, tlsf2._slBitmask);
+        EXPECT_EQ(initialSLMask, tlsf2._slBitmap);
     }
 
 
@@ -836,7 +836,7 @@ namespace pmm
         const auto initialUsedSize = tlsf._usedSize;
         const auto initialSize     = tlsf._size;
         const auto initialFLMask   = tlsf._flBitmask;
-        const auto initialSLMask   = tlsf._slBitmask;
+        const auto initialSLMask   = tlsf._slBitmap;
         TLSF<pmm::ManagedMemory> tlsf2(256);
 
         tlsf2 = std::move(tlsf);
@@ -846,7 +846,7 @@ namespace pmm
         EXPECT_EQ(initialUsedSize, tlsf2._usedSize);
         EXPECT_EQ(initialSize, tlsf2._size);
         EXPECT_EQ(initialFLMask, tlsf2._flBitmask);
-        EXPECT_EQ(initialSLMask, tlsf2._slBitmask);
+        EXPECT_EQ(initialSLMask, tlsf2._slBitmap);
     }
 
 
@@ -854,7 +854,7 @@ namespace pmm
     {
         const auto initialAddress = reinterpret_cast<uintptr_t>(tlsf._buffer);
         const auto initialFLMask  = tlsf._flBitmask;
-        const auto initialSLMask  = tlsf._slBitmask;
+        const auto initialSLMask  = tlsf._slBitmap;
 #ifdef __clang__
     #pragma clang diagnostic push
     #pragma clang diagnostic ignored "-Wself-move"
@@ -873,7 +873,7 @@ namespace pmm
 
         EXPECT_EQ(initialAddress, reinterpret_cast<uintptr_t>(tlsf._buffer));
         EXPECT_EQ(initialFLMask, tlsf._flBitmask);
-        EXPECT_EQ(initialSLMask, tlsf._slBitmask);
+        EXPECT_EQ(initialSLMask, tlsf._slBitmap);
     }
 
 

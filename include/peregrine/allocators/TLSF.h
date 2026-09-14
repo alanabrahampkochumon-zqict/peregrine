@@ -238,8 +238,8 @@ namespace pmm
     private:
         uint8_t* _buffer;
         size_t _size, _usedSize;
-        Bitmask_t _flBitmask;                                 /// First level bitmap
-        std::array<Bitmask_t, sizeof(_flBitmask)> _slBitmask; /// Second Level Bitmaps
+        Bitmask_t _flBitmask;                     /// First level bitmap
+        std::array<Bitmask_t, FL_SIZE> _slBitmap; /// Second Level Bitmaps
 
         Header* freeList[FL_SIZE][SL_SIZE]; /// Free-list
         /// Structure used for exchanging bit mask indices internally.
@@ -249,17 +249,22 @@ namespace pmm
         };
 
 
-        static constexpr BitmapIndices mappingInsert(size_t blockSize) noexcept;
-
         /**
          * @brief Get the FL and SL index for the given @p blockSize.
          *
-         * @note The function rounds @p blockSize to the nearest sl-block range.
+         * @param blockSize The block to search a match for.
+         * @return The FL, and SL index for the rounded block size.
+         */
+        static constexpr BitmapIndices mappingInsert(size_t blockSize) noexcept;
+
+
+        /**
+         * @brief Get the FL and SL index for the given @p blockSize, rounded to the nearest sl-block range.
          *
          * @code
          * // FL: 3 [512, 1024)  SL: [1000, 1008), [1008, 1016), [1016, 1024)
          * // FL: 4 [1024, 2048) SL: [1024, 1040), [1040, 1056)...
-         * mappingSearch(1015); // {.fl = 3, .sl = 63} since the block is rounded to 1016.
+         * mappingSearch(1015); // {.fl = 3, .sl = 62} since the block is rounded to 1016.
          * mappingSearch(1023); // {.fl = 4, .sl = 0} since the block is rounded to 1024.
          * mappingSearch(1025); // {.fl = 4, .sl = 1} since the block is rounded to 1032.
          * @endcode
@@ -268,6 +273,20 @@ namespace pmm
          * @return The FL, and SL index for the rounded block size.
          */
         static constexpr BitmapIndices mappingSearch(size_t blockSize) noexcept;
+
+
+        /**
+         * @brief Get a pointer to the free block at @p index.
+         *
+         * @param index The FL and SL index for searching the block.
+         *
+         * @note The validity of indices must be checked from outside.
+         * @note Index validity is checked only in Debug Mode.
+         *
+         * @return A pointer to the block at the given index, or the pointer to the adjacent block
+         *         if the provided indices doesn't contain a free block.
+         */
+        constexpr uint8_t* searchSuitableBlock(BitmapIndices index) const noexcept;
 
 
 
