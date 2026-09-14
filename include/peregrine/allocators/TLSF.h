@@ -234,6 +234,15 @@ namespace pmm
         /// Get the amount of free memory in bytes.
         constexpr size_t freeSize() const noexcept;
 
+        /**
+         * @brief Allocate a block of memory.
+         *
+         * @param size The size of memory to allocate.
+         * @param size The alignment of the memory block.
+         *             Default: 8-bytes (sizeof(void*) on a 64-bit machine).
+         */
+        constexpr void malloc(size_t size, size_t alignment) noexcept;
+
 
     private:
         uint8_t* _buffer;
@@ -241,7 +250,8 @@ namespace pmm
         Bitmask_t _flBitmask;                     /// First level bitmap
         std::array<Bitmask_t, FL_SIZE> _slBitmap; /// Second Level Bitmaps
 
-        Header* freeList[FL_SIZE][SL_SIZE]; /// Free-list
+        TLSFFreeNode* freeList[FL_SIZE][SL_SIZE]; /// Free-list
+
         /// Structure used for exchanging bit mask indices internally.
         struct BitmapIndices
         {
@@ -290,8 +300,17 @@ namespace pmm
          * @param block     The memory block to insert.
          * @param blockSize The size of the block.
          */
-        constexpr void insertBlock(uint8_t* block, size_t blockSize) const noexcept;
+        constexpr void insertBlock(uint8_t* block, size_t blockSize) noexcept;
 
+
+        /**
+         * @brief Get the header from a freenode.
+         *
+         * @param node The node whose free node is to be found.
+         *
+         * @return A pointer to header.
+         */
+        static constexpr Header* getHeader(TLSFFreeNode* node) noexcept;
 
 
 

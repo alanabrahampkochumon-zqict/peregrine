@@ -93,6 +93,17 @@ namespace pmm
     { return _size - _usedSize; }
 
 
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
+    PMM_INLINE constexpr void TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::malloc(const size_t size,
+                                                                                   const size_t alignment) noexcept
+    {
+        // For allocating memory we need to find the fl and sl indices.
+        auto index = mappingSearch(size);
+
+        auto freeBlock = searchSuitableBlock(index);
+    }
+
+
 
     /**************************************
      *         INTERNAL HELPERS           *
@@ -190,33 +201,41 @@ namespace pmm
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr void TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::insertBlock(
-        uint8_t* block, const size_t blockSize) const noexcept
+    PMM_INLINE constexpr void TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::insertBlock(uint8_t* block,
+                                                                                        const size_t blockSize) noexcept
     {
         /// Since the function is internal this check is necessary but kept for safety.
         PMM_ASSERT_MSG(block != nullptr && blockSize > 0, "Cannot insert a zero sized or nullptr block.");
 
-        // Get the fl and sl index
+        // Get the FL and SL index
         auto index = mappingInsert(blockSize);
 
-        // Insert both the header(which contains only the size and flags)
-        // and the freeNode.
-        Header* header = static_cast<Header*>(block);
-        header->setSize(blockSize);
-        header->markFree();
-
-        // FreeList = [[Header][FreeNode][....] <=> [Header][FreeNode][....]]
+        // Insert the freenode
+        // FreeList = [[FreeNode][Header][....] <=> [FreeNode][Header][....]]
         // [FL][SL] = nullptr(START) <- existingNode* -> nullptr(END)
         //            nullptr(START) <- freeNode* <=> existingNode* -> nullptr(END)
-        TLSFFreeNode* freeNode = static_cast<TLSFFreeNode*>(block + sizeof(Header));
-        TLSFFreeNode* existingNode =
-            static_cast<TLSFFreeNode*>(freeList[index.flIndex][index.slIndex] + sizeof(Header));
-        freeNode->next = existingNode;
+        TLSFFreeNode* freeNode     = static_cast<TLSFFreeNode*>(block);
+        TLSFFreeNode* existingNode = freeList[index.flIndex][index.slIndex];
+        freeNode->next             = existingNode;
         if (existingNode != nullptr)
         {
             existingNode->prev = freeNode;
         }
-        freeList[index.flIndex][index.slIndex] = header; // We must insert the starting address (not the freelist)
+        freeList[index.flIndex][index.slIndex] = freeNode;
+
+        // Update the Header of the free node
+        Header* header = getHeader(freeNode);
+        header->setSize(blockSize);
+        header->markFree();
+    }
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
+    PMM_INLINE constexpr typename TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::Header* TLSF<
+        MemStrategy, TelPolicy, Safe, MTPolicy>::getHeader(TLSFFreeNode* node) noexcept
+    {
+        // Note: Header is placed above the free node.
+        return static_cast<Header*>(static_cast<uint8_t*>(node) + sizeof(TLSFFreeNode));
     }
 
 } // namespace pmm
