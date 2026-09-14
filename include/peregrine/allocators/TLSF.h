@@ -42,6 +42,7 @@ namespace pmm
         struct Header
         {
             size_t sizeWithFlags; /// The size of the memory block with 2 LSB used for flags.
+            size_t padding;       /// Padding requirements. Unused when the block is free.
 
             /// Mask for manipulating the free bit.
             static constexpr size_t MASK_FREE = 0b01;
@@ -134,9 +135,9 @@ namespace pmm
         /// SL bucket.
         static constexpr size_t L = 6;
 
-        static constexpr size_t FL_SIZE        = sizeof(Bitmask_t); // 64-bytes
-        static constexpr size_t SL_SIZE        = 1 << L;            // 2^L = 64 slots per FL
-        static constexpr size_t MIN_BLOCK_SIZE = 1ULL << FL_OFFSET; // 64-bytes
+        static constexpr size_t FL_SIZE              = sizeof(Bitmask_t); // 64-bytes
+        static constexpr size_t SL_SIZE              = 1 << L;            // 2^L = 64 slots per FL
+        static constexpr size_t SPLIT_SIZE_THRESHOLD = 1ULL << FL_OFFSET; // 64-bytes
 
 
         /**
@@ -241,7 +242,7 @@ namespace pmm
          * @param size The alignment of the memory block.
          *             Default: 8-bytes (sizeof(void*) on a 64-bit machine).
          */
-        constexpr void malloc(size_t size, size_t alignment) noexcept;
+        constexpr void* malloc(size_t size, size_t alignment) noexcept;
 
 
     private:
@@ -290,10 +291,10 @@ namespace pmm
          *
          * @param index The FL and SL index for searching the block.
          *
-         * @return A pointer to the block at the given index, or the pointer to the adjacent block
+         * @return A FreeNode pointer to the block at the given index, or to the adjacent block
          *         if the provided indices doesn't contain a free block.
          */
-        constexpr uint8_t* searchSuitableBlock(BitmapIndices index) const noexcept;
+        constexpr TLSFFreeNode* searchSuitableBlock(BitmapIndices index) const noexcept;
 
         /**
          * @brief Insert @p block into the freelist.

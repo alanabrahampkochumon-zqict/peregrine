@@ -94,13 +94,41 @@ namespace pmm
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr void TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::malloc(const size_t size,
-                                                                                   const size_t alignment) noexcept
+    PMM_INLINE constexpr void* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::malloc(const size_t size,
+                                                                                    const size_t alignment) noexcept
     {
-        // For allocating memory we need to find the fl and sl indices.
-        auto index = mappingSearch(size);
+        // We need to allocate space for the header as well as assume the worst case alignment of alignment - 1
+        const auto requiredSize = sizeof(Header) + alignment + size;
 
+        // For allocating memory we need to find the fl and sl indices.
+        auto index     = mappingSearch(requiredSize);
         auto freeBlock = searchSuitableBlock(index);
+
+        // searchSuitable block doesn't return a nullptr by default on in safe mode
+        // so we can skip the nullptr check and assume a valid block is returned. TODO(SAFEMODE)
+        Header* freeBlockHeader = getHeader(freeBlock);
+        const auto freeSize     = freeBlockHeader->getSize();
+        // Remove and insert the appropriate header for and add calculate padding for the block.
+        const auto padding = static_cast<uintptr_t>(freeBlock) & (alignment - 1);
+        // [padding][header][*ptr returned to user]
+        Header* header = static_cast<Header*>(freeBlock);
+        header->markUsed();
+        header->setSize(requiredSize);
+        header->padding = padding;
+
+        // Since we know real padding right now we can use it.
+        const auto usedSize = size + sizeof(Header) + padding;
+
+        // If there is more free space than split threshold, split and store that memory
+        if (const auto sizeLeft = freeSize - usedSize; sizeLeft >= SPLIT_SIZE_THRESHOLD)
+        {
+            auto remainingBlock = static_cast<uint8_t*>(freeBlock) + usedSize;
+            insertBlock(remainingBlock, sizeLeft);
+        }
+
+        const auto memoryStart = static_cast<uint8_t*>(freeBlock) + padding + sizeof(Header);
+        
+        return memoryStart;
     }
 
 
@@ -120,7 +148,7 @@ namespace pmm
         BitmapIndices indices;
         // TODO: Move rounding to safe mode only and introduce and assert for debug safety in
         //       non-safe mode.
-        blockSize = std::max(MIN_BLOCK_SIZE, blockSize);
+        blockSize = std::max(SPLIT_SIZE_THRESHOLD, blockSize);
         // The flIndex can be found using floor(log_2(size)) and fls(First Last Set)
         // can be used to get the value using bit manipulation.
         const auto rawFL = utils::fls(blockSize);
@@ -156,8 +184,8 @@ namespace pmm
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr uint8_t* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::searchSuitableBlock(
-        const BitmapIndices index) const noexcept
+    PMM_INLINE constexpr typename TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::TLSFFreeNode* TLSF<
+        MemStrategy, TelPolicy, Safe, MTPolicy>::searchSuitableBlock(const BitmapIndices index) const noexcept
     {
         // For finding the suitable block we first get the SL-bitmask for the given fl index and
         // mask out all the values that are less than our sl index.
