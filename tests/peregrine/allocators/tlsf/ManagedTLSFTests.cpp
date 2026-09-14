@@ -809,14 +809,14 @@ namespace pmm
         const auto initialPointer  = tlsf._buffer;
         const auto initialUsedSize = tlsf._usedSize;
         const auto initialSize     = tlsf._size;
-        const auto initialFLMask   = tlsf._flBitmask;
+        const auto initialFLMask   = tlsf._flBitmap;
         const auto initialSLMask   = tlsf._slBitmap;
 
         const TLSF<pmm::ManagedMemory> tlsf2 = std::move(tlsf);
         EXPECT_EQ(initialPointer, tlsf2._buffer);
         EXPECT_EQ(initialUsedSize, tlsf2._usedSize);
         EXPECT_EQ(initialSize, tlsf2._size);
-        EXPECT_EQ(initialFLMask, tlsf2._flBitmask);
+        EXPECT_EQ(initialFLMask, tlsf2._flBitmap);
         EXPECT_EQ(initialSLMask, tlsf2._slBitmap);
     }
 
@@ -835,7 +835,7 @@ namespace pmm
         const auto initialPointer  = tlsf._buffer;
         const auto initialUsedSize = tlsf._usedSize;
         const auto initialSize     = tlsf._size;
-        const auto initialFLMask   = tlsf._flBitmask;
+        const auto initialFLMask   = tlsf._flBitmap;
         const auto initialSLMask   = tlsf._slBitmap;
         TLSF<pmm::ManagedMemory> tlsf2(256);
 
@@ -845,7 +845,7 @@ namespace pmm
         EXPECT_EQ(initialPointer, tlsf2._buffer);
         EXPECT_EQ(initialUsedSize, tlsf2._usedSize);
         EXPECT_EQ(initialSize, tlsf2._size);
-        EXPECT_EQ(initialFLMask, tlsf2._flBitmask);
+        EXPECT_EQ(initialFLMask, tlsf2._flBitmap);
         EXPECT_EQ(initialSLMask, tlsf2._slBitmap);
     }
 
@@ -853,7 +853,7 @@ namespace pmm
     TEST_F(ManagedTLSFTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF)
     {
         const auto initialAddress = reinterpret_cast<uintptr_t>(tlsf._buffer);
-        const auto initialFLMask  = tlsf._flBitmask;
+        const auto initialFLMask  = tlsf._flBitmap;
         const auto initialSLMask  = tlsf._slBitmap;
 #ifdef __clang__
     #pragma clang diagnostic push
@@ -872,7 +872,7 @@ namespace pmm
 #endif
 
         EXPECT_EQ(initialAddress, reinterpret_cast<uintptr_t>(tlsf._buffer));
-        EXPECT_EQ(initialFLMask, tlsf._flBitmask);
+        EXPECT_EQ(initialFLMask, tlsf._flBitmap);
         EXPECT_EQ(initialSLMask, tlsf._slBitmap);
     }
 

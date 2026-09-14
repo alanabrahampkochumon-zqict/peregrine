@@ -143,8 +143,8 @@ namespace pmm
         /**
          * @brief Create a TLSF allocator with user managed memory.
          *
-         * @param buffer     The buffer to use for allocations.
-         * @param memorySize The size of the buffer, which will also acts as the allocator's size.
+         * @param[in] buffer     The buffer to use for allocations.
+         * @param[in] memorySize The size of the buffer, which will also acts as the allocator's size.
          *
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
          */
@@ -155,7 +155,7 @@ namespace pmm
         /**
          * @brief Create a TLSF allocator with internally managed memory.
          *
-         * @param allocatorSize The size of the allocator's size.
+         * @param[in] allocatorSize The size of the allocator's size.
          *                      Will not be the true usable size due internal paddings
          *                      for headers and alignment.
          *
@@ -238,17 +238,24 @@ namespace pmm
         /**
          * @brief Allocate a block of memory.
          *
-         * @param size The size of memory to allocate.
-         * @param size The alignment of the memory block.
-         *             Default: 8-bytes (sizeof(void*) on a 64-bit machine).
+         * @param size      The size of memory to allocate.
+         * @param alignment The alignment of the memory block.
+         *                  Default: 8-bytes (sizeof(void*) on a 64-bit machine).
          */
         constexpr void* malloc(size_t size, size_t alignment) noexcept;
+
+        /**
+         * @brief Free a memory block.
+         *
+         * @param[in] block The block to free.
+         */
+        constexpr void free(void* block) noexcept;
 
 
     private:
         uint8_t* _buffer;
         size_t _size, _usedSize;
-        Bitmask_t _flBitmask;                     /// First level bitmap
+        Bitmask_t _flBitmap;                      /// First level bitmap
         std::array<Bitmask_t, FL_SIZE> _slBitmap; /// Second Level Bitmaps
 
         TLSFFreeNode* freeList[FL_SIZE][SL_SIZE]; /// Free-list
@@ -263,7 +270,7 @@ namespace pmm
         /**
          * @brief Get the FL and SL index for the given @p blockSize.
          *
-         * @param blockSize The block to search a match for.
+         * @param[in] blockSize The block to search a match for.
          * @return The FL, and SL index for the rounded block size.
          */
         static constexpr BitmapIndices mappingInsert(size_t blockSize) noexcept;
@@ -280,7 +287,7 @@ namespace pmm
          * mappingSearch(1025); // {.fl = 4, .sl = 1} since the block is rounded to 1032.
          * @endcode
          *
-         * @param blockSize The block to search a match for.
+         * @param[in] blockSize The block to search a match for.
          * @return The FL, and SL index for the rounded block size.
          */
         static constexpr BitmapIndices mappingSearch(size_t blockSize) noexcept;
@@ -289,17 +296,19 @@ namespace pmm
         /**
          * @brief Get a pointer to the free block at @p index.
          *
-         * @param index The FL and SL index for searching the block.
+         * @note The index will be updated if the given indices doesn't have any free blocks.
+         *
+         * @param[in,out] index The FL and SL index for searching the block.
          *
          * @return A FreeNode pointer to the block at the given index, or to the adjacent block
          *         if the provided indices doesn't contain a free block.
          */
-        constexpr TLSFFreeNode* searchSuitableBlock(BitmapIndices index) const noexcept;
+        constexpr TLSFFreeNode* searchSuitableBlock(BitmapIndices& index) const noexcept;
 
         /**
          * @brief Insert @p block into the freelist.
-         * @param block     The memory block to insert.
-         * @param blockSize The size of the block.
+         * @param[in] block     The memory block to insert.
+         * @param[in] blockSize The size of the block.
          */
         constexpr void insertBlock(uint8_t* block, size_t blockSize) noexcept;
 
@@ -307,7 +316,7 @@ namespace pmm
         /**
          * @brief Get the header from a freenode.
          *
-         * @param node The node whose free node is to be found.
+         * @param[in] node The node whose free node is to be found.
          *
          * @return A pointer to header.
          */

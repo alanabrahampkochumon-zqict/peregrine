@@ -19,7 +19,7 @@ namespace pmm
     PMM_INLINE constexpr TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::TLSF(uint8_t* buffer,
                                                                             const size_t memorySize) noexcept
         requires std::same_as<MemStrategy, UnmanagedMemory>
-        : _buffer{ buffer }, _size{ memorySize }, _usedSize{ 0 }, _flBitmask{ 0 }, _slBitmap{}
+        : _buffer{ buffer }, _size{ memorySize }, _usedSize{ 0 }, _flBitmap{ 0 }, _slBitmap{}
     {}
 
 
@@ -29,7 +29,7 @@ namespace pmm
         : _buffer{ static_cast<uint8_t*>(memAlloc(allocatorSize)) },
           _size{ allocatorSize },
           _usedSize{ 0 },
-          _flBitmask{ 0 },
+          _flBitmap{ 0 },
           _slBitmap{}
     {}
 
@@ -39,7 +39,7 @@ namespace pmm
         : _buffer{ std::exchange(tlsf._buffer, nullptr) },
           _size{ tlsf._size },
           _usedSize{ tlsf._usedSize },
-          _flBitmask{ tlsf._flBitmask }
+          _flBitmap{ tlsf._flBitmap }
     { std::move(tlsf._slBitmap.begin(), tlsf._slBitmap.end(), _slBitmap.begin()); }
 
 
@@ -59,10 +59,10 @@ namespace pmm
             return *this;
         }
 
-        _buffer    = std::exchange(tlsf._buffer, nullptr);
-        _size      = tlsf._size;
-        _usedSize  = tlsf._usedSize;
-        _flBitmask = tlsf._flBitmask;
+        _buffer   = std::exchange(tlsf._buffer, nullptr);
+        _size     = tlsf._size;
+        _usedSize = tlsf._usedSize;
+        _flBitmap = tlsf._flBitmap;
         std::move(tlsf._slBitmap.begin(), tlsf._slBitmap.end(), _slBitmap.begin());
 
         return *this;
@@ -106,6 +106,17 @@ namespace pmm
 
         // searchSuitable block doesn't return a nullptr by default on in safe mode
         // so we can skip the nullptr check and assume a valid block is returned. TODO(SAFEMODE)
+
+
+        // Clear the SL bitmask
+        if (freeBlock->next == nullptr)
+        {
+            _slBitmap[index.flIndex] &= ~(1ULL << index.slIndex);
+        }
+        // Clear the FL Bitmask if the sl bitmask is zero.
+        _flBitmap = _slBitmap[index.flIndex] == 0 ? _flBitmap & ~(1ULL << index.flIndex) : _flBitmap;
+
+
         Header* freeBlockHeader = getHeader(freeBlock);
         const auto freeSize     = freeBlockHeader->getSize();
         // Remove and insert the appropriate header for and add calculate padding for the block.
@@ -127,8 +138,20 @@ namespace pmm
         }
 
         const auto memoryStart = static_cast<uint8_t*>(freeBlock) + padding + sizeof(Header);
-        
+
         return memoryStart;
+    }
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
+    PMM_INLINE constexpr void TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::free(void* block) noexcept
+    {
+        // block       = mergePrevious(block);
+        // block       = mergeNext(block);
+        // auto header = static_cast<Header*>(block);
+        //
+        // // TODO: Mark the next block's prevFree.
+        // auto nextHeader = static_cast<Header*>(block + header->getSize());
     }
 
 
@@ -185,7 +208,7 @@ namespace pmm
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
     PMM_INLINE constexpr typename TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::TLSFFreeNode* TLSF<
-        MemStrategy, TelPolicy, Safe, MTPolicy>::searchSuitableBlock(const BitmapIndices index) const noexcept
+        MemStrategy, TelPolicy, Safe, MTPolicy>::searchSuitableBlock(BitmapIndices& index) const noexcept
     {
         // For finding the suitable block we first get the SL-bitmask for the given fl index and
         // mask out all the values that are less than our sl index.
@@ -224,6 +247,8 @@ namespace pmm
                 "FL and/or SL indices out-of-range.\nProvided\n\tFL: {} and SL: {}.\nDeduced\n\tFL: {} and SL: {}.\n",
                 index.flIndex, index.slIndex, nonEmptyFL, nonEmptySL));
 
+        index.flIndex = nonEmptyFL;
+        index.slIndex = nonEmptySL;
         return freeList[nonEmptyFL][nonEmptySL];
     }
 
