@@ -97,10 +97,13 @@ namespace pmm
     PMM_INLINE constexpr void* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::malloc(const size_t size,
                                                                                     const size_t alignment) noexcept
     {
+        // [Header][Padding][OffsetToHeader][Ptr* returned to user]
+        // The offset to header acts as a way to ensure that we can get to header from the ptr given by the user
+        // during free as well from the start(used in mergeNext).
         // We need to allocate space for the header as well as assume the worst case alignment of alignment - 1
-        const auto requiredSize = sizeof(Header) + alignment + size;
+        const auto requiredSize = sizeof(Header) + sizeof(HeaderOffset_t) + alignment + size;
 
-        // For allocating memory we need to find the fl and sl indices.
+        // For allocating memory we need to find the FL and SL indices.
         auto index     = mappingSearch(requiredSize);
         auto freeBlock = searchSuitableBlock(index);
 
@@ -120,24 +123,35 @@ namespace pmm
         Header* freeBlockHeader = getHeader(freeBlock);
         const auto freeSize     = freeBlockHeader->getSize();
         // Remove and insert the appropriate header for and add calculate padding for the block.
-        const auto padding = static_cast<uintptr_t>(freeBlock) & (alignment - 1);
-        // [padding][header][*ptr returned to user]
+        // We need to calculate padding based on the address that is offset by the size of header and header offset.
+        // Calculation representation: [Header][HeaderOffset][Padding][Aligned Memory Ptr]
+        // But padding will be placed in the middle in real usage.
+        const auto metadataSize = sizeof(Header) + sizeof(HeaderOffset_t);
+        const auto padding      = (static_cast<uintptr_t>(freeBlock) + metadataSize) & (alignment - 1);
+        // [header][padding][start_offset][*ptr returned to user]
         Header* header = static_cast<Header*>(freeBlock);
         header->markUsed();
-        header->setSize(requiredSize);
         header->padding = padding;
 
         // Since we know real padding right now we can use it.
-        const auto usedSize = size + sizeof(Header) + padding;
+        auto usedSize       = size + metadataSize + padding;
+        const auto sizeLeft = freeSize - usedSize;
+        usedSize += sizeLeft < SPLIT_SIZE_THRESHOLD ? sizeLeft : 0;
+        header->setSize(usedSize);
 
         // If there is more free space than split threshold, split and store that memory
-        if (const auto sizeLeft = freeSize - usedSize; sizeLeft >= SPLIT_SIZE_THRESHOLD)
+        if (sizeLeft >= SPLIT_SIZE_THRESHOLD)
         {
             auto remainingBlock = static_cast<uint8_t*>(freeBlock) + usedSize;
             insertBlock(remainingBlock, sizeLeft);
         }
 
-        const auto memoryStart = static_cast<uint8_t*>(freeBlock) + padding + sizeof(Header);
+        // Add the offset after adding the padding
+        const auto offsetAmount = sizeof(Header) + padding;
+        HeaderOffset_t* offset  = static_cast<uint8_t*>(freeBlock) + offsetAmount;
+        *offset                 = offsetAmount;
+
+        const auto memoryStart = static_cast<uint8_t*>(freeBlock) + offsetAmount + sizeof(HeaderOffset_t);
 
         return memoryStart;
     }
@@ -297,16 +311,17 @@ namespace pmm
     constexpr void* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mergePrevious(void* block) const noexcept
     {
         // prev_offset := sizeof(block) - padding(block) - sizeof(size_t)
-        // [[Header][...][size_t]] + [[padding][Header][....]] =COALESCED=> [[Header][....]]
-        // ^             ^                     ^
-        // |             |                     |
-        // start       offset                block
-        const Header* header = static_cast<Header*>(block);
-        size_t totalSize     = header->getSize() + header->padding;
+        // [[Header][...][size_t]] + [[Header][padding][HeaderOffset][block....]] =COALESCED=> [[Header][....]]
+        // ^             ^            ^                              ^
+        // |             |            |                              |
+        // start       offset   block - headerOffset               block
+        const HeaderOffset_t* headerOffset = static_cast<HeaderOffset_t*>(block - sizeof(HeaderOffset_t));
+        const Header* header               = static_cast<Header*>(block - *headerOffset);
+        size_t totalSize = header->getSize() + header->padding + sizeof(Header) + sizeof(HeaderOffset_t);
         if (header->isPrevFree())
         {
             // Get the previous block's size from it's footer.
-            const size_t* prevBlockSize = static_cast<size_t*>(block - (header->padding + sizeof(size_t)));
+            const size_t* prevBlockSize = static_cast<size_t*>(block - (*headerOffset + sizeof(size_t)));
             totalSize += *prevBlockSize;
 
             // Get the start of previous header.
@@ -325,6 +340,15 @@ namespace pmm
         {
             return block;
         }
+    }
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
+    PMM_INLINE constexpr void* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mergeNext(void* block) const noexcept
+    {
+        // To merge with the next block we need to check if the next block is free
+        // TODO: Impl
+        return block;
     }
 
 } // namespace pmm

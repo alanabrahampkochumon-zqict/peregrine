@@ -126,7 +126,8 @@ namespace pmm
             TLSFFreeNode* next;
         };
 
-        using Bitmask_t = uint64_t; /// Data type used for bitmasks
+        using Bitmask_t      = uint64_t; /// Data type used for bitmasks
+        using HeaderOffset_t = uint32_t; /// Offset used for headers.
         /// The offset used for LSB(Least Significant Bit) of FL.
         /// Since we are using an offset of 64, which means that our initial SL indices start
         /// at [64, 128) rather than [1, 2).
@@ -334,6 +335,17 @@ namespace pmm
          * @return The given @p block address, otherwise.
          */
         constexpr void* mergePrevious(void* block) const noexcept;
+
+        /**
+         * @brief Merge this block with its next block if it's free.
+         *
+         * @note The function expects the header to be placed at the start of @p block.
+         *
+         * @param block The block to join with the next block.
+         *
+         * @return The given @p block address.
+         */
+        constexpr void* mergeNext(void* block) const noexcept;
 
 
 
