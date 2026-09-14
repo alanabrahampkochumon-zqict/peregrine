@@ -164,9 +164,6 @@ namespace pmm
         // and taking the ffs(_slBitmap[newFL]), gives the correct sl index since block are arranged in order.
         // TODO: Update to branchless variant(exploiting ?: which compiles down to cmovcc)
         //       after adding allocation and tests
-        PMM_ASSERT_MSG(
-            index.flIndex < FL_SIZE && index.slIndex < SL_SIZE,
-            std::format("FL and/or SL indices out-of-range. FL: {} and SL: {}.", index.flIndex, index.slIndex));
         auto bitmapTemp = _slBitmap[index.flIndex] & (~0ULL << index.slIndex);
         size_t nonEmptyFL, nonEmptySL;
         if (bitmapTemp == 0)
@@ -189,6 +186,37 @@ namespace pmm
                 index.flIndex, index.slIndex, nonEmptyFL, nonEmptySL));
 
         return freeList[nonEmptyFL][nonEmptySL];
+    }
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
+    PMM_INLINE constexpr void TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::insertBlock(
+        uint8_t* block, const size_t blockSize) const noexcept
+    {
+        /// Since the function is internal this check is necessary but kept for safety.
+        PMM_ASSERT_MSG(block != nullptr && blockSize > 0, "Cannot insert a zero sized or nullptr block.");
+
+        // Get the fl and sl index
+        auto index = mappingInsert(blockSize);
+
+        // Insert both the header(which contains only the size and flags)
+        // and the freeNode.
+        Header* header = static_cast<Header*>(block);
+        header->setSize(blockSize);
+        header->markFree();
+
+        // FreeList = [[Header][FreeNode][....] <=> [Header][FreeNode][....]]
+        // [FL][SL] = nullptr(START) <- existingNode* -> nullptr(END)
+        //            nullptr(START) <- freeNode* <=> existingNode* -> nullptr(END)
+        TLSFFreeNode* freeNode = static_cast<TLSFFreeNode*>(block + sizeof(Header));
+        TLSFFreeNode* existingNode =
+            static_cast<TLSFFreeNode*>(freeList[index.flIndex][index.slIndex] + sizeof(Header));
+        freeNode->next = existingNode;
+        if (existingNode != nullptr)
+        {
+            existingNode->prev = freeNode;
+        }
+        freeList[index.flIndex][index.slIndex] = header; // We must insert the starting address (not the freelist)
     }
 
 } // namespace pmm

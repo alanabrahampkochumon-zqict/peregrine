@@ -115,14 +115,14 @@ namespace pmm
                 // 1 such that 0bxxxx...xxxx1x & 0b1111...111101 -> 0bxxxx...xxxx0x
                 sizeWithFlags &= PREV_USED_MAN_BIT;
             }
+        };
 
-            /// Internal doubly linked list node used for storing memory blocks of similar size in the
-            /// same FL_SL bitmask.
-            struct FreeNode
-            {
-                FreeNode* prev;
-                FreeNode* next;
-            };
+        /// Internal doubly linked list node used for storing memory blocks of similar size in the
+        /// same FL_SL bitmask.
+        struct TLSFFreeNode
+        {
+            TLSFFreeNode* prev;
+            TLSFFreeNode* next;
         };
 
         using Bitmask_t = uint64_t; /// Data type used for bitmasks
@@ -280,13 +280,17 @@ namespace pmm
          *
          * @param index The FL and SL index for searching the block.
          *
-         * @note The validity of indices must be checked from outside.
-         * @note Index validity is checked only in Debug Mode.
-         *
          * @return A pointer to the block at the given index, or the pointer to the adjacent block
          *         if the provided indices doesn't contain a free block.
          */
         constexpr uint8_t* searchSuitableBlock(BitmapIndices index) const noexcept;
+
+        /**
+         * @brief Insert @p block into the freelist.
+         * @param block     The memory block to insert.
+         * @param blockSize The size of the block.
+         */
+        constexpr void insertBlock(uint8_t* block, size_t blockSize) const noexcept;
 
 
 
