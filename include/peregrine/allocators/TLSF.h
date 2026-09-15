@@ -334,7 +334,7 @@ namespace pmm
          * @return The starting address of the previous block if it's free.
          * @return The given @p block address, otherwise.
          */
-        constexpr void* mergePrevious(void* block) const noexcept;
+        constexpr uint8_t* mergePrevious(uint8_t* block) noexcept;
 
         /**
          * @brief Merge this block with its next block if it's free.
@@ -345,7 +345,13 @@ namespace pmm
          *
          * @return The given @p block address.
          */
-        constexpr void* mergeNext(void* block) const noexcept;
+        constexpr uint8_t* mergeNext(uint8_t* block) noexcept;
+
+        /**
+         * @brief Unlinks the block from the FL/SL bitmask and reset the bitmasks.
+         * @param block The block to unlink.
+         */
+        constexpr void unlinkNode(TLSFFreeNode* block) noexcept;
 
 
 

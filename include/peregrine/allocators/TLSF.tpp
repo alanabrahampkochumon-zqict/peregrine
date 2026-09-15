@@ -112,15 +112,18 @@ namespace pmm
         // searchSuitable block doesn't return a nullptr by default on in safe mode
         // so we can skip the nullptr check and assume a valid block is returned. TODO(SAFEMODE)
 
+        // Unlink the free node from the bitmap
+        unlinkNode(freeBlock);
 
+        // TODO: REMOVE
         // Clear the SL bitmask. This is only applicable if the block is the only node is freelist.
-        if (freeBlock->next == nullptr)
-        {
-            // Let SLIndex be 2, then shifting gives use 0100 and mask is 1011.
-            _slBitmap[index.flIndex] &= ~(1ULL << index.slIndex);
-        }
-        // Clear the FL Bitmask if the sl bitmask is zero.
-        _flBitmap = _slBitmap[index.flIndex] == 0 ? _flBitmap & ~(1ULL << index.flIndex) : _flBitmap;
+        // if (freeBlock->next == nullptr)
+        // {
+        //     // Let SLIndex be 2, then shifting gives use 0100 and mask is 1011.
+        //     _slBitmap[index.flIndex] &= ~(1ULL << index.slIndex);
+        // }
+        // // Clear the FL Bitmask if the sl bitmask is zero.
+        // _flBitmap = _slBitmap[index.flIndex] == 0 ? _flBitmap & ~(1ULL << index.flIndex) : _flBitmap;
 
 
         // For rewriting the header we need to get the free block's size.
@@ -132,18 +135,18 @@ namespace pmm
         // We need to calculate padding based on the address that is offset by the size of header and header offset.
         // Calculation representation: [Header][HeaderOffset][Padding][Aligned Memory Ptr]
         // But padding will be placed in the middle in real usage.
-        const auto padding = (static_cast<uintptr_t>(freeBlock) + metadataSize) & (alignment - 1);
+        auto basePtr       = static_cast<uint8_t*>(freeBlockHeader);
+        const auto padding = (reinterpret_cast<uintptr_t>(basePtr) + metadataSize) & (alignment - 1);
         // [Header][Padding][HeaderOffset][Aligned Memory Ptr(Returned to user)]
-        Header* header = static_cast<Header*>(freeBlock);
-        header->markUsed();
-        header->padding = padding;
+        freeBlockHeader->markUsed();
+        freeBlockHeader->padding = padding;
 
         // Since we know real padding right now we can use it.
         auto usedSize       = size + metadataSize + padding;
         const auto sizeLeft = freeSize - usedSize;
         // If we don't carve out free block if it is smaller than threshold size, we need ot add it's size to used size.
         usedSize += sizeLeft < SPLIT_SIZE_THRESHOLD ? sizeLeft : 0;
-        header->setSize(usedSize);
+        freeBlockHeader->setSize(usedSize);
 
         // If there is more free space than split threshold, split and store that memory
         if (sizeLeft >= SPLIT_SIZE_THRESHOLD)
@@ -294,10 +297,12 @@ namespace pmm
         auto index = mappingInsert(blockSize);
 
         // Insert the freenode
-        // FreeList = [[FreeNode][Header][....] <=> [FreeNode][Header][....]]
+        //                       ____________________________
+        //                      |                            |
+        // FreeList = [[Header][FreeNode][....] <=> [Header][FreeNode][....]]
         // [FL][SL] = nullptr(START) <- existingNode* -> nullptr(END)
         //            nullptr(START) <- freeNode* <=> existingNode* -> nullptr(END)
-        TLSFFreeNode* freeNode     = static_cast<TLSFFreeNode*>(block);
+        TLSFFreeNode* freeNode     = static_cast<TLSFFreeNode*>(block + sizeof(Header));
         TLSFFreeNode* existingNode = freeList[index.flIndex][index.slIndex];
         freeNode->next             = existingNode;
         if (existingNode != nullptr)
@@ -317,14 +322,14 @@ namespace pmm
     PMM_INLINE constexpr typename TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::Header* TLSF<
         MemStrategy, TelPolicy, Safe, MTPolicy>::getHeader(TLSFFreeNode* node) noexcept
     {
-        // Note: Header is placed above the free node.
-        return static_cast<Header*>(static_cast<uint8_t*>(node) + sizeof(TLSFFreeNode));
+        // Note: Header is placed below the free node.
+        return static_cast<Header*>(static_cast<uint8_t*>(node) - sizeof(TLSFFreeNode));
     }
 
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    constexpr void* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mergePrevious(void* block) const noexcept
+    constexpr uint8_t* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mergePrevious(uint8_t* block) noexcept
     {
         // prev_offset := sizeof(block) - padding(block) - sizeof(size_t)
         // [[Header][...][size_t]] + [[Header][padding][HeaderOffset][block....]] =COALESCED=> [[Header][....]]
@@ -345,11 +350,21 @@ namespace pmm
             // gives the starting address of
             uint8_t* startAddress = static_cast<uint8_t*>(header) - *prevBlockSize;
 
-            // Write the new header and return the start address
+            // Unlink next node
+            // [Header][FreeNode]
+            TLSFFreeNode* nextFreeNode = static_cast<TLSFFreeNode*>(startAddress + sizeof(Header));
+            unlinkNode(nextFreeNode);
+
+            // Write the new header
             Header* newHeader = static_cast<Header*>(startAddress);
             newHeader->setSize(totalSize);
             newHeader->markFree();
 
+            // Write the footer with block size
+            const auto footer = static_cast<size_t*>(block + totalSize - sizeof(size_t));
+            *footer           = totalSize;
+
+            // return the start address
             return startAddress;
         }
         else
@@ -360,7 +375,7 @@ namespace pmm
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr void* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mergeNext(void* block) const noexcept
+    PMM_INLINE constexpr uint8_t* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mergeNext(uint8_t* block) noexcept
     {
         // To merge with the next block we need to check if the next block is free
         // Access the next block's header
@@ -369,16 +384,48 @@ namespace pmm
         // Coalesce current and next blocks if next block is free.
         if (nextHeader->isFree())
         {
+            // Unlink next node
+            // [Header][FreeNode]
+            TLSFFreeNode* nextFreeNode = static_cast<TLSFFreeNode*>(static_cast<uint8_t*>(nextHeader) + sizeof(Header));
+            unlinkNode(nextFreeNode);
+
+            // Unify the header
             // Since our current header is where our new header will be we can overwrite the values
             // to include the new size as well, and reset the padding to zero
             currentHeader->setSize(currentHeader->getSize() + nextHeader->getSize());
             currentHeader->markFree();
             currentHeader->padding = 0;
-
-            // Remove node from FL and SL bucket.
         }
 
         return block;
     }
+
+
+    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
+    constexpr void TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::unlinkNode(TLSFFreeNode* block) noexcept
+    {
+        const auto header = getHeader(block);
+        const auto index  = mappingInsert(header->getSize());
+        // If the node has a previous link, update it's next node to the current block next node
+        // essentially removing this block.
+        if (block->prev != nullptr)
+        {
+            block->prev->next = block->next;
+        }
+        else
+        // If there is no previous node then this could mean either the current block is the first node
+        // or its the only node so, reassign freelist head to the block next node.
+        {
+            freeList[index.flIndex][index.slIndex] = block->next;
+        }
+
+        // Reset the sl flag if sl bucket is empty
+        const auto newSL = _slBitmap[index.flIndex] & ~(1ULL << index.slIndex);
+        // Ternary will get translated into a single cmovcc instruction so no branching.
+        _slBitmap[index.flIndex] = freeList[index.flIndex][index.slIndex] == nullptr ? newSL : _slBitmap[index.flIndex];
+        const auto newFL         = _flBitmap & ~(1ULL << index.flIndex);
+        _flBitmap                = _slBitmap[index.flIndex] == 0 ? newFL : _flBitmap;
+    }
+
 
 } // namespace pmm
