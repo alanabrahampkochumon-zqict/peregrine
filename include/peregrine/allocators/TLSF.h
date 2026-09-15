@@ -243,7 +243,7 @@ namespace pmm
          * @param alignment The alignment of the memory block.
          *                  Default: 8-bytes (sizeof(void*) on a 64-bit machine).
          */
-        constexpr void* malloc(size_t size, size_t alignment) noexcept;
+        constexpr void* alloc(size_t size, size_t alignment) noexcept;
 
         /**
          * @brief Free a memory block.

@@ -94,14 +94,16 @@ namespace pmm
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr void* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::malloc(const size_t size,
-                                                                                    const size_t alignment) noexcept
+    PMM_INLINE constexpr void* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::alloc(const size_t size,
+                                                                                   const size_t alignment) noexcept
     {
         // [Header][Padding][OffsetToHeader][Ptr* returned to user]
-        // The offset to header acts as a way to ensure that we can get to header from the ptr given by the user
-        // during free as well from the start(used in mergeNext).
-        // We need to allocate space for the header as well as assume the worst case alignment of alignment - 1
-        const auto requiredSize = sizeof(Header) + sizeof(HeaderOffset_t) + alignment + size;
+        // The offset to header acts as a way for bidirectional access to header. From the base address,
+        // as well as from the pointer handed over to the user.
+
+        const auto metadataSize = sizeof(Header) + sizeof(HeaderOffset_t);
+        // We need to allocate space for the metadata, size and for the worst case alignment of alignment - 1
+        const auto requiredSize = metadataSize + (alignment - 1) + size;
 
         // For allocating memory we need to find the FL and SL indices.
         auto index     = mappingSearch(requiredSize);
@@ -111,24 +113,27 @@ namespace pmm
         // so we can skip the nullptr check and assume a valid block is returned. TODO(SAFEMODE)
 
 
-        // Clear the SL bitmask
+        // Clear the SL bitmask. This is only applicable if the block is the only node is freelist.
         if (freeBlock->next == nullptr)
         {
+            // Let SLIndex be 2, then shifting gives use 0100 and mask is 1011.
             _slBitmap[index.flIndex] &= ~(1ULL << index.slIndex);
         }
         // Clear the FL Bitmask if the sl bitmask is zero.
         _flBitmap = _slBitmap[index.flIndex] == 0 ? _flBitmap & ~(1ULL << index.flIndex) : _flBitmap;
 
 
+        // For rewriting the header we need to get the free block's size.
+        // Write the header with the used size and padding.
+        // NOTE: Used size is the entire size of the block including padding and metadata.
         Header* freeBlockHeader = getHeader(freeBlock);
         const auto freeSize     = freeBlockHeader->getSize();
         // Remove and insert the appropriate header for and add calculate padding for the block.
         // We need to calculate padding based on the address that is offset by the size of header and header offset.
         // Calculation representation: [Header][HeaderOffset][Padding][Aligned Memory Ptr]
         // But padding will be placed in the middle in real usage.
-        const auto metadataSize = sizeof(Header) + sizeof(HeaderOffset_t);
-        const auto padding      = (static_cast<uintptr_t>(freeBlock) + metadataSize) & (alignment - 1);
-        // [header][padding][start_offset][*ptr returned to user]
+        const auto padding = (static_cast<uintptr_t>(freeBlock) + metadataSize) & (alignment - 1);
+        // [Header][Padding][HeaderOffset][Aligned Memory Ptr(Returned to user)]
         Header* header = static_cast<Header*>(freeBlock);
         header->markUsed();
         header->padding = padding;
@@ -136,6 +141,7 @@ namespace pmm
         // Since we know real padding right now we can use it.
         auto usedSize       = size + metadataSize + padding;
         const auto sizeLeft = freeSize - usedSize;
+        // If we don't carve out free block if it is smaller than threshold size, we need ot add it's size to used size.
         usedSize += sizeLeft < SPLIT_SIZE_THRESHOLD ? sizeLeft : 0;
         header->setSize(usedSize);
 
@@ -151,8 +157,7 @@ namespace pmm
         HeaderOffset_t* offset  = static_cast<uint8_t*>(freeBlock) + offsetAmount;
         *offset                 = offsetAmount;
 
-        const auto memoryStart = static_cast<uint8_t*>(freeBlock) + offsetAmount + sizeof(HeaderOffset_t);
-
+        const auto memoryStart = static_cast<uint8_t*>(freeBlock) + metadataSize + padding;
         return memoryStart;
     }
 
@@ -160,12 +165,22 @@ namespace pmm
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
     PMM_INLINE constexpr void TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::free(void* block) noexcept
     {
-        // block       = mergePrevious(block);
-        // block       = mergeNext(block);
-        // auto header = static_cast<Header*>(block);
-        //
-        // // TODO: Mark the next block's prevFree.
-        // auto nextHeader = static_cast<Header*>(block + header->getSize());
+        block            = mergePrevious(block);
+        block            = mergeNext(block);
+        auto header      = static_cast<Header*>(block);
+        const auto index = mappingInsert(header->getSize());
+
+        // TODO: Insert block needs to be made more granular since we are doing repeated work.
+        insertBlock(block, header->getSize());
+
+        // Mark the next block's prevFree.
+        // If this is not the final block, then we can mark the next block's prevFreeBlock as true.
+        if (reinterpret_cast<uintptr_t>(block) + header->getSize() <
+            reinterpret_cast<uintptr_t>(_buffer) + _size + sizeof(Header))
+        {
+            auto nextHeader = static_cast<Header*>(block + header->getSize());
+            nextHeader->markPrevFree();
+        }
     }
 
 
@@ -242,16 +257,17 @@ namespace pmm
         //       after adding allocation and tests
         auto bitmapTemp = _slBitmap[index.flIndex] & (~0ULL << index.slIndex);
         size_t nonEmptyFL, nonEmptySL;
-        if (bitmapTemp == 0)
+        if (bitmapTemp != 0)
         {
             nonEmptyFL = index.flIndex;
             nonEmptySL = utils::ffs(bitmapTemp);
         }
         else
         {
-            bitmapTemp = index.flIndex & (~0ULL << (index.flIndex + 1));
+            bitmapTemp = _flBitmap & (~0ULL << (index.flIndex + 1));
+            PMM_ASSERT_MSG(bitmapTemp > 0, "Out of memory: No suitable FL bucket.");
             nonEmptyFL = utils::ffs(bitmapTemp);
-            nonEmptySL = utils::ffs(bitmapTemp);
+            nonEmptySL = utils::ffs(_slBitmap[nonEmptyFL]);
         }
         // Out of range FL and SL index indicate that there is no memory left with
         // that satisfies the FL and SL requirements.
@@ -315,19 +331,19 @@ namespace pmm
         // ^             ^            ^                              ^
         // |             |            |                              |
         // start       offset   block - headerOffset               block
+        // <--- PREV BLK SIZE --->   <------------ CURRENT BLK SIZE ------------>
         const HeaderOffset_t* headerOffset = static_cast<HeaderOffset_t*>(block - sizeof(HeaderOffset_t));
         const Header* header               = static_cast<Header*>(block - *headerOffset);
-        size_t totalSize = header->getSize() + header->padding + sizeof(Header) + sizeof(HeaderOffset_t);
+        size_t totalSize                   = header->getSize(); // Get size gives the entire block size.
         if (header->isPrevFree())
         {
             // Get the previous block's size from it's footer.
             const size_t* prevBlockSize = static_cast<size_t*>(block - (*headerOffset + sizeof(size_t)));
-            totalSize += *prevBlockSize;
 
             // Get the start of previous header.
-            // Assumption: Since the block is already freed, the padding has been removed.
-            // Note: This can be written as a single line(startAddress and newHeader) but left as two for clarity.
-            uint8_t* startAddress = static_cast<uint8_t*>(block) - totalSize;
+            // The previous block ends at this blocks header so subtracting that from previous block's size
+            // gives the starting address of
+            uint8_t* startAddress = static_cast<uint8_t*>(header) - *prevBlockSize;
 
             // Write the new header and return the start address
             Header* newHeader = static_cast<Header*>(startAddress);
@@ -347,7 +363,21 @@ namespace pmm
     PMM_INLINE constexpr void* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mergeNext(void* block) const noexcept
     {
         // To merge with the next block we need to check if the next block is free
-        // TODO: Impl
+        // Access the next block's header
+        Header* currentHeader = static_cast<Header*>(block);
+        Header* nextHeader    = static_cast<Header*>(static_cast<uint8_t*>(block) + currentHeader->getSize());
+        // Coalesce current and next blocks if next block is free.
+        if (nextHeader->isFree())
+        {
+            // Since our current header is where our new header will be we can overwrite the values
+            // to include the new size as well, and reset the padding to zero
+            currentHeader->setSize(currentHeader->getSize() + nextHeader->getSize());
+            currentHeader->markFree();
+            currentHeader->padding = 0;
+
+            // Remove node from FL and SL bucket.
+        }
+
         return block;
     }
 
