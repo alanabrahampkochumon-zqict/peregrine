@@ -303,6 +303,8 @@ TEST_F(ManagedTLSFTests, Malloc_SubsequentAllocationDoNotCorruptMemory)
     }
 }
 
+// TODO: Add more TLSF allocation tests.
+
 // TEST_F(ManagedTLSFTests, Malloc_UpdatesTelemetry)
 // {
 //     constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
@@ -796,6 +798,62 @@ TEST_F(ManagedTLSFTests, Malloc_SubsequentAllocationDoNotCorruptMemory)
 namespace pmm
 {
 
+    // NOTE: For CTOR tests we are using the fixture allocated tlsf.
+    TEST_F(ManagedTLSFTests, Ctor_CreatesValidFLAndSLBitmaps)
+    {
+        // Get the FL and SL bitmaps corresponding to our size.
+        const auto [flIndex, slIndex] = tlsf.mappingInsert(tlsfSize);
+        const auto expectedFLBitmap   = 1ULL << flIndex;
+        const auto expectedSLBitmap   = 1ULL << slIndex;
+
+        const auto flBitmap = tlsf._flBitmap;
+        const auto slBitmap = tlsf._slBitmap[flIndex];
+        EXPECT_EQ(expectedFLBitmap, flBitmap);
+        EXPECT_EQ(expectedSLBitmap, slBitmap);
+    }
+
+
+    TEST_F(ManagedTLSFTests, Ctor_SingleAllocation_FLBitmapIsSingleBit)
+    { EXPECT_TRUE(std::has_single_bit(tlsf._flBitmap)); }
+
+
+    TEST_F(ManagedTLSFTests, Ctor_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry)
+    {
+        size_t nonZeroEntry{ 0 };
+
+        for (const auto slBitmap : tlsf._slBitmap)
+        {
+            if (slBitmap != 0)
+            {
+                ++nonZeroEntry;
+            }
+        }
+
+        EXPECT_EQ(1, nonZeroEntry);
+    }
+
+
+    TEST_F(ManagedTLSFTests, Ctor_SingleAllocation_OnlySingleFreeListIsPopulated)
+    {
+        size_t nonNullFLCount{}, nonNullSLCount{};
+
+        for (size_t i = 0; i < tlsf.FL_SIZE; ++i)
+        {
+            for (size_t j = 0; j < tlsf.SL_SIZE; ++j)
+            {
+                if (tlsf._freeList[i][j] != nullptr)
+                {
+                    nonNullFLCount++;
+                    nonNullSLCount++;
+                }
+            }
+        }
+
+        EXPECT_EQ(1, nonNullFLCount);
+        EXPECT_EQ(1, nonNullSLCount);
+    }
+
+
     TEST_F(ManagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer)
     {
         [[maybe_unused]] const TLSF<pmm::ManagedMemory> tlsf2 = std::move(tlsf);
@@ -921,47 +979,118 @@ namespace pmm
         EXPECT_EQ(expectedSl, sl);
     }
 
+    // TODO: Correct header is created(malloc back navigation)
 
-    TEST_F(ManagedTLSFTests, Malloc_NullsOutInitialBitmask)
+    TEST_F(ManagedTLSFTests, Malloc_NullsOutInitialBitmap)
     {
+        // Store the initial FL bitmap
+        const auto initialBitmap = tlsf._flBitmap;
+        // Make an allocation
         static_cast<void>(tlsf.malloc(32));
+        // Get the new bitmap
+        const auto newBitmap = tlsf._flBitmap;
 
+        // Ensure both are not equal
+        EXPECT_NE(initialBitmap, newBitmap);
+
+        // And together both bitmaps, if they don't have any equal bits
+        // result should be zero
+        // 0010 0000 & 1000 0000 = 0000 0000 (PASS)
+        // 1010 0000 & 1000 0000 = 1000 0000 (FAIL)
+        EXPECT_EQ(0, initialBitmap & newBitmap);
     }
 
-    // /**
-    //  * @test Verify that when allocation buffer using malloc, prevOffset is
-    //  *       moved by relative to the allocated object's size.
-    //  */
-    // TEST_F(ManagedTLSFTests, Malloc_MovesPrevOffset)
-    // {
-    //     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-    //     static_cast<void>(tlsf.malloc(2, 2));
-    //
-    //     // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
-    //     constexpr auto alignment           = 128;
-    //     constexpr auto bufferSize          = 64;
-    //     [[maybe_unused]] const auto buffer = tlsf.malloc(bufferSize, alignment);
-    //
-    //     EXPECT_EQ(bufferSize, tlsf._offset - tlsf._prevOffset);
-    // }
-    //
-    //
-    // /**
-    //  * @test Verify that when allocation buffer using alloc, prevOffset is
-    //  *       moved by relative to the allocated object's size.
-    //  */
-    // TEST_F(ManagedTLSFTests, Alloc_MovesPrevOffset)
-    // {
-    //     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-    //     static_cast<void>(tlsf.malloc(2, 2));
-    //
-    //     // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
-    //     [[maybe_unused]] const auto vec = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
-    //
-    //     EXPECT_EQ(sizeof(Vec4), tlsf._offset - tlsf._prevOffset);
-    // }
-    //
-    //
+
+    TEST_F(ManagedTLSFTests, Malloc_SingleAllocation_FLBitmapIsSingleBit)
+    {
+        static_cast<void>(tlsf.malloc(32));
+        EXPECT_TRUE(std::has_single_bit(tlsf._flBitmap));
+    }
+
+
+    TEST_F(ManagedTLSFTests, Malloc_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry)
+    {
+        static_cast<void>(tlsf.malloc(32));
+        size_t nonZeroEntries = 0;
+
+        for (const auto mask : tlsf._slBitmap)
+        {
+            if (mask != 0)
+            {
+                nonZeroEntries++;
+            }
+        }
+
+        EXPECT_EQ(1, nonZeroEntries);
+    }
+
+
+    TEST_F(ManagedTLSFTests, Malloc_SingleAllocation_OnlySingleFreeListIsPopulated)
+    {
+        static_cast<void>(tlsf.malloc(32));
+        size_t nonNullEntries = 0;
+
+        for (const auto& list : tlsf._freeList)
+        {
+            for (const auto& entry : list)
+            {
+                if (entry != nullptr)
+                {
+                    nonNullEntries++;
+                }
+            }
+        }
+
+        EXPECT_EQ(1, nonNullEntries);
+    }
+
+
+
+    TEST_F(ManagedTLSFTests, Malloc_SingleAllocation_FreeListIsUpdatedAfterAllocation)
+    {
+        // To check where the FL and SL entries in the free is updated
+        // we can make 1 allocation and ensure that the entries are updated
+        // from the initial location to the new location.
+        size_t initialNonNullFL, initialNonNullSL, updatedNonNullFL, updatedNonNullSL;
+
+        // Gather initial indices
+        for (size_t i = 0; i < tlsf.FL_SIZE; ++i)
+        {
+            for (size_t j = 0; j < tlsf.SL_SIZE; ++j)
+            {
+                if (tlsf._freeList[i][j] != nullptr)
+                {
+                    initialNonNullFL = i;
+                    initialNonNullSL = j;
+                }
+            }
+        }
+        // Make an allocation
+        static_cast<void>(tlsf.malloc(tlsfSize / 2));
+        // Gather indices prior to allocation
+        for (size_t i = 0; i < tlsf.FL_SIZE; ++i)
+        {
+            for (size_t j = 0; j < tlsf.SL_SIZE; ++j)
+            {
+                if (tlsf._freeList[i][j] != nullptr)
+                {
+                    updatedNonNullFL = i;
+                    updatedNonNullSL = j;
+                }
+            }
+        }
+        // Check if they are unequal
+        EXPECT_NE(initialNonNullFL, updatedNonNullFL);
+        EXPECT_NE(initialNonNullSL, updatedNonNullSL);
+
+        // We can also verify that the updated FL is always less than the initial one
+        // since are using nearly half the 2_KB space, but this may fail if updated with
+        // new parameters.
+        EXPECT_GT(initialNonNullFL, updatedNonNullFL);
+    }
+
+
+
     // TEST_F(ManagedTLSFTests, Malloc_UpdatesTelemetryPadding)
     // {
     //     const auto buffer          = tlsf.malloc(128, 128);
