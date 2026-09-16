@@ -16,7 +16,7 @@ namespace
     {
     public:
         size_t blockSize = 2_MB;
-        pmm::TLSF<>::Header header{ 2_MB };
+        pmm::TLSF<>::Header header{ .sizeWithFlags = 2_MB, .padding = 0 };
     };
 } // namespace
 

@@ -177,11 +177,11 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
     // EXPECT_EQ(tlsfSize, tlsf2.getTelemetry().getTLSFSize());
 }
 //
-// TODO: Add back after adding telemetry and allocBytes
+// TODO: Add back after adding telemetry and malloc
 // TEST_F(ManagedTLSFTests, MoveCtor_MovesTelemetry)
 // {
-//     static_cast<void>(tlsf.allocBytes(120));
-//     static_cast<void>(tlsf.allocBytes(240));
+//     static_cast<void>(tlsf.malloc(120));
+//     static_cast<void>(tlsf.malloc(240));
 //     // Get the telemetry to ensure that the value is preserved when moving
 //     // DON'T get by reference as it will change internally
 //     const auto telemetry = tlsf.getTelemetry();
@@ -200,7 +200,7 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 // TEST_F(ManagedTLSFTests, MoveAssign_CopiesAttributesToNewObject)
 // {
 //     constexpr auto sampleAllocation = 50;
-//     static_cast<void>(tlsf.allocBytes(sampleAllocation));
+//     static_cast<void>(tlsf.malloc(sampleAllocation));
 //     pmm::TLSF<> tlsf2(256);
 //
 //     tlsf2 = std::move(tlsf);
@@ -212,8 +212,8 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //
 // TEST_F(ManagedTLSFTests, MoveAssign_MovesTelemetry)
 // {
-//     static_cast<void>(tlsf.allocBytes(120));
-//     static_cast<void>(tlsf.allocBytes(240));
+//     static_cast<void>(tlsf.malloc(120));
+//     static_cast<void>(tlsf.malloc(240));
 //     // Get the telemetry to ensure that the value is preserved when moving
 //     // DON'T get by reference as it will change internally
 //     const auto telemetry = tlsf.getTelemetry();
@@ -235,82 +235,84 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
  *            ALLOC BYTES             *
  **************************************/
 
-// /**
-//  * @test Verify that allocBytes returns an address aligned to sizeof(void*) bytes
-//  *       given no alignment was passed-in.
-//  */
-// TEST_F(ManagedTLSFTests, AllocBytes_Returns8ByteAlignedAddressByDefault)
-// {
-//     // Misalign bytes to 2
-//     [[maybe_unused]] void* misalignedBytes = tlsf.allocBytes(2, 2);
-//
-//     void* bytes = tlsf.allocBytes(8);
-//
-//     const auto address = reinterpret_cast<uintptr_t>(bytes);
-//     EXPECT_EQ(0, address % sizeof(void*));
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, AllocBytes_ReturnsProvidedByteAlignedAddress)
-// {
-//     constexpr auto byteAlignment = 32;
-//     void* bytes                  = tlsf.allocBytes(128, byteAlignment);
-//
-//     const auto address = reinterpret_cast<uintptr_t>(bytes);
-//     EXPECT_EQ(0, address % byteAlignment);
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, AllocBytes_ReturnsNonNullPtrWhenAllocatingMemoryLessThanTLSFSize)
-// {
-//     void* bytes = tlsf.allocBytes(256);
-//
-//     EXPECT_NE(nullptr, bytes);
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, AllocBytes_ReturnsNonNullPtrWhenAllocatingMemoryEqualTLSFSize)
-// {
-//     // 7 is used as a worst case aligned requirement which is 8-bytes by default
-//     // on a 64-bit machine
-//     void* bytes = tlsf.allocBytes(tlsfSize - 7);
-//
-//     EXPECT_NE(nullptr, bytes);
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, AllocBytes_SubsequentAllocationDoNotCorruptMemory)
-// {
-//     constexpr auto bufferLength = 8;
-//     // Given two contiguous block of memory allocated back to back
-//     const auto firstAlloc = static_cast<int*>(tlsf.allocBytes(bufferLength * sizeof(int)));
-//     for (std::size_t i = 0; i < bufferLength; ++i)
-//     {
-//         firstAlloc[i] = static_cast<int>(i + 5);
-//     }
-//
-//     const auto secondAlloc = static_cast<int*>(tlsf.allocBytes(bufferLength * sizeof(int)));
-//     for (std::size_t i = 0; i < bufferLength; ++i)
-//     {
-//         secondAlloc[i] = static_cast<int>(i + 7);
-//     }
-//
-//     // When read back there is no corruption
-//     for (std::size_t i = 0; i < bufferLength; ++i)
-//     {
-//         EXPECT_EQ(static_cast<int>(i + 5), firstAlloc[i]);
-//         EXPECT_EQ(static_cast<int>(i + 7), secondAlloc[i]);
-//     }
-// }
-//
-// TEST_F(ManagedTLSFTests, AllocBytes_UpdatesTelemetry)
+/**
+ * @test Verify that malloc returns an address aligned to sizeof(void*) bytes
+ *       given no alignment was passed-in.
+ */
+TEST_F(ManagedTLSFTests, Malloc_Returns8ByteAlignedAddressByDefault)
+{
+
+    [[maybe_unused]] pmm::TLSF<> tlsf2{ tlsfSize };
+    // Misalign bytes to 2
+    [[maybe_unused]] void* misalignedBytes = tlsf.malloc(2, 2);
+
+    void* bytes = tlsf.malloc(8);
+
+    const auto address = reinterpret_cast<uintptr_t>(bytes);
+    EXPECT_EQ(0, address % sizeof(void*));
+}
+
+
+TEST_F(ManagedTLSFTests, Malloc_ReturnsProvidedByteAlignedAddress)
+{
+    constexpr auto byteAlignment = 32;
+    void* bytes                  = tlsf.malloc(128, byteAlignment);
+
+    const auto address = reinterpret_cast<uintptr_t>(bytes);
+    EXPECT_EQ(0, address % byteAlignment);
+}
+
+
+TEST_F(ManagedTLSFTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryLessThanTLSFSize)
+{
+    void* bytes = tlsf.malloc(256);
+
+    EXPECT_NE(nullptr, bytes);
+}
+
+
+TEST_F(ManagedTLSFTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryEqualTLSFSize)
+{
+
+    // 15 bytes used for worst case alignment, 16-bytes for header, and 4 bytes for offset.
+    void* bytes = tlsf.malloc(tlsfSize - 64);
+
+    EXPECT_NE(nullptr, bytes);
+}
+
+
+TEST_F(ManagedTLSFTests, Malloc_SubsequentAllocationDoNotCorruptMemory)
+{
+    constexpr auto bufferLength = 8;
+    // Given two contiguous block of memory allocated back to back
+    const auto firstAlloc = static_cast<int*>(tlsf.malloc(bufferLength * sizeof(int)));
+    for (std::size_t i = 0; i < bufferLength; ++i)
+    {
+        firstAlloc[i] = static_cast<int>(i + 5);
+    }
+
+    const auto secondAlloc = static_cast<int*>(tlsf.malloc(bufferLength * sizeof(int)));
+    for (std::size_t i = 0; i < bufferLength; ++i)
+    {
+        secondAlloc[i] = static_cast<int>(i + 7);
+    }
+
+    // When read back there is no corruption
+    for (std::size_t i = 0; i < bufferLength; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(i + 5), firstAlloc[i]);
+        EXPECT_EQ(static_cast<int>(i + 7), secondAlloc[i]);
+    }
+}
+
+// TEST_F(ManagedTLSFTests, Malloc_UpdatesTelemetry)
 // {
 //     constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
 //
 //     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-//     static_cast<void>(tlsf.allocBytes(byte1));
-//     static_cast<void>(tlsf.allocBytes(byte2));
-//     static_cast<void>(tlsf.allocBytes(byte3));
+//     static_cast<void>(tlsf.malloc(byte1));
+//     static_cast<void>(tlsf.malloc(byte2));
+//     static_cast<void>(tlsf.malloc(byte3));
 //
 //     constexpr std::size_t expectedMinUsage  = byte1;
 //     constexpr std::size_t expectedPeakUsage = byte3;
@@ -320,9 +322,9 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     EXPECT_EQ(expectedPeakUsage, tlsf.getTelemetry().getPeakUsage());
 //     EXPECT_EQ(expectedUsage, tlsf.getTelemetry().getUsedSize());
 // }
-//
-//
-//
+
+
+
 // /**************************************
 //  *              ALLOC                 *
 //  **************************************/
@@ -341,7 +343,7 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 // TEST_F(ManagedTLSFTests, Alloc_AlignsToTargetAlignment)
 // {
 //     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-//     static_cast<void>(tlsf.allocBytes(2, 2));
+//     static_cast<void>(tlsf.malloc(2, 2));
 //
 //     constexpr auto expectedAlignment = alignof(Vec4);
 //     [[maybe_unused]] const auto vec  = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
@@ -457,9 +459,9 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 // TEST_F(ManagedTLSFTests, Resize_NewSizeSmallerThanOldSizeReturnsSameAddress)
 // {
 //     constexpr auto byteSize   = 128;
-//     const auto firstByteChunk = tlsf.allocBytes(byteSize);
+//     const auto firstByteChunk = tlsf.malloc(byteSize);
 //     // Additional allocation
-//     [[maybe_unused]] const auto secondByteChunk = tlsf.allocBytes(byteSize);
+//     [[maybe_unused]] const auto secondByteChunk = tlsf.malloc(byteSize);
 //
 //     const auto data = tlsf.resize(firstByteChunk, byteSize, byteSize / 2, alignof(void*));
 //
@@ -473,7 +475,7 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     constexpr auto newByteSize = byteSize * 2;
 //
 //     // Allocate the chunk
-//     const auto firstByteChunk = tlsf.allocBytes(byteSize);
+//     const auto firstByteChunk = tlsf.malloc(byteSize);
 //     [[maybe_unused]] const auto data =
 //         static_cast<int*>(tlsf.resize(firstByteChunk, byteSize, newByteSize, alignof(int)));
 //     // Resize it
@@ -502,8 +504,8 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     constexpr auto byteSize    = 128;
 //     constexpr auto newByteSize = byteSize * 2;
 //
-//     const auto firstByteChunk                   = tlsf.allocBytes(byteSize);
-//     [[maybe_unused]] const auto secondByteChunk = tlsf.allocBytes(byteSize);
+//     const auto firstByteChunk                   = tlsf.malloc(byteSize);
+//     [[maybe_unused]] const auto secondByteChunk = tlsf.malloc(byteSize);
 //
 //     [[maybe_unused]] const auto data = tlsf.resize(firstByteChunk, byteSize, newByteSize, alignof(void*));
 //
@@ -518,7 +520,7 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     constexpr auto newByteSize = byteSize * 2;
 //
 //     // Allocate memory
-//     const auto firstByteChunk = static_cast<int*>(tlsf.allocBytes(byteSize));
+//     const auto firstByteChunk = static_cast<int*>(tlsf.malloc(byteSize));
 //     constexpr auto arraySize  = byteSize / sizeof(int);
 //
 //     // Write some data to the allocated memory
@@ -528,7 +530,7 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     }
 //
 //     // Allocate some more memory
-//     [[maybe_unused]] const auto secondByteChunk = tlsf.allocBytes(byteSize);
+//     [[maybe_unused]] const auto secondByteChunk = tlsf.malloc(byteSize);
 //
 //     // Resize the first buffer
 //     const auto data = static_cast<int*>(tlsf.resize(firstByteChunk, byteSize, newByteSize, alignof(int)));
@@ -545,7 +547,7 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 // {
 //     constexpr auto byteSize = 128;
 //
-//     const auto allocatedBytes = tlsf.allocBytes(byteSize);
+//     const auto allocatedBytes = tlsf.malloc(byteSize);
 //
 //     const auto oldUsage     = tlsf.getTelemetry().getUsedSize();
 //     const auto oldMinUsage  = tlsf.getTelemetry().getMinUsage();
@@ -565,7 +567,7 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     constexpr auto byteSize    = 128;
 //     constexpr auto newByteSize = byteSize - 10;
 //
-//     const auto allocatedBytes = tlsf.allocBytes(byteSize);
+//     const auto allocatedBytes = tlsf.malloc(byteSize);
 //
 //     const auto oldUsage     = tlsf.getTelemetry().getUsedSize();
 //     const auto oldMinUsage  = tlsf.getTelemetry().getMinUsage();
@@ -586,8 +588,8 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     constexpr auto byteDifference = 100;
 //     constexpr auto newByteSize    = byteSize + byteDifference;
 //
-//     [[maybe_unused]] const auto unusedBytes = tlsf.allocBytes(50);
-//     const auto allocatedBytes               = tlsf.allocBytes(byteSize);
+//     [[maybe_unused]] const auto unusedBytes = tlsf.malloc(50);
+//     const auto allocatedBytes               = tlsf.malloc(byteSize);
 //
 //     const auto oldUsage                      = tlsf.getTelemetry().getUsedSize();
 //     const auto oldMinUsage                   = tlsf.getTelemetry().getMinUsage();
@@ -608,8 +610,8 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     constexpr auto byteDifference = 100;
 //     constexpr auto newByteSize    = byteSize + byteDifference;
 //
-//     const auto allocatedBytes               = tlsf.allocBytes(byteSize);
-//     [[maybe_unused]] const auto unusedBytes = tlsf.allocBytes(50);
+//     const auto allocatedBytes               = tlsf.malloc(byteSize);
+//     [[maybe_unused]] const auto unusedBytes = tlsf.malloc(50);
 //
 //     const auto oldUsage    = tlsf.getTelemetry().getUsedSize();
 //     const auto oldMinUsage = tlsf.getTelemetry().getMinUsage();
@@ -626,14 +628,14 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 // TEST_F(ManagedTLSFTests, ResizeFast_NewSizeSmallerThanOldSizeReturnsNewBufferWithOldData)
 // {
 //     constexpr auto byteSize   = 128;
-//     const auto firstByteChunk = static_cast<size_t*>(tlsf.allocBytes(byteSize));
+//     const auto firstByteChunk = static_cast<size_t*>(tlsf.malloc(byteSize));
 //     const auto dataCount      = byteSize / sizeof(size_t);
 //     for (size_t i = 0; i < dataCount; ++i)
 //     {
 //         firstByteChunk[i] = i + 11;
 //     }
 //     // Additional allocation
-//     [[maybe_unused]] const auto secondByteChunk = tlsf.allocBytes(byteSize);
+//     [[maybe_unused]] const auto secondByteChunk = tlsf.malloc(byteSize);
 //
 //     const auto data = static_cast<size_t*>(tlsf.resizeFast(firstByteChunk, byteSize, byteSize / 2, alignof(void*)));
 //
@@ -652,7 +654,7 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     constexpr auto newByteSize = byteSize * 2;
 //
 //     // Allocate the chunk
-//     const auto firstByteChunk = tlsf.allocBytes(byteSize);
+//     const auto firstByteChunk = tlsf.malloc(byteSize);
 //     const auto data           = static_cast<int*>(tlsf.resizeFast(firstByteChunk, byteSize, newByteSize,
 //     alignof(int)));
 //
@@ -681,14 +683,14 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     constexpr auto byteSize    = 128;
 //     constexpr auto newByteSize = byteSize * 2;
 //
-//     const auto firstByteChunk = static_cast<size_t*>(tlsf.allocBytes(byteSize));
+//     const auto firstByteChunk = static_cast<size_t*>(tlsf.malloc(byteSize));
 //     const auto dataCount      = byteSize / sizeof(size_t);
 //     for (size_t i = 0; i < dataCount; ++i)
 //     {
 //         firstByteChunk[i] = i + 11;
 //     }
 //
-//     [[maybe_unused]] const auto secondByteChunk = tlsf.allocBytes(byteSize);
+//     [[maybe_unused]] const auto secondByteChunk = tlsf.malloc(byteSize);
 //
 //     const auto data = static_cast<size_t*>(tlsf.resizeFast(firstByteChunk, byteSize, newByteSize, alignof(size_t)));
 //
@@ -704,7 +706,7 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 // {
 //     constexpr auto byteSize = 128;
 //
-//     const auto allocatedBytes = tlsf.allocBytes(byteSize);
+//     const auto allocatedBytes = tlsf.malloc(byteSize);
 //
 //     const auto oldUsage     = tlsf.getTelemetry().getUsedSize();
 //     const auto oldMinUsage  = tlsf.getTelemetry().getMinUsage();
@@ -725,7 +727,7 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     constexpr auto byteSize    = 128;
 //     constexpr auto newByteSize = byteSize - 10;
 //
-//     const auto allocatedBytes = tlsf.allocBytes(byteSize);
+//     const auto allocatedBytes = tlsf.malloc(byteSize);
 //
 //     const auto oldUsage     = tlsf.getTelemetry().getUsedSize();
 //     const auto oldPeakUsage = tlsf.getTelemetry().getPeakUsage();
@@ -748,8 +750,8 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     constexpr auto byteDifference = 100;
 //     constexpr auto newByteSize    = byteSize + byteDifference;
 //
-//     [[maybe_unused]] const auto unusedBytes = tlsf.allocBytes(50);
-//     const auto allocatedBytes               = tlsf.allocBytes(byteSize);
+//     [[maybe_unused]] const auto unusedBytes = tlsf.malloc(50);
+//     const auto allocatedBytes               = tlsf.malloc(byteSize);
 //
 //     const auto oldUsage                      = tlsf.getTelemetry().getUsedSize();
 //     const auto oldMinUsage                   = tlsf.getTelemetry().getMinUsage();
@@ -771,8 +773,8 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     constexpr auto byteDifference = 100;
 //     constexpr auto newByteSize    = byteSize + byteDifference;
 //
-//     const auto allocatedBytes               = tlsf.allocBytes(byteSize);
-//     [[maybe_unused]] const auto unusedBytes = tlsf.allocBytes(50);
+//     const auto allocatedBytes               = tlsf.malloc(byteSize);
+//     [[maybe_unused]] const auto unusedBytes = tlsf.malloc(50);
 //
 //     const auto oldUsage    = tlsf.getTelemetry().getUsedSize();
 //     const auto oldMinUsage = tlsf.getTelemetry().getMinUsage();
@@ -923,18 +925,18 @@ namespace pmm
 
 
     // /**
-    //  * @test Verify that when allocation buffer using allocBytes, prevOffset is
+    //  * @test Verify that when allocation buffer using malloc, prevOffset is
     //  *       moved by relative to the allocated object's size.
     //  */
-    // TEST_F(ManagedTLSFTests, AllocBytes_MovesPrevOffset)
+    // TEST_F(ManagedTLSFTests, Malloc_MovesPrevOffset)
     // {
     //     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-    //     static_cast<void>(tlsf.allocBytes(2, 2));
+    //     static_cast<void>(tlsf.malloc(2, 2));
     //
     //     // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
     //     constexpr auto alignment           = 128;
     //     constexpr auto bufferSize          = 64;
-    //     [[maybe_unused]] const auto buffer = tlsf.allocBytes(bufferSize, alignment);
+    //     [[maybe_unused]] const auto buffer = tlsf.malloc(bufferSize, alignment);
     //
     //     EXPECT_EQ(bufferSize, tlsf._offset - tlsf._prevOffset);
     // }
@@ -947,7 +949,7 @@ namespace pmm
     // TEST_F(ManagedTLSFTests, Alloc_MovesPrevOffset)
     // {
     //     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-    //     static_cast<void>(tlsf.allocBytes(2, 2));
+    //     static_cast<void>(tlsf.malloc(2, 2));
     //
     //     // For testing using 128 byte alignment instead of the object's 16-byte natural alignment
     //     [[maybe_unused]] const auto vec = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
@@ -956,9 +958,9 @@ namespace pmm
     // }
     //
     //
-    // TEST_F(ManagedTLSFTests, AllocBytes_UpdatesTelemetryPadding)
+    // TEST_F(ManagedTLSFTests, Malloc_UpdatesTelemetryPadding)
     // {
-    //     const auto buffer          = tlsf.allocBytes(128, 128);
+    //     const auto buffer          = tlsf.malloc(128, 128);
     //     const auto expectedPadding = reinterpret_cast<uintptr_t>(buffer) - reinterpret_cast<uintptr_t>(tlsf._buffer);
     //
     //     EXPECT_EQ(expectedPadding, tlsf.getTelemetry().getTotalPadding());
@@ -987,8 +989,8 @@ namespace pmm
     //
     // TEST_F(ManagedTLSFTests, Clear_ResetsOffsetToZero)
     // {
-    //     [[maybe_unused]] const auto chunkOne = tlsf.allocBytes(128);
-    //     [[maybe_unused]] const auto chunkTwo = tlsf.allocBytes(128);
+    //     [[maybe_unused]] const auto chunkOne = tlsf.malloc(128);
+    //     [[maybe_unused]] const auto chunkTwo = tlsf.malloc(128);
     //
     //     // Initially expect offset and prevOffset are not zero
     //     EXPECT_NE(0, tlsf._offset);
@@ -1008,9 +1010,9 @@ namespace pmm
     //     constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
     //
     //     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-    //     static_cast<void>(tlsf.allocBytes(byte1));
-    //     static_cast<void>(tlsf.allocBytes(byte2));
-    //     static_cast<void>(tlsf.allocBytes(byte3));
+    //     static_cast<void>(tlsf.malloc(byte1));
+    //     static_cast<void>(tlsf.malloc(byte2));
+    //     static_cast<void>(tlsf.malloc(byte3));
     //
     //     constexpr std::size_t expectedMinUsage  = byte1;
     //     constexpr std::size_t expectedPeakUsage = byte3;
@@ -1029,8 +1031,8 @@ namespace pmm
     //     constexpr auto byteSize    = 128;
     //     constexpr auto newByteSize = byteSize * 2;
     //
-    //     [[maybe_unused]] const auto firstByteChunk = tlsf.allocBytes(byteSize);
-    //     auto secondByteChunk                       = tlsf.allocBytes(byteSize);
+    //     [[maybe_unused]] const auto firstByteChunk = tlsf.malloc(byteSize);
+    //     auto secondByteChunk                       = tlsf.malloc(byteSize);
     //     const auto offsetBeforeResize              = tlsf._offset;
     //
     //     [[maybe_unused]] const auto data = tlsf.resize(secondByteChunk, byteSize, newByteSize, alignof(void*));
@@ -1045,8 +1047,8 @@ namespace pmm
     //     constexpr auto byteSize    = 128;
     //     constexpr auto newByteSize = byteSize * 2;
     //
-    //     [[maybe_unused]] const auto firstByteChunk = tlsf.allocBytes(byteSize);
-    //     const auto secondByteChunk                 = tlsf.allocBytes(byteSize);
+    //     [[maybe_unused]] const auto firstByteChunk = tlsf.malloc(byteSize);
+    //     const auto secondByteChunk                 = tlsf.malloc(byteSize);
     //     const auto offsetBeforeResize              = tlsf._offset;
     //     const auto expectedOffset                  = offsetBeforeResize + (newByteSize - byteSize);
     //

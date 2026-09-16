@@ -136,9 +136,9 @@ namespace pmm
         /// SL bucket.
         static constexpr size_t L = 6;
 
-        static constexpr size_t FL_SIZE              = sizeof(Bitmask_t); // 64-bytes
-        static constexpr size_t SL_SIZE              = 1 << L;            // 2^L = 64 slots per FL
-        static constexpr size_t SPLIT_SIZE_THRESHOLD = 1ULL << FL_OFFSET; // 64-bytes
+        static constexpr size_t FL_SIZE              = sizeof(Bitmask_t) * 8; // 64-bytes
+        static constexpr size_t SL_SIZE              = 1 << L;                // 2^L = 64 slots per FL
+        static constexpr size_t SPLIT_SIZE_THRESHOLD = 1ULL << FL_OFFSET;     // 64-bytes
 
 
         /**
@@ -193,7 +193,7 @@ namespace pmm
          *
          * @warning This will delete any buffers held by the allocator on the left hand side of the assingment.
          *
-         * @param[in,out] tlsf The TLSF allocator to move into this object.
+         * @param[in,out] tlsf The TLSF allocataor to move into this object.
          *
          * @return The current TLSF allocator instance.
          */
@@ -243,14 +243,14 @@ namespace pmm
          * @param alignment The alignment of the memory block.
          *                  Default: 8-bytes (sizeof(void*) on a 64-bit machine).
          */
-        constexpr void* alloc(size_t size, size_t alignment) noexcept;
+        constexpr void* malloc(size_t size, size_t alignment = sizeof(void*)) noexcept;
 
         /**
          * @brief Free a memory block.
          *
          * @param[in] block The block to free.
          */
-        constexpr void free(void* block) noexcept;
+        constexpr void mfree(void* block) noexcept;
 
 
     private:
@@ -259,7 +259,7 @@ namespace pmm
         Bitmask_t _flBitmap;                      /// First level bitmap
         std::array<Bitmask_t, FL_SIZE> _slBitmap; /// Second Level Bitmaps
 
-        TLSFFreeNode* freeList[FL_SIZE][SL_SIZE]; /// Free-list
+        TLSFFreeNode* _freeList[FL_SIZE][SL_SIZE]; /// Free-list
 
         /// Structure used for exchanging bit mask indices internally.
         struct BitmapIndices

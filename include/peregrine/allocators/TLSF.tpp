@@ -20,7 +20,7 @@ namespace pmm
                                                                             const size_t memorySize) noexcept
         requires std::same_as<MemStrategy, UnmanagedMemory>
         : _buffer{ buffer }, _size{ memorySize }, _usedSize{ 0 }, _flBitmap{ 0 }, _slBitmap{}
-    {}
+    { insertBlock(_buffer, _size); }
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
@@ -30,9 +30,11 @@ namespace pmm
           _size{ allocatorSize },
           _usedSize{ 0 },
           _flBitmap{ 0 },
-          _slBitmap{}
-    {}
+          _slBitmap{},
+          _freeList{}
+    { insertBlock(_buffer, _size); }
 
+    // TODO: Update move ctor to move bitmaps
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
     PMM_INLINE constexpr TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::TLSF(TLSF&& tlsf) noexcept
@@ -94,9 +96,10 @@ namespace pmm
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr void* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::alloc(const size_t size,
-                                                                                   const size_t alignment) noexcept
+    PMM_INLINE constexpr void* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::malloc(const size_t size,
+                                                                                    const size_t alignment) noexcept
     {
+        PMM_ASSERT_MSG(std::has_single_bit(alignment), "Alignment must be a power of 2");
         // [Header][Padding][OffsetToHeader][Ptr* returned to user]
         // The offset to header acts as a way for bidirectional access to header. From the base address,
         // as well as from the pointer handed over to the user.
@@ -135,7 +138,7 @@ namespace pmm
         // We need to calculate padding based on the address that is offset by the size of header and header offset.
         // Calculation representation: [Header][HeaderOffset][Padding][Aligned Memory Ptr]
         // But padding will be placed in the middle in real usage.
-        auto basePtr       = static_cast<uint8_t*>(freeBlockHeader);
+        auto basePtr       = reinterpret_cast<uint8_t*>(freeBlockHeader);
         const auto padding = (reinterpret_cast<uintptr_t>(basePtr) + metadataSize) & (alignment - 1);
         // [Header][Padding][HeaderOffset][Aligned Memory Ptr(Returned to user)]
         freeBlockHeader->markUsed();
@@ -151,22 +154,22 @@ namespace pmm
         // If there is more free space than split threshold, split and store that memory
         if (sizeLeft >= SPLIT_SIZE_THRESHOLD)
         {
-            auto remainingBlock = static_cast<uint8_t*>(freeBlock) + usedSize;
+            auto remainingBlock = reinterpret_cast<uint8_t*>(freeBlock) + usedSize;
             insertBlock(remainingBlock, sizeLeft);
         }
 
         // Add the offset after adding the padding
         const auto offsetAmount = sizeof(Header) + padding;
-        HeaderOffset_t* offset  = static_cast<uint8_t*>(freeBlock) + offsetAmount;
-        *offset                 = offsetAmount;
+        const auto offset = reinterpret_cast<HeaderOffset_t*>(reinterpret_cast<uint8_t*>(freeBlock) + offsetAmount);
+        *offset           = offsetAmount;
 
-        const auto memoryStart = static_cast<uint8_t*>(freeBlock) + metadataSize + padding;
+        const auto memoryStart = reinterpret_cast<uint8_t*>(freeBlock) + metadataSize + padding;
         return memoryStart;
     }
 
 
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr void TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::free(void* block) noexcept
+    PMM_INLINE constexpr void TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mfree(void* block) noexcept
     {
         block            = mergePrevious(block);
         block            = mergeNext(block);
@@ -232,6 +235,8 @@ namespace pmm
         // if the value is not 1024(1025->1040, 1026->1041...)
         // which when divided by block width 1041/16 yields 65 which when subtracted from our bucket size(2^6 or 64)
         // gets us 1, which is the [1040, 1056) sl bucket.
+        // Round block size to be at least 2^L to prevent shifting math errors.
+        blockSize = std::max(1ULL << L, blockSize);
         blockSize = blockSize + (1ULL << (utils::fls(blockSize) - L)) - 1;
         // Since after rounding its pretty much the same as mapping insert.
         return mappingInsert(blockSize);
@@ -278,11 +283,12 @@ namespace pmm
             nonEmptyFL < FL_SIZE && nonEmptySL < SL_SIZE,
             std::format(
                 "FL and/or SL indices out-of-range.\nProvided\n\tFL: {} and SL: {}.\nDeduced\n\tFL: {} and SL: {}.\n",
-                index.flIndex, index.slIndex, nonEmptyFL, nonEmptySL));
+                index.flIndex, index.slIndex, nonEmptyFL, nonEmptySL)
+                .c_str());
 
         index.flIndex = nonEmptyFL;
         index.slIndex = nonEmptySL;
-        return freeList[nonEmptyFL][nonEmptySL];
+        return _freeList[nonEmptyFL][nonEmptySL];
     }
 
 
@@ -290,7 +296,7 @@ namespace pmm
     PMM_INLINE constexpr void TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::insertBlock(uint8_t* block,
                                                                                         const size_t blockSize) noexcept
     {
-        /// Since the function is internal this check is necessary but kept for safety.
+        /// Since the function is internal this check is unnecessary but kept for safety.
         PMM_ASSERT_MSG(block != nullptr && blockSize > 0, "Cannot insert a zero sized or nullptr block.");
 
         // Get the FL and SL index
@@ -302,14 +308,18 @@ namespace pmm
         // FreeList = [[Header][FreeNode][....] <=> [Header][FreeNode][....]]
         // [FL][SL] = nullptr(START) <- existingNode* -> nullptr(END)
         //            nullptr(START) <- freeNode* <=> existingNode* -> nullptr(END)
-        TLSFFreeNode* freeNode     = static_cast<TLSFFreeNode*>(block + sizeof(Header));
-        TLSFFreeNode* existingNode = freeList[index.flIndex][index.slIndex];
+        TLSFFreeNode* freeNode     = reinterpret_cast<TLSFFreeNode*>(block + sizeof(Header));
+        TLSFFreeNode* existingNode = _freeList[index.flIndex][index.slIndex];
         freeNode->next             = existingNode;
         if (existingNode != nullptr)
         {
             existingNode->prev = freeNode;
         }
-        freeList[index.flIndex][index.slIndex] = freeNode;
+        _freeList[index.flIndex][index.slIndex] = freeNode;
+
+        // Update the FL and SL bitmasks
+        _flBitmap |= 1ULL << index.flIndex;
+        _slBitmap[index.flIndex] |= 1ULL << index.slIndex;
 
         // Update the Header of the free node
         Header* header = getHeader(freeNode);
@@ -323,7 +333,7 @@ namespace pmm
         MemStrategy, TelPolicy, Safe, MTPolicy>::getHeader(TLSFFreeNode* node) noexcept
     {
         // Note: Header is placed below the free node.
-        return static_cast<Header*>(static_cast<uint8_t*>(node) - sizeof(TLSFFreeNode));
+        return reinterpret_cast<Header*>(reinterpret_cast<uint8_t*>(node) - sizeof(TLSFFreeNode));
     }
 
 
@@ -337,13 +347,13 @@ namespace pmm
         // |             |            |                              |
         // start       offset   block - headerOffset               block
         // <--- PREV BLK SIZE --->   <------------ CURRENT BLK SIZE ------------>
-        const HeaderOffset_t* headerOffset = static_cast<HeaderOffset_t*>(block - sizeof(HeaderOffset_t));
+        const HeaderOffset_t* headerOffset = reinterpret_cast<HeaderOffset_t*>(block - sizeof(HeaderOffset_t));
         const Header* header               = static_cast<Header*>(block - *headerOffset);
         size_t totalSize                   = header->getSize(); // Get size gives the entire block size.
         if (header->isPrevFree())
         {
             // Get the previous block's size from it's footer.
-            const size_t* prevBlockSize = static_cast<size_t*>(block - (*headerOffset + sizeof(size_t)));
+            const size_t* prevBlockSize = reinterpret_cast<size_t*>(block - (*headerOffset + sizeof(size_t)));
 
             // Get the start of previous header.
             // The previous block ends at this blocks header so subtracting that from previous block's size
@@ -361,7 +371,7 @@ namespace pmm
             newHeader->markFree();
 
             // Write the footer with block size
-            const auto footer = static_cast<size_t*>(block + totalSize - sizeof(size_t));
+            const auto footer = reinterpret_cast<size_t*>(block + totalSize - sizeof(size_t));
             *footer           = totalSize;
 
             // return the start address
@@ -416,15 +426,16 @@ namespace pmm
         // If there is no previous node then this could mean either the current block is the first node
         // or its the only node so, reassign freelist head to the block next node.
         {
-            freeList[index.flIndex][index.slIndex] = block->next;
+            _freeList[index.flIndex][index.slIndex] = block->next;
         }
 
         // Reset the sl flag if sl bucket is empty
         const auto newSL = _slBitmap[index.flIndex] & ~(1ULL << index.slIndex);
         // Ternary will get translated into a single cmovcc instruction so no branching.
-        _slBitmap[index.flIndex] = freeList[index.flIndex][index.slIndex] == nullptr ? newSL : _slBitmap[index.flIndex];
-        const auto newFL         = _flBitmap & ~(1ULL << index.flIndex);
-        _flBitmap                = _slBitmap[index.flIndex] == 0 ? newFL : _flBitmap;
+        _slBitmap[index.flIndex] =
+            _freeList[index.flIndex][index.slIndex] == nullptr ? newSL : _slBitmap[index.flIndex];
+        const auto newFL = _flBitmap & ~(1ULL << index.flIndex);
+        _flBitmap        = _slBitmap[index.flIndex] == 0 ? newFL : _flBitmap;
     }
 
 
