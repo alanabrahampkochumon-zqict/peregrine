@@ -241,8 +241,6 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
  */
 TEST_F(ManagedTLSFTests, Malloc_Returns8ByteAlignedAddressByDefault)
 {
-
-    [[maybe_unused]] pmm::TLSF<> tlsf2{ tlsfSize };
     // Misalign bytes to 2
     [[maybe_unused]] void* misalignedBytes = tlsf.malloc(2, 2);
 
@@ -923,6 +921,12 @@ namespace pmm
         EXPECT_EQ(expectedSl, sl);
     }
 
+
+    TEST_F(ManagedTLSFTests, Malloc_NullsOutInitialBitmask)
+    {
+        static_cast<void>(tlsf.malloc(32));
+
+    }
 
     // /**
     //  * @test Verify that when allocation buffer using malloc, prevOffset is

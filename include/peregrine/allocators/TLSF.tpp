@@ -134,12 +134,16 @@ namespace pmm
         // NOTE: Used size is the entire size of the block including padding and metadata.
         Header* freeBlockHeader = getHeader(freeBlock);
         const auto freeSize     = freeBlockHeader->getSize();
-        // Remove and insert the appropriate header for and add calculate padding for the block.
+        // Remove and insert the appropriate header and add calculate padding for the block.
         // We need to calculate padding based on the address that is offset by the size of header and header offset.
         // Calculation representation: [Header][HeaderOffset][Padding][Aligned Memory Ptr]
         // But padding will be placed in the middle in real usage.
-        auto basePtr       = reinterpret_cast<uint8_t*>(freeBlockHeader);
-        const auto padding = (reinterpret_cast<uintptr_t>(basePtr) + metadataSize) & (alignment - 1);
+        // [Header][Offset][Addr Start]
+        // |
+        // basePtr(points to the start of header)
+        auto basePtr               = reinterpret_cast<uint8_t*>(freeBlockHeader);
+        const auto paddingOverflow = (reinterpret_cast<uintptr_t>(basePtr) + metadataSize) & (alignment - 1);
+        const auto padding         = alignment - paddingOverflow;
         // [Header][Padding][HeaderOffset][Aligned Memory Ptr(Returned to user)]
         freeBlockHeader->markUsed();
         freeBlockHeader->padding = padding;
@@ -160,10 +164,11 @@ namespace pmm
 
         // Add the offset after adding the padding
         const auto offsetAmount = sizeof(Header) + padding;
-        const auto offset = reinterpret_cast<HeaderOffset_t*>(reinterpret_cast<uint8_t*>(freeBlock) + offsetAmount);
-        *offset           = offsetAmount;
-
-        const auto memoryStart = reinterpret_cast<uint8_t*>(freeBlock) + metadataSize + padding;
+        const auto offset       = reinterpret_cast<HeaderOffset_t*>(basePtr + offsetAmount);
+        *offset                 = offsetAmount;
+        // We only need to offset the memory by the size of header offset and padding as header is prepopulated before
+        // the "freeBlock".
+        const auto memoryStart = basePtr + metadataSize + padding;
         return memoryStart;
     }
 
