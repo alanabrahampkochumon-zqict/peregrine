@@ -345,6 +345,82 @@ TEST_F(ManagedTLSFTests, Malloc_HeaderIsPreservedInAddressBeforeGivenAddress)
     EXPECT_EQ(expectedPadding, header->padding);
 }
 
+/// @test Verify that free marks the internal buffer as free.
+/// @note While we can't directly test this, we can allocate a near full size
+///       allocation and requesting a larger allocation after free shouldn't trigger
+///       an out-of-memory exception.
+TEST_F(ManagedTLSFTests, Free_FreeTheBuffer)
+{
+    // TODO: This test can be used for checking if allocations smaller than min chunk size
+    //       cleaves the memory.
+    // Leeway to ensure the allocation passes.
+    constexpr auto leeway = 64;
+    const auto firstMem   = tlsf.malloc(tlsfSize - leeway);
+    tlsf.mfree(firstMem);
+    // If the allocation fails this will trigger an exception in DEBUG
+    // and its UB in Release Mode(without SafeMode)
+    const auto secondMem = tlsf.malloc(tlsfSize - leeway);
+    EXPECT_NE(nullptr, secondMem);
+}
+
+/// @test Verify that free perform right only coalesce (latest allocations are freed in order).
+///       AllocA, AllocB, AllocC, FreeB, FreeA
+TEST_F(ManagedTLSFTests, Free_PerformsRightOnlyCoalesce)
+{
+    // Total Memory size is 2KB so this would around half the memory or more.
+    constexpr auto firstAllocSize{ 512 }, secondAllocSize{ 128 }, thirdAllocSize{ 255 };
+    const auto firstAlloc                  = tlsf.malloc(firstAllocSize);
+    const auto secondAlloc                 = tlsf.malloc(secondAllocSize);
+    [[maybe_unused]] const auto thirdAlloc = tlsf.malloc(thirdAllocSize);
+
+    tlsf.mfree(secondAlloc);
+    tlsf.mfree(firstAlloc);
+
+    // Here 128 is leeway
+    const auto fourthAlloc = tlsf.malloc(tlsfSize - (thirdAllocSize + 128));
+    EXPECT_NE(nullptr, fourthAlloc);
+}
+
+
+/// @test Verify that free perform left-only coalesce (first allocations are freed in order).
+///       AllocA, AllocB, AllocC, FreeA, FreeB.
+TEST_F(ManagedTLSFTests, Free_PerformsLeftOnlyCoalesce)
+{
+    // Total Memory size is 2KB so this would around half the memory or more.
+    constexpr auto firstAllocSize{ 512 }, secondAllocSize{ 128 }, thirdAllocSize{ 255 };
+    const auto firstAlloc                  = tlsf.malloc(firstAllocSize);
+    const auto secondAlloc                 = tlsf.malloc(secondAllocSize);
+    [[maybe_unused]] const auto thirdAlloc = tlsf.malloc(thirdAllocSize);
+
+    tlsf.mfree(firstAlloc);
+    tlsf.mfree(secondAlloc);
+
+    // Here 128 is leeway
+    const auto fourthAlloc = tlsf.malloc(tlsfSize - (thirdAllocSize + 128));
+    EXPECT_NE(nullptr, fourthAlloc);
+}
+
+
+/// @test Verify that free perform right only coalesce (allocations freed in a mixed order).
+///       AllocA, AllocB, AllocC, FreeC, FreeA, FreeB.
+TEST_F(ManagedTLSFTests, Free_PerformsMixedCoalesce)
+{
+    // Total Memory size is 2KB so this would around half the memory or more.
+    constexpr auto firstAllocSize{ 512 }, secondAllocSize{ 128 }, thirdAllocSize{ 255 };
+    const auto firstAlloc  = tlsf.malloc(firstAllocSize);
+    const auto secondAlloc = tlsf.malloc(secondAllocSize);
+    const auto thirdAlloc  = tlsf.malloc(thirdAllocSize);
+
+    tlsf.mfree(thirdAlloc);
+    tlsf.mfree(firstAlloc);
+    tlsf.mfree(secondAlloc);
+
+    // Here 128 is leeway
+    const auto fourthAlloc = tlsf.malloc(tlsfSize - 64);
+    EXPECT_NE(nullptr, fourthAlloc);
+}
+
+
 // /**************************************
 //  *              ALLOC                 *
 //  **************************************/

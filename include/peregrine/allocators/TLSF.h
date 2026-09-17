@@ -122,8 +122,8 @@ namespace pmm
         /// same FL_SL bitmask.
         struct TLSFFreeNode
         {
-            TLSFFreeNode* prev;
-            TLSFFreeNode* next;
+            TLSFFreeNode* prev{ nullptr };
+            TLSFFreeNode* next{ nullptr };
         };
 
         using Bitmask_t      = uint64_t; /// Data type used for bitmasks

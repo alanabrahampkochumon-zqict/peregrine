@@ -158,10 +158,11 @@ namespace pmm
         // If there is more free space than split threshold, split and store that memory
         if (sizeLeft >= SPLIT_SIZE_THRESHOLD)
         {
-            auto remainingBlock = reinterpret_cast<uint8_t*>(freeBlock) + usedSize;
-            insertBlock(remainingBlock, sizeLeft);
+            /// The remaining block starts where the allocated block ends
+            auto remainingBlockStart = basePtr + usedSize;
+            insertBlock(remainingBlockStart, sizeLeft);
         }
-
+        // TODO: If the padding can store the header, then do so
         //                Offset
         //                  ↓
         // [Header][Padding][OffsetAmount][Address Returned to user]
@@ -190,21 +191,24 @@ namespace pmm
         // since all mergePrevious, mergeNext, and mappingInsert expects the block to start at Header
         const HeaderOffset_t* headerOffset =
             reinterpret_cast<HeaderOffset_t*>(static_cast<uint8_t*>(block) - sizeof(HeaderOffset_t));
-        block            = static_cast<uint8_t*>(block) - *headerOffset;
-        block            = mergePrevious(block);
-        block            = mergeNext(block);
-        auto header      = static_cast<Header*>(block);
-        const auto index = mappingInsert(header->getSize());
+        block       = static_cast<uint8_t*>(block) - *headerOffset;
+        block       = mergePrevious(static_cast<uint8_t*>(block));
+        block       = mergeNext(static_cast<uint8_t*>(block));
+        auto header = static_cast<Header*>(block);
+        // const auto index = mappingInsert(header->getSize()); // TODO: REMOVE
 
         // TODO: Insert block needs to be made more granular since we are doing repeated work.
-        insertBlock(block, header->getSize());
+        insertBlock(static_cast<uint8_t*>(block), header->getSize());
 
         // Mark the next block's prevFree.
         // If this is not the final block, then we can mark the next block's prevFreeBlock as true.
-        if (reinterpret_cast<uintptr_t>(block) + header->getSize() <
-            reinterpret_cast<uintptr_t>(_buffer) + _size + sizeof(Header))
+        // The currently freed block is considered non-final if and only if the current block with its size leaves
+        // enough space for at least a header.
+        // TODO: Check if its much safe to use the SPLIT_SIZE_THRESHOLD as the invalidation boundary.
+        if (reinterpret_cast<uintptr_t>(block) + header->getSize() + sizeof(Header) <
+            reinterpret_cast<uintptr_t>(_buffer) + _size)
         {
-            auto nextHeader = static_cast<Header*>(block + header->getSize());
+            auto nextHeader = reinterpret_cast<Header*>(static_cast<uint8_t*>(block) + header->getSize());
             nextHeader->markPrevFree();
         }
     }
@@ -330,6 +334,7 @@ namespace pmm
         //            nullptr(START) <- freeNode* <=> existingNode* -> nullptr(END)
         TLSFFreeNode* freeNode     = reinterpret_cast<TLSFFreeNode*>(block + sizeof(Header));
         TLSFFreeNode* existingNode = _freeList[index.flIndex][index.slIndex];
+        freeNode->prev             = nullptr; // Can have garbage values so we need to assign nullptr.
         freeNode->next             = existingNode;
         if (existingNode != nullptr)
         {
@@ -362,7 +367,7 @@ namespace pmm
     constexpr uint8_t* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mergePrevious(uint8_t* block) noexcept
     {
 
-        const Header* header = static_cast<Header*>(block);
+        const Header* header = reinterpret_cast<Header*>(block);
         size_t totalSize     = header->getSize(); // Get size gives the entire block size.
         if (header->isPrevFree())
         {
@@ -372,15 +377,15 @@ namespace pmm
             // Get the start of previous header.
             // The previous block ends at this blocks header so subtracting that from previous block's size
             // gives the starting address of
-            uint8_t* startAddress = static_cast<uint8_t*>(header) - *prevBlockSize;
+            uint8_t* prevStartAddress = block - *prevBlockSize;
 
             // Unlink next node
             // [Header][FreeNode]
-            TLSFFreeNode* nextFreeNode = static_cast<TLSFFreeNode*>(startAddress + sizeof(Header));
-            unlinkNode(nextFreeNode);
+            TLSFFreeNode* prevFreeNode = reinterpret_cast<TLSFFreeNode*>(prevStartAddress + sizeof(Header));
+            unlinkNode(prevFreeNode);
 
             // Write the new header
-            Header* newHeader = static_cast<Header*>(startAddress);
+            Header* newHeader = reinterpret_cast<Header*>(prevStartAddress);
             newHeader->setSize(totalSize);
             newHeader->markFree();
 
@@ -389,7 +394,7 @@ namespace pmm
             *footer           = totalSize;
 
             // return the start address
-            return startAddress;
+            return prevStartAddress;
         }
         else
         {
@@ -403,14 +408,20 @@ namespace pmm
     {
         // To merge with the next block we need to check if the next block is free
         // Access the next block's header
-        Header* currentHeader = static_cast<Header*>(block);
-        Header* nextHeader    = static_cast<Header*>(block + currentHeader->getSize());
+        Header* currentHeader = reinterpret_cast<Header*>(block);
+        // Bounds checking to ensure that we are not trying to access invalid memory in beyond
+        // our application's addressable space.
+        // We can't also the the boundary byte.
+        Header* nextHeader = block + currentHeader->getSize() >= _buffer + _size
+            ? nullptr
+            : reinterpret_cast<Header*>(block + currentHeader->getSize());
         // Coalesce current and next blocks if next block is free.
-        if (nextHeader->isFree())
+        if (nextHeader != nullptr && nextHeader->isFree())
         {
             // Unlink next node
             // [Header][FreeNode]
-            TLSFFreeNode* nextFreeNode = static_cast<TLSFFreeNode*>(static_cast<uint8_t*>(nextHeader) + sizeof(Header));
+            TLSFFreeNode* nextFreeNode =
+                reinterpret_cast<TLSFFreeNode*>(reinterpret_cast<uint8_t*>(nextHeader) + sizeof(Header));
             unlinkNode(nextFreeNode);
 
             // Unify the header
