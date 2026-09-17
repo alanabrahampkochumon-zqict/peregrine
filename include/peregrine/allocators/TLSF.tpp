@@ -141,9 +141,9 @@ namespace pmm
         // [Header][Offset][Addr Start]
         // |
         // basePtr(points to the start of header)
-        auto basePtr               = reinterpret_cast<uint8_t*>(freeBlockHeader);
-        const auto paddingOverflow = (reinterpret_cast<uintptr_t>(basePtr) + metadataSize) & (alignment - 1);
-        const auto padding         = alignment - paddingOverflow;
+        auto basePtr            = reinterpret_cast<uint8_t*>(freeBlockHeader);
+        const auto misalignment = (reinterpret_cast<uintptr_t>(basePtr) + metadataSize) & (alignment - 1);
+        const auto padding      = alignment - misalignment;
         // [Header][Padding][HeaderOffset][Aligned Memory Ptr(Returned to user)]
         freeBlockHeader->markUsed();
         freeBlockHeader->padding = padding;
@@ -162,9 +162,13 @@ namespace pmm
             insertBlock(remainingBlock, sizeLeft);
         }
 
+        //                Offset
+        //                  ↓
+        // [Header][Padding][OffsetAmount][Address Returned to user]
+        // <------- OFFSET AMOUNT ------->
         // Add the offset after adding the padding
-        const auto offsetAmount = sizeof(Header) + padding;
-        const auto offset       = reinterpret_cast<HeaderOffset_t*>(basePtr + offsetAmount);
+        const auto offsetAmount = metadataSize + padding;
+        const auto offset       = reinterpret_cast<HeaderOffset_t*>(basePtr + sizeof(Header) + padding);
         *offset                 = offsetAmount;
         // We only need to offset the memory by the size of header offset and padding as header is prepopulated before
         // the "freeBlock".
@@ -176,6 +180,17 @@ namespace pmm
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
     PMM_INLINE constexpr void TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mfree(void* block) noexcept
     {
+        // prev_offset := sizeof(block) - padding(block) - sizeof(size_t)
+        // [[Header][...][size_t]] + [[Header][padding][HeaderOffset][block....]] =COALESCED=> [[Header][....]]
+        // ^             ^            ^                              ^
+        // |             |            |                              |
+        // start       offset   block - headerOffset               block
+        // <--- PREV BLK SIZE --->   <------------ CURRENT BLK SIZE ------------>
+        // We need to offset the block to the header's base which is the real real starting address of the block.
+        // since all mergePrevious, mergeNext, and mappingInsert expects the block to start at Header
+        const HeaderOffset_t* headerOffset =
+            reinterpret_cast<HeaderOffset_t*>(static_cast<uint8_t*>(block) - sizeof(HeaderOffset_t));
+        block            = static_cast<uint8_t*>(block) - *headerOffset;
         block            = mergePrevious(block);
         block            = mergeNext(block);
         auto header      = static_cast<Header*>(block);
@@ -346,19 +361,13 @@ namespace pmm
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
     constexpr uint8_t* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mergePrevious(uint8_t* block) noexcept
     {
-        // prev_offset := sizeof(block) - padding(block) - sizeof(size_t)
-        // [[Header][...][size_t]] + [[Header][padding][HeaderOffset][block....]] =COALESCED=> [[Header][....]]
-        // ^             ^            ^                              ^
-        // |             |            |                              |
-        // start       offset   block - headerOffset               block
-        // <--- PREV BLK SIZE --->   <------------ CURRENT BLK SIZE ------------>
-        const HeaderOffset_t* headerOffset = reinterpret_cast<HeaderOffset_t*>(block - sizeof(HeaderOffset_t));
-        const Header* header               = static_cast<Header*>(block - *headerOffset);
-        size_t totalSize                   = header->getSize(); // Get size gives the entire block size.
+
+        const Header* header = static_cast<Header*>(block);
+        size_t totalSize     = header->getSize(); // Get size gives the entire block size.
         if (header->isPrevFree())
         {
             // Get the previous block's size from it's footer.
-            const size_t* prevBlockSize = reinterpret_cast<size_t*>(block - (*headerOffset + sizeof(size_t)));
+            const size_t* prevBlockSize = reinterpret_cast<size_t*>(block - sizeof(size_t));
 
             // Get the start of previous header.
             // The previous block ends at this blocks header so subtracting that from previous block's size
@@ -395,7 +404,7 @@ namespace pmm
         // To merge with the next block we need to check if the next block is free
         // Access the next block's header
         Header* currentHeader = static_cast<Header*>(block);
-        Header* nextHeader    = static_cast<Header*>(static_cast<uint8_t*>(block) + currentHeader->getSize());
+        Header* nextHeader    = static_cast<Header*>(block + currentHeader->getSize());
         // Coalesce current and next blocks if next block is free.
         if (nextHeader->isFree())
         {

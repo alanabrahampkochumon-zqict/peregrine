@@ -323,7 +323,28 @@ TEST_F(ManagedTLSFTests, Malloc_SubsequentAllocationDoNotCorruptMemory)
 //     EXPECT_EQ(expectedUsage, tlsf.getTelemetry().getUsedSize());
 // }
 
+// TODO: Add correct header is added when ctor and prior to first allocation
+// TODO: Start from here!
+TEST_F(ManagedTLSFTests, Malloc_HeaderIsPreservedInAddressBeforeGivenAddress)
+{
+    // NOTE: This tests works on the premise that the allocated memory follows a
+    // [Header][Padding][OffsetToHeader][Ptr given to user] pattern
+    // and the OffsetToHeader is not itself corrupted.
+    constexpr auto allocSize = 64;
+    auto bytes               = static_cast<uint8_t*>(tlsf.malloc(allocSize));
+    using Offset_t           = pmm::TLSF<>::HeaderOffset_t;
+    using Header_t           = pmm::TLSF<>::Header;
 
+    const auto offset = reinterpret_cast<Offset_t*>(bytes - sizeof(Offset_t));
+    const auto header = reinterpret_cast<Header_t*>(bytes - *offset);
+
+    const auto expectedSize = *offset + allocSize;
+    // Padding equals the size left in the in offset after subtracting size of Header and HeaderOffset
+    const auto expectedPadding = *offset - (sizeof(Offset_t) + sizeof(Header_t));
+
+    EXPECT_EQ(expectedSize, header->getSize());
+    EXPECT_EQ(expectedPadding, header->padding);
+}
 
 // /**************************************
 //  *              ALLOC                 *
