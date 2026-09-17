@@ -366,6 +366,7 @@ namespace pmm
         FRIEND_TEST(ManagedTLSFTests, Ctor_SingleAllocation_FLBitmapIsSingleBit);
         FRIEND_TEST(ManagedTLSFTests, Ctor_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry);
         FRIEND_TEST(ManagedTLSFTests, Ctor_SingleAllocation_OnlySingleFreeListIsPopulated);
+        FRIEND_TEST(ManagedTLSFTests, Ctor_WritesAppropriateHeaderToBuffer);
         FRIEND_TEST(ManagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer);
         FRIEND_TEST(ManagedTLSFTests, MoveCtor_MovesBufferIntoNewObject);
         FRIEND_TEST(ManagedTLSFTests, MoveAssign_ClearsMovedTLSF);
@@ -378,6 +379,7 @@ namespace pmm
         FRIEND_TEST(ManagedTLSFTests, Malloc_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry);
         FRIEND_TEST(ManagedTLSFTests, Malloc_SingleAllocation_OnlySingleFreeListIsPopulated);
         FRIEND_TEST(ManagedTLSFTests, Malloc_SingleAllocation_FreeListIsUpdatedAfterAllocation);
+        FRIEND_TEST(ManagedTLSFTests, Malloc_WritesAppropriateHeaderToBuffer_AfterFirstAllocation);
 
         FRIEND_TEST(ManagedTLSFTests, Alloc_UpdatesTelemetryPadding);
         FRIEND_TEST(ManagedTLSFTests, AllocV_UpdatesTelemetryPadding);

@@ -323,8 +323,7 @@ TEST_F(ManagedTLSFTests, Malloc_SubsequentAllocationDoNotCorruptMemory)
 //     EXPECT_EQ(expectedUsage, tlsf.getTelemetry().getUsedSize());
 // }
 
-// TODO: Add correct header is added when ctor and prior to first allocation
-// TODO: Start from here!
+
 TEST_F(ManagedTLSFTests, Malloc_HeaderIsPreservedInAddressBeforeGivenAddress)
 {
     // NOTE: This tests works on the premise that the allocated memory follows a
@@ -874,6 +873,30 @@ namespace pmm
         EXPECT_EQ(1, nonNullSLCount);
     }
 
+    TEST_F(ManagedTLSFTests, Ctor_WritesAppropriateHeaderToBuffer)
+    {
+        TLSF<>::TLSFFreeNode* freeNode;
+        // While we can directly query the buffer(_buffer member variable), it is better to iterate and get the buffer
+        // since a) there is only one TLSFFreeNode that is non-null and b) _buffer internal variable may get removed
+        // due to its redundancy.
+        for (const auto& flList : tlsf._freeList)
+        {
+            for (auto& slList : flList)
+            {
+                if (slList != nullptr)
+                {
+                    freeNode = slList;
+                }
+            }
+        }
+
+        ASSERT_NE(nullptr, freeNode);
+        const auto header = TLSF<>::getHeader(freeNode);
+
+        EXPECT_EQ(tlsfSize, header->getSize());
+        EXPECT_TRUE(header->isFree());
+    }
+
 
     TEST_F(ManagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer)
     {
@@ -1111,6 +1134,42 @@ namespace pmm
     }
 
 
+    /// @test Verify that malloc write cleaves the remaining buffer and writes appropriate
+    ///       header after allocation.
+    TEST_F(ManagedTLSFTests, Malloc_WritesAppropriateHeaderToBuffer_AfterFirstAllocation)
+    {
+        using Header_t             = TLSF<>::Header;
+        using Offset_t             = TLSF<>::HeaderOffset_t;
+        constexpr size_t allocSize = 128;
+
+        // Allocate some buffer and query the header for its size by walking backwards
+        // with the memory address
+        const auto bytes  = static_cast<uint8_t*>(tlsf.malloc(allocSize));
+        const auto offset = reinterpret_cast<Offset_t*>(bytes - sizeof(Offset_t));
+        auto allocHeader  = reinterpret_cast<Header_t*>(bytes - *offset);
+
+        // Get the internal free node by iterating the freelist
+        // Invariant: After first allocation there should only be 1 buffer in freelist.
+        TLSF<>::TLSFFreeNode* freeNode;
+        for (const auto& flList : tlsf._freeList)
+        {
+            for (auto& slList : flList)
+            {
+                if (slList != nullptr)
+                {
+                    freeNode = slList;
+                }
+            }
+        }
+
+        ASSERT_NE(nullptr, freeNode);
+        const auto freeHeader = TLSF<>::getHeader(freeNode);
+
+        // Then the size of the header must be totalsize - allocatedSize(this will not be actual size
+        // requested by the user, due to padding and metadata requirements).
+        EXPECT_EQ(tlsfSize - allocHeader->getSize(), freeHeader->getSize());
+        EXPECT_TRUE(freeHeader->isFree());
+    }
 
     // TEST_F(ManagedTLSFTests, Malloc_UpdatesTelemetryPadding)
     // {
