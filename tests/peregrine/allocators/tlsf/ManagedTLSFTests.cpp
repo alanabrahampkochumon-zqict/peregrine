@@ -340,7 +340,6 @@ TEST_F(ManagedTLSFTests, Malloc_HeaderIsPreservedInAddressBeforeGivenAddress)
     const auto expectedSize = *offset + allocSize;
     // Padding equals the size left in the in offset after subtracting size of Header and HeaderOffset
     const auto expectedPadding = *offset - (sizeof(Offset_t) + sizeof(Header_t));
-
     EXPECT_EQ(expectedSize, header->getSize());
     EXPECT_EQ(expectedPadding, header->padding);
 }
@@ -354,7 +353,7 @@ TEST_F(ManagedTLSFTests, Free_FreeTheBuffer)
     // TODO: This test can be used for checking if allocations smaller than min chunk size
     //       cleaves the memory.
     // Leeway to ensure the allocation passes.
-    constexpr auto leeway = 64;
+    constexpr auto leeway = 32;
     const auto firstMem   = tlsf.malloc(tlsfSize - leeway);
     tlsf.mfree(firstMem);
     // If the allocation fails this will trigger an exception in DEBUG
@@ -376,9 +375,15 @@ TEST_F(ManagedTLSFTests, Free_PerformsRightOnlyCoalesce)
     tlsf.mfree(secondAlloc);
     tlsf.mfree(firstAlloc);
 
-    // Here 128 is leeway
-    const auto fourthAlloc = tlsf.malloc(tlsfSize - (thirdAllocSize + 128));
+    // There should be two free blocks since we didn't free the middle block
+    // so, we can allocate a buffer of size firstSize + secondSize and another that has the remainingSize
+    // with leeway.
+    // 128 byte leeway = 32 * 4 (3 allocated and 1 for 4th allocation)
+    // 16(Header) + 4(Offset) + 7(Max misalignment) rounded to 32-bytes.
+    const auto fourthAlloc = tlsf.malloc(tlsfSize - (firstAllocSize + secondAllocSize + thirdAllocSize + 128));
+    const auto fifthAlloc  = tlsf.malloc(firstAllocSize + secondAllocSize - 32);
     EXPECT_NE(nullptr, fourthAlloc);
+    EXPECT_NE(nullptr, fifthAlloc);
 }
 
 
@@ -395,9 +400,15 @@ TEST_F(ManagedTLSFTests, Free_PerformsLeftOnlyCoalesce)
     tlsf.mfree(firstAlloc);
     tlsf.mfree(secondAlloc);
 
-    // Here 128 is leeway
-    const auto fourthAlloc = tlsf.malloc(tlsfSize - (thirdAllocSize + 128));
+    // There should be two free blocks since we didn't free the middle block
+    // so, we can allocate a buffer of size firstSize + secondSize and another that has the remainingSize
+    // with leeway.
+    // 128 byte leeway = 32 * 4 (3 allocated and 1 for 4th allocation)
+    // 16(Header) + 4(Offset) + 7(Max misalignment) rounded to 32-bytes.
+    const auto fourthAlloc = tlsf.malloc(tlsfSize - (firstAllocSize + secondAllocSize + thirdAllocSize + 128));
+    const auto fifthAlloc  = tlsf.malloc(firstAllocSize + secondAllocSize - 32);
     EXPECT_NE(nullptr, fourthAlloc);
+    EXPECT_NE(nullptr, fifthAlloc);
 }
 
 

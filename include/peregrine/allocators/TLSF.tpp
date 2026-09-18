@@ -208,8 +208,14 @@ namespace pmm
         if (reinterpret_cast<uintptr_t>(block) + header->getSize() + sizeof(Header) <
             reinterpret_cast<uintptr_t>(_buffer) + _size)
         {
-            auto nextHeader = reinterpret_cast<Header*>(static_cast<uint8_t*>(block) + header->getSize());
+            // [CurrentHeader][Block Space...][Footer] [NextBlockHeader]
+            const auto nextBlockAddress = static_cast<uint8_t*>(block) + header->getSize();
+            // Mark the next block header's isPrevFree flag
+            const auto nextHeader = reinterpret_cast<Header*>(nextBlockAddress);
             nextHeader->markPrevFree();
+            // Write the size current block to the footer.
+            const auto footer = reinterpret_cast<size_t*>(nextBlockAddress - sizeof(size_t));
+            *footer           = header->getSize();
         }
     }
 
@@ -367,8 +373,8 @@ namespace pmm
     constexpr uint8_t* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mergePrevious(uint8_t* block) noexcept
     {
 
-        const Header* header = reinterpret_cast<Header*>(block);
-        size_t totalSize     = header->getSize(); // Get size gives the entire block size.
+        const Header* header     = reinterpret_cast<Header*>(block);
+        size_t currentHeaderSize = header->getSize(); // Get size gives the entire block size.
         if (header->isPrevFree())
         {
             // Get the previous block's size from it's footer.
@@ -386,12 +392,10 @@ namespace pmm
 
             // Write the new header
             Header* newHeader = reinterpret_cast<Header*>(prevStartAddress);
-            newHeader->setSize(totalSize);
+            // The new header is the previous free block's header so we can query and story its size
+            const auto prevHeaderSize = newHeader->getSize();
+            newHeader->setSize(prevHeaderSize + currentHeaderSize);
             newHeader->markFree();
-
-            // Write the footer with block size
-            const auto footer = reinterpret_cast<size_t*>(block + totalSize - sizeof(size_t));
-            *footer           = totalSize;
 
             // return the start address
             return prevStartAddress;
@@ -402,13 +406,12 @@ namespace pmm
         }
     }
 
-    // TODO FIXBUG: Metadata is getting overwritten by size.
-// TODO: Add tests with looped allocations
-//       1. Descending free
-//       1. Ascending free
-//       1. Free top half
-//       1. Free bottom half
-//       1. Free odd allocations and then even allocations
+    // TODO: Add tests with looped allocations
+    //       1. Descending free
+    //       1. Ascending free
+    //       1. Free top half
+    //       1. Free bottom half
+    //       1. Free odd allocations and then even allocations
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
     PMM_INLINE constexpr uint8_t* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mergeNext(uint8_t* block) noexcept
     {

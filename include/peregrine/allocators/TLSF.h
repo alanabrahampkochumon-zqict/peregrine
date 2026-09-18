@@ -18,6 +18,8 @@
 
 #include <array>
 #include <bit>
+#include <format>
+
 
 namespace pmm
 {
@@ -56,22 +58,22 @@ namespace pmm
 
             /// Number of bits reserved for flags.
             static constexpr size_t RESERVED_FLAG_BIT_COUNT = 2;
-            static constexpr size_t FLAG_BIT_SHIFT          = sizeof(size_t) - RESERVED_FLAG_BIT_COUNT;
+            static constexpr size_t FLAG_BIT_SHIFT          = (sizeof(size_t) * 8) - RESERVED_FLAG_BIT_COUNT; // 62
             /// Mask for manipulating the free bit.
-            static constexpr size_t MASK_FREE = 0b01 << FLAG_BIT_SHIFT;
+            static constexpr size_t MASK_FREE = 1ULL << FLAG_BIT_SHIFT;
             /// Mask for manipulating the free bit for previous memory address.
-            static constexpr size_t MASK_PREV_FREE = 0b10 << FLAG_BIT_SHIFT;
+            static constexpr size_t MASK_PREV_FREE = 2ULL << FLAG_BIT_SHIFT;
             /// Mask for all flag bits.
-            static constexpr size_t MASK_FLAGS = 0b11 << FLAG_BIT_SHIFT;
+            static constexpr size_t MASK_FLAGS = MASK_FREE | MASK_PREV_FREE;
             /// Mask for getting the true block size.
             static constexpr size_t MASK_SIZE = ~MASK_FLAGS;
 
             /// Bit manipulator for marking this block as free.
-            static constexpr size_t FREE_MAN_BIT = 0b01 << FLAG_BIT_SHIFT; // 0b0100...0000
+            static constexpr size_t FREE_MAN_BIT = 1ULL << FLAG_BIT_SHIFT; // 0b0100...0000
             /// Bit manipulator for marking this block as used.
             static constexpr size_t USED_MAN_BIT = ~FREE_MAN_BIT; // 0b1011...1111
             /// Bit manipulator for marking previous block as free.
-            static constexpr size_t PREV_FREE_MAN_BIT = 0b10 << FLAG_BIT_SHIFT; // 0b1000...0000
+            static constexpr size_t PREV_FREE_MAN_BIT = 2ULL << FLAG_BIT_SHIFT; // 0b1000...0000
             /// Bit manipulator for marking previous block as used.
             static constexpr size_t PREV_USED_MAN_BIT = ~PREV_FREE_MAN_BIT; // 0b0111...1111
 
@@ -82,7 +84,7 @@ namespace pmm
             /// Return whether the previous block is free.
             [[nodiscard]] PMM_INLINE constexpr bool isPrevFree() const noexcept
             {
-                // Previous block is free if bit before LSB is 1
+                // Previous block is free if bit before MSB is 01
                 return (sizeWithFlags & MASK_PREV_FREE) == MASK_PREV_FREE;
             }
             /// Return the true size of the block.
