@@ -41,34 +41,44 @@ namespace pmm
         /// TLSF Block Header
         struct Header
         {
+
+            /**
+             * @note Flag bits are stored in the MSB(Most Significant Bits) since we don't anticipate the allocator
+             *       being used with sizes in the 2^62 - 2^64 range and most modern hardware doesn't implement beyond
+             *       memory address lines.
+             *       Moreover, the allocator can suffer from corruption if they are stored in LSB, like when allocating
+             *       an odd size, the FREE BIT can get overridden.
+             */
+
+
             size_t sizeWithFlags; /// The size of the memory block with 2 LSB used for flags.
             size_t padding;       /// Padding requirements. Unused when the block is free.
 
+            /// Number of bits reserved for flags.
+            static constexpr size_t RESERVED_FLAG_BIT_COUNT = 2;
+            static constexpr size_t FLAG_BIT_SHIFT          = sizeof(size_t) - RESERVED_FLAG_BIT_COUNT;
             /// Mask for manipulating the free bit.
-            static constexpr size_t MASK_FREE = 0b01;
+            static constexpr size_t MASK_FREE = 0b01 << FLAG_BIT_SHIFT;
             /// Mask for manipulating the free bit for previous memory address.
-            static constexpr size_t MASK_PREV_FREE = 0b10;
-            /// Mask for all flag bits
-            static constexpr size_t MASK_FLAGS = 0b11;
+            static constexpr size_t MASK_PREV_FREE = 0b10 << FLAG_BIT_SHIFT;
+            /// Mask for all flag bits.
+            static constexpr size_t MASK_FLAGS = 0b11 << FLAG_BIT_SHIFT;
             /// Mask for getting the true block size.
             static constexpr size_t MASK_SIZE = ~MASK_FLAGS;
 
             /// Bit manipulator for marking this block as free.
-            static constexpr size_t FREE_MAN_BIT = 0b1;
+            static constexpr size_t FREE_MAN_BIT = 0b01 << FLAG_BIT_SHIFT; // 0b0100...0000
             /// Bit manipulator for marking this block as used.
-            static constexpr size_t USED_MAN_BIT = ~0 - 1; // 0b1111...1110
+            static constexpr size_t USED_MAN_BIT = ~FREE_MAN_BIT; // 0b1011...1111
             /// Bit manipulator for marking previous block as free.
-            static constexpr size_t PREV_FREE_MAN_BIT = 0b10; // 0b0000...000010
+            static constexpr size_t PREV_FREE_MAN_BIT = 0b10 << FLAG_BIT_SHIFT; // 0b1000...0000
             /// Bit manipulator for marking previous block as used.
-            static constexpr size_t PREV_USED_MAN_BIT = ~0 - 0b10; // 0b1111...111111 - 0b10 = 0b1111...111101
+            static constexpr size_t PREV_USED_MAN_BIT = ~PREV_FREE_MAN_BIT; // 0b0111...1111
 
 
             /// Return whether the current block is free.
             [[nodiscard]] PMM_INLINE constexpr bool isFree() const noexcept
-            {
-                // Block is free if the LSB is set to 1.
-                return (sizeWithFlags & MASK_FREE) == MASK_FREE;
-            }
+            { return (sizeWithFlags & MASK_FREE) == MASK_FREE; }
             /// Return whether the previous block is free.
             [[nodiscard]] PMM_INLINE constexpr bool isPrevFree() const noexcept
             {
