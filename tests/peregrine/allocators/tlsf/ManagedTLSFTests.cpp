@@ -38,7 +38,7 @@ namespace
     class ManagedTLSFTests: public testing::Test
     {
     public:
-        size_t tlsfSize{ 2_KB };
+        size_t tlsfSize{ 2_MB };
         pmm::TLSF<> tlsf{ tlsfSize };
     };
 
@@ -429,6 +429,85 @@ TEST_F(ManagedTLSFTests, Free_PerformsMixedCoalesce)
     // Here 128 is leeway
     const auto fourthAlloc = tlsf.malloc(tlsfSize - 64);
     EXPECT_NE(nullptr, fourthAlloc);
+}
+
+
+TEST_F(ManagedTLSFTests, Free_PerformRightCoalesceWithMultipleAllocations)
+{
+    std::vector<void*> allocations;
+    constexpr auto leeway            = 32;
+    constexpr auto perAllocationSize = 2_KB;
+    const auto numAllocations        = tlsfSize / (perAllocationSize + leeway);
+    // Allocate memory
+    for (size_t i = 0; i < numAllocations; ++i)
+    {
+        allocations.push_back(tlsf.malloc(perAllocationSize));
+    }
+
+    // Free memory
+    // Note size_t can wrap around when hitting --1, so we can internally use zero index.
+    for (size_t i = numAllocations; i > 0; --i)
+    {
+        tlsf.mfree(allocations[i]);
+    }
+
+    // Try allocating a new full size allocation
+    const auto finalAllocation = tlsf.malloc(tlsfSize - leeway);
+    EXPECT_NE(nullptr, finalAllocation);
+}
+
+
+TEST_F(ManagedTLSFTests, Free_PerformLeftCoalesceWithMultipleAllocations)
+{
+    std::vector<void*> allocations;
+    constexpr auto leeway            = 32;
+    constexpr auto perAllocationSize = 2_KB;
+    const auto numAllocations        = tlsfSize / (perAllocationSize + leeway);
+    // Allocate memory
+    for (size_t i = 0; i < numAllocations; ++i)
+    {
+        allocations.push_back(tlsf.malloc(perAllocationSize));
+    }
+
+    // Free memory
+    // Note size_t can wrap around when hitting --1, so we can internally use zero index.
+    for (size_t i = numAllocations; i > 0; --i)
+    {
+        tlsf.mfree(allocations[i]);
+    }
+
+    // Try allocating a new full size allocation
+    const auto finalAllocation = tlsf.malloc(tlsfSize - leeway);
+    EXPECT_NE(nullptr, finalAllocation);
+}
+
+
+TEST_F(ManagedTLSFTests, Free_PerformCoalesceWithMixedIntermittentFrees)
+{
+    std::vector<void*> allocations;
+    constexpr auto leeway            = 32;
+    constexpr auto perAllocationSize = 2_KB;
+    const auto numAllocations        = tlsfSize / (perAllocationSize + leeway);
+    // Allocate memory
+    for (size_t i = 0; i < numAllocations; ++i)
+    {
+        allocations.push_back(tlsf.malloc(perAllocationSize));
+    }
+
+    // Free memory
+    // Note size_t can wrap around when hitting --1, so we can internally use zero index.
+    for (size_t i = 0; i < numAllocations; i += 2) // Free even indexed allocations
+    {
+        tlsf.mfree(allocations[i]);
+    }
+    for (size_t i = 1; i < numAllocations; i += 2) // Free odd indexed allocations
+    {
+        tlsf.mfree(allocations[i]);
+    }
+
+    // Try allocating a new full size allocation
+    const auto finalAllocation = tlsf.malloc(tlsfSize - leeway);
+    EXPECT_NE(nullptr, finalAllocation);
 }
 
 

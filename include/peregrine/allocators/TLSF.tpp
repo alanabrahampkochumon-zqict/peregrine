@@ -409,8 +409,6 @@ namespace pmm
     // TODO: Add tests with looped allocations
     //       1. Descending free
     //       1. Ascending free
-    //       1. Free top half
-    //       1. Free bottom half
     //       1. Free odd allocations and then even allocations
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
     PMM_INLINE constexpr uint8_t* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mergeNext(uint8_t* block) noexcept
