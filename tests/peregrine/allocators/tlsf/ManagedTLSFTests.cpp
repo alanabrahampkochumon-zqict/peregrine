@@ -367,7 +367,7 @@ TEST_F(ManagedTLSFTests, Free_FreeTheBuffer)
 TEST_F(ManagedTLSFTests, Free_PerformsRightOnlyCoalesce)
 {
     // Total Memory size is 2KB so this would around half the memory or more.
-    constexpr auto firstAllocSize{ 512 }, secondAllocSize{ 128 }, thirdAllocSize{ 255 };
+    constexpr size_t firstAllocSize{ 128_KB }, secondAllocSize{ 64_KB }, thirdAllocSize{ 255 };
     const auto firstAlloc                  = tlsf.malloc(firstAllocSize);
     const auto secondAlloc                 = tlsf.malloc(secondAllocSize);
     [[maybe_unused]] const auto thirdAlloc = tlsf.malloc(thirdAllocSize);
@@ -378,9 +378,9 @@ TEST_F(ManagedTLSFTests, Free_PerformsRightOnlyCoalesce)
     // There should be two free blocks since we didn't free the middle block
     // so, we can allocate a buffer of size firstSize + secondSize and another that has the remainingSize
     // with leeway.
-    // 128 byte leeway = 32 * 4 (3 allocated and 1 for 4th allocation)
-    // 16(Header) + 4(Offset) + 7(Max misalignment) rounded to 32-bytes.
-    const auto fourthAlloc = tlsf.malloc(tlsfSize - (firstAllocSize + secondAllocSize + thirdAllocSize + 128));
+    // We need a larger leeway here to account for the fact that tlsf rounds up the size requirement to the next nearest
+    // SL boundary and at nearly 2MB, it will be 16_KB((2MB - 1MB) / (2^6)) where 6 is the L value; 16_KB.
+    const auto fourthAlloc = tlsf.malloc(tlsfSize - (firstAllocSize + secondAllocSize + thirdAllocSize + 16_KB));
     const auto fifthAlloc  = tlsf.malloc(firstAllocSize + secondAllocSize - 32);
     EXPECT_NE(nullptr, fourthAlloc);
     EXPECT_NE(nullptr, fifthAlloc);
@@ -392,7 +392,7 @@ TEST_F(ManagedTLSFTests, Free_PerformsRightOnlyCoalesce)
 TEST_F(ManagedTLSFTests, Free_PerformsLeftOnlyCoalesce)
 {
     // Total Memory size is 2KB so this would around half the memory or more.
-    constexpr auto firstAllocSize{ 512 }, secondAllocSize{ 128 }, thirdAllocSize{ 255 };
+    constexpr size_t firstAllocSize{ 128_KB }, secondAllocSize{ 64_KB }, thirdAllocSize{ 255 };
     const auto firstAlloc                  = tlsf.malloc(firstAllocSize);
     const auto secondAlloc                 = tlsf.malloc(secondAllocSize);
     [[maybe_unused]] const auto thirdAlloc = tlsf.malloc(thirdAllocSize);
@@ -403,9 +403,9 @@ TEST_F(ManagedTLSFTests, Free_PerformsLeftOnlyCoalesce)
     // There should be two free blocks since we didn't free the middle block
     // so, we can allocate a buffer of size firstSize + secondSize and another that has the remainingSize
     // with leeway.
-    // 128 byte leeway = 32 * 4 (3 allocated and 1 for 4th allocation)
-    // 16(Header) + 4(Offset) + 7(Max misalignment) rounded to 32-bytes.
-    const auto fourthAlloc = tlsf.malloc(tlsfSize - (firstAllocSize + secondAllocSize + thirdAllocSize + 128));
+    // We need a larger leeway here to account for the fact that tlsf rounds up the size requirement to the next nearest
+    // SL boundary and at nearly 2MB, it will be 16_KB((2MB - 1MB) / (2^6)) where 6 is the L value; 16_KB.
+    const auto fourthAlloc = tlsf.malloc(tlsfSize - (firstAllocSize + secondAllocSize + thirdAllocSize + 16_KB));
     const auto fifthAlloc  = tlsf.malloc(firstAllocSize + secondAllocSize - 32);
     EXPECT_NE(nullptr, fourthAlloc);
     EXPECT_NE(nullptr, fifthAlloc);
@@ -448,7 +448,7 @@ TEST_F(ManagedTLSFTests, Free_PerformRightCoalesceWithMultipleAllocations)
     // Note size_t can wrap around when hitting --1, so we can internally use zero index.
     for (size_t i = numAllocations; i > 0; --i)
     {
-        tlsf.mfree(allocations[i]);
+        tlsf.mfree(allocations[i - 1]);
     }
 
     // Try allocating a new full size allocation
@@ -473,7 +473,7 @@ TEST_F(ManagedTLSFTests, Free_PerformLeftCoalesceWithMultipleAllocations)
     // Note size_t can wrap around when hitting --1, so we can internally use zero index.
     for (size_t i = numAllocations; i > 0; --i)
     {
-        tlsf.mfree(allocations[i]);
+        tlsf.mfree(allocations[i - 1]);
     }
 
     // Try allocating a new full size allocation

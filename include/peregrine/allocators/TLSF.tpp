@@ -35,7 +35,7 @@ namespace pmm
     { insertBlock(_buffer, _size); }
 
     // TODO: Update move ctor to move bitmaps
-
+    // TODO: Update Strategy, and Policy to enum
     template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
     PMM_INLINE constexpr TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::TLSF(TLSF&& tlsf) noexcept
         : _buffer{ std::exchange(tlsf._buffer, nullptr) },
