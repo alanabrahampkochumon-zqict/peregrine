@@ -196,7 +196,7 @@ namespace pmm
     } // namespace mt
 
     /// @brief Allocator Telemetry configuration.
-    enum class TelPolicy final : uint8_t
+    enum class TelPolicy : uint8_t
     {
         Enabled,
         Disabled
@@ -204,7 +204,7 @@ namespace pmm
 
 
     /// @brief Allocator memory ownership configuration.
-    enum class MemPolicy final : uint8_t
+    enum class MemPolicy : uint8_t
     {
         Internal, ///< Memory buffer is owned by the allocator. Lifecycle is managed by allocator.
         External  ///< Memory buffer needs to be provided by used.
@@ -212,7 +212,7 @@ namespace pmm
 
 
     /// @brief Allocator safety policy configuration.
-    enum class SafeModePolicy final : uint8_t
+    enum class SafeModePolicy : uint8_t
     {
         Safe,  ///< Policy for safe allocator. Recommended for allocations/deallocation where validation is required.
         Unsafe ///< Policy for unsafe allocator. Faster due to lack of safe guardrails like nullptr checking.
@@ -220,7 +220,7 @@ namespace pmm
 
 
     /// @brief Allocator multithreading configuration.
-    enum class MTPolicy final : uint8_t
+    enum class MTPolicy : uint8_t
     {
         NoMTPolicy,    /// Not safe for multithread environments.
         SpinLockPolicy /// Multithreading support with spin locks.

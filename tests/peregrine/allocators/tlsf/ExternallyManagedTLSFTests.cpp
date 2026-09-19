@@ -1,5 +1,5 @@
 /**
- * @file UnmanagedTLSFTests.cpp
+ * @file ExternallyManagedTLSFTests.cpp
  * @author Alan Abraham P Kochumon
  * @date Created on: September 08, 2026
  *
@@ -33,14 +33,14 @@ namespace
     using namespace pmm::constants;
 
     /**
-     * @brief Test fixture for managed @ref pmm::TLSF.
+     * @brief Test fixture for @ref pmm::TLSF with external memory management.
      */
-    class UnmanagedTLSFTests: public testing::Test
+    class ExternallyManagedTLSFTests: public testing::Test
     {
     public:
         size_t tlsfSize{ 2_KB };
         uint8_t* buffer = new uint8_t[tlsfSize];
-        pmm::TLSF<pmm::UnmanagedMemory> tlsf{ buffer, tlsfSize };
+        pmm::TLSF<pmm::MemPolicy::External> tlsf{ buffer, tlsfSize };
 
     protected:
         void TearDown() override { delete[] buffer; }
@@ -59,7 +59,7 @@ namespace
          *        TLSF, we can check if it is trivially destructible to ensure memory is freed in the tlsf in unmanaged
          *        mode and opposite otherwise.
          */
-        static_assert(std::is_trivially_destructible_v<pmm::TLSF<pmm::UnmanagedMemory>> == true);
+        static_assert(std::is_trivially_destructible_v<pmm::TLSF<pmm::MemPolicy::External>> == true);
     } // namespace static_tests
 
 } // namespace
@@ -79,7 +79,7 @@ namespace
 // TEST_F(UnmanagedTLSFTests, EnabledTelemetry_ReturnsRealTelemetry)
 // {
 //     const auto backingBuffer = new uint8_t[512];
-//     [[maybe_unused]] const pmm::TLSF<pmm::UnmanagedMemory, pmm::telemetry::Enabled>
+//     [[maybe_unused]] const pmm::TLSF<pmm::MemPolicy::External, pmm::telemetry::Enabled>
 //     telemetryEnabledTLSF(backingBuffer,
 //                                                                                                          512);
 //     [[maybe_unused]] auto telemetry = telemetryEnabledTLSF.getTelemetry();
@@ -92,7 +92,7 @@ namespace
 // TEST_F(UnmanagedTLSFTests, DisabledTelemetry_ReturnsDummyTelemetry)
 // {
 //     const auto backingBuffer = new uint8_t[512];
-//     [[maybe_unused]] const pmm::TLSF<pmm::UnmanagedMemory, pmm::telemetry::Disabled> telemetryDisabledTLSF(
+//     [[maybe_unused]] const pmm::TLSF<pmm::MemPolicy::External, pmm::telemetry::Disabled> telemetryDisabledTLSF(
 //         backingBuffer, 512);
 //     [[maybe_unused]] auto telemetry = telemetryDisabledTLSF.getTelemetry();
 //     const bool result               = std::is_same_v<decltype(telemetry), pmm::DummyTLSFTelemetry>;
@@ -100,18 +100,18 @@ namespace
 //     delete[] backingBuffer;
 // }
 
-TEST_F(UnmanagedTLSFTests, Ctor_InitializesTLSFWithTheGivenBytes) { EXPECT_EQ(tlsfSize, tlsf.size()); }
+TEST_F(ExternallyManagedTLSFTests, Ctor_InitializesTLSFWithTheGivenBytes) { EXPECT_EQ(tlsfSize, tlsf.size()); }
 
 
-TEST_F(UnmanagedTLSFTests, TLSFHasZeroUsedSizeInitially) { EXPECT_EQ(0, tlsf.usedSize()); }
+TEST_F(ExternallyManagedTLSFTests, TLSFHasZeroUsedSizeInitially) { EXPECT_EQ(0, tlsf.usedSize()); }
 
 
-TEST_F(UnmanagedTLSFTests, TLSFHasFreeSpaceEqualToSizeInitially) { EXPECT_EQ(tlsfSize, tlsf.freeSize()); }
+TEST_F(ExternallyManagedTLSFTests, TLSFHasFreeSpaceEqualToSizeInitially) { EXPECT_EQ(tlsfSize, tlsf.freeSize()); }
 
 
-TEST_F(UnmanagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
+TEST_F(ExternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 {
-    const pmm::TLSF<pmm::UnmanagedMemory> tlsf2 = std::move(tlsf);
+    const pmm::TLSF<pmm::MemPolicy::External> tlsf2 = std::move(tlsf);
     EXPECT_EQ(tlsfSize, tlsf2.freeSize());
     EXPECT_EQ(tlsfSize, tlsf2.size());
     EXPECT_EQ(0, tlsf2.usedSize());
@@ -130,7 +130,7 @@ TEST_F(UnmanagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     // DON'T get by reference as it will change internally
 //     const auto telemetry = tlsf.getTelemetry();
 //
-//     const pmm::TLSF<pmm::UnmanagedMemory> tlsf2 = std::move(tlsf);
+//     const pmm::TLSF<pmm::MemPolicy::External> tlsf2 = std::move(tlsf);
 //
 //     // Checking for telemetry equality
 //     EXPECT_EQ(telemetry.getUsedSize(), tlsf2.getTelemetry().getUsedSize());
@@ -145,7 +145,7 @@ TEST_F(UnmanagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     const auto buffer2              = new uint8_t[256];
 //     constexpr auto sampleAllocation = 50;
 //     static_cast<void>(tlsf.allocBytes(sampleAllocation));
-//     pmm::TLSF<pmm::UnmanagedMemory> tlsf2(buffer2, 256);
+//     pmm::TLSF<pmm::MemPolicy::External> tlsf2(buffer2, 256);
 //
 //     tlsf2 = std::move(tlsf);
 //     EXPECT_EQ(tlsfSize - sampleAllocation, tlsf2.freeSize());
@@ -165,7 +165,7 @@ TEST_F(UnmanagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     // DON'T get by reference as it will change internally
 //     const auto telemetry = tlsf.getTelemetry();
 //
-//     pmm::TLSF<pmm::UnmanagedMemory> tlsf2(buffer2, 256);
+//     pmm::TLSF<pmm::MemPolicy::External> tlsf2(buffer2, 256);
 //     tlsf2 = std::move(tlsf);
 //
 //     // Checking for telemetry equality
@@ -769,15 +769,15 @@ TEST_F(UnmanagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 namespace pmm
 {
 
-    TEST_F(UnmanagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer)
+    TEST_F(ExternallyManagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer)
     {
-        [[maybe_unused]] const TLSF<pmm::UnmanagedMemory> tlsf2 = std::move(tlsf);
+        [[maybe_unused]] const TLSF<pmm::MemPolicy::External> tlsf2 = std::move(tlsf);
         // NOLINT(bugprone-use-after-move)
         EXPECT_EQ(nullptr, tlsf._buffer);
     }
 
 
-    TEST_F(UnmanagedTLSFTests, MoveCtor_MovesBufferIntoNewObject)
+    TEST_F(ExternallyManagedTLSFTests, MoveCtor_MovesBufferIntoNewObject)
     {
         const auto initialPointer  = tlsf._buffer;
         const auto initialUsedSize = tlsf._usedSize;
@@ -785,7 +785,7 @@ namespace pmm
         const auto initialFLMask   = tlsf._flBitmap;
         const auto initialSLMask   = tlsf._slBitmap;
 
-        const TLSF<pmm::UnmanagedMemory> tlsf2 = std::move(tlsf);
+        const TLSF<pmm::MemPolicy::External> tlsf2 = std::move(tlsf);
         EXPECT_EQ(initialPointer, tlsf2._buffer);
         EXPECT_EQ(initialUsedSize, tlsf2._usedSize);
         EXPECT_EQ(initialSize, tlsf2._size);
@@ -794,10 +794,10 @@ namespace pmm
     }
 
 
-    TEST_F(UnmanagedTLSFTests, MoveAssign_ClearsMovedTLSF)
+    TEST_F(ExternallyManagedTLSFTests, MoveAssign_ClearsMovedTLSF)
     {
         const auto buffer2 = new uint8_t[256];
-        [[maybe_unused]] TLSF<pmm::UnmanagedMemory> tlsf2(buffer2, 256);
+        [[maybe_unused]] TLSF<pmm::MemPolicy::External> tlsf2(buffer2, 256);
 
         static_cast<void>(tlsf2 = std::move(tlsf));
         EXPECT_EQ(nullptr, tlsf._buffer);
@@ -805,7 +805,7 @@ namespace pmm
     }
 
 
-    TEST_F(UnmanagedTLSFTests, MoveAssign_MovesBufferIntoNewObject)
+    TEST_F(ExternallyManagedTLSFTests, MoveAssign_MovesBufferIntoNewObject)
     {
         const auto buffer2         = new uint8_t[256];
         const auto initialPointer  = tlsf._buffer;
@@ -813,7 +813,7 @@ namespace pmm
         const auto initialSize     = tlsf._size;
         const auto initialFLMask   = tlsf._flBitmap;
         const auto initialSLMask   = tlsf._slBitmap;
-        TLSF<pmm::UnmanagedMemory> tlsf2(buffer2, 256);
+        TLSF<pmm::MemPolicy::External> tlsf2(buffer2, 256);
 
         tlsf2 = std::move(tlsf);
 
@@ -827,7 +827,7 @@ namespace pmm
     }
 
 
-    TEST_F(UnmanagedTLSFTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF)
+    TEST_F(ExternallyManagedTLSFTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF)
     {
         const auto initialAddress = reinterpret_cast<uintptr_t>(tlsf._buffer);
         const auto initialFLMask  = tlsf._flBitmap;
@@ -854,16 +854,16 @@ namespace pmm
     }
 
 
-    TEST_F(UnmanagedTLSFTests, MoveAssign_DeletingOriginalTLSFDoNotDeleteTheNewTLSFsMemory)
+    TEST_F(ExternallyManagedTLSFTests, MoveAssign_DeletingOriginalTLSFDoNotDeleteTheNewTLSFsMemory)
     {
         const auto buffer1 = new uint8_t[256];
-        TLSF<pmm::UnmanagedMemory> tlsf2(buffer1, 256);
+        TLSF<pmm::MemPolicy::External> tlsf2(buffer1, 256);
         constexpr auto scopedTLSFSize = 512;
         const auto buffer2            = new uint8_t[scopedTLSFSize];
 
         // The tlsf being moved is scoped
         {
-            TLSF<pmm::UnmanagedMemory> scopedTLSF(buffer2, scopedTLSFSize);
+            TLSF<pmm::MemPolicy::External> scopedTLSF(buffer2, scopedTLSFSize);
             tlsf2 = std::move(scopedTLSF);
         }
         EXPECT_NE(nullptr, tlsf2._buffer);

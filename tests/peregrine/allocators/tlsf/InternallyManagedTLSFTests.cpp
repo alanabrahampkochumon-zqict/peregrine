@@ -1,5 +1,5 @@
 /**
- * @file ManagedTLSFTests.cpp
+ * @file InternallyManagedTLSFTests.cpp
  * @author Alan Abraham P Kochumon
  * @date Created on: September 08, 2026
  *
@@ -35,7 +35,7 @@ namespace
     /**
      * @brief Test fixture for managed @ref pmm::TLSF.
      */
-    class ManagedTLSFTests: public testing::Test
+    class InternallyManagedTLSFTests: public testing::Test
     {
     public:
         size_t tlsfSize{ 2_MB };
@@ -57,11 +57,11 @@ namespace
 
 
     /// @brief Test fixture for TLSF mapping insert function.
-    class ManagedTLSF_MappingInsertTests: public testing::TestWithParam<TLSFMappingInsertParams>
+    class InternallyManagedTLSF_MappingInsertTests: public testing::TestWithParam<TLSFMappingInsertParams>
     {};
 
     INSTANTIATE_TEST_SUITE_P(
-        TLSF_InternalMappingTests, ManagedTLSF_MappingInsertTests,
+        TLSF_InternalMappingTests, InternallyManagedTLSF_MappingInsertTests,
         ::testing::Values(TLSFMappingInsertParams{ .allocationSize = 0, .flIndex = 0, .slIndex = 0 },
                           // Values that are clamped to the minimum allocation size of 64 bytes(2^6)
                           TLSFMappingInsertParams{ .allocationSize = 15, .flIndex = 0, .slIndex = 0 },
@@ -82,10 +82,10 @@ namespace
 
 
     /// @brief Test fixture for TLSF mapping search function.
-    class ManagedTLSF_MappingSearchTests: public testing::TestWithParam<TLSFMappingInsertParams>
+    class InternallyManagedTLSF_MappingSearchTests: public testing::TestWithParam<TLSFMappingInsertParams>
     {};
 
-    INSTANTIATE_TEST_SUITE_P(TLSF_InternalMappingTests, ManagedTLSF_MappingSearchTests,
+    INSTANTIATE_TEST_SUITE_P(TLSF_InternalMappingTests, InternallyManagedTLSF_MappingSearchTests,
                              ::testing::Values(
                                  // Minimum value index (our LSB is considered to be 64 or 2^6)
                                  // 0000 0001 -> <FL=0, SL=0>
@@ -123,7 +123,7 @@ namespace
          *        TLSF, we can check if it is trivially destructible to ensure memory is freed in the tlsf in unmanaged
          * mode and opposite otherwise.
          */
-        static_assert(std::is_trivially_destructible_v<pmm::TLSF<pmm::ManagedMemory>> == false);
+        static_assert(std::is_trivially_destructible_v<pmm::TLSF<pmm::MemPolicy::Internal>> == false);
     } // namespace static_tests
 
 } // namespace
@@ -142,7 +142,7 @@ namespace
 //
 // TEST_F(ManagedTLSFTests, EnabledTelemetry_ReturnsRealTelemetry)
 // {
-//     [[maybe_unused]] pmm::TLSF<pmm::ManagedMemory, pmm::telemetry::Enabled> telemetryEnabledTLSF(512);
+//     [[maybe_unused]] pmm::TLSF<pmm::MemPolicy::Internal, pmm::telemetry::Enabled> telemetryEnabledTLSF(512);
 //     [[maybe_unused]] auto telemetry = telemetryEnabledTLSF.getTelemetry();
 //     const bool result               = std::is_same_v<decltype(telemetry), pmm::TLSFTelemetry>;
 //     EXPECT_TRUE(result);
@@ -151,23 +151,23 @@ namespace
 //
 // TEST_F(ManagedTLSFTests, DisabledTelemetry_ReturnsDummyTelemetry)
 // {
-//     [[maybe_unused]] const pmm::TLSF<pmm::ManagedMemory, pmm::telemetry::Disabled> telemetryDisabledTLSF(512);
+//     [[maybe_unused]] const pmm::TLSF<pmm::MemPolicy::Internal, pmm::telemetry::Disabled> telemetryDisabledTLSF(512);
 //     [[maybe_unused]] auto telemetry = telemetryDisabledTLSF.getTelemetry();
 //     const bool result               = std::is_same_v<decltype(telemetry), pmm::DummyTLSFTelemetry>;
 //     EXPECT_TRUE(result);
 // }
 
 
-TEST_F(ManagedTLSFTests, Ctor_InitializesTLSFWithTheGivenBytes) { EXPECT_EQ(tlsfSize, tlsf.size()); }
+TEST_F(InternallyManagedTLSFTests, Ctor_InitializesTLSFWithTheGivenBytes) { EXPECT_EQ(tlsfSize, tlsf.size()); }
 
 
-TEST_F(ManagedTLSFTests, TLSFHasZeroUsedSizeInitially) { EXPECT_EQ(0, tlsf.usedSize()); }
+TEST_F(InternallyManagedTLSFTests, TLSFHasZeroUsedSizeInitially) { EXPECT_EQ(0, tlsf.usedSize()); }
 
 
-TEST_F(ManagedTLSFTests, TLSFHasFreeSpaceEqualToSizeInitially) { EXPECT_EQ(tlsfSize, tlsf.freeSize()); }
+TEST_F(InternallyManagedTLSFTests, TLSFHasFreeSpaceEqualToSizeInitially) { EXPECT_EQ(tlsfSize, tlsf.freeSize()); }
 
 
-TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
+TEST_F(InternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 {
     const pmm::TLSF<> tlsf2 = std::move(tlsf);
     EXPECT_EQ(tlsfSize, tlsf2.freeSize());
@@ -239,7 +239,7 @@ TEST_F(ManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
  * @test Verify that malloc returns an address aligned to sizeof(void*) bytes
  *       given no alignment was passed-in.
  */
-TEST_F(ManagedTLSFTests, Malloc_Returns8ByteAlignedAddressByDefault)
+TEST_F(InternallyManagedTLSFTests, Malloc_Returns8ByteAlignedAddressByDefault)
 {
     // Misalign bytes to 2
     [[maybe_unused]] void* misalignedBytes = tlsf.malloc(2, 2);
@@ -251,7 +251,7 @@ TEST_F(ManagedTLSFTests, Malloc_Returns8ByteAlignedAddressByDefault)
 }
 
 
-TEST_F(ManagedTLSFTests, Malloc_ReturnsProvidedByteAlignedAddress)
+TEST_F(InternallyManagedTLSFTests, Malloc_ReturnsProvidedByteAlignedAddress)
 {
     constexpr auto byteAlignment = 32;
     void* bytes                  = tlsf.malloc(128, byteAlignment);
@@ -261,7 +261,7 @@ TEST_F(ManagedTLSFTests, Malloc_ReturnsProvidedByteAlignedAddress)
 }
 
 
-TEST_F(ManagedTLSFTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryLessThanTLSFSize)
+TEST_F(InternallyManagedTLSFTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryLessThanTLSFSize)
 {
     void* bytes = tlsf.malloc(256);
 
@@ -269,7 +269,7 @@ TEST_F(ManagedTLSFTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryLessThanTLS
 }
 
 
-TEST_F(ManagedTLSFTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryEqualTLSFSize)
+TEST_F(InternallyManagedTLSFTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryEqualTLSFSize)
 {
 
     // 15 bytes used for worst case alignment, 16-bytes for header, and 4 bytes for offset.
@@ -279,7 +279,7 @@ TEST_F(ManagedTLSFTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryEqualTLSFSi
 }
 
 
-TEST_F(ManagedTLSFTests, Malloc_SubsequentAllocationDoNotCorruptMemory)
+TEST_F(InternallyManagedTLSFTests, Malloc_SubsequentAllocationDoNotCorruptMemory)
 {
     constexpr auto bufferLength = 8;
     // Given two contiguous block of memory allocated back to back
@@ -324,7 +324,7 @@ TEST_F(ManagedTLSFTests, Malloc_SubsequentAllocationDoNotCorruptMemory)
 // }
 
 
-TEST_F(ManagedTLSFTests, Malloc_HeaderIsPreservedInAddressBeforeGivenAddress)
+TEST_F(InternallyManagedTLSFTests, Malloc_HeaderIsPreservedInAddressBeforeGivenAddress)
 {
     // NOTE: This tests works on the premise that the allocated memory follows a
     // [Header][Padding][OffsetToHeader][Ptr given to user] pattern
@@ -348,7 +348,7 @@ TEST_F(ManagedTLSFTests, Malloc_HeaderIsPreservedInAddressBeforeGivenAddress)
 /// @note While we can't directly test this, we can allocate a near full size
 ///       allocation and requesting a larger allocation after free shouldn't trigger
 ///       an out-of-memory exception.
-TEST_F(ManagedTLSFTests, Free_FreeTheBuffer)
+TEST_F(InternallyManagedTLSFTests, Free_FreeTheBuffer)
 {
     // TODO: This test can be used for checking if allocations smaller than min chunk size
     //       cleaves the memory.
@@ -364,7 +364,7 @@ TEST_F(ManagedTLSFTests, Free_FreeTheBuffer)
 
 /// @test Verify that free perform right only coalesce (latest allocations are freed in order).
 ///       AllocA, AllocB, AllocC, FreeB, FreeA
-TEST_F(ManagedTLSFTests, Free_PerformsRightOnlyCoalesce)
+TEST_F(InternallyManagedTLSFTests, Free_PerformsRightOnlyCoalesce)
 {
     // Total Memory size is 2KB so this would around half the memory or more.
     constexpr size_t firstAllocSize{ 128_KB }, secondAllocSize{ 64_KB }, thirdAllocSize{ 255 };
@@ -389,7 +389,7 @@ TEST_F(ManagedTLSFTests, Free_PerformsRightOnlyCoalesce)
 
 /// @test Verify that free perform left-only coalesce (first allocations are freed in order).
 ///       AllocA, AllocB, AllocC, FreeA, FreeB.
-TEST_F(ManagedTLSFTests, Free_PerformsLeftOnlyCoalesce)
+TEST_F(InternallyManagedTLSFTests, Free_PerformsLeftOnlyCoalesce)
 {
     // Total Memory size is 2KB so this would around half the memory or more.
     constexpr size_t firstAllocSize{ 128_KB }, secondAllocSize{ 64_KB }, thirdAllocSize{ 255 };
@@ -414,7 +414,7 @@ TEST_F(ManagedTLSFTests, Free_PerformsLeftOnlyCoalesce)
 
 /// @test Verify that free perform right only coalesce (allocations freed in a mixed order).
 ///       AllocA, AllocB, AllocC, FreeC, FreeA, FreeB.
-TEST_F(ManagedTLSFTests, Free_PerformsMixedCoalesce)
+TEST_F(InternallyManagedTLSFTests, Free_PerformsMixedCoalesce)
 {
     // Total Memory size is 2KB so this would around half the memory or more.
     constexpr auto firstAllocSize{ 512 }, secondAllocSize{ 128 }, thirdAllocSize{ 255 };
@@ -432,7 +432,7 @@ TEST_F(ManagedTLSFTests, Free_PerformsMixedCoalesce)
 }
 
 
-TEST_F(ManagedTLSFTests, Free_PerformRightCoalesceWithMultipleAllocations)
+TEST_F(InternallyManagedTLSFTests, Free_PerformRightCoalesceWithMultipleAllocations)
 {
     std::vector<void*> allocations;
     constexpr auto leeway            = 32;
@@ -457,7 +457,7 @@ TEST_F(ManagedTLSFTests, Free_PerformRightCoalesceWithMultipleAllocations)
 }
 
 
-TEST_F(ManagedTLSFTests, Free_PerformLeftCoalesceWithMultipleAllocations)
+TEST_F(InternallyManagedTLSFTests, Free_PerformLeftCoalesceWithMultipleAllocations)
 {
     std::vector<void*> allocations;
     constexpr auto leeway            = 32;
@@ -482,7 +482,7 @@ TEST_F(ManagedTLSFTests, Free_PerformLeftCoalesceWithMultipleAllocations)
 }
 
 
-TEST_F(ManagedTLSFTests, Free_PerformCoalesceWithMixedIntermittentFrees)
+TEST_F(InternallyManagedTLSFTests, Free_PerformCoalesceWithMixedIntermittentFrees)
 {
     std::vector<void*> allocations;
     constexpr auto leeway            = 32;
@@ -985,7 +985,7 @@ namespace pmm
 {
 
     // NOTE: For CTOR tests we are using the fixture allocated tlsf.
-    TEST_F(ManagedTLSFTests, Ctor_CreatesValidFLAndSLBitmaps)
+    TEST_F(InternallyManagedTLSFTests, Ctor_CreatesValidFLAndSLBitmaps)
     {
         // Get the FL and SL bitmaps corresponding to our size.
         const auto [flIndex, slIndex] = tlsf.mappingInsert(tlsfSize);
@@ -999,11 +999,11 @@ namespace pmm
     }
 
 
-    TEST_F(ManagedTLSFTests, Ctor_SingleAllocation_FLBitmapIsSingleBit)
+    TEST_F(InternallyManagedTLSFTests, Ctor_SingleAllocation_FLBitmapIsSingleBit)
     { EXPECT_TRUE(std::has_single_bit(tlsf._flBitmap)); }
 
 
-    TEST_F(ManagedTLSFTests, Ctor_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry)
+    TEST_F(InternallyManagedTLSFTests, Ctor_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry)
     {
         size_t nonZeroEntry{ 0 };
 
@@ -1019,7 +1019,7 @@ namespace pmm
     }
 
 
-    TEST_F(ManagedTLSFTests, Ctor_SingleAllocation_OnlySingleFreeListIsPopulated)
+    TEST_F(InternallyManagedTLSFTests, Ctor_SingleAllocation_OnlySingleFreeListIsPopulated)
     {
         size_t nonNullFLCount{}, nonNullSLCount{};
 
@@ -1039,7 +1039,7 @@ namespace pmm
         EXPECT_EQ(1, nonNullSLCount);
     }
 
-    TEST_F(ManagedTLSFTests, Ctor_WritesAppropriateHeaderToBuffer)
+    TEST_F(InternallyManagedTLSFTests, Ctor_WritesAppropriateHeaderToBuffer)
     {
         TLSF<>::TLSFFreeNode* freeNode;
         // While we can directly query the buffer(_buffer member variable), it is better to iterate and get the buffer
@@ -1064,15 +1064,15 @@ namespace pmm
     }
 
 
-    TEST_F(ManagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer)
+    TEST_F(InternallyManagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer)
     {
-        [[maybe_unused]] const TLSF<pmm::ManagedMemory> tlsf2 = std::move(tlsf);
+        [[maybe_unused]] const TLSF<pmm::MemPolicy::Internal> tlsf2 = std::move(tlsf);
         // NOLINT(bugprone-use-after-move)
         EXPECT_EQ(nullptr, tlsf._buffer);
     }
 
 
-    TEST_F(ManagedTLSFTests, MoveCtor_MovesBufferIntoNewObject)
+    TEST_F(InternallyManagedTLSFTests, MoveCtor_MovesBufferIntoNewObject)
     {
         const auto initialPointer  = tlsf._buffer;
         const auto initialUsedSize = tlsf._usedSize;
@@ -1080,7 +1080,7 @@ namespace pmm
         const auto initialFLMask   = tlsf._flBitmap;
         const auto initialSLMask   = tlsf._slBitmap;
 
-        const TLSF<pmm::ManagedMemory> tlsf2 = std::move(tlsf);
+        const TLSF<pmm::MemPolicy::Internal> tlsf2 = std::move(tlsf);
         EXPECT_EQ(initialPointer, tlsf2._buffer);
         EXPECT_EQ(initialUsedSize, tlsf2._usedSize);
         EXPECT_EQ(initialSize, tlsf2._size);
@@ -1089,23 +1089,23 @@ namespace pmm
     }
 
 
-    TEST_F(ManagedTLSFTests, MoveAssign_ClearsMovedTLSF)
+    TEST_F(InternallyManagedTLSFTests, MoveAssign_ClearsMovedTLSF)
     {
-        [[maybe_unused]] TLSF<pmm::ManagedMemory> tlsf2(256);
+        [[maybe_unused]] TLSF<pmm::MemPolicy::Internal> tlsf2(256);
 
         static_cast<void>(tlsf2 = std::move(tlsf));
         EXPECT_EQ(nullptr, tlsf._buffer);
     }
 
 
-    TEST_F(ManagedTLSFTests, MoveAssign_MovesBufferIntoNewObject)
+    TEST_F(InternallyManagedTLSFTests, MoveAssign_MovesBufferIntoNewObject)
     {
         const auto initialPointer  = tlsf._buffer;
         const auto initialUsedSize = tlsf._usedSize;
         const auto initialSize     = tlsf._size;
         const auto initialFLMask   = tlsf._flBitmap;
         const auto initialSLMask   = tlsf._slBitmap;
-        TLSF<pmm::ManagedMemory> tlsf2(256);
+        TLSF<pmm::MemPolicy::Internal> tlsf2(256);
 
         tlsf2 = std::move(tlsf);
 
@@ -1118,7 +1118,7 @@ namespace pmm
     }
 
 
-    TEST_F(ManagedTLSFTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF)
+    TEST_F(InternallyManagedTLSFTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF)
     {
         const auto initialAddress = reinterpret_cast<uintptr_t>(tlsf._buffer);
         const auto initialFLMask  = tlsf._flBitmap;
@@ -1145,14 +1145,14 @@ namespace pmm
     }
 
 
-    TEST_F(ManagedTLSFTests, MoveAssign_DeletingOriginalTLSFDoNotDeleteTheNewTLSFsMemory)
+    TEST_F(InternallyManagedTLSFTests, MoveAssign_DeletingOriginalTLSFDoNotDeleteTheNewTLSFsMemory)
     {
-        TLSF<pmm::ManagedMemory> tlsf2(256);
+        TLSF<pmm::MemPolicy::Internal> tlsf2(256);
         constexpr auto scopedTLSFSize = 512;
 
         // The tlsf being moved is scoped
         {
-            TLSF<pmm::ManagedMemory> scopedTLSF(scopedTLSFSize);
+            TLSF<pmm::MemPolicy::Internal> scopedTLSF(scopedTLSFSize);
             tlsf2 = std::move(scopedTLSF);
         }
         EXPECT_NE(nullptr, tlsf2._buffer);
@@ -1171,7 +1171,7 @@ namespace pmm
         }
     }
 
-    TEST_P(ManagedTLSF_MappingInsertTests, ReturnsValidFLAndSLIndices)
+    TEST_P(InternallyManagedTLSF_MappingInsertTests, ReturnsValidFLAndSLIndices)
     {
         const auto [size, expectedFl, expectedSl] = GetParam();
         const auto [fl, sl]                       = TLSF<>::mappingInsert(size);
@@ -1181,7 +1181,7 @@ namespace pmm
 
 
 
-    TEST_P(ManagedTLSF_MappingSearchTests, ReturnsValidFLAndSLIndices)
+    TEST_P(InternallyManagedTLSF_MappingSearchTests, ReturnsValidFLAndSLIndices)
     {
         const auto [size, expectedFl, expectedSl] = GetParam();
         const auto [fl, sl]                       = TLSF<>::mappingSearch(size);
@@ -1191,7 +1191,7 @@ namespace pmm
 
     // TODO: Correct header is created(malloc back navigation)
 
-    TEST_F(ManagedTLSFTests, Malloc_NullsOutInitialBitmap)
+    TEST_F(InternallyManagedTLSFTests, Malloc_NullsOutInitialBitmap)
     {
         // Store the initial FL bitmap
         const auto initialBitmap = tlsf._flBitmap;
@@ -1211,14 +1211,14 @@ namespace pmm
     }
 
 
-    TEST_F(ManagedTLSFTests, Malloc_SingleAllocation_FLBitmapIsSingleBit)
+    TEST_F(InternallyManagedTLSFTests, Malloc_SingleAllocation_FLBitmapIsSingleBit)
     {
         static_cast<void>(tlsf.malloc(32));
         EXPECT_TRUE(std::has_single_bit(tlsf._flBitmap));
     }
 
 
-    TEST_F(ManagedTLSFTests, Malloc_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry)
+    TEST_F(InternallyManagedTLSFTests, Malloc_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry)
     {
         static_cast<void>(tlsf.malloc(32));
         size_t nonZeroEntries = 0;
@@ -1235,7 +1235,7 @@ namespace pmm
     }
 
 
-    TEST_F(ManagedTLSFTests, Malloc_SingleAllocation_OnlySingleFreeListIsPopulated)
+    TEST_F(InternallyManagedTLSFTests, Malloc_SingleAllocation_OnlySingleFreeListIsPopulated)
     {
         static_cast<void>(tlsf.malloc(32));
         size_t nonNullEntries = 0;
@@ -1256,7 +1256,7 @@ namespace pmm
 
 
 
-    TEST_F(ManagedTLSFTests, Malloc_SingleAllocation_FreeListIsUpdatedAfterAllocation)
+    TEST_F(InternallyManagedTLSFTests, Malloc_SingleAllocation_FreeListIsUpdatedAfterAllocation)
     {
         // To check where the FL and SL entries in the free is updated
         // we can make 1 allocation and ensure that the entries are updated
@@ -1302,7 +1302,7 @@ namespace pmm
 
     /// @test Verify that malloc write cleaves the remaining buffer and writes appropriate
     ///       header after allocation.
-    TEST_F(ManagedTLSFTests, Malloc_WritesAppropriateHeaderToBuffer_AfterFirstAllocation)
+    TEST_F(InternallyManagedTLSFTests, Malloc_WritesAppropriateHeaderToBuffer_AfterFirstAllocation)
     {
         using Header_t             = TLSF<>::Header;
         using Offset_t             = TLSF<>::HeaderOffset_t;

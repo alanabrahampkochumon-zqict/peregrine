@@ -23,20 +23,22 @@
 
 namespace pmm
 {
-
-    // TODO: Add a thread safe variant using mutexes
+    // TODO: Add a thread safe variant using spin lock
     /**
-     * @brief Constant time dynamic memory allocator.
+     * @brief Constant time dynamic memory allocator(Two Level Segregated Fit).
      *
-     * @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
-     * @tparam TelPolicy   Flag indicating whether or not telemetry is enabled for this arena. See @ref pmm::telemetry.
-     * @tparam Safe        Flags an arena as safe, implying certain operations like resizing a `nullptr` are handled
-     *                     gracefully when assertions are disabled. `False` by default to prevent any performance
-     *                     stalls incurred by conditional checks.
-     * @tparam MTPolicy    Flag hinting the instance handle multithreading safety. Default: @ref mt::NonThreadSafe.
+     * @tparam MemoryPolicy         Memory management type. See @ref pmm::MemPolicy.
+     * @tparam TelemetryPolicy      Policy indicating whether or not telemetry is enabled for this allocator.
+     *                              See @ref pmm::TelPolicy. Disabled by default.
+     * @tparam SafeMode             Policy dictating the safety of this allocator. When in safe mode, certain actions
+     *                              like `nullptr` resize or free are handled gracefully, in *Release Mode*. Assertions
+     *                              acts as safety value in both mode, given *Debug Mode* is enabled. Disabled by
+     *                              default to prevent any performance stalls incurred by conditional checks.
+     * @tparam MultithreadingPolicy Policy hinting whether the instance can handle multithreading safety.
+     *                              Default: @ref mt::MTPolicy::NoMTPolicy.
      */
-    template <MemoryStrategy MemStrategy = ManagedMemory, telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled,
-              bool Safe = false, mt::MTPolicy MTPolicy = mt::NonThreadSafe>
+    template <MemPolicy MemoryPolicy = MemPolicy::Internal, TelPolicy TelemetryPolicy = TelPolicy::Disabled,
+              SafeModePolicy SafeMode = SafeModePolicy::Safe, MTPolicy MultithreadingPolicy = MTPolicy::NoMTPolicy>
     class TLSF
     {
     public:
@@ -162,7 +164,7 @@ namespace pmm
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
          */
         constexpr TLSF(uint8_t* buffer, size_t memorySize) noexcept
-            requires std::same_as<MemStrategy, UnmanagedMemory>;
+            requires(MemoryPolicy == MemPolicy::External);
 
 
         /**
@@ -175,7 +177,7 @@ namespace pmm
          * @remarks API specialized for @ref pmm::ManagedMemory.
          */
         explicit constexpr TLSF(size_t allocatorSize) noexcept
-            requires std::same_as<MemStrategy, ManagedMemory>;
+            requires(MemoryPolicy == MemPolicy::Internal);
 
 
         /**
@@ -223,7 +225,7 @@ namespace pmm
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
          */
         constexpr ~TLSF() noexcept
-            requires std::same_as<MemStrategy, UnmanagedMemory>
+            requires(MemoryPolicy == MemPolicy::External)
         = default;
 
 
@@ -236,7 +238,7 @@ namespace pmm
          * @remarks API specialized for @ref pmm::ManagedMemory.
          */
         constexpr ~TLSF() noexcept
-            requires std::same_as<MemStrategy, ManagedMemory>;
+            requires(MemoryPolicy == MemPolicy::Internal);
 
 
         /// Get the size of the allocator in bytes.
@@ -374,51 +376,51 @@ namespace pmm
 
 
 
-        FRIEND_TEST(ManagedTLSFTests, Ctor_CreatesValidFLAndSLBitmaps);
-        FRIEND_TEST(ManagedTLSFTests, Ctor_SingleAllocation_FLBitmapIsSingleBit);
-        FRIEND_TEST(ManagedTLSFTests, Ctor_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry);
-        FRIEND_TEST(ManagedTLSFTests, Ctor_SingleAllocation_OnlySingleFreeListIsPopulated);
-        FRIEND_TEST(ManagedTLSFTests, Ctor_WritesAppropriateHeaderToBuffer);
-        FRIEND_TEST(ManagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer);
-        FRIEND_TEST(ManagedTLSFTests, MoveCtor_MovesBufferIntoNewObject);
-        FRIEND_TEST(ManagedTLSFTests, MoveAssign_ClearsMovedTLSF);
-        FRIEND_TEST(ManagedTLSFTests, MoveAssign_MovesBufferIntoNewObject);
-        FRIEND_TEST(ManagedTLSFTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF);
-        FRIEND_TEST(ManagedTLSFTests, MoveAssign_DeletingOriginalTLSFDoNotDeleteTheNewTLSFsMemory);
-        FRIEND_TEST(ManagedTLSFTests, Malloc_NullsOutInitialBitmap);
-        FRIEND_TEST(ManagedTLSFTests, Malloc_CreatesANewSingleBitmap);
-        FRIEND_TEST(ManagedTLSFTests, Malloc_SingleAllocation_FLBitmapIsSingleBit);
-        FRIEND_TEST(ManagedTLSFTests, Malloc_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry);
-        FRIEND_TEST(ManagedTLSFTests, Malloc_SingleAllocation_OnlySingleFreeListIsPopulated);
-        FRIEND_TEST(ManagedTLSFTests, Malloc_SingleAllocation_FreeListIsUpdatedAfterAllocation);
-        FRIEND_TEST(ManagedTLSFTests, Malloc_WritesAppropriateHeaderToBuffer_AfterFirstAllocation);
+        FRIEND_TEST(InternallyManagedTLSFTests, Ctor_CreatesValidFLAndSLBitmaps);
+        FRIEND_TEST(InternallyManagedTLSFTests, Ctor_SingleAllocation_FLBitmapIsSingleBit);
+        FRIEND_TEST(InternallyManagedTLSFTests, Ctor_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry);
+        FRIEND_TEST(InternallyManagedTLSFTests, Ctor_SingleAllocation_OnlySingleFreeListIsPopulated);
+        FRIEND_TEST(InternallyManagedTLSFTests, Ctor_WritesAppropriateHeaderToBuffer);
+        FRIEND_TEST(InternallyManagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer);
+        FRIEND_TEST(InternallyManagedTLSFTests, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(InternallyManagedTLSFTests, MoveAssign_ClearsMovedTLSF);
+        FRIEND_TEST(InternallyManagedTLSFTests, MoveAssign_MovesBufferIntoNewObject);
+        FRIEND_TEST(InternallyManagedTLSFTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF);
+        FRIEND_TEST(InternallyManagedTLSFTests, MoveAssign_DeletingOriginalTLSFDoNotDeleteTheNewTLSFsMemory);
+        FRIEND_TEST(InternallyManagedTLSFTests, Malloc_NullsOutInitialBitmap);
+        FRIEND_TEST(InternallyManagedTLSFTests, Malloc_CreatesANewSingleBitmap);
+        FRIEND_TEST(InternallyManagedTLSFTests, Malloc_SingleAllocation_FLBitmapIsSingleBit);
+        FRIEND_TEST(InternallyManagedTLSFTests, Malloc_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry);
+        FRIEND_TEST(InternallyManagedTLSFTests, Malloc_SingleAllocation_OnlySingleFreeListIsPopulated);
+        FRIEND_TEST(InternallyManagedTLSFTests, Malloc_SingleAllocation_FreeListIsUpdatedAfterAllocation);
+        FRIEND_TEST(InternallyManagedTLSFTests, Malloc_WritesAppropriateHeaderToBuffer_AfterFirstAllocation);
 
-        FRIEND_TEST(ManagedTLSFTests, Alloc_UpdatesTelemetryPadding);
-        FRIEND_TEST(ManagedTLSFTests, AllocV_UpdatesTelemetryPadding);
-        FRIEND_TEST(ManagedTLSFTests, Resize_LatestAllocationResizeBuffer);
-        FRIEND_TEST(ManagedTLSFTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
-        FRIEND_TEST(ManagedTLSFTests, Clear_ResetsOffsetToZero);
-        FRIEND_TEST(ManagedTLSFTests, ZeroOut_ZeroesOutTheInternalBuffer);
+        FRIEND_TEST(InternallyManagedTLSFTests, Alloc_UpdatesTelemetryPadding);
+        FRIEND_TEST(InternallyManagedTLSFTests, AllocV_UpdatesTelemetryPadding);
+        FRIEND_TEST(InternallyManagedTLSFTests, Resize_LatestAllocationResizeBuffer);
+        FRIEND_TEST(InternallyManagedTLSFTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
+        FRIEND_TEST(InternallyManagedTLSFTests, Clear_ResetsOffsetToZero);
+        FRIEND_TEST(InternallyManagedTLSFTests, ZeroOut_ZeroesOutTheInternalBuffer);
 
-        FRIEND_TEST(ManagedTLSF_MappingInsertTests, ReturnsValidFLAndSLIndices);
-        FRIEND_TEST(ManagedTLSF_MappingSearchTests, ReturnsValidFLAndSLIndices);
+        FRIEND_TEST(InternallyManagedTLSF_MappingInsertTests, ReturnsValidFLAndSLIndices);
+        FRIEND_TEST(InternallyManagedTLSF_MappingSearchTests, ReturnsValidFLAndSLIndices);
 
-        FRIEND_TEST(UnmanagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer);
-        FRIEND_TEST(UnmanagedTLSFTests, MoveCtor_MovesBufferIntoNewObject);
-        FRIEND_TEST(UnmanagedTLSFTests, MoveAssign_ClearsMovedTLSF);
-        FRIEND_TEST(UnmanagedTLSFTests, MoveAssign_MovesBufferIntoNewObject);
-        FRIEND_TEST(UnmanagedTLSFTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF);
-        FRIEND_TEST(UnmanagedTLSFTests, MoveAssign_DeletingOriginalTLSFDoNotDeleteTheNewTLSFsMemory);
-        FRIEND_TEST(UnmanagedTLSFTests, AllocBytes_MovesPrevOffset);
-        FRIEND_TEST(UnmanagedTLSFTests, Alloc_MovesPrevOffset);
-        FRIEND_TEST(UnmanagedTLSFTests, AllocBytes_UpdatesTelemetryPadding);
-        FRIEND_TEST(UnmanagedTLSFTests, Alloc_UpdatesTelemetryPadding);
-        FRIEND_TEST(UnmanagedTLSFTests, AllocV_UpdatesTelemetryPadding);
-        FRIEND_TEST(UnmanagedTLSFTests, Resize_LatestAllocationResizeBuffer);
-        FRIEND_TEST(UnmanagedTLSFTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
-        FRIEND_TEST(UnmanagedTLSFTests, Clear_ResetsOffsetToZero);
+        FRIEND_TEST(ExternallyManagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer);
+        FRIEND_TEST(ExternallyManagedTLSFTests, MoveCtor_MovesBufferIntoNewObject);
+        FRIEND_TEST(ExternallyManagedTLSFTests, MoveAssign_ClearsMovedTLSF);
+        FRIEND_TEST(ExternallyManagedTLSFTests, MoveAssign_MovesBufferIntoNewObject);
+        FRIEND_TEST(ExternallyManagedTLSFTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF);
+        FRIEND_TEST(ExternallyManagedTLSFTests, MoveAssign_DeletingOriginalTLSFDoNotDeleteTheNewTLSFsMemory);
+        FRIEND_TEST(ExternallyManagedTLSFTests, AllocBytes_MovesPrevOffset);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Alloc_MovesPrevOffset);
+        FRIEND_TEST(ExternallyManagedTLSFTests, AllocBytes_UpdatesTelemetryPadding);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Alloc_UpdatesTelemetryPadding);
+        FRIEND_TEST(ExternallyManagedTLSFTests, AllocV_UpdatesTelemetryPadding);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Resize_LatestAllocationResizeBuffer);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Clear_ResetsOffsetToZero);
 
-        FRIEND_TEST(UnmanagedTLSF_MappingInsertTests, ReturnsValidFLAndSLIndices);
+        FRIEND_TEST(ExternallyManagedTLSF_MappingInsertTests, ReturnsValidFLAndSLIndices);
 #endif
     };
 

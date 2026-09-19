@@ -15,17 +15,18 @@
 
 namespace pmm
 {
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::TLSF(uint8_t* buffer,
-                                                                            const size_t memorySize) noexcept
-        requires std::same_as<MemStrategy, UnmanagedMemory>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::TLSF(
+        uint8_t* buffer, const size_t memorySize) noexcept
+        requires(MemoryPolicy == MemPolicy::External)
         : _buffer{ buffer }, _size{ memorySize }, _usedSize{ 0 }, _flBitmap{ 0 }, _slBitmap{}
     { insertBlock(_buffer, _size); }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::TLSF(const size_t allocatorSize) noexcept
-        requires std::same_as<MemStrategy, ManagedMemory>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::TLSF(
+        const size_t allocatorSize) noexcept
+        requires(MemoryPolicy == MemPolicy::Internal)
         : _buffer{ static_cast<uint8_t*>(memAlloc(allocatorSize)) },
           _size{ allocatorSize },
           _usedSize{ 0 },
@@ -36,8 +37,8 @@ namespace pmm
 
     // TODO: Update move ctor to move bitmaps
     // TODO: Update Strategy, and Policy to enum
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::TLSF(TLSF&& tlsf) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::TLSF(TLSF&& tlsf) noexcept
         : _buffer{ std::exchange(tlsf._buffer, nullptr) },
           _size{ tlsf._size },
           _usedSize{ tlsf._usedSize },
@@ -45,13 +46,13 @@ namespace pmm
     { std::move(tlsf._slBitmap.begin(), tlsf._slBitmap.end(), _slBitmap.begin()); }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>& TLSF<MemStrategy, TelPolicy, Safe,
-                                                                            MTPolicy>::operator=(TLSF&& tlsf) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>& TLSF<
+        MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::operator=(TLSF&& tlsf) noexcept
     {
         // If the memory is internally managed, we need to free it before moving over the other allocator's
         // internal buffer.
-        if constexpr (std::is_same_v<MemStrategy, ManagedMemory>)
+        if constexpr (MemoryPolicy == MemPolicy::Internal)
         {
             memFree(_buffer, _size);
         }
@@ -72,9 +73,9 @@ namespace pmm
 
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::~TLSF() noexcept
-        requires std::same_as<MemStrategy, ManagedMemory>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::~TLSF() noexcept
+        requires(MemoryPolicy == MemPolicy::Internal)
     { memFree(_buffer, _size); }
 
 
@@ -82,22 +83,25 @@ namespace pmm
      *             GETTERS                *
      **************************************/
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr size_t TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::size() const noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr size_t TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::size()
+        const noexcept
     { return _size; }
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr size_t TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::usedSize() const noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr size_t TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::usedSize()
+        const noexcept
     { return _usedSize; }
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr size_t TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::freeSize() const noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr size_t TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::freeSize()
+        const noexcept
     { return _size - _usedSize; }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr void* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::malloc(const size_t size,
-                                                                                    const size_t alignment) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr void* TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::malloc(
+        const size_t size, const size_t alignment) noexcept
     {
         PMM_ASSERT_MSG(std::has_single_bit(alignment), "Alignment must be a power of 2");
         // [Header][Padding][OffsetToHeader][Ptr* returned to user]
@@ -178,8 +182,9 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr void TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mfree(void* block) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr void TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::mfree(
+        void* block) noexcept
     {
         // prev_offset := sizeof(block) - padding(block) - sizeof(size_t)
         // [[Header][...][size_t]] + [[Header][padding][HeaderOffset][block....]] =COALESCED=> [[Header][....]]
@@ -225,9 +230,9 @@ namespace pmm
      *         INTERNAL HELPERS           *
      **************************************/
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr typename TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::BitmapIndices TLSF<
-        MemStrategy, TelPolicy, Safe, MTPolicy>::mappingInsert(size_t blockSize) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr typename TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::BitmapIndices
+    TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::mappingInsert(size_t blockSize) noexcept
     {
         // The allocator always hands out memory in 64-byte chunks.
         // And the minimum chunk size we can insert into the freelist is 64-bytes
@@ -251,9 +256,9 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr typename TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::BitmapIndices TLSF<
-        MemStrategy, TelPolicy, Safe, MTPolicy>::mappingSearch(size_t blockSize) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr typename TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::BitmapIndices
+    TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::mappingSearch(size_t blockSize) noexcept
     {
         // When allocating a block, we typically round to the next nearest bucket,
         // To make it work we need to add an offset of 2^(log_2(r) - L) - 1 which
@@ -273,9 +278,10 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr typename TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::TLSFFreeNode* TLSF<
-        MemStrategy, TelPolicy, Safe, MTPolicy>::searchSuitableBlock(BitmapIndices& index) const noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr typename TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::TLSFFreeNode*
+    TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::searchSuitableBlock(
+        BitmapIndices& index) const noexcept
     {
         // For finding the suitable block we first get the SL-bitmask for the given fl index and
         // mask out all the values that are less than our sl index.
@@ -322,9 +328,9 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr void TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::insertBlock(uint8_t* block,
-                                                                                        const size_t blockSize) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr void TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::insertBlock(
+        uint8_t* block, const size_t blockSize) noexcept
     {
         /// Since the function is internal this check is unnecessary but kept for safety.
         PMM_ASSERT_MSG(block != nullptr && blockSize > 0, "Cannot insert a zero sized or nullptr block.");
@@ -359,9 +365,9 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr typename TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::Header* TLSF<
-        MemStrategy, TelPolicy, Safe, MTPolicy>::getHeader(TLSFFreeNode* node) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr typename TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::Header* TLSF<
+        MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::getHeader(TLSFFreeNode* node) noexcept
     {
         // Note: Header is placed below the free node.
         return reinterpret_cast<Header*>(reinterpret_cast<uint8_t*>(node) - sizeof(TLSFFreeNode));
@@ -369,8 +375,9 @@ namespace pmm
 
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    constexpr uint8_t* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mergePrevious(uint8_t* block) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    constexpr uint8_t* TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::mergePrevious(
+        uint8_t* block) noexcept
     {
 
         const Header* header     = reinterpret_cast<Header*>(block);
@@ -410,8 +417,9 @@ namespace pmm
     //       1. Descending free
     //       1. Ascending free
     //       1. Free odd allocations and then even allocations
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    PMM_INLINE constexpr uint8_t* TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::mergeNext(uint8_t* block) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr uint8_t* TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::mergeNext(
+        uint8_t* block) noexcept
     {
         // To merge with the next block we need to check if the next block is free
         // Access the next block's header
@@ -443,8 +451,9 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe, mt::MTPolicy MTPolicy>
-    constexpr void TLSF<MemStrategy, TelPolicy, Safe, MTPolicy>::unlinkNode(TLSFFreeNode* block) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    constexpr void TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::unlinkNode(
+        TLSFFreeNode* block) noexcept
     {
         const auto header = getHeader(block);
         const auto index  = mappingInsert(header->getSize());
