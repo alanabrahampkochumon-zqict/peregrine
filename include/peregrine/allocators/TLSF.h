@@ -266,6 +266,18 @@ namespace pmm
          */
         constexpr void mfree(void* block) noexcept;
 
+        /**
+         * @brief Resize a block of memory to a new size.
+         *
+         * @note Resize is a slow method due to potential branch mispredictions
+         *       and must be used judiciously.
+         *
+         * @param block   The starting memory address of the memory.
+         * @param oldSize The originally allocated size of the block.
+         * @param newSize The size to resize to.
+         */
+        constexpr void* resize(void* block, size_t oldSize, size_t newSize) noexcept;
+
 
     private:
         uint8_t* _buffer;
@@ -366,6 +378,7 @@ namespace pmm
          * @param block The block to unlink.
          */
         constexpr void unlinkNode(TLSFFreeNode* block) noexcept;
+
 
 
 

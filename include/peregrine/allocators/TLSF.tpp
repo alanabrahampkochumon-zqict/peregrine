@@ -11,6 +11,7 @@
 
 #include "../memory/Memory.h"
 
+#include <cstring>
 #include <format>
 
 namespace pmm
@@ -221,6 +222,42 @@ namespace pmm
             // Write the size current block to the footer.
             const auto footer = reinterpret_cast<size_t*>(nextBlockAddress - sizeof(size_t));
             *footer           = header->getSize();
+        }
+    }
+
+
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr void* TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::resize(
+        void* block, const size_t oldSize, const size_t newSize) noexcept
+    {
+        const auto startAddress = static_cast<uint8_t*>(block);
+        // If the old header and new header have equal sizes or if we are trying to resize to a smaller size
+        // smaller than the split threshold, then we can just return the block.
+        // We don't have verbosely check for equality since the conditional will cover the equal case for us.
+        if (newSize <= oldSize && oldSize - newSize < SPLIT_SIZE_THRESHOLD)
+        {
+            return block;
+        }
+        else if (newSize < oldSize)
+        {
+            // If the new block is smaller we can update the header and store the cleaved block
+            // Update the header
+            const auto oldOffset = reinterpret_cast<HeaderOffset_t*>(startAddress - sizeof(HeaderOffset_t));
+            const auto oldHeader = reinterpret_cast<Header*>(startAddress - *oldOffset);
+            oldHeader->setSize(newSize);
+            // Insert the block
+            insertBlock(startAddress + newSize);
+            // Return
+            return block;
+        }
+        else
+        {
+            // If a larger memory is requested, get a new memory block
+            // copy the existing content, free the old memory and return the new memory
+            const auto newMemory = malloc(newSize);
+            std::memcpy(newMemory, block, oldSize);
+            mfree(block);
+            return newMemory;
         }
     }
 
