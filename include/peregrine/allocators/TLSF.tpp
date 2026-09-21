@@ -184,6 +184,23 @@ namespace pmm
 
 
     template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    template <typename T, typename... Args>
+    PMM_INLINE T* TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::alloc(Args... args) noexcept
+    {
+        auto rawMemory = malloc(sizeof(T), alignof(T));
+        // TODO: Add safe-mode
+        // if constexpr (Safe == true)
+        // {
+        //     if (rawMemory == nullptr)
+        //     {
+        //         return nullptr;
+        //     }
+        // }
+        return new (rawMemory) T(std::forward<Args>(args)...);
+    }
+
+
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
     PMM_INLINE constexpr void TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::mfree(
         void* block) noexcept
     {
@@ -203,7 +220,7 @@ namespace pmm
         auto header = static_cast<Header*>(block);
         // const auto index = mappingInsert(header->getSize()); // TODO: REMOVE
 
-        // TODO: Insert block needs to be made more granular since we are doing repeated work.
+        // TODO: Insert block needs to be made more granular since we are doing repeated work(separate write headers).
         insertBlock(static_cast<uint8_t*>(block), header->getSize());
 
         // Mark the next block's prevFree.

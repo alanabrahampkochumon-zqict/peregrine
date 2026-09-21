@@ -1642,6 +1642,16 @@ namespace pmm
         EXPECT_EQ(oldFreeNode, newFreeNode);
     }
 
+    TEST_F(InternallyManagedTLSFTests, Alloc_ReturnsObjectPointerInitializedWithParameters)
+    {
+        const auto vec = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+        EXPECT_FLOAT_EQ(1.0f, vec->x);
+        EXPECT_FLOAT_EQ(2.0f, vec->y);
+        EXPECT_FLOAT_EQ(3.0f, vec->z);
+        EXPECT_FLOAT_EQ(4.0f, vec->w);
+    }
+
     // TEST_F(ManagedTLSFTests, Malloc_UpdatesTelemetryPadding)
     // {
     //     const auto buffer          = tlsf.malloc(128, 128);
@@ -1649,17 +1659,17 @@ namespace pmm
     //
     //     EXPECT_EQ(expectedPadding, tlsf.getTelemetry().getTotalPadding());
     // }
-    //
-    //
-    // TEST_F(ManagedTLSFTests, Alloc_UpdatesTelemetryPadding)
+
+
+    // TEST_F(InternallyManagedTLSFTests, Alloc_UpdatesTelemetryPadding)
     // {
     //     const auto vec4            = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
     //     const auto expectedPadding = reinterpret_cast<uintptr_t>(vec4) - reinterpret_cast<uintptr_t>(tlsf._buffer);
     //
     //     EXPECT_EQ(expectedPadding, tlsf.getTelemetry().getTotalPadding());
     // }
-    //
-    //
+
+
     // TEST_F(ManagedTLSFTests, AllocV_UpdatesTelemetryPadding)
     // {
     //     const auto data = tlsf.allocV<Vec4>(10);

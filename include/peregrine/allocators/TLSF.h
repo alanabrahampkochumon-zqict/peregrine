@@ -256,8 +256,32 @@ namespace pmm
          * @param size      The size of memory to allocate.
          * @param alignment The alignment of the memory block.
          *                  Default: 8-bytes (sizeof(void*) on a 64-bit machine).
+         *
+         * @relatedalso alloc
+         * @relatedalso allocV
          */
-        constexpr void* malloc(size_t size, size_t alignment = sizeof(void*)) noexcept;
+        [[nodiscard]] constexpr void* malloc(size_t size, size_t alignment = sizeof(void*)) noexcept;
+
+
+        /**
+         * @brief Allocate an object of type @p T in the stack and initialize it with @p args.
+         *
+         * @note The object will be aligned to the default alignment of @p T.
+         * @note T must be aligned to a power of 2.
+         *
+         * @tparam T    The type of object to allocate.
+         * @tparam Args The type of arguments to instantiate the object.
+         *
+         * @param[in] args      The arguments to instantiate the object.
+         *
+         * @return A reference to the allocated memory.
+         *
+         * @relatedalso malloc
+         * @relatedalso allocV
+         */
+        template <typename T, typename... Args>
+        [[nodiscard]] T* alloc(Args... args) noexcept;
+
 
         /**
          * @brief Free a memory block.
@@ -276,7 +300,7 @@ namespace pmm
          * @param oldSize The originally allocated size of the block.
          * @param newSize The size to resize to.
          */
-        constexpr void* resize(void* block, size_t oldSize, size_t newSize) noexcept;
+        [[nodiscard]] constexpr void* resize(void* block, size_t oldSize, size_t newSize) noexcept;
 
         /// Invalidates and resets all allocations made by TLSF.
         constexpr void clear() noexcept;
@@ -453,6 +477,7 @@ namespace pmm
         FRIEND_TEST(ExternallyManagedTLSF_MappingInsertTests, ReturnsValidFLAndSLIndices);
 #endif
     };
+
 
 
 } // namespace pmm
