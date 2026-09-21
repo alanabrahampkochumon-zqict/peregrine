@@ -308,9 +308,35 @@ namespace pmm
         /**
          * @brief Free a memory block.
          *
+         * @note Use @ref free to free object allocated with @ref alloc.
+         *
          * @param[in] block The block to free.
+         *
+         * @relatedalso free
+         * @relatedalso clear
          */
         constexpr void mfree(void* block) noexcept;
+
+
+        /**
+         * @brief Safely free memory allocated with @ref alloc<T>.
+         *
+         * @note Destructor is called for non-trivially destructible types.
+         * @note Use @ref mfree to free raw memory allocated with @ref malloc.
+         *
+         * @tparam T  The data type of the memory pointer.
+         *
+         * @param[in] ptr The object pointer to free.
+         *
+         * @return A boolean status indicating whether the free was valid.
+         *         **Validation is available ONLY for SafePool in Release Mode**
+         *
+         * @relatedalso mfree
+         * @relatedalso clear
+         */
+        template <typename T>
+        void free(T* ptr) noexcept;
+
 
         /**
          * @brief Resize a block of memory to a new size.

@@ -9,6 +9,7 @@
  */
 
 
+#include "Mocks.h"
 #include "Utils.h"
 
 #include <array>
@@ -38,7 +39,7 @@ namespace
     class InternallyManagedTLSFTests: public testing::Test
     {
     public:
-        size_t tlsfSize{ 2_MB };
+        static constexpr size_t tlsfSize{ 2_MB };
         pmm::TLSF<> tlsf{ tlsfSize };
     };
 
@@ -348,7 +349,7 @@ TEST_F(InternallyManagedTLSFTests, Malloc_HeaderIsPreservedInAddressBeforeGivenA
 /// @note While we can't directly test this, we can allocate a near full size
 ///       allocation and requesting a larger allocation after free shouldn't trigger
 ///       an out-of-memory exception.
-TEST_F(InternallyManagedTLSFTests, Free_FreeTheBuffer)
+TEST_F(InternallyManagedTLSFTests, MFree_FreeTheBuffer)
 {
     // TODO: This test can be used for checking if allocations smaller than min chunk size
     //       cleaves the memory.
@@ -364,7 +365,7 @@ TEST_F(InternallyManagedTLSFTests, Free_FreeTheBuffer)
 
 /// @test Verify that free perform right only coalesce (latest allocations are freed in order).
 ///       AllocA, AllocB, AllocC, FreeB, FreeA
-TEST_F(InternallyManagedTLSFTests, Free_PerformsRightOnlyCoalesce)
+TEST_F(InternallyManagedTLSFTests, MFree_PerformsRightOnlyCoalesce)
 {
     // Total Memory size is 2KB so this would around half the memory or more.
     constexpr size_t firstAllocSize{ 128_KB }, secondAllocSize{ 64_KB }, thirdAllocSize{ 255 };
@@ -389,7 +390,7 @@ TEST_F(InternallyManagedTLSFTests, Free_PerformsRightOnlyCoalesce)
 
 /// @test Verify that free perform left-only coalesce (first allocations are freed in order).
 ///       AllocA, AllocB, AllocC, FreeA, FreeB.
-TEST_F(InternallyManagedTLSFTests, Free_PerformsLeftOnlyCoalesce)
+TEST_F(InternallyManagedTLSFTests, MFree_PerformsLeftOnlyCoalesce)
 {
     // Total Memory size is 2KB so this would around half the memory or more.
     constexpr size_t firstAllocSize{ 128_KB }, secondAllocSize{ 64_KB }, thirdAllocSize{ 255 };
@@ -414,7 +415,7 @@ TEST_F(InternallyManagedTLSFTests, Free_PerformsLeftOnlyCoalesce)
 
 /// @test Verify that free perform right only coalesce (allocations freed in a mixed order).
 ///       AllocA, AllocB, AllocC, FreeC, FreeA, FreeB.
-TEST_F(InternallyManagedTLSFTests, Free_PerformsMixedCoalesce)
+TEST_F(InternallyManagedTLSFTests, MFree_PerformsMixedCoalesce)
 {
     // Total Memory size is 2KB so this would around half the memory or more.
     constexpr auto firstAllocSize{ 512 }, secondAllocSize{ 128 }, thirdAllocSize{ 255 };
@@ -432,7 +433,7 @@ TEST_F(InternallyManagedTLSFTests, Free_PerformsMixedCoalesce)
 }
 
 
-TEST_F(InternallyManagedTLSFTests, Free_PerformRightCoalesceWithMultipleAllocations)
+TEST_F(InternallyManagedTLSFTests, MFree_PerformRightCoalesceWithMultipleAllocations)
 {
     std::vector<void*> allocations;
     constexpr auto leeway            = 32;
@@ -457,7 +458,7 @@ TEST_F(InternallyManagedTLSFTests, Free_PerformRightCoalesceWithMultipleAllocati
 }
 
 
-TEST_F(InternallyManagedTLSFTests, Free_PerformLeftCoalesceWithMultipleAllocations)
+TEST_F(InternallyManagedTLSFTests, MFree_PerformLeftCoalesceWithMultipleAllocations)
 {
     std::vector<void*> allocations;
     constexpr auto leeway            = 32;
@@ -482,7 +483,7 @@ TEST_F(InternallyManagedTLSFTests, Free_PerformLeftCoalesceWithMultipleAllocatio
 }
 
 
-TEST_F(InternallyManagedTLSFTests, Free_PerformCoalesceWithMixedIntermittentFrees)
+TEST_F(InternallyManagedTLSFTests, MFree_PerformCoalesceWithMixedIntermittentFrees)
 {
     std::vector<void*> allocations;
     constexpr auto leeway            = 32;
@@ -509,6 +510,28 @@ TEST_F(InternallyManagedTLSFTests, Free_PerformCoalesceWithMixedIntermittentFree
     const auto finalAllocation = tlsf.malloc(tlsfSize - leeway);
     EXPECT_NE(nullptr, finalAllocation);
 }
+
+
+TEST_F(InternallyManagedTLSFTests, Free_CallsClassDestructorForNonTrivialTypes)
+{
+    int numDestructorCalls = 0;
+    const auto nonTrivial  = tlsf.alloc<DestructionTracker>(&numDestructorCalls);
+
+    tlsf.free(nonTrivial);
+    EXPECT_EQ(1, numDestructorCalls);
+}
+
+
+TEST_F(InternallyManagedTLSFTests, Free_FreesMemoryForNewAllocations)
+{
+    const auto firstAlloc = tlsf.alloc<LargeData<tlsfSize - 1_KB>>();
+    tlsf.free(firstAlloc);
+
+    // This trigger assertion in debug if the memory is not freed
+    const auto newAlloc = tlsf.alloc<LargeData<tlsfSize - 1_KB>>();
+    EXPECT_NE(nullptr, newAlloc);
+}
+
 
 
 
