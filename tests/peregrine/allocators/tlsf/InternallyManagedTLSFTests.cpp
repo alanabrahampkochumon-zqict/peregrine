@@ -612,6 +612,28 @@ TEST_F(InternallyManagedTLSFTests, Resize_LargerSizeSizeCopiesContentFromOldMemo
 }
 
 
+/// @test Verify that clear clears the TLSF allowing for new allocations.
+TEST_F(InternallyManagedTLSFTests, Clear_ClearsTLSFAllowingForNewAllocations)
+{
+    // Make some allocations and free
+    [[maybe_unused]] const auto mem1 = tlsf.malloc(1_KB);
+    [[maybe_unused]] const auto mem2 = tlsf.malloc(11_KB);
+    tlsf.mfree(mem1);
+    [[maybe_unused]] const auto mem3 = tlsf.malloc(15_KB);
+    [[maybe_unused]] const auto mem4 = tlsf.malloc(2_KB);
+    [[maybe_unused]] const auto mem5 = tlsf.malloc(2_KB);
+    tlsf.mfree(mem4);
+
+    // Clear tlsf
+    tlsf.clear();
+
+    // Make an allocation near the buffer size
+    const auto newMem = tlsf.malloc(tlsfSize - 32);
+
+    EXPECT_NE(nullptr, newMem);
+}
+
+
 // /**************************************
 //  *              ALLOC                 *
 //  **************************************/
@@ -1440,7 +1462,7 @@ namespace pmm
 
 
     /// @test Verify that when trying to resizing to the same size, FL and SL bitmasks doesn't update.
-    TEST_F(InternallyManagedTLSFTests, Resize_SameSizeDoesNotUpdateTLAndSLBitmaps)
+    TEST_F(InternallyManagedTLSFTests, Resize_SameSizeDoesNotUpdateFLAndSLBitmaps)
     {
         constexpr auto oldSize = 1_KB, newSize = 1_KB;
         // Note: While the test uses two variables for holding old and resized memory address, it is not
@@ -1462,7 +1484,7 @@ namespace pmm
     /// @test Verify that when resizing a buffer to a smaller size with the size difference
     ///       smaller than split threshold, does not update the fl and sl bitmasks.
     TEST_F(InternallyManagedTLSFTests,
-           Resize_ToSmallerSize_SizeDiffSmallerThanSplitThreshold_DoesNotUpdateTLAndSLBitmaps)
+           Resize_ToSmallerSize_SizeDiffSmallerThanSplitThreshold_DoesNotUpdateFLAndSLBitmaps)
     {
         constexpr auto oldSize = 1_KB, newSize = 1_KB - (TLSF<>::SPLIT_SIZE_THRESHOLD - 1);
         // Note: While the test uses two variables for holding old and resized memory address, it is not
@@ -1484,7 +1506,7 @@ namespace pmm
 
     /// @test Verify that when resizing a buffer to a smaller size with the size difference
     ///       equalling split threshold, updates the fl and sl bitmasks.
-    TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffEqualToSplitThreshold_UpdatesTLAndSLBitmaps)
+    TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffEqualToSplitThreshold_UpdatesFLAndSLBitmaps)
     {
         constexpr auto oldSize = 1_KB, newSize = 1_KB - (TLSF<>::SPLIT_SIZE_THRESHOLD);
         // Note: While the test uses two variables for holding old and resized memory address, it is not
@@ -1506,7 +1528,7 @@ namespace pmm
 
     /// @test Verify that when resizing a buffer to a smaller size with the size difference
     ///       greater than split threshold, updates the fl and sl bitmasks.
-    TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffGreaterThanSplitThreshold_UpdatesTLAndSLBitmaps)
+    TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffGreaterThanSplitThreshold_UpdatesFLAndSLBitmaps)
     {
         constexpr auto oldSize = 1_KB, newSize = 1_KB - (TLSF<>::SPLIT_SIZE_THRESHOLD + 1);
         // Note: While the test uses two variables for holding old and resized memory address, it is not
@@ -1526,7 +1548,7 @@ namespace pmm
     }
 
     /// @test Verify that when resizing a buffer to a larger size updates the fl and sl masks.
-    TEST_F(InternallyManagedTLSFTests, Resize_LargerSizeSizeUpdatesTLAndSLBitmaps)
+    TEST_F(InternallyManagedTLSFTests, Resize_LargerSizeSizeUpdatesFLAndSLBitmaps)
     {
         constexpr auto oldSize = 1_KB, newSize = 5_KB;
         // Note: While the test uses two variables for holding old and resized memory address, it is not
@@ -1543,6 +1565,81 @@ namespace pmm
 
         EXPECT_NE(oldFL, tlsf._flBitmap);
         EXPECT_NE(oldSL, tlsf._slBitmap);
+    }
+
+
+    TEST_F(InternallyManagedTLSFTests, Clear_ResetsFLAndSLBitmaps)
+    {
+        // Store the initial FL and SL bitmasks
+        const auto oldFL = tlsf._flBitmap;
+        const auto oldSL = tlsf._slBitmap;
+
+        // Make some allocations and free
+        [[maybe_unused]] const auto mem1 = tlsf.malloc(1_KB);
+        [[maybe_unused]] const auto mem2 = tlsf.malloc(11_KB);
+        tlsf.mfree(mem1);
+        [[maybe_unused]] const auto mem3 = tlsf.malloc(15_KB);
+        [[maybe_unused]] const auto mem4 = tlsf.malloc(2_KB);
+        [[maybe_unused]] const auto mem5 = tlsf.malloc(2_KB);
+        tlsf.mfree(mem4);
+
+        // Clear tlsf
+        tlsf.clear();
+
+        EXPECT_EQ(oldFL, tlsf._flBitmap);
+        EXPECT_EQ(oldSL, tlsf._slBitmap);
+    }
+
+
+
+    TEST_F(InternallyManagedTLSFTests, Clear_ResetsFreeList)
+    {
+        // Store initial state
+        auto oldFreeListSize              = 0;
+        auto newFreeListSize              = 0;
+        TLSF<>::TLSFFreeNode* oldFreeNode = nullptr;
+        TLSF<>::TLSFFreeNode* newFreeNode = nullptr;
+
+        for (size_t i = 0; i < TLSF<>::FL_SIZE; ++i)
+        {
+            for (size_t j = 0; j < TLSF<>::SL_SIZE; ++j)
+            {
+                if (tlsf._freeList[i][j] != nullptr)
+                {
+                    ++oldFreeListSize;
+                    oldFreeNode = tlsf._freeList[i][j];
+                }
+            }
+        }
+
+        // Make some allocations and free
+        [[maybe_unused]] const auto mem1 = tlsf.malloc(1_KB);
+        [[maybe_unused]] const auto mem2 = tlsf.malloc(11_KB);
+        tlsf.mfree(mem1);
+        [[maybe_unused]] const auto mem3 = tlsf.malloc(15_KB);
+        [[maybe_unused]] const auto mem4 = tlsf.malloc(2_KB);
+        [[maybe_unused]] const auto mem5 = tlsf.malloc(2_KB);
+        tlsf.mfree(mem4);
+
+        // Clear tlsf
+        tlsf.clear();
+
+        // Query the state again
+        for (size_t i = 0; i < TLSF<>::FL_SIZE; ++i)
+        {
+            for (size_t j = 0; j < TLSF<>::SL_SIZE; ++j)
+            {
+                if (tlsf._freeList[i][j] != nullptr)
+                {
+                    ++newFreeListSize;
+                    newFreeNode = tlsf._freeList[i][j];
+                }
+            }
+        }
+
+        EXPECT_EQ(1, newFreeListSize);
+        EXPECT_EQ(oldFreeListSize, newFreeListSize);
+        EXPECT_EQ(oldFreeNode, newFreeNode);
     }
 
     // TEST_F(ManagedTLSFTests, Malloc_UpdatesTelemetryPadding)

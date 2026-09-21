@@ -278,6 +278,9 @@ namespace pmm
          */
         constexpr void* resize(void* block, size_t oldSize, size_t newSize) noexcept;
 
+        /// Invalidates and resets all allocations made by TLSF.
+        constexpr void clear() noexcept;
+
 
     private:
         uint8_t* _buffer;
@@ -409,14 +412,18 @@ namespace pmm
         FRIEND_TEST(InternallyManagedTLSFTests, Malloc_WritesAppropriateHeaderToBuffer_AfterFirstAllocation);
         /// Note: The resize tests is necessary for internal state mutation as the memory address returned from resize
         ///       only changes in one instance(when the new size is larger).
-        FRIEND_TEST(InternallyManagedTLSFTests, Resize_SameSizeDoesNotUpdateTLAndSLBitmaps);
+        FRIEND_TEST(InternallyManagedTLSFTests, Resize_SameSizeDoesNotUpdateFLAndSLBitmaps);
         FRIEND_TEST(InternallyManagedTLSFTests,
-                    Resize_ToSmallerSize_SizeDiffSmallerThanSplitThreshold_DoesNotUpdateTLAndSLBitmaps);
+                    Resize_ToSmallerSize_SizeDiffSmallerThanSplitThreshold_DoesNotUpdateFLAndSLBitmaps);
         FRIEND_TEST(InternallyManagedTLSFTests,
-                    Resize_ToSmallerSize_SizeDiffEqualToSplitThreshold_UpdatesTLAndSLBitmaps);
+                    Resize_ToSmallerSize_SizeDiffEqualToSplitThreshold_UpdatesFLAndSLBitmaps);
         FRIEND_TEST(InternallyManagedTLSFTests,
-                    Resize_ToSmallerSize_SizeDiffGreaterThanSplitThreshold_UpdatesTLAndSLBitmaps);
-        FRIEND_TEST(InternallyManagedTLSFTests, Resize_LargerSizeSizeUpdatesTLAndSLBitmaps);
+                    Resize_ToSmallerSize_SizeDiffGreaterThanSplitThreshold_UpdatesFLAndSLBitmaps);
+        FRIEND_TEST(InternallyManagedTLSFTests, Resize_LargerSizeSizeUpdatesFLAndSLBitmaps);
+        FRIEND_TEST(InternallyManagedTLSFTests, Clear_ResetsFLAndSLBitmaps);
+        FRIEND_TEST(InternallyManagedTLSFTests, Clear_ResetsFreeList);
+
+
 
         FRIEND_TEST(InternallyManagedTLSFTests, Alloc_UpdatesTelemetryPadding);
         FRIEND_TEST(InternallyManagedTLSFTests, AllocV_UpdatesTelemetryPadding);

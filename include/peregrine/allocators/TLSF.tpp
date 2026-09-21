@@ -267,6 +267,19 @@ namespace pmm
     }
 
 
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr void TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::clear() noexcept
+    {
+        // Clear the FL and SL bitmask
+        _flBitmap = 0;
+        std::memset(_slBitmap.data(), 0, _slBitmap.size() * sizeof(Bitmask_t));
+        // Clear the freelist
+        std::memset(_freeList, 0, sizeof(_freeList));
+        // Insert the block
+        insertBlock(_buffer, _size);
+    }
+
+
 
     /**************************************
      *         INTERNAL HELPERS           *
