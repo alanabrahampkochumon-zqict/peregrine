@@ -230,6 +230,11 @@ namespace pmm
     PMM_INLINE constexpr void* TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::resize(
         void* block, const size_t oldSize, const size_t newSize) noexcept
     {
+        // TODO: Add death tests
+        PMM_ASSERT_MSG(block != nullptr && oldSize > 0,
+                       "[TLSF]: Cannot resize a nullptr or a zero sized block. Use `malloc` for creating a new block");
+        PMM_ASSERT_MSG(newSize > 0, "[TLSF]: Cannot resize to 0 bytes. Use `mfree` for freeing memory.");
+
         const auto startAddress = static_cast<uint8_t*>(block);
         // If the old header and new header have equal sizes or if we are trying to resize to a smaller size
         // smaller than the split threshold, then we can just return the block.
@@ -246,7 +251,7 @@ namespace pmm
             const auto oldHeader = reinterpret_cast<Header*>(startAddress - *oldOffset);
             oldHeader->setSize(newSize);
             // Insert the block
-            insertBlock(startAddress + newSize);
+            insertBlock(startAddress + newSize, oldSize - newSize);
             // Return
             return block;
         }

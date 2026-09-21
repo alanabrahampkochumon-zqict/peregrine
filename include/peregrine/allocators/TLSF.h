@@ -407,6 +407,16 @@ namespace pmm
         FRIEND_TEST(InternallyManagedTLSFTests, Malloc_SingleAllocation_OnlySingleFreeListIsPopulated);
         FRIEND_TEST(InternallyManagedTLSFTests, Malloc_SingleAllocation_FreeListIsUpdatedAfterAllocation);
         FRIEND_TEST(InternallyManagedTLSFTests, Malloc_WritesAppropriateHeaderToBuffer_AfterFirstAllocation);
+        /// Note: The resize tests is necessary for internal state mutation as the memory address returned from resize
+        ///       only changes in one instance(when the new size is larger).
+        FRIEND_TEST(InternallyManagedTLSFTests, Resize_SameSizeDoesNotUpdateTLAndSLBitmaps);
+        FRIEND_TEST(InternallyManagedTLSFTests,
+                    Resize_ToSmallerSize_SizeDiffSmallerThanSplitThreshold_DoesNotUpdateTLAndSLBitmaps);
+        FRIEND_TEST(InternallyManagedTLSFTests,
+                    Resize_ToSmallerSize_SizeDiffEqualToSplitThreshold_UpdatesTLAndSLBitmaps);
+        FRIEND_TEST(InternallyManagedTLSFTests,
+                    Resize_ToSmallerSize_SizeDiffGreaterThanSplitThreshold_UpdatesTLAndSLBitmaps);
+        FRIEND_TEST(InternallyManagedTLSFTests, Resize_LargerSizeSizeUpdatesTLAndSLBitmaps);
 
         FRIEND_TEST(InternallyManagedTLSFTests, Alloc_UpdatesTelemetryPadding);
         FRIEND_TEST(InternallyManagedTLSFTests, AllocV_UpdatesTelemetryPadding);
