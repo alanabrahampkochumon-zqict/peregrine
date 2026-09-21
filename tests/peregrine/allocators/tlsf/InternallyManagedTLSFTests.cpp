@@ -533,6 +533,49 @@ TEST_F(InternallyManagedTLSFTests, Free_FreesMemoryForNewAllocations)
 }
 
 
+TEST_F(InternallyManagedTLSFTests, FreeV_FreesMemoryForSubsequentAllocations)
+{
+
+    // NOTE: 64 bytes is some leeway for buffer header and alignment
+    constexpr auto leeway = 64;
+    // Should saturate the buffer as 4 * 1200 = 4800, near buffer size of 5_KB
+    // Allocate some test data
+    const auto listData = tlsf.allocV<int>(1200);
+    // Free it
+    tlsf.freeV(listData);
+
+    const auto intV = tlsf.allocV<int>(tlsfSize / sizeof(int) - leeway);
+
+    // Allocate Memory
+    for (std::size_t i = 0; i < intV.size(); ++i)
+    {
+        intV[i] = static_cast<int>(i + 316);
+    }
+
+    // Verify the allocation is successful with data writes
+    for (std::size_t i = 0; i < intV.size(); ++i)
+    {
+        EXPECT_EQ(static_cast<int>(i + 316), intV[i]);
+    }
+}
+
+
+TEST_F(InternallyManagedTLSFTests, FreeV_CallsClassDestructorForNonTrivialTypes)
+{
+    // @Warning Not thread safe
+    int numDestructorCalls       = 0;
+    constexpr auto numAllocation = 500;
+    auto nonTrivial              = tlsf.allocV<DestructionTracker>(numAllocation);
+    for (auto& item : nonTrivial)
+    {
+        item.destructorCalledCount = &numDestructorCalls;
+    }
+
+    tlsf.freeV(nonTrivial);
+
+    EXPECT_EQ(numAllocation, numDestructorCalls);
+}
+
 
 
 TEST_F(InternallyManagedTLSFTests, Resize_SameSizeReturnsSameAddress)

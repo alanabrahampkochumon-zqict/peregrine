@@ -339,6 +339,28 @@ namespace pmm
 
 
         /**
+         * @brief Safely free memory allocated with @ref allocV<T>.
+         *
+         * @note Destructor is called for non-trivially destructible types.
+         * @note Use @ref mfree to free raw memory allocated with @ref malloc.
+         *
+         * @tparam T  The data type of the memory pointer.
+         *
+         * @return A boolean status indicating whether the free was valid.
+         *         **Validation is available ONLY for SafePool in Release Mode**
+         *
+         * @param[in] vector The collection of objects to free.
+         *
+         * @relatedalso free
+         * @relatedalso mfree
+         * @relatedalso clear
+         */
+        template <typename T>
+        void freeV(std::span<T> vector) noexcept;
+
+
+
+        /**
          * @brief Resize a block of memory to a new size.
          *
          * @note Resize is a slow method due to potential branch mispredictions

@@ -232,6 +232,22 @@ namespace pmm
 
 
     template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    template <typename T>
+    PMM_INLINE void TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::freeV(
+        std::span<T> vector) noexcept
+    {
+        if constexpr (!std::is_trivially_destructible_v<T>)
+        {
+            for (auto& item : vector)
+            {
+                item.~T();
+            }
+        }
+        mfree(vector.data());
+    }
+
+
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
     PMM_INLINE constexpr void TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::mfree(
         void* block) noexcept
     {
