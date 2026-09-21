@@ -284,6 +284,28 @@ namespace pmm
 
 
         /**
+         * @brief Allocate a contiguous memory block for an array of @p count objects.
+         *
+         * @note This function allocates raw, uninitialized memory aligned to type @p T.
+         *       Object constructors are NOT called automatically. You must manually construct
+         *       the objects in the returned memory (e.g., using placement-new or `std::uninitialized_fill`).
+         * @note T must be aligned to a power of 2.
+         *
+         * @tparam T The type of object to allocate.
+         *
+         * @param[in] count The total number of contiguous elements requested.
+         *
+         * @return A `std::span<T>` viewing the allocated memory block.
+         *         Returns an empty span (`.empty() == true`) if the Stack lacks sufficient capacity.
+         *
+         * @relatedalso malloc
+         * @relatedalso alloc
+         */
+        template <typename T>
+        [[nodiscard]] std::span<T> allocV(std::size_t count) noexcept;
+
+
+        /**
          * @brief Free a memory block.
          *
          * @param[in] block The block to free.

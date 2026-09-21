@@ -201,6 +201,24 @@ namespace pmm
 
 
     template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    template <typename T>
+    PMM_INLINE std::span<T> TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::allocV(
+        std::size_t count) noexcept
+    {
+        PMM_ASSERT_MSG(count > 0, "[TLSF]: Cannot allocate an array of size 0");
+        // TODO: Add safe mode
+        // if constexpr (Safe == true)
+        // {
+        //     if (_offset + sizeof(T) * count > _stackSize || count == 0)
+        //     {
+        //         return std::span<T>();
+        //     }
+        // }
+        return std::span(static_cast<T*>(malloc(sizeof(T) * count, alignof(T))), count);
+    }
+
+
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
     PMM_INLINE constexpr void TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::mfree(
         void* block) noexcept
     {

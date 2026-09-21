@@ -140,7 +140,7 @@ namespace
  *           INITIALIZATIONS          *
  **************************************/
 //
-// TEST_F(ManagedTLSFTests, EnabledTelemetry_ReturnsRealTelemetry)
+// TEST_F(InternallyManagedTLSFTests, EnabledTelemetry_ReturnsRealTelemetry)
 // {
 //     [[maybe_unused]] pmm::TLSF<pmm::MemPolicy::Internal, pmm::telemetry::Enabled> telemetryEnabledTLSF(512);
 //     [[maybe_unused]] auto telemetry = telemetryEnabledTLSF.getTelemetry();
@@ -149,7 +149,7 @@ namespace
 // }
 //
 //
-// TEST_F(ManagedTLSFTests, DisabledTelemetry_ReturnsDummyTelemetry)
+// TEST_F(InternallyManagedTLSFTests, DisabledTelemetry_ReturnsDummyTelemetry)
 // {
 //     [[maybe_unused]] const pmm::TLSF<pmm::MemPolicy::Internal, pmm::telemetry::Disabled> telemetryDisabledTLSF(512);
 //     [[maybe_unused]] auto telemetry = telemetryDisabledTLSF.getTelemetry();
@@ -178,7 +178,7 @@ TEST_F(InternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 }
 //
 // TODO: Add back after adding telemetry and malloc
-// TEST_F(ManagedTLSFTests, MoveCtor_MovesTelemetry)
+// TEST_F(InternallyManagedTLSFTests, MoveCtor_MovesTelemetry)
 // {
 //     static_cast<void>(tlsf.malloc(120));
 //     static_cast<void>(tlsf.malloc(240));
@@ -197,7 +197,7 @@ TEST_F(InternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 // }
 //
 //
-// TEST_F(ManagedTLSFTests, MoveAssign_CopiesAttributesToNewObject)
+// TEST_F(InternallyManagedTLSFTests, MoveAssign_CopiesAttributesToNewObject)
 // {
 //     constexpr auto sampleAllocation = 50;
 //     static_cast<void>(tlsf.malloc(sampleAllocation));
@@ -210,7 +210,7 @@ TEST_F(InternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 // }
 //
 //
-// TEST_F(ManagedTLSFTests, MoveAssign_MovesTelemetry)
+// TEST_F(InternallyManagedTLSFTests, MoveAssign_MovesTelemetry)
 // {
 //     static_cast<void>(tlsf.malloc(120));
 //     static_cast<void>(tlsf.malloc(240));
@@ -305,7 +305,7 @@ TEST_F(InternallyManagedTLSFTests, Malloc_SubsequentAllocationDoNotCorruptMemory
 
 // TODO: Add more TLSF allocation tests.
 
-// TEST_F(ManagedTLSFTests, Malloc_UpdatesTelemetry)
+// TEST_F(InternallyManagedTLSFTests, Malloc_UpdatesTelemetry)
 // {
 //     constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
 //
@@ -634,34 +634,34 @@ TEST_F(InternallyManagedTLSFTests, Clear_ClearsTLSFAllowingForNewAllocations)
 }
 
 
-// /**************************************
-//  *              ALLOC                 *
-//  **************************************/
-//
-// TEST_F(ManagedTLSFTests, Alloc_AllocatesAnObjectInTheTLSF)
-// {
-//     const auto vec = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
-//
-//     EXPECT_FLOAT_EQ(1.0f, vec->x);
-//     EXPECT_FLOAT_EQ(2.0f, vec->y);
-//     EXPECT_FLOAT_EQ(3.0f, vec->z);
-//     EXPECT_FLOAT_EQ(4.0f, vec->w);
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, Alloc_AlignsToTargetAlignment)
-// {
-//     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-//     static_cast<void>(tlsf.malloc(2, 2));
-//
-//     constexpr auto expectedAlignment = alignof(Vec4);
-//     [[maybe_unused]] const auto vec  = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
-//
-//     EXPECT_EQ(0, reinterpret_cast<uintptr_t>(vec) % expectedAlignment);
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, Alloc_UpdatesTelemetry)
+/**************************************
+ *              ALLOC                 *
+ **************************************/
+
+TEST_F(InternallyManagedTLSFTests, Alloc_AllocatesAnObjectInTheTLSF)
+{
+    const auto vec = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+    EXPECT_FLOAT_EQ(1.0f, vec->x);
+    EXPECT_FLOAT_EQ(2.0f, vec->y);
+    EXPECT_FLOAT_EQ(3.0f, vec->z);
+    EXPECT_FLOAT_EQ(4.0f, vec->w);
+}
+
+
+TEST_F(InternallyManagedTLSFTests, Alloc_AlignsToTargetAlignment)
+{
+    // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+    static_cast<void>(tlsf.malloc(2, 2));
+
+    constexpr auto expectedAlignment = alignof(Vec4);
+    [[maybe_unused]] const auto vec  = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+
+    EXPECT_EQ(0, reinterpret_cast<uintptr_t>(vec) % expectedAlignment);
+}
+
+
+// TEST_F(InternallyManagedTLSFTests, Alloc_UpdatesTelemetry)
 // {
 //     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
 //     static_cast<void>(tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
@@ -677,71 +677,71 @@ TEST_F(InternallyManagedTLSFTests, Clear_ClearsTLSFAllowingForNewAllocations)
 //     EXPECT_EQ(expectedPeakUsage, tlsf.getTelemetry().getPeakUsage());
 //     EXPECT_EQ(expectedUsage, tlsf.getTelemetry().getUsedSize());
 // }
-//
-//
-//
-// /**************************************
-//  *            ALLOC V(ector)           *
-//  **************************************/
-//
-// TEST_F(ManagedTLSFTests, AllocV_ReturnsAContinguousBlockOfMemory)
-// {
-//     constexpr auto blockCount = 10;
-//     const auto vertices       = tlsf.allocV<Vec4>(blockCount);
-//
-//     EXPECT_EQ(blockCount, vertices.size());
-//     EXPECT_EQ(blockCount * sizeof(Vec4), vertices.size_bytes());
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, AllocV_SubsequentAllocationDoNotCorruptMemory)
-// {
-//     constexpr auto blockCount       = 5;
-//     constexpr std::array vertexData = {
-//         1.0f,  2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  8.0f,  9.0f,  10.0f,
-//         11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f, 20.0f,
-//     };
-//     constexpr std::array edgeData = {
-//         101.0f, 102.0f, 103.0f,  104.0f, 105.0f, 106.0f, 107.0f,  108.0f, 109.0f, 110.0f,
-//         111.0f, 112.0f, 1013.0f, 114.0f, 115.0f, 116.0f, 1017.0f, 118.0f, 119.0f, 120.0f,
-//     };
-//
-//     auto vertices = tlsf.allocV<Vec4>(blockCount);
-//     auto edges    = tlsf.allocV<Vec4>(blockCount);
-//
-//     // Write into the first allocated span
-//     for (std::size_t i = 0; i < blockCount; ++i)
-//     {
-//         vertices[i] = Vec4{ vertexData[i * 4], vertexData[i * 4 + 1], vertexData[i * 4 + 2], vertexData[i * 4 + 3] };
-//     }
-//
-//     // Write into the second allocated span
-//     for (std::size_t i = 0; i < blockCount; ++i)
-//     {
-//         edges[i] = Vec4{ edgeData[i * 4], edgeData[i * 4 + 1], edgeData[i * 4 + 2], edgeData[i * 4 + 3] };
-//     }
-//
-//
-//     // Verify data integrity is maintained for both
-//     for (std::size_t i = 0; i < blockCount; ++i)
-//     {
-//         constexpr auto epsilon = 1e-5;
-//         const auto vert        = vertices[i];
-//         EXPECT_NEAR(vertexData[i * 4], vert.x, epsilon);
-//         EXPECT_NEAR(vertexData[i * 4 + 1], vert.y, epsilon);
-//         EXPECT_NEAR(vertexData[i * 4 + 2], vert.z, epsilon);
-//         EXPECT_NEAR(vertexData[i * 4 + 3], vert.w, epsilon);
-//
-//         const auto edge = edges[i];
-//         EXPECT_NEAR(edgeData[i * 4], edge.x, epsilon);
-//         EXPECT_NEAR(edgeData[i * 4 + 1], edge.y, epsilon);
-//         EXPECT_NEAR(edgeData[i * 4 + 2], edge.z, epsilon);
-//         EXPECT_NEAR(edgeData[i * 4 + 3], edge.w, epsilon);
-//     }
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, AllocV_UpdatesTelemetry)
+
+
+
+/**************************************
+ *            ALLOC V(ector)           *
+ **************************************/
+
+TEST_F(InternallyManagedTLSFTests, AllocV_ReturnsAContinguousBlockOfMemory)
+{
+    constexpr auto blockCount = 10;
+    const auto vertices       = tlsf.allocV<Vec4>(blockCount);
+
+    EXPECT_EQ(blockCount, vertices.size());
+    EXPECT_EQ(blockCount * sizeof(Vec4), vertices.size_bytes());
+}
+
+
+TEST_F(InternallyManagedTLSFTests, AllocV_SubsequentAllocationDoNotCorruptMemory)
+{
+    constexpr auto blockCount       = 5;
+    constexpr std::array vertexData = {
+        1.0f,  2.0f,  3.0f,  4.0f,  5.0f,  6.0f,  7.0f,  8.0f,  9.0f,  10.0f,
+        11.0f, 12.0f, 13.0f, 14.0f, 15.0f, 16.0f, 17.0f, 18.0f, 19.0f, 20.0f,
+    };
+    constexpr std::array edgeData = {
+        101.0f, 102.0f, 103.0f,  104.0f, 105.0f, 106.0f, 107.0f,  108.0f, 109.0f, 110.0f,
+        111.0f, 112.0f, 1013.0f, 114.0f, 115.0f, 116.0f, 1017.0f, 118.0f, 119.0f, 120.0f,
+    };
+
+    auto vertices = tlsf.allocV<Vec4>(blockCount);
+    auto edges    = tlsf.allocV<Vec4>(blockCount);
+
+    // Write into the first allocated span
+    for (std::size_t i = 0; i < blockCount; ++i)
+    {
+        vertices[i] = Vec4{ vertexData[i * 4], vertexData[i * 4 + 1], vertexData[i * 4 + 2], vertexData[i * 4 + 3] };
+    }
+
+    // Write into the second allocated span
+    for (std::size_t i = 0; i < blockCount; ++i)
+    {
+        edges[i] = Vec4{ edgeData[i * 4], edgeData[i * 4 + 1], edgeData[i * 4 + 2], edgeData[i * 4 + 3] };
+    }
+
+
+    // Verify data integrity is maintained for both
+    for (std::size_t i = 0; i < blockCount; ++i)
+    {
+        constexpr auto epsilon = 1e-5;
+        const auto vert        = vertices[i];
+        EXPECT_NEAR(vertexData[i * 4], vert.x, epsilon);
+        EXPECT_NEAR(vertexData[i * 4 + 1], vert.y, epsilon);
+        EXPECT_NEAR(vertexData[i * 4 + 2], vert.z, epsilon);
+        EXPECT_NEAR(vertexData[i * 4 + 3], vert.w, epsilon);
+
+        const auto edge = edges[i];
+        EXPECT_NEAR(edgeData[i * 4], edge.x, epsilon);
+        EXPECT_NEAR(edgeData[i * 4 + 1], edge.y, epsilon);
+        EXPECT_NEAR(edgeData[i * 4 + 2], edge.z, epsilon);
+        EXPECT_NEAR(edgeData[i * 4 + 3], edge.w, epsilon);
+    }
+}
+
+
+// TEST_F(InternallyManagedTLSFTests, AllocV_UpdatesTelemetry)
 // {
 //     constexpr std::size_t count1 = 2, count2 = 4, count3 = 6;
 //
@@ -757,343 +757,6 @@ TEST_F(InternallyManagedTLSFTests, Clear_ClearsTLSFAllowingForNewAllocations)
 //     EXPECT_EQ(expectedMinUsage, tlsf.getTelemetry().getMinUsage());
 //     EXPECT_EQ(expectedPeakUsage, tlsf.getTelemetry().getPeakUsage());
 //     EXPECT_EQ(expectedUsage, tlsf.getTelemetry().getUsedSize());
-// }
-//
-//
-//
-// /**************************************
-//  *             RESIZE                 *
-//  **************************************/
-//
-// TEST_F(ManagedTLSFTests, Resize_NewSizeSmallerThanOldSizeReturnsSameAddress)
-// {
-//     constexpr auto byteSize   = 128;
-//     const auto firstByteChunk = tlsf.malloc(byteSize);
-//     // Additional allocation
-//     [[maybe_unused]] const auto secondByteChunk = tlsf.malloc(byteSize);
-//
-//     const auto data = tlsf.resize(firstByteChunk, byteSize, byteSize / 2, alignof(void*));
-//
-//     EXPECT_EQ(reinterpret_cast<uintptr_t>(firstByteChunk), reinterpret_cast<uintptr_t>(data));
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, Resize_LatestAllocationOnlyResizeByOffsetDifference)
-// {
-//     constexpr auto byteSize    = 128;
-//     constexpr auto newByteSize = byteSize * 2;
-//
-//     // Allocate the chunk
-//     const auto firstByteChunk = tlsf.malloc(byteSize);
-//     [[maybe_unused]] const auto data =
-//         static_cast<int*>(tlsf.resize(firstByteChunk, byteSize, newByteSize, alignof(int)));
-//     // Resize it
-//     constexpr auto firstArraySize = newByteSize / sizeof(int);
-//
-//     // Write some data
-//     for (std::size_t i = 0; i < firstArraySize; ++i)
-//     {
-//         data[i] = static_cast<int>(i + 100);
-//     }
-//
-//     // Allocate some more memory
-//     [[maybe_unused]] auto vec = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
-//
-//     // Verify data is not overwritten
-//     for (std::size_t i = 0; i < firstArraySize; ++i)
-//     {
-//         EXPECT_EQ(i + 100, data[i]);
-//     }
-// }
-//
-//
-// /** @test Verify that resize of allocation before the last allocation returns a new buffer. */
-// TEST_F(ManagedTLSFTests, Resize_AllocationPriorToLatestAllocationReturnNewBuffer)
-// {
-//     constexpr auto byteSize    = 128;
-//     constexpr auto newByteSize = byteSize * 2;
-//
-//     const auto firstByteChunk                   = tlsf.malloc(byteSize);
-//     [[maybe_unused]] const auto secondByteChunk = tlsf.malloc(byteSize);
-//
-//     [[maybe_unused]] const auto data = tlsf.resize(firstByteChunk, byteSize, newByteSize, alignof(void*));
-//
-//     EXPECT_NE(reinterpret_cast<uintptr_t>(firstByteChunk), reinterpret_cast<uintptr_t>(data));
-// }
-//
-//
-// /** @test Verify that resize of allocation before the last allocation copies old data. */
-// TEST_F(ManagedTLSFTests, Resize_AllocationPriorToLatestAllocationCopiesOldData)
-// {
-//     constexpr auto byteSize    = 128;
-//     constexpr auto newByteSize = byteSize * 2;
-//
-//     // Allocate memory
-//     const auto firstByteChunk = static_cast<int*>(tlsf.malloc(byteSize));
-//     constexpr auto arraySize  = byteSize / sizeof(int);
-//
-//     // Write some data to the allocated memory
-//     for (std::size_t i = 0; i < arraySize; ++i)
-//     {
-//         firstByteChunk[i] = static_cast<int>(i + 100);
-//     }
-//
-//     // Allocate some more memory
-//     [[maybe_unused]] const auto secondByteChunk = tlsf.malloc(byteSize);
-//
-//     // Resize the first buffer
-//     const auto data = static_cast<int*>(tlsf.resize(firstByteChunk, byteSize, newByteSize, alignof(int)));
-//
-//     // Verify data is copied
-//     for (std::size_t i = 0; i < arraySize; ++i)
-//     {
-//         EXPECT_EQ(i + 100, data[i]);
-//     }
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, Resize_SameMemorySize_DoesNotUpdateTelemetry)
-// {
-//     constexpr auto byteSize = 128;
-//
-//     const auto allocatedBytes = tlsf.malloc(byteSize);
-//
-//     const auto oldUsage     = tlsf.getTelemetry().getUsedSize();
-//     const auto oldMinUsage  = tlsf.getTelemetry().getMinUsage();
-//     const auto oldPeakUsage = tlsf.getTelemetry().getPeakUsage();
-//
-//
-//     [[maybe_unused]] const auto data = tlsf.resize(allocatedBytes, byteSize, byteSize, alignof(void*));
-//
-//     EXPECT_EQ(oldUsage, tlsf.getTelemetry().getUsedSize());
-//     EXPECT_EQ(oldMinUsage, tlsf.getTelemetry().getMinUsage());
-//     EXPECT_EQ(oldPeakUsage, tlsf.getTelemetry().getPeakUsage());
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, Resize_SmallerMemorySize_DoesNotUpdateTelemetry)
-// {
-//     constexpr auto byteSize    = 128;
-//     constexpr auto newByteSize = byteSize - 10;
-//
-//     const auto allocatedBytes = tlsf.malloc(byteSize);
-//
-//     const auto oldUsage     = tlsf.getTelemetry().getUsedSize();
-//     const auto oldMinUsage  = tlsf.getTelemetry().getMinUsage();
-//     const auto oldPeakUsage = tlsf.getTelemetry().getPeakUsage();
-//
-//
-//     [[maybe_unused]] const auto data = tlsf.resize(allocatedBytes, byteSize, newByteSize, alignof(void*));
-//
-//     EXPECT_EQ(oldUsage, tlsf.getTelemetry().getUsedSize());
-//     EXPECT_EQ(oldMinUsage, tlsf.getTelemetry().getMinUsage());
-//     EXPECT_EQ(oldPeakUsage, tlsf.getTelemetry().getPeakUsage());
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, Resize_LatestAllocationResize_UpdatesTelemetry)
-// {
-//     constexpr auto byteSize       = 128;
-//     constexpr auto byteDifference = 100;
-//     constexpr auto newByteSize    = byteSize + byteDifference;
-//
-//     [[maybe_unused]] const auto unusedBytes = tlsf.malloc(50);
-//     const auto allocatedBytes               = tlsf.malloc(byteSize);
-//
-//     const auto oldUsage                      = tlsf.getTelemetry().getUsedSize();
-//     const auto oldMinUsage                   = tlsf.getTelemetry().getMinUsage();
-//     [[maybe_unused]] const auto oldPeakUsage = tlsf.getTelemetry().getPeakUsage();
-//
-//
-//     [[maybe_unused]] const auto data = tlsf.resize(allocatedBytes, byteSize, newByteSize, alignof(void*));
-//
-//     EXPECT_EQ(oldUsage + byteDifference, tlsf.getTelemetry().getUsedSize());
-//     EXPECT_EQ(oldMinUsage, tlsf.getTelemetry().getMinUsage());
-//     EXPECT_EQ(oldPeakUsage + byteDifference, tlsf.getTelemetry().getPeakUsage());
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, Resize_InBetweenAllocationResize_UpdatesTelemetry)
-// {
-//     constexpr auto byteSize       = 128;
-//     constexpr auto byteDifference = 100;
-//     constexpr auto newByteSize    = byteSize + byteDifference;
-//
-//     const auto allocatedBytes               = tlsf.malloc(byteSize);
-//     [[maybe_unused]] const auto unusedBytes = tlsf.malloc(50);
-//
-//     const auto oldUsage    = tlsf.getTelemetry().getUsedSize();
-//     const auto oldMinUsage = tlsf.getTelemetry().getMinUsage();
-//
-//
-//     [[maybe_unused]] const auto data = tlsf.resize(allocatedBytes, byteSize, newByteSize, alignof(void*));
-//
-//     EXPECT_EQ(oldUsage + newByteSize, tlsf.getTelemetry().getUsedSize());
-//     EXPECT_EQ(oldMinUsage, tlsf.getTelemetry().getMinUsage());
-//     EXPECT_EQ(newByteSize, tlsf.getTelemetry().getPeakUsage());
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, ResizeFast_NewSizeSmallerThanOldSizeReturnsNewBufferWithOldData)
-// {
-//     constexpr auto byteSize   = 128;
-//     const auto firstByteChunk = static_cast<size_t*>(tlsf.malloc(byteSize));
-//     const auto dataCount      = byteSize / sizeof(size_t);
-//     for (size_t i = 0; i < dataCount; ++i)
-//     {
-//         firstByteChunk[i] = i + 11;
-//     }
-//     // Additional allocation
-//     [[maybe_unused]] const auto secondByteChunk = tlsf.malloc(byteSize);
-//
-//     const auto data = static_cast<size_t*>(tlsf.resizeFast(firstByteChunk, byteSize, byteSize / 2, alignof(void*)));
-//
-//     EXPECT_NE(reinterpret_cast<uintptr_t>(firstByteChunk), reinterpret_cast<uintptr_t>(data));
-//     // Verify data is not overwritten
-//     for (std::size_t i = 0; i < dataCount; ++i)
-//     {
-//         EXPECT_EQ(i + 11, data[i]);
-//     }
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, ResizeFast_LatestAllocationReturnsNewBufferWithOldData)
-// {
-//     constexpr auto byteSize    = 128;
-//     constexpr auto newByteSize = byteSize * 2;
-//
-//     // Allocate the chunk
-//     const auto firstByteChunk = tlsf.malloc(byteSize);
-//     const auto data           = static_cast<int*>(tlsf.resizeFast(firstByteChunk, byteSize, newByteSize,
-//     alignof(int)));
-//
-//     // Resize it
-//     constexpr auto firstArraySize = newByteSize / sizeof(int);
-//
-//     // Write some data
-//     for (std::size_t i = 0; i < firstArraySize; ++i)
-//     {
-//         data[i] = static_cast<int>(i + 100);
-//     }
-//
-//     // Allocate some more memory
-//     [[maybe_unused]] auto vec = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
-//
-//     // Verify data is not overwritten
-//     for (std::size_t i = 0; i < firstArraySize; ++i)
-//     {
-//         EXPECT_EQ(i + 100, data[i]);
-//     }
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, ResizeFast_AllocationPriorToLatestAllocationReturnNewBufferWithOldData)
-// {
-//     constexpr auto byteSize    = 128;
-//     constexpr auto newByteSize = byteSize * 2;
-//
-//     const auto firstByteChunk = static_cast<size_t*>(tlsf.malloc(byteSize));
-//     const auto dataCount      = byteSize / sizeof(size_t);
-//     for (size_t i = 0; i < dataCount; ++i)
-//     {
-//         firstByteChunk[i] = i + 11;
-//     }
-//
-//     [[maybe_unused]] const auto secondByteChunk = tlsf.malloc(byteSize);
-//
-//     const auto data = static_cast<size_t*>(tlsf.resizeFast(firstByteChunk, byteSize, newByteSize, alignof(size_t)));
-//
-//     EXPECT_NE(reinterpret_cast<uintptr_t>(firstByteChunk), reinterpret_cast<uintptr_t>(data));
-//     for (size_t i = 0; i < dataCount; ++i)
-//     {
-//         EXPECT_EQ(i + 11, data[i]);
-//     }
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, ResizeFast_SameMemorySize_UpdatesTelemetry)
-// {
-//     constexpr auto byteSize = 128;
-//
-//     const auto allocatedBytes = tlsf.malloc(byteSize);
-//
-//     const auto oldUsage     = tlsf.getTelemetry().getUsedSize();
-//     const auto oldMinUsage  = tlsf.getTelemetry().getMinUsage();
-//     const auto oldPeakUsage = tlsf.getTelemetry().getPeakUsage();
-//
-//
-//     [[maybe_unused]] const auto data = tlsf.resizeFast(allocatedBytes, byteSize, byteSize, alignof(void*));
-//
-//     // Since we are allocating twice the usage will also increment by 2x, but the peak stats will remain the same.
-//     EXPECT_EQ(2 * oldUsage, tlsf.getTelemetry().getUsedSize());
-//     EXPECT_EQ(oldMinUsage, tlsf.getTelemetry().getMinUsage());
-//     EXPECT_EQ(oldPeakUsage, tlsf.getTelemetry().getPeakUsage());
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, Resize_SmallerMemorySize_UpdatesTelemetry)
-// {
-//     constexpr auto byteSize    = 128;
-//     constexpr auto newByteSize = byteSize - 10;
-//
-//     const auto allocatedBytes = tlsf.malloc(byteSize);
-//
-//     const auto oldUsage     = tlsf.getTelemetry().getUsedSize();
-//     const auto oldPeakUsage = tlsf.getTelemetry().getPeakUsage();
-//
-//
-//     [[maybe_unused]] const auto data = tlsf.resizeFast(allocatedBytes, byteSize, newByteSize, alignof(void*));
-//
-//     // Since we are allocating twice the usage will also increment.
-//     EXPECT_EQ(oldUsage + newByteSize, tlsf.getTelemetry().getUsedSize());
-//     // Since the new allocation is smaller the min usage will decrease to the new size
-//     EXPECT_EQ(newByteSize, tlsf.getTelemetry().getMinUsage());
-//     // But peak usage doesn't change
-//     EXPECT_EQ(oldPeakUsage, tlsf.getTelemetry().getPeakUsage());
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, ResizeFast_LatestAllocationResize_UpdatesTelemetry)
-// {
-//     constexpr auto byteSize       = 128;
-//     constexpr auto byteDifference = 100;
-//     constexpr auto newByteSize    = byteSize + byteDifference;
-//
-//     [[maybe_unused]] const auto unusedBytes = tlsf.malloc(50);
-//     const auto allocatedBytes               = tlsf.malloc(byteSize);
-//
-//     const auto oldUsage                      = tlsf.getTelemetry().getUsedSize();
-//     const auto oldMinUsage                   = tlsf.getTelemetry().getMinUsage();
-//     [[maybe_unused]] const auto oldPeakUsage = tlsf.getTelemetry().getPeakUsage();
-//
-//
-//     [[maybe_unused]] const auto data = tlsf.resizeFast(allocatedBytes, byteSize, newByteSize, alignof(void*));
-//
-//     // Since we are creating a new allocation, the usage stats increment
-//     EXPECT_EQ(oldUsage + newByteSize, tlsf.getTelemetry().getUsedSize());
-//     EXPECT_EQ(oldMinUsage, tlsf.getTelemetry().getMinUsage());
-//     EXPECT_EQ(newByteSize, tlsf.getTelemetry().getPeakUsage());
-// }
-//
-//
-// TEST_F(ManagedTLSFTests, ResizeFast_InBetweenAllocationResize_UpdatesTelemetry)
-// {
-//     constexpr auto byteSize       = 128;
-//     constexpr auto byteDifference = 100;
-//     constexpr auto newByteSize    = byteSize + byteDifference;
-//
-//     const auto allocatedBytes               = tlsf.malloc(byteSize);
-//     [[maybe_unused]] const auto unusedBytes = tlsf.malloc(50);
-//
-//     const auto oldUsage    = tlsf.getTelemetry().getUsedSize();
-//     const auto oldMinUsage = tlsf.getTelemetry().getMinUsage();
-//
-//
-//     [[maybe_unused]] const auto data = tlsf.resizeFast(allocatedBytes, byteSize, newByteSize, alignof(void*));
-//
-//     EXPECT_EQ(oldUsage + newByteSize, tlsf.getTelemetry().getUsedSize());
-//     EXPECT_EQ(oldMinUsage, tlsf.getTelemetry().getMinUsage());
-//     EXPECT_EQ(newByteSize, tlsf.getTelemetry().getPeakUsage());
 // }
 
 
@@ -1642,17 +1305,7 @@ namespace pmm
         EXPECT_EQ(oldFreeNode, newFreeNode);
     }
 
-    TEST_F(InternallyManagedTLSFTests, Alloc_ReturnsObjectPointerInitializedWithParameters)
-    {
-        const auto vec = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
-
-        EXPECT_FLOAT_EQ(1.0f, vec->x);
-        EXPECT_FLOAT_EQ(2.0f, vec->y);
-        EXPECT_FLOAT_EQ(3.0f, vec->z);
-        EXPECT_FLOAT_EQ(4.0f, vec->w);
-    }
-
-    // TEST_F(ManagedTLSFTests, Malloc_UpdatesTelemetryPadding)
+    // TEST_F(InternallyManagedTLSFTests, Malloc_UpdatesTelemetryPadding)
     // {
     //     const auto buffer          = tlsf.malloc(128, 128);
     //     const auto expectedPadding = reinterpret_cast<uintptr_t>(buffer) - reinterpret_cast<uintptr_t>(tlsf._buffer);
@@ -1670,7 +1323,7 @@ namespace pmm
     // }
 
 
-    // TEST_F(ManagedTLSFTests, AllocV_UpdatesTelemetryPadding)
+    // TEST_F(InternallyManagedTLSFTests, AllocV_UpdatesTelemetryPadding)
     // {
     //     const auto data = tlsf.allocV<Vec4>(10);
     //     const auto expectedPadding =
@@ -1678,28 +1331,9 @@ namespace pmm
     //
     //     EXPECT_EQ(expectedPadding, tlsf.getTelemetry().getTotalPadding());
     // }
-    //
-    //
-    //
-    // TEST_F(ManagedTLSFTests, Clear_ResetsOffsetToZero)
-    // {
-    //     [[maybe_unused]] const auto chunkOne = tlsf.malloc(128);
-    //     [[maybe_unused]] const auto chunkTwo = tlsf.malloc(128);
-    //
-    //     // Initially expect offset and prevOffset are not zero
-    //     EXPECT_NE(0, tlsf._offset);
-    //     EXPECT_NE(0, tlsf._prevOffset);
-    //
-    //     // After freeing, offsets are reset
-    //     tlsf.clear();
-    //
-    //     // Offsets are reset to zero
-    //     EXPECT_EQ(0, tlsf._offset);
-    //     EXPECT_EQ(0, tlsf._prevOffset);
-    // }
-    //
-    //
-    // TEST_F(ManagedTLSFTests, Clear_OnlyResetsCurrentTelemetryUsage)
+
+
+    // TEST_F(InternallyManagedTLSFTests, Clear_OnlyResetsCurrentTelemetryUsage)
     // {
     //     constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
     //
@@ -1718,59 +1352,6 @@ namespace pmm
     //     EXPECT_EQ(0, tlsf.getTelemetry().getUsedSize());
     //     EXPECT_EQ(0, tlsf.getTelemetry().getTotalPadding());
     // }
-    //
-    //
-    // TEST_F(ManagedTLSFTests, Resize_LatestAllocationResizeBuffer)
-    // {
-    //     constexpr auto byteSize    = 128;
-    //     constexpr auto newByteSize = byteSize * 2;
-    //
-    //     [[maybe_unused]] const auto firstByteChunk = tlsf.malloc(byteSize);
-    //     auto secondByteChunk                       = tlsf.malloc(byteSize);
-    //     const auto offsetBeforeResize              = tlsf._offset;
-    //
-    //     [[maybe_unused]] const auto data = tlsf.resize(secondByteChunk, byteSize, newByteSize, alignof(void*));
-    //
-    //     EXPECT_GT(tlsf._offset, offsetBeforeResize);
-    //     EXPECT_EQ(reinterpret_cast<uintptr_t>(secondByteChunk), reinterpret_cast<uintptr_t>(data));
-    // }
-    //
-    //
-    // TEST_F(ManagedTLSFTests, Resize_LatestAllocationOnlyResizeByOffsetDifference)
-    // {
-    //     constexpr auto byteSize    = 128;
-    //     constexpr auto newByteSize = byteSize * 2;
-    //
-    //     [[maybe_unused]] const auto firstByteChunk = tlsf.malloc(byteSize);
-    //     const auto secondByteChunk                 = tlsf.malloc(byteSize);
-    //     const auto offsetBeforeResize              = tlsf._offset;
-    //     const auto expectedOffset                  = offsetBeforeResize + (newByteSize - byteSize);
-    //
-    //     [[maybe_unused]] const auto data = tlsf.resize(secondByteChunk, byteSize, newByteSize, alignof(void*));
-    //
-    //     EXPECT_EQ(expectedOffset, tlsf._offset) << "Offset Mismatch";
-    // }
-    //
-    //
-    // TEST_F(ManagedTLSFTests, ZeroOut_ZeroesOutTheInternalBuffer)
-    // {
-    //     // Fill the buffer with arbitrary data
-    //     for (size_t i = 0; i < tlsf.size(); ++i)
-    //     {
-    //         tlsf._buffer[i] = static_cast<uint8_t>(i % 255);
-    //     }
-    //     // This call unnecessary for testing, but adhering to how the method is supposed to be called,
-    //     // we are leaving it here.
-    //     tlsf.clear();
-    //
-    //     // Zero-out
-    //     tlsf.zeroOut();
-    //
-    //     // Assert tlsf's buffer is cleared
-    //     for (size_t i = 0; i < tlsf.size(); ++i)
-    //     {
-    //         EXPECT_EQ(0, tlsf._buffer[i]);
-    //     }
-    // }
+
 
 } // namespace pmm
