@@ -8,6 +8,8 @@ set(TelemetryHeaders
         StackTelemetry.tpp
         PoolTelemetry.h
         PoolTelemetry.tpp
+        TLSFTelemetry.h
+        TLSFTelemetry.tpp
 )
 
 list(TRANSFORM TelemetryHeaders PREPEND ${TelemetryDir})

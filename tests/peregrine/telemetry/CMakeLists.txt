@@ -7,6 +7,7 @@ target_sources(
         ArenaTelemetryTests.cpp
         StackTelemetryTests.cpp
         PoolTelemetryTests.cpp
+        TLSFTelemetryTests.cpp
 )
 
 target_include_directories(
