@@ -168,7 +168,7 @@ namespace pmm
         [[nodiscard]] constexpr size_t getActiveAllocations() const noexcept { return 0; }
         [[nodiscard]] constexpr size_t getLifetimeAllocations() const noexcept { return 0; }
         [[nodiscard]] constexpr size_t getLifetimeFrees() const noexcept { return 0; }
-        [[nodiscard]] constexpr bool hasMemoryLeak() const noexcept { return 0; }
+        [[nodiscard]] constexpr bool hasMemoryLeak() const noexcept { return false; }
 
         constexpr void resetTelemetry() noexcept {};
     };

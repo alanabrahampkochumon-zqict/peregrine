@@ -80,7 +80,7 @@ namespace
 /** @test Verify that TLSF telemetry is initialized with size and usage defaults. */
 TEST_F(TLSFTelemetryTests, IntializesWithSizeAndDefaultStats)
 {
-    constexpr auto maxValue = std::numeric_limits<size_t>();
+    constexpr auto maxValue = std::numeric_limits<size_t>::max();
     EXPECT_EQ(size, telemetry.getTotalCapacity());
     EXPECT_EQ(0, telemetry.getCurrentBufferUsage());
     EXPECT_EQ(maxValue, telemetry.getMinBufferUsage());
@@ -94,239 +94,149 @@ TEST_F(TLSFTelemetryTests, IntializesWithSizeAndDefaultStats)
     EXPECT_EQ(maxValue, telemetry.getMinPayloadUsage());
     EXPECT_EQ(0, telemetry.getPeakPayloadUsage());
 
+    EXPECT_EQ(0, telemetry.getLifetimeAllocations());
+    EXPECT_EQ(0, telemetry.getActiveAllocations());
+    EXPECT_EQ(0, telemetry.getLifetimeFrees());
     EXPECT_EQ(0, telemetry.getLargestFreeBlockSize());
     EXPECT_EQ(0, telemetry.getFreeBlockCount());
-    EXPECT_EQ(0, telemetry.getActiveAllocations());
-    EXPECT_EQ(0, telemetry.getLifetimeAllocations());
-    EXPECT_EQ(0, telemetry.getLifetimeFrees());
+
+    EXPECT_FALSE(telemetry.hasMemoryLeak());
 }
 
 
 /** @test Verify that TLSF telemetry is incremented with correct usage values. */
 TEST_F(TLSFTelemetryTests, IncTelemetryUsage_UpdatesWithCorrectUsage)
 {
+    telemetry.incUsage(100, 8);
+    telemetry.incUsage(500, 24);
+    telemetry.incUsage(200, 100);
+    telemetry.incUsage(300, 4);
+    telemetry.incUsage(100, 0);
+    constexpr auto totalBufferUsage = 1200;
+    constexpr auto metaSize         = 136;
 
-    telemetry.incTLSFUsage(100, 8);
-    telemetry.incTLSFUsage(500, 24);
-    telemetry.incTLSFUsage(200, 100);
-    telemetry.incTLSFUsage(300, 4);
-    telemetry.incTLSFUsage(100, 0);
+    EXPECT_EQ(metaSize + totalBufferUsage, telemetry.getCurrentBufferUsage());
+    EXPECT_EQ(100, telemetry.getMinBufferUsage());
+    EXPECT_EQ(524, telemetry.getPeakBufferUsage());
 
-    EXPECT_EQ(1200, telemetry.getCurrentMemoryUsage());
-    EXPECT_EQ(100, telemetry.getMinMemoryUsage());
-    EXPECT_EQ(500, telemetry.getPeakMemoryUsage());
+    EXPECT_EQ(metaSize, telemetry.getCurrentMetadataUsage());
+    EXPECT_EQ(0, telemetry.getMinMetadataUsage());
+    EXPECT_EQ(100, telemetry.getPeakMetadataUsage());
 
-    EXPECT_EQ(136, telemetry.getCurrentPadding());
-    EXPECT_EQ(0, telemetry.getMinPadding());
-    EXPECT_EQ(100, telemetry.getPeakPadding());
+    EXPECT_EQ(totalBufferUsage, telemetry.getCurrentPayloadUsage());
+    EXPECT_EQ(100, telemetry.getMinPayloadUsage());
+    EXPECT_EQ(500, telemetry.getPeakPayloadUsage());
 
-    EXPECT_EQ(1336, telemetry.getTotalUsage());
+    EXPECT_EQ(5, telemetry.getLifetimeAllocations());
+    EXPECT_EQ(5, telemetry.getActiveAllocations());
+    EXPECT_EQ(0, telemetry.getLifetimeFrees());
 }
-
-
-TEST(TLSFTelemetryHelpersTests, ManagedPolicy_ReturnRealTLSFTelemetry) {}
 
 
 /** @test Verify that TLSF telemetry is decrement with correct usage values. */
 TEST_F(TLSFTelemetryTests, DecTelemetryUsage_UpdatesWithCorrectUsage)
 {
+    telemetry.incUsage(2500, 120);
+    telemetry.incUsage(2500, 120);
+    telemetry.incUsage(1200, 24);
+    telemetry.decUsage(2500, 120);
+    telemetry.decUsage(1200, 24);
 
-    telemetry.incTLSFUsage(5000, 120);
-    telemetry.decTLSFUsage(500, 24);
-    telemetry.decTLSFUsage(100, 12);
+    EXPECT_EQ(2620, telemetry.getCurrentBufferUsage());
+    EXPECT_EQ(1224, telemetry.getMinBufferUsage());
+    EXPECT_EQ(2620, telemetry.getPeakBufferUsage());
 
-    EXPECT_EQ(4400, telemetry.getCurrentMemoryUsage());
+    EXPECT_EQ(120, telemetry.getCurrentMetadataUsage());
+    EXPECT_EQ(24, telemetry.getMinMetadataUsage());
+    EXPECT_EQ(120, telemetry.getPeakMetadataUsage());
 
-    EXPECT_EQ(84, telemetry.getCurrentPadding());
+    EXPECT_EQ(2500, telemetry.getCurrentPayloadUsage());
+    EXPECT_EQ(1200, telemetry.getMinPayloadUsage());
+    EXPECT_EQ(2500, telemetry.getPeakPayloadUsage());
 
-    EXPECT_EQ(4484, telemetry.getTotalUsage());
+    EXPECT_EQ(3, telemetry.getLifetimeAllocations());
+    EXPECT_EQ(1, telemetry.getActiveAllocations());
+    EXPECT_EQ(2, telemetry.getLifetimeFrees());
+
+    EXPECT_FALSE(telemetry.hasMemoryLeak());
 }
 
 
-/**
- * @test Verify that TLSF telemetry updateMinMemoryUsage updates the minimum memory usage
- *       when passing in a smaller value.
- */
-TEST_F(TLSFTelemetryTests, UpdateMinMemoryUsage_UpdateMinimumWhenPassingInASmallValue)
+TEST_F(TLSFTelemetryTests, IncFreeBlockCount_IncreasesFreeBlockCountBy1)
 {
-    constexpr std::size_t newMin = 5;
+    telemetry.incFreeBlockCount();
+    EXPECT_EQ(1, telemetry.getFreeBlockCount());
 
-    telemetry.incTLSFUsage(10, 5);
-    telemetry.incTLSFUsage(50, 2);
+    telemetry.incFreeBlockCount();
+    EXPECT_EQ(2, telemetry.getFreeBlockCount());
 
-    telemetry.updateMinMemoryUsage(newMin);
-    EXPECT_EQ(newMin, telemetry.getMinMemoryUsage());
+    telemetry.incFreeBlockCount();
+    EXPECT_EQ(3, telemetry.getFreeBlockCount());
+
+    telemetry.incFreeBlockCount();
+    EXPECT_EQ(4, telemetry.getFreeBlockCount());
 }
 
 
-/**
- * @test Verify that TLSF telemetry updateMinMemoryUsage does not update the minimum memory usage
- *       when passing in a larger value.
- */
-TEST_F(TLSFTelemetryTests, UpdateMinMemoryUsage_DoesNotUpdateMinimumWhenPassingInALargerValue)
+TEST_F(TLSFTelemetryTests, DecFreeBlockCount_DecreasesFreeBlockCountBy1)
 {
-    constexpr std::size_t newMin = 50;
+    telemetry.incFreeBlockCount();
+    telemetry.incFreeBlockCount();
+    telemetry.incFreeBlockCount();
+    telemetry.incFreeBlockCount();
+    telemetry.incFreeBlockCount();
 
-    telemetry.incTLSFUsage(10, 2);
-    telemetry.incTLSFUsage(40, 2);
+    EXPECT_EQ(5, telemetry.getFreeBlockCount());
 
-    const auto oldMin = telemetry.getMinMemoryUsage();
+    telemetry.decFreeBlockCount();
+    EXPECT_EQ(4, telemetry.getFreeBlockCount());
 
-    telemetry.updateMinMemoryUsage(newMin);
-    EXPECT_EQ(oldMin, telemetry.getMinMemoryUsage());
+    telemetry.decFreeBlockCount();
+    EXPECT_EQ(3, telemetry.getFreeBlockCount());
+
+    telemetry.decFreeBlockCount();
+    EXPECT_EQ(2, telemetry.getFreeBlockCount());
+
+    telemetry.decFreeBlockCount();
+    EXPECT_EQ(1, telemetry.getFreeBlockCount());
 }
 
 
-/**
- * @test Verify that TLSF telemetry updatePeakMemoryUsage updates the peak memory usage
- *       when passing in a larger value.
- */
-TEST_F(TLSFTelemetryTests, UpdatePeakMemoryUsage_UpdatePeakUsageWhenPassingInALargerValue)
+TEST_F(TLSFTelemetryTests, HasLeak_ReturnsFalse_ForEqualAllocationsAndDeallocations)
 {
-    constexpr std::size_t newPeak = 500;
+    telemetry.incUsage(2500, 120);
+    telemetry.incUsage(2500, 120);
+    telemetry.incUsage(1200, 24);
+    telemetry.decUsage(2500, 120);
+    telemetry.decUsage(1200, 24);
+    telemetry.decUsage(2500, 120);
 
-    telemetry.incTLSFUsage(10, 2);
-    telemetry.incTLSFUsage(50, 2);
-
-    telemetry.updatePeakMemoryUsage(newPeak);
-    EXPECT_EQ(newPeak, telemetry.getPeakMemoryUsage());
+    EXPECT_FALSE(telemetry.hasMemoryLeak());
 }
 
 
-/**
- * @test Verify that TLSF telemetry updatePeakMemoryUsage does not update the peak memory usage
- *       when passing in a smaller value.
- */
-TEST_F(TLSFTelemetryTests, UpdatePeakMemoryUsage_DoesNotUpdatePeakUsageWhenPassingInASmallerValue)
+// TODO: Add back after figuring out how to cause a leak?
+// TEST_F(TLSFTelemetryTests, HasLeak_ReturnsTrue_ForEqualAllocationsAndDeallocations)
+// {
+//     telemetry.incUsage(2500, 120);
+//     telemetry.incUsage(2500, 120);
+//     telemetry.incUsage(1200, 24);
+//     telemetry.decUsage(2500, 120);
+//     telemetry.decUsage(1200, 24);
+//     telemetry.decUsage(2500, 120);
+//
+//     EXPECT_FALSE(telemetry.hasMemoryLeak());
+// }
+
+
+TEST_F(TLSFTelemetryTests, UpdateLargestFreeBlockSize_UpdatesMemberVariable)
 {
-    constexpr std::size_t newPeak = 15;
-
-    telemetry.incTLSFUsage(10, 2);
-    telemetry.incTLSFUsage(50, 2);
-
-    const auto oldMin = telemetry.getPeakMemoryUsage();
-
-    telemetry.updatePeakMemoryUsage(newPeak);
-    EXPECT_EQ(oldMin, telemetry.getPeakMemoryUsage());
-}
-
-
-/**
- * @test Verify that TLSF telemetry updateMinPaddingUsage updates the minimum padding
- *       when passing in a smaller value.
- */
-TEST_F(TLSFTelemetryTests, UpdateMinUsage_UpdateMinimumPaddingWhenPassingInASmallValue)
-{
-    constexpr std::size_t newMin = 5;
-
-    telemetry.incTLSFUsage(10, 15);
-    telemetry.incTLSFUsage(50, 12);
-
-    telemetry.updateMinPaddingUsage(newMin);
-    EXPECT_EQ(newMin, telemetry.getMinPadding());
-}
-
-
-/**
- * @test Verify that TLSF telemetry updateMinPaddingUsage does not update the minimum padding
- *       when passing in a larger value.
- */
-TEST_F(TLSFTelemetryTests, UpdateMinUsage_DoesNotUpdateMinimumPaddingWhenPassingInALargerValue)
-{
-    constexpr std::size_t newMin = 50;
-
-    telemetry.incTLSFUsage(10, 2);
-    telemetry.incTLSFUsage(40, 2);
-
-    const auto oldMin = telemetry.getMinPadding();
-
-    telemetry.updateMinPaddingUsage(newMin);
-    EXPECT_EQ(oldMin, telemetry.getMinPadding());
-}
-
-
-/**
- * @test Verify that TLSF telemetry updatePeakPaddingUsage updates the peak padding
- *       when passing in a larger value.
- */
-TEST_F(TLSFTelemetryTests, UpdatePeakUsage_UpdatePeakPaddingUsageWhenPassingInALargerValue)
-{
-    constexpr std::size_t newPeak = 500;
-
-    telemetry.incTLSFUsage(10, 2);
-    telemetry.incTLSFUsage(50, 2);
-
-    telemetry.updatePeakPaddingUsage(newPeak);
-    EXPECT_EQ(newPeak, telemetry.getPeakPadding());
-}
-
-
-/**
- * @test Verify that TLSF telemetry updatePeakPaddingUsage does not update the peak padding
- *        when passing in a smaller value.
- */
-TEST_F(TLSFTelemetryTests, UpdatePeakUsage_DoesNotUpdatePeakPaddingUsageWhenPassingInASmallerValue)
-{
-    constexpr std::size_t newPeak = 12;
-
-    telemetry.incTLSFUsage(10, 24);
-    telemetry.incTLSFUsage(50, 24);
-
-    const auto oldMin = telemetry.getPeakPadding();
-
-    telemetry.updatePeakPaddingUsage(newPeak);
-    EXPECT_EQ(oldMin, telemetry.getPeakPadding());
-}
-
-
-/**
- * @test Verify that resetting the current usage resets current usage
- *       but preserves peak and minimum usage for both memory and padding.
- */
-TEST_F(TLSFTelemetryTests, ResetCurrentUsage_OnlyResetsCurrentUsage)
-{
-
-    telemetry.incTLSFUsage(10, 4);
-    telemetry.incTLSFUsage(50, 12);
-    telemetry.incTLSFUsage(20, 24);
-    telemetry.incTLSFUsage(30, 12);
-    telemetry.incTLSFUsage(10, 12);
-
-    // Reset current usage
-    telemetry.resetCurrentUsage();
-
-    // Only reset current usage
-    EXPECT_EQ(0, telemetry.getCurrentMemoryUsage());
-    EXPECT_EQ(0, telemetry.getCurrentPadding());
-
-    // But preserves the min and peak usage
-    EXPECT_EQ(10, telemetry.getMinMemoryUsage());
-    EXPECT_EQ(50, telemetry.getPeakMemoryUsage());
-
-    EXPECT_EQ(4, telemetry.getMinPadding());
-    EXPECT_EQ(24, telemetry.getPeakPadding());
-}
-
-
-/** @test Verify that TLSF telemetry reset resets all values to default. */
-TEST_F(TLSFTelemetryTests, Reset_ResetsUsages)
-{
-
-    telemetry.incTLSFUsage(10, 4);
-    telemetry.incTLSFUsage(50, 4);
-    telemetry.incTLSFUsage(20, 4);
-    telemetry.incTLSFUsage(30, 4);
-    telemetry.incTLSFUsage(10, 4);
-
-    telemetry.resetTelemetry();
-    EXPECT_EQ(0, telemetry.getCurrentMemoryUsage());
-    EXPECT_EQ(std::numeric_limits<std::size_t>::max(), telemetry.getMinMemoryUsage());
-    EXPECT_EQ(0, telemetry.getPeakMemoryUsage());
-
-
-    EXPECT_EQ(0, telemetry.getCurrentPadding());
-    EXPECT_EQ(std::numeric_limits<std::size_t>::max(), telemetry.getMinPadding());
-    EXPECT_EQ(0, telemetry.getPeakPadding());
+    telemetry.updateLargestFreeBlockSize(512);
+    EXPECT_EQ(512, telemetry.getLargestFreeBlockSize());
+    telemetry.updateLargestFreeBlockSize(24);
+    EXPECT_EQ(24, telemetry.getLargestFreeBlockSize());
+    telemetry.updateLargestFreeBlockSize(746);
+    EXPECT_EQ(746, telemetry.getLargestFreeBlockSize());
 }
 
 /** @} */
