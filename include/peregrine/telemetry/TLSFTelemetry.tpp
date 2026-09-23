@@ -13,6 +13,7 @@
 #include "peregrine/utils/Preprocessors.h"
 
 #include <algorithm>
+#include <format>
 #include <limits>
 
 namespace pmm
@@ -58,6 +59,17 @@ namespace pmm
 
     PMM_INLINE constexpr void TLSFTelemetry::decUsage(const size_t reqSize, const size_t overhead) noexcept
     {
+        PMM_ASSERT_MSG(_currentPayloadUsage >= reqSize,
+                       std::format("Payload size out-of-bounds.\nCurrent Request Size: {}\nAllocator Payload usage{}",
+                                   reqSize, _currentPayloadUsage)
+                           .c_str());
+        PMM_ASSERT_MSG(_currentMetadataUsage >= overhead,
+                       std::format("Metadata size out-of-bounds.\nCurrent Request Size: {}\nAllocator Metadata usage{}",
+                                   reqSize, _currentPayloadUsage)
+                           .c_str());
+        PMM_ASSERT_MSG(_activeAllocationCount > 0, "There are no active allocation to decrement.\n");
+
+
         _currentPayloadUsage -= reqSize;
         _currentMetadataUsage -= overhead;
         _currentBufferUsage -= reqSize + overhead;

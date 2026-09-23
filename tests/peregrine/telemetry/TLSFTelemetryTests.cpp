@@ -80,16 +80,25 @@ namespace
 /** @test Verify that TLSF telemetry is initialized with size and usage defaults. */
 TEST_F(TLSFTelemetryTests, IntializesWithSizeAndDefaultStats)
 {
-    EXPECT_EQ(size, telemetry.getTLSFSize());
-    EXPECT_EQ(0, telemetry.getTotalUsage());
+    constexpr auto maxValue = std::numeric_limits<size_t>();
+    EXPECT_EQ(size, telemetry.getTotalCapacity());
+    EXPECT_EQ(0, telemetry.getCurrentBufferUsage());
+    EXPECT_EQ(maxValue, telemetry.getMinBufferUsage());
+    EXPECT_EQ(0, telemetry.getPeakBufferUsage());
 
-    EXPECT_EQ(0, telemetry.getCurrentMemoryUsage());
-    EXPECT_EQ(0, telemetry.getPeakMemoryUsage());
-    EXPECT_EQ(std::numeric_limits<std::size_t>::max(), telemetry.getMinMemoryUsage());
+    EXPECT_EQ(0, telemetry.getCurrentMetadataUsage());
+    EXPECT_EQ(maxValue, telemetry.getMinMetadataUsage());
+    EXPECT_EQ(0, telemetry.getPeakMetadataUsage());
 
-    EXPECT_EQ(0, telemetry.getCurrentPadding());
-    EXPECT_EQ(0, telemetry.getPeakPadding());
-    EXPECT_EQ(std::numeric_limits<std::size_t>::max(), telemetry.getMinPadding());
+    EXPECT_EQ(0, telemetry.getCurrentPayloadUsage());
+    EXPECT_EQ(maxValue, telemetry.getMinPayloadUsage());
+    EXPECT_EQ(0, telemetry.getPeakPayloadUsage());
+
+    EXPECT_EQ(0, telemetry.getLargestFreeBlockSize());
+    EXPECT_EQ(0, telemetry.getFreeBlockCount());
+    EXPECT_EQ(0, telemetry.getActiveAllocations());
+    EXPECT_EQ(0, telemetry.getLifetimeAllocations());
+    EXPECT_EQ(0, telemetry.getLifetimeFrees());
 }
 
 
