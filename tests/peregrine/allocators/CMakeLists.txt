@@ -22,6 +22,7 @@ target_sources(
 
         tlsf/HeaderTests.cpp
         tlsf/InternallyManagedTLSFTests.cpp
+        tlsf/InternallyManagedTelemetryIntegrationTests.cpp
         tlsf/ExternallyManagedTLSFTests.cpp
 
         TempArenaTests.cpp

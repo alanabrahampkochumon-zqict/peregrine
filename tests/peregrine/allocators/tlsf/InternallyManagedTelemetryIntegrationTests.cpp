@@ -1,7 +1,7 @@
 /**
- * @file InternallyManagedTLSFTests.cpp
+ * @file InternallyManagedTelemetryIntegrationTests.cpp
  * @author Alan Abraham P Kochumon
- * @date Created on: September 08, 2026
+ * @date Created on: September 24, 2026
  *
  * @brief Verify managed tlsf allocation, free, and helper function logic.
  *
@@ -140,6 +140,24 @@ namespace
 /**************************************
  *           INITIALIZATIONS          *
  **************************************/
+//
+// TEST_F(InternallyManagedTLSFTests, EnabledTelemetry_ReturnsRealTelemetry)
+// {
+//     [[maybe_unused]] pmm::TLSF<pmm::MemPolicy::Internal, pmm::telemetry::Enabled> telemetryEnabledTLSF(512);
+//     [[maybe_unused]] auto telemetry = telemetryEnabledTLSF.getTelemetry();
+//     const bool result               = std::is_same_v<decltype(telemetry), pmm::TLSFTelemetry>;
+//     EXPECT_TRUE(result);
+// }
+//
+//
+// TEST_F(InternallyManagedTLSFTests, DisabledTelemetry_ReturnsDummyTelemetry)
+// {
+//     [[maybe_unused]] const pmm::TLSF<pmm::MemPolicy::Internal, pmm::telemetry::Disabled> telemetryDisabledTLSF(512);
+//     [[maybe_unused]] auto telemetry = telemetryDisabledTLSF.getTelemetry();
+//     const bool result               = std::is_same_v<decltype(telemetry), pmm::DummyTLSFTelemetry>;
+//     EXPECT_TRUE(result);
+// }
+
 
 TEST_F(InternallyManagedTLSFTests, Ctor_InitializesTLSFWithTheGivenBytes) { EXPECT_EQ(tlsfSize, tlsf.size()); }
 
@@ -156,7 +174,63 @@ TEST_F(InternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
     EXPECT_EQ(tlsfSize, tlsf2.freeSize());
     EXPECT_EQ(tlsfSize, tlsf2.size());
     EXPECT_EQ(0, tlsf2.usedSize());
+    // TODO: Add back after telemetry
+    // EXPECT_EQ(tlsfSize, tlsf2.getTelemetry().getTLSFSize());
 }
+//
+// TODO: Add back after adding telemetry and malloc
+// TEST_F(InternallyManagedTLSFTests, MoveCtor_MovesTelemetry)
+// {
+//     static_cast<void>(tlsf.malloc(120));
+//     static_cast<void>(tlsf.malloc(240));
+//     // Get the telemetry to ensure that the value is preserved when moving
+//     // DON'T get by reference as it will change internally
+//     const auto telemetry = tlsf.getTelemetry();
+//
+//     const pmm::TLSF<> tlsf2 = std::move(tlsf);
+//
+//     // Checking for telemetry equality
+//     EXPECT_EQ(telemetry.getUsedSize(), tlsf2.getTelemetry().getUsedSize());
+//     EXPECT_EQ(telemetry.getPeakUsage(), tlsf2.getTelemetry().getPeakUsage());
+//     EXPECT_EQ(telemetry.getTLSFSize(), tlsf2.getTelemetry().getTLSFSize());
+//     EXPECT_EQ(telemetry.getMinUsage(), tlsf2.getTelemetry().getMinUsage());
+//     EXPECT_EQ(telemetry.getTotalPadding(), tlsf2.getTelemetry().getTotalPadding());
+// }
+//
+//
+// TEST_F(InternallyManagedTLSFTests, MoveAssign_CopiesAttributesToNewObject)
+// {
+//     constexpr auto sampleAllocation = 50;
+//     static_cast<void>(tlsf.malloc(sampleAllocation));
+//     pmm::TLSF<> tlsf2(256);
+//
+//     tlsf2 = std::move(tlsf);
+//     EXPECT_EQ(tlsfSize - sampleAllocation, tlsf2.freeSize());
+//     EXPECT_EQ(tlsfSize, tlsf2.size());
+//     EXPECT_EQ(sampleAllocation, tlsf2.usedSize());
+// }
+//
+//
+// TEST_F(InternallyManagedTLSFTests, MoveAssign_MovesTelemetry)
+// {
+//     static_cast<void>(tlsf.malloc(120));
+//     static_cast<void>(tlsf.malloc(240));
+//     // Get the telemetry to ensure that the value is preserved when moving
+//     // DON'T get by reference as it will change internally
+//     const auto telemetry = tlsf.getTelemetry();
+//
+//     pmm::TLSF<> tlsf2(256);
+//     tlsf2 = std::move(tlsf);
+//
+//     // Checking for telemetry equality
+//     EXPECT_EQ(telemetry.getUsedSize(), tlsf2.getTelemetry().getUsedSize());
+//     EXPECT_EQ(telemetry.getPeakUsage(), tlsf2.getTelemetry().getPeakUsage());
+//     EXPECT_EQ(telemetry.getTLSFSize(), tlsf2.getTelemetry().getTLSFSize());
+//     EXPECT_EQ(telemetry.getMinUsage(), tlsf2.getTelemetry().getMinUsage());
+//     EXPECT_EQ(telemetry.getTotalPadding(), tlsf2.getTelemetry().getTotalPadding());
+// }
+
+
 
 /**************************************
  *            ALLOC BYTES             *
@@ -229,6 +303,26 @@ TEST_F(InternallyManagedTLSFTests, Malloc_SubsequentAllocationDoNotCorruptMemory
         EXPECT_EQ(static_cast<int>(i + 7), secondAlloc[i]);
     }
 }
+
+// TODO: Add more TLSF allocation tests.
+
+// TEST_F(InternallyManagedTLSFTests, Malloc_UpdatesTelemetry)
+// {
+//     constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
+//
+//     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+//     static_cast<void>(tlsf.malloc(byte1));
+//     static_cast<void>(tlsf.malloc(byte2));
+//     static_cast<void>(tlsf.malloc(byte3));
+//
+//     constexpr std::size_t expectedMinUsage  = byte1;
+//     constexpr std::size_t expectedPeakUsage = byte3;
+//     constexpr std::size_t expectedUsage     = byte1 + byte2 + byte3;
+//
+//     EXPECT_EQ(expectedMinUsage, tlsf.getTelemetry().getMinUsage());
+//     EXPECT_EQ(expectedPeakUsage, tlsf.getTelemetry().getPeakUsage());
+//     EXPECT_EQ(expectedUsage, tlsf.getTelemetry().getUsedSize());
+// }
 
 
 TEST_F(InternallyManagedTLSFTests, Malloc_HeaderIsPreservedInAddressBeforeGivenAddress)
@@ -633,6 +727,25 @@ TEST_F(InternallyManagedTLSFTests, Alloc_AlignsToTargetAlignment)
 }
 
 
+// TEST_F(InternallyManagedTLSFTests, Alloc_UpdatesTelemetry)
+// {
+//     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+//     static_cast<void>(tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+//     static_cast<void>(tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+//     static_cast<void>(tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
+//     static_cast<void>(tlsf.alloc<int>(1));
+//
+//     constexpr std::size_t expectedMinUsage  = sizeof(int);
+//     constexpr std::size_t expectedPeakUsage = sizeof(Vec4);
+//     constexpr std::size_t expectedUsage     = sizeof(Vec4) * 3 + sizeof(int);
+//
+//     EXPECT_EQ(expectedMinUsage, tlsf.getTelemetry().getMinUsage());
+//     EXPECT_EQ(expectedPeakUsage, tlsf.getTelemetry().getPeakUsage());
+//     EXPECT_EQ(expectedUsage, tlsf.getTelemetry().getUsedSize());
+// }
+
+
+
 /**************************************
  *            ALLOC V(ector)           *
  **************************************/
@@ -692,6 +805,25 @@ TEST_F(InternallyManagedTLSFTests, AllocV_SubsequentAllocationDoNotCorruptMemory
         EXPECT_NEAR(edgeData[i * 4 + 3], edge.w, epsilon);
     }
 }
+
+
+// TEST_F(InternallyManagedTLSFTests, AllocV_UpdatesTelemetry)
+// {
+//     constexpr std::size_t count1 = 2, count2 = 4, count3 = 6;
+//
+//     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+//     static_cast<void>(tlsf.allocV<Vec4>(count1));
+//     static_cast<void>(tlsf.allocV<Vec4>(count2));
+//     static_cast<void>(tlsf.allocV<Vec4>(count3));
+//
+//     constexpr std::size_t expectedMinUsage  = count1 * sizeof(Vec4);
+//     constexpr std::size_t expectedPeakUsage = count3 * sizeof(Vec4);
+//     constexpr std::size_t expectedUsage     = (count1 + count2 + count3) * sizeof(Vec4);
+//
+//     EXPECT_EQ(expectedMinUsage, tlsf.getTelemetry().getMinUsage());
+//     EXPECT_EQ(expectedPeakUsage, tlsf.getTelemetry().getPeakUsage());
+//     EXPECT_EQ(expectedUsage, tlsf.getTelemetry().getUsedSize());
+// }
 
 
 /**************************************
@@ -1144,7 +1276,6 @@ namespace pmm
         EXPECT_NE(oldSL, tlsf._slBitmap);
     }
 
-
     /// @test Verify that when resizing a buffer to a larger size updates the fl and sl masks.
     TEST_F(InternallyManagedTLSFTests, Resize_LargerSizeSizeUpdatesFLAndSLBitmaps)
     {
@@ -1239,5 +1370,54 @@ namespace pmm
         EXPECT_EQ(oldFreeListSize, newFreeListSize);
         EXPECT_EQ(oldFreeNode, newFreeNode);
     }
+
+    // TEST_F(InternallyManagedTLSFTests, Malloc_UpdatesTelemetryPadding)
+    // {
+    //     const auto buffer          = tlsf.malloc(128, 128);
+    //     const auto expectedPadding = reinterpret_cast<uintptr_t>(buffer) - reinterpret_cast<uintptr_t>(tlsf._buffer);
+    //
+    //     EXPECT_EQ(expectedPadding, tlsf.getTelemetry().getTotalPadding());
+    // }
+
+
+    // TEST_F(InternallyManagedTLSFTests, Alloc_UpdatesTelemetryPadding)
+    // {
+    //     const auto vec4            = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
+    //     const auto expectedPadding = reinterpret_cast<uintptr_t>(vec4) - reinterpret_cast<uintptr_t>(tlsf._buffer);
+    //
+    //     EXPECT_EQ(expectedPadding, tlsf.getTelemetry().getTotalPadding());
+    // }
+
+
+    // TEST_F(InternallyManagedTLSFTests, AllocV_UpdatesTelemetryPadding)
+    // {
+    //     const auto data = tlsf.allocV<Vec4>(10);
+    //     const auto expectedPadding =
+    //         reinterpret_cast<uintptr_t>(data.data()) - reinterpret_cast<uintptr_t>(tlsf._buffer);
+    //
+    //     EXPECT_EQ(expectedPadding, tlsf.getTelemetry().getTotalPadding());
+    // }
+
+
+    // TEST_F(InternallyManagedTLSFTests, Clear_OnlyResetsCurrentTelemetryUsage)
+    // {
+    //     constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
+    //
+    //     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
+    //     static_cast<void>(tlsf.malloc(byte1));
+    //     static_cast<void>(tlsf.malloc(byte2));
+    //     static_cast<void>(tlsf.malloc(byte3));
+    //
+    //     constexpr std::size_t expectedMinUsage  = byte1;
+    //     constexpr std::size_t expectedPeakUsage = byte3;
+    //
+    //     tlsf.clear();
+    //
+    //     EXPECT_EQ(expectedMinUsage, tlsf.getTelemetry().getMinUsage());
+    //     EXPECT_EQ(expectedPeakUsage, tlsf.getTelemetry().getPeakUsage());
+    //     EXPECT_EQ(0, tlsf.getTelemetry().getUsedSize());
+    //     EXPECT_EQ(0, tlsf.getTelemetry().getTotalPadding());
+    // }
+
 
 } // namespace pmm
