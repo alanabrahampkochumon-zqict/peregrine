@@ -158,6 +158,27 @@ TEST_F(InternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
     EXPECT_EQ(0, tlsf2.usedSize());
 }
 
+
+/// @test Verify that the move constructor moves all the internal allocator state, enabling allocations
+///       with the new instance.
+TEST_F(InternallyManagedTLSFTests, MoveCtor_MovesAllocatorEnablingAllocationsWithNewAllocator)
+{
+    pmm::TLSF<pmm::MemPolicy::Internal> tlsf2 = std::move(tlsf);
+    const auto mem                            = tlsf2.malloc(512);
+    EXPECT_NE(nullptr, mem);
+}
+
+
+/// @test Verify that the move assign operator moves all the internal allocator state, enabling allocations
+///       with the new instance.
+TEST_F(InternallyManagedTLSFTests, MoveAssignOperator_MovesAllocatorEnablingAllocationsWithNewAllocator)
+{
+    pmm::TLSF<pmm::MemPolicy::Internal> tlsf2(512);
+    tlsf2          = std::move(tlsf);
+    const auto mem = tlsf2.malloc(512);
+    EXPECT_NE(nullptr, mem);
+}
+
 /**************************************
  *            ALLOC BYTES             *
  **************************************/
@@ -806,6 +827,9 @@ namespace pmm
         EXPECT_EQ(initialSize, tlsf2._size);
         EXPECT_EQ(initialFLMask, tlsf2._flBitmap);
         EXPECT_EQ(initialSLMask, tlsf2._slBitmap);
+        // Since freelist is a raw array we need to compare it with a for loop
+        static_assert(sizeof(tlsf._freeList) == sizeof(tlsf2._freeList));
+        EXPECT_TRUE(std::memcmp(tlsf._freeList, tlsf2._freeList, sizeof(tlsf._freeList)) == 0);
     }
 
 
@@ -835,6 +859,8 @@ namespace pmm
         EXPECT_EQ(initialSize, tlsf2._size);
         EXPECT_EQ(initialFLMask, tlsf2._flBitmap);
         EXPECT_EQ(initialSLMask, tlsf2._slBitmap);
+        static_assert(sizeof(tlsf._freeList) == sizeof(tlsf2._freeList));
+        EXPECT_TRUE(std::memcmp(tlsf._freeList, tlsf2._freeList, sizeof(tlsf._freeList)) == 0);
     }
 
 

@@ -1,5 +1,5 @@
 /**
- * @file InternallyManagedTelemetryIntegrationTests.cpp
+ * @file InternallyManagedTLSFTelemetryIntegrationTests.cpp
  * @author Alan Abraham P Kochumon
  * @date Created on: September 24, 2026
  *
@@ -83,15 +83,15 @@ TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, TLSFHasFreeSpaceEqualToSi
 { EXPECT_EQ(tlsfSize, tlsf.freeSize()); }
 
 
-TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveCtor_CopiesAttributesToNewObject)
-{
-    const pmm::TLSF<> tlsf2 = std::move(tlsf);
-    EXPECT_EQ(tlsfSize, tlsf2.freeSize());
-    EXPECT_EQ(tlsfSize, tlsf2.size());
-    EXPECT_EQ(0, tlsf2.usedSize());
-    // TODO: Add back after telemetry
-    // EXPECT_EQ(tlsfSize, tlsf2.getTelemetry().getTLSFSize());
-}
+// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveCtor_CopiesAttributesToNewObject)
+// {
+//     const pmm::TLSF<> tlsf2 = std::move(tlsf);
+//     EXPECT_EQ(tlsfSize, tlsf2.freeSize());
+//     EXPECT_EQ(tlsfSize, tlsf2.size());
+//     EXPECT_EQ(0, tlsf2.usedSize());
+//     // TODO: Add back after telemetry
+//     // EXPECT_EQ(tlsfSize, tlsf2.getTelemetry().getTLSFSize());
+// }
 //
 // TODO: Add back after adding telemetry and malloc
 // TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveCtor_MovesTelemetry)
@@ -755,541 +755,547 @@ namespace pmm
 {
 
     // NOTE: For CTOR tests we are using the fixture allocated tlsf.
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_CreatesValidFLAndSLBitmaps)
-    {
-        // Get the FL and SL bitmaps corresponding to our size.
-        const auto [flIndex, slIndex] = tlsf.mappingInsert(tlsfSize);
-        const auto expectedFLBitmap   = 1ULL << flIndex;
-        const auto expectedSLBitmap   = 1ULL << slIndex;
-
-        const auto flBitmap = tlsf._flBitmap;
-        const auto slBitmap = tlsf._slBitmap[flIndex];
-        EXPECT_EQ(expectedFLBitmap, flBitmap);
-        EXPECT_EQ(expectedSLBitmap, slBitmap);
-    }
-
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_SingleAllocation_FLBitmapIsSingleBit)
-    { EXPECT_TRUE(std::has_single_bit(tlsf._flBitmap)); }
-
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry)
-    {
-        size_t nonZeroEntry{ 0 };
-
-        for (const auto slBitmap : tlsf._slBitmap)
-        {
-            if (slBitmap != 0)
-            {
-                ++nonZeroEntry;
-            }
-        }
-
-        EXPECT_EQ(1, nonZeroEntry);
-    }
-
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_SingleAllocation_OnlySingleFreeListIsPopulated)
-    {
-        size_t nonNullFLCount{}, nonNullSLCount{};
-
-        for (size_t i = 0; i < tlsf.FL_SIZE; ++i)
-        {
-            for (size_t j = 0; j < tlsf.SL_SIZE; ++j)
-            {
-                if (tlsf._freeList[i][j] != nullptr)
-                {
-                    nonNullFLCount++;
-                    nonNullSLCount++;
-                }
-            }
-        }
-
-        EXPECT_EQ(1, nonNullFLCount);
-        EXPECT_EQ(1, nonNullSLCount);
-    }
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_WritesAppropriateHeaderToBuffer)
-    {
-        TLSF<>::TLSFFreeNode* freeNode;
-        // While we can directly query the buffer(_buffer member variable), it is better to iterate and get the buffer
-        // since a) there is only one TLSFFreeNode that is non-null and b) _buffer internal variable may get removed
-        // due to its redundancy.
-        for (const auto& flList : tlsf._freeList)
-        {
-            for (auto& slList : flList)
-            {
-                if (slList != nullptr)
-                {
-                    freeNode = slList;
-                }
-            }
-        }
-
-        ASSERT_NE(nullptr, freeNode);
-        const auto header = TLSF<>::getHeader(freeNode);
-
-        EXPECT_EQ(tlsfSize, header->getSize());
-        EXPECT_TRUE(header->isFree());
-    }
-
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveCtor_ClearsMovedTLSFsInternalBuffer)
-    {
-        [[maybe_unused]] const TLSF<pmm::MemPolicy::Internal> tlsf2 = std::move(tlsf);
-        // NOLINT(bugprone-use-after-move)
-        EXPECT_EQ(nullptr, tlsf._buffer);
-    }
-
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveCtor_MovesBufferIntoNewObject)
-    {
-        const auto initialPointer  = tlsf._buffer;
-        const auto initialUsedSize = tlsf._usedSize;
-        const auto initialSize     = tlsf._size;
-        const auto initialFLMask   = tlsf._flBitmap;
-        const auto initialSLMask   = tlsf._slBitmap;
-
-        const TLSF<pmm::MemPolicy::Internal> tlsf2 = std::move(tlsf);
-        EXPECT_EQ(initialPointer, tlsf2._buffer);
-        EXPECT_EQ(initialUsedSize, tlsf2._usedSize);
-        EXPECT_EQ(initialSize, tlsf2._size);
-        EXPECT_EQ(initialFLMask, tlsf2._flBitmap);
-        EXPECT_EQ(initialSLMask, tlsf2._slBitmap);
-    }
-
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveAssign_ClearsMovedTLSF)
-    {
-        [[maybe_unused]] TLSF<pmm::MemPolicy::Internal> tlsf2(256);
-
-        static_cast<void>(tlsf2 = std::move(tlsf));
-        EXPECT_EQ(nullptr, tlsf._buffer);
-    }
-
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveAssign_MovesBufferIntoNewObject)
-    {
-        const auto initialPointer  = tlsf._buffer;
-        const auto initialUsedSize = tlsf._usedSize;
-        const auto initialSize     = tlsf._size;
-        const auto initialFLMask   = tlsf._flBitmap;
-        const auto initialSLMask   = tlsf._slBitmap;
-        TLSF<pmm::MemPolicy::Internal> tlsf2(256);
-
-        tlsf2 = std::move(tlsf);
-
-        EXPECT_EQ(initialPointer, tlsf2._buffer);
-        EXPECT_EQ(initialPointer, tlsf2._buffer);
-        EXPECT_EQ(initialUsedSize, tlsf2._usedSize);
-        EXPECT_EQ(initialSize, tlsf2._size);
-        EXPECT_EQ(initialFLMask, tlsf2._flBitmap);
-        EXPECT_EQ(initialSLMask, tlsf2._slBitmap);
-    }
-
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF)
-    {
-        const auto initialAddress = reinterpret_cast<uintptr_t>(tlsf._buffer);
-        const auto initialFLMask  = tlsf._flBitmap;
-        const auto initialSLMask  = tlsf._slBitmap;
-#ifdef __clang__
-    #pragma clang diagnostic push
-    #pragma clang diagnostic ignored "-Wself-move"
-#endif
-#ifdef __GNUC__
-    #pragma GCC diagnostic push
-    #pragma GCC diagnostic ignored "-Wself-move"
-#endif
-        tlsf = std::move(tlsf);
-#ifdef __GNUC__
-    #pragma GCC diagnostic pop
-#endif
-#if defined(__clang__)
-    #pragma clang diagnostic pop
-#endif
-
-        EXPECT_EQ(initialAddress, reinterpret_cast<uintptr_t>(tlsf._buffer));
-        EXPECT_EQ(initialFLMask, tlsf._flBitmap);
-        EXPECT_EQ(initialSLMask, tlsf._slBitmap);
-    }
-
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveAssign_DeletingOriginalTLSFDoNotDeleteTheNewTLSFsMemory)
-    {
-        TLSF<pmm::MemPolicy::Internal> tlsf2(256);
-        constexpr auto scopedTLSFSize = 512;
-
-        // The tlsf being moved is scoped
-        {
-            TLSF<pmm::MemPolicy::Internal> scopedTLSF(scopedTLSFSize);
-            tlsf2 = std::move(scopedTLSF);
-        }
-        EXPECT_NE(nullptr, tlsf2._buffer);
-
-        // Write arbitrary data into the buffer
-        // NOTE: i % 255 ensures that uint8_t does not overflow
-        for (uint32_t i = 0; i < scopedTLSFSize; ++i)
-        {
-            tlsf2._buffer[i] = i % 255;
-        }
-
-        // Read the value from buffer
-        for (uint32_t i = 0; i < scopedTLSFSize / 4; i += 4)
-        {
-            EXPECT_EQ(i % 255, tlsf2._buffer[i]);
-        }
-    }
-
-    TEST_P(InternallyManagedTLSF_MappingInsertTests, ReturnsValidFLAndSLIndices)
-    {
-        const auto [size, expectedFl, expectedSl] = GetParam();
-        const auto [fl, sl]                       = TLSF<>::mappingInsert(size);
-        EXPECT_EQ(expectedFl, fl);
-        EXPECT_EQ(expectedSl, sl);
-    }
-
-
-
-    TEST_P(InternallyManagedTLSF_MappingSearchTests, ReturnsValidFLAndSLIndices)
-    {
-        const auto [size, expectedFl, expectedSl] = GetParam();
-        const auto [fl, sl]                       = TLSF<>::mappingSearch(size);
-        EXPECT_EQ(expectedFl, fl);
-        EXPECT_EQ(expectedSl, sl);
-    }
-
-    // TODO: Correct header is created(malloc back navigation)
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_NullsOutInitialBitmap)
-    {
-        // Store the initial FL bitmap
-        const auto initialBitmap = tlsf._flBitmap;
-        // Make an allocation
-        static_cast<void>(tlsf.malloc(32));
-        // Get the new bitmap
-        const auto newBitmap = tlsf._flBitmap;
-
-        // Ensure both are not equal
-        EXPECT_NE(initialBitmap, newBitmap);
-
-        // And together both bitmaps, if they don't have any equal bits
-        // result should be zero
-        // 0010 0000 & 1000 0000 = 0000 0000 (PASS)
-        // 1010 0000 & 1000 0000 = 1000 0000 (FAIL)
-        EXPECT_EQ(0, initialBitmap & newBitmap);
-    }
-
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_SingleAllocation_FLBitmapIsSingleBit)
-    {
-        static_cast<void>(tlsf.malloc(32));
-        EXPECT_TRUE(std::has_single_bit(tlsf._flBitmap));
-    }
-
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry)
-    {
-        static_cast<void>(tlsf.malloc(32));
-        size_t nonZeroEntries = 0;
-
-        for (const auto mask : tlsf._slBitmap)
-        {
-            if (mask != 0)
-            {
-                nonZeroEntries++;
-            }
-        }
-
-        EXPECT_EQ(1, nonZeroEntries);
-    }
-
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_SingleAllocation_OnlySingleFreeListIsPopulated)
-    {
-        static_cast<void>(tlsf.malloc(32));
-        size_t nonNullEntries = 0;
-
-        for (const auto& list : tlsf._freeList)
-        {
-            for (const auto& entry : list)
-            {
-                if (entry != nullptr)
-                {
-                    nonNullEntries++;
-                }
-            }
-        }
-
-        EXPECT_EQ(1, nonNullEntries);
-    }
-
-
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_SingleAllocation_FreeListIsUpdatedAfterAllocation)
-    {
-        // To check where the FL and SL entries in the free is updated
-        // we can make 1 allocation and ensure that the entries are updated
-        // from the initial location to the new location.
-        size_t initialNonNullFL, initialNonNullSL, updatedNonNullFL, updatedNonNullSL;
-
-        // Gather initial indices
-        for (size_t i = 0; i < tlsf.FL_SIZE; ++i)
-        {
-            for (size_t j = 0; j < tlsf.SL_SIZE; ++j)
-            {
-                if (tlsf._freeList[i][j] != nullptr)
-                {
-                    initialNonNullFL = i;
-                    initialNonNullSL = j;
-                }
-            }
-        }
-        // Make an allocation
-        static_cast<void>(tlsf.malloc(tlsfSize / 2));
-        // Gather indices prior to allocation
-        for (size_t i = 0; i < tlsf.FL_SIZE; ++i)
-        {
-            for (size_t j = 0; j < tlsf.SL_SIZE; ++j)
-            {
-                if (tlsf._freeList[i][j] != nullptr)
-                {
-                    updatedNonNullFL = i;
-                    updatedNonNullSL = j;
-                }
-            }
-        }
-        // Check if they are unequal
-        EXPECT_NE(initialNonNullFL, updatedNonNullFL);
-        EXPECT_NE(initialNonNullSL, updatedNonNullSL);
-
-        // We can also verify that the updated FL is always less than the initial one
-        // since are using nearly half the 2_KB space, but this may fail if updated with
-        // new parameters.
-        EXPECT_GT(initialNonNullFL, updatedNonNullFL);
-    }
-
-
-    /// @test Verify that malloc write cleaves the remaining buffer and writes appropriate
-    ///       header after allocation.
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_WritesAppropriateHeaderToBuffer_AfterFirstAllocation)
-    {
-        using Header_t             = TLSF<>::Header;
-        using Offset_t             = TLSF<>::HeaderOffset_t;
-        constexpr size_t allocSize = 128;
-
-        // Allocate some buffer and query the header for its size by walking backwards
-        // with the memory address
-        const auto bytes  = static_cast<uint8_t*>(tlsf.malloc(allocSize));
-        const auto offset = reinterpret_cast<Offset_t*>(bytes - sizeof(Offset_t));
-        auto allocHeader  = reinterpret_cast<Header_t*>(bytes - *offset);
-
-        // Get the internal free node by iterating the freelist
-        // Invariant: After first allocation there should only be 1 buffer in freelist.
-        TLSF<>::TLSFFreeNode* freeNode;
-        for (const auto& flList : tlsf._freeList)
-        {
-            for (auto& slList : flList)
-            {
-                if (slList != nullptr)
-                {
-                    freeNode = slList;
-                }
-            }
-        }
-
-        ASSERT_NE(nullptr, freeNode);
-        const auto freeHeader = TLSF<>::getHeader(freeNode);
-
-        // Then the size of the header must be totalsize - allocatedSize(this will not be actual size
-        // requested by the user, due to padding and metadata requirements).
-        EXPECT_EQ(tlsfSize - allocHeader->getSize(), freeHeader->getSize());
-        EXPECT_TRUE(freeHeader->isFree());
-    }
-
-
-    /// @test Verify that when trying to resizing to the same size, FL and SL bitmasks doesn't update.
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Resize_SameSizeDoesNotUpdateFLAndSLBitmaps)
-    {
-        constexpr auto oldSize = 1_KB, newSize = 1_KB;
-        // Note: While the test uses two variables for holding old and resized memory address, it is not
-        //       recommended for production use since that can lead to dangling pointers and memory corruptions
-        //       (if data is written to it).
-        // Allocate initial buffer
-        const auto mem = tlsf.malloc(oldSize);
-        // Get the FL and SL bitmasks
-        const auto oldFL = tlsf._flBitmap;
-        const auto oldSL = tlsf._slBitmap;
-        // Resize the buffer
-        [[maybe_unused]] const auto resized = tlsf.resize(mem, oldSize, newSize);
-
-        EXPECT_EQ(oldFL, tlsf._flBitmap);
-        EXPECT_EQ(oldSL, tlsf._slBitmap);
-    }
-
-
-    /// @test Verify that when resizing a buffer to a smaller size with the size difference
-    ///       smaller than split threshold, does not update the fl and sl bitmasks.
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
-           Resize_ToSmallerSize_SizeDiffSmallerThanSplitThreshold_DoesNotUpdateFLAndSLBitmaps)
-    {
-        constexpr auto oldSize = 1_KB, newSize = 1_KB - (TLSF<>::SPLIT_SIZE_THRESHOLD - 1);
-        // Note: While the test uses two variables for holding old and resized memory address, it is not
-        //       recommended for production use since that can lead to dangling pointers and memory corruptions
-        //       (if data is written to it).
-
-        // Allocate initial buffer
-        const auto mem = tlsf.malloc(oldSize);
-        // Get the FL and SL bitmasks
-        const auto oldFL = tlsf._flBitmap;
-        const auto oldSL = tlsf._slBitmap;
-        // Resize the buffer
-        [[maybe_unused]] const auto resized = tlsf.resize(mem, oldSize, newSize);
-
-        EXPECT_EQ(oldFL, tlsf._flBitmap);
-        EXPECT_EQ(oldSL, tlsf._slBitmap);
-    }
-
-
-    /// @test Verify that when resizing a buffer to a smaller size with the size difference
-    ///       equalling split threshold, updates the fl and sl bitmasks.
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
-           Resize_ToSmallerSize_SizeDiffEqualToSplitThreshold_UpdatesFLAndSLBitmaps)
-    {
-        constexpr auto oldSize = 1_KB, newSize = 1_KB - (TLSF<>::SPLIT_SIZE_THRESHOLD);
-        // Note: While the test uses two variables for holding old and resized memory address, it is not
-        //       recommended for production use since that can lead to dangling pointers and memory corruptions
-        //       (if data is written to it).
-
-        // Allocate initial buffer
-        const auto mem = tlsf.malloc(oldSize);
-        // Get the FL and SL bitmasks
-        const auto oldFL = tlsf._flBitmap;
-        const auto oldSL = tlsf._slBitmap;
-        // Resize the buffer
-        [[maybe_unused]] const auto resized = tlsf.resize(mem, oldSize, newSize);
-
-        EXPECT_NE(oldFL, tlsf._flBitmap);
-        EXPECT_NE(oldSL, tlsf._slBitmap);
-    }
-
-
-    /// @test Verify that when resizing a buffer to a smaller size with the size difference
-    ///       greater than split threshold, updates the fl and sl bitmasks.
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
-           Resize_ToSmallerSize_SizeDiffGreaterThanSplitThreshold_UpdatesFLAndSLBitmaps)
-    {
-        constexpr auto oldSize = 1_KB, newSize = 1_KB - (TLSF<>::SPLIT_SIZE_THRESHOLD + 1);
-        // Note: While the test uses two variables for holding old and resized memory address, it is not
-        //       recommended for production use since that can lead to dangling pointers and memory corruptions
-        //       (if data is written to it).
-
-        // Allocate initial buffer
-        const auto mem = tlsf.malloc(oldSize);
-        // Get the FL and SL bitmasks
-        const auto oldFL = tlsf._flBitmap;
-        const auto oldSL = tlsf._slBitmap;
-        // Resize the buffer
-        [[maybe_unused]] const auto resized = tlsf.resize(mem, oldSize, newSize);
-
-        EXPECT_NE(oldFL, tlsf._flBitmap);
-        EXPECT_NE(oldSL, tlsf._slBitmap);
-    }
-
-    /// @test Verify that when resizing a buffer to a larger size updates the fl and sl masks.
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Resize_LargerSizeSizeUpdatesFLAndSLBitmaps)
-    {
-        constexpr auto oldSize = 1_KB, newSize = 5_KB;
-        // Note: While the test uses two variables for holding old and resized memory address, it is not
-        //       recommended for production use since that can lead to dangling pointers and memory corruptions
-        //       (if data is written to it).
-
-        // Allocate initial buffer
-        const auto mem = tlsf.malloc(oldSize);
-        // Get the FL and SL bitmasks
-        const auto oldFL = tlsf._flBitmap;
-        const auto oldSL = tlsf._slBitmap;
-        // Resize the buffer
-        [[maybe_unused]] const auto resized = tlsf.resize(mem, oldSize, newSize);
-
-        EXPECT_NE(oldFL, tlsf._flBitmap);
-        EXPECT_NE(oldSL, tlsf._slBitmap);
-    }
-
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Clear_ResetsFLAndSLBitmaps)
-    {
-        // Store the initial FL and SL bitmasks
-        const auto oldFL = tlsf._flBitmap;
-        const auto oldSL = tlsf._slBitmap;
-
-        // Make some allocations and free
-        [[maybe_unused]] const auto mem1 = tlsf.malloc(1_KB);
-        [[maybe_unused]] const auto mem2 = tlsf.malloc(11_KB);
-        tlsf.mfree(mem1);
-        [[maybe_unused]] const auto mem3 = tlsf.malloc(15_KB);
-        [[maybe_unused]] const auto mem4 = tlsf.malloc(2_KB);
-        [[maybe_unused]] const auto mem5 = tlsf.malloc(2_KB);
-        tlsf.mfree(mem4);
-
-        // Clear tlsf
-        tlsf.clear();
-
-        EXPECT_EQ(oldFL, tlsf._flBitmap);
-        EXPECT_EQ(oldSL, tlsf._slBitmap);
-    }
-
-
-
-    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Clear_ResetsFreeList)
-    {
-        // Store initial state
-        auto oldFreeListSize              = 0;
-        auto newFreeListSize              = 0;
-        TLSF<>::TLSFFreeNode* oldFreeNode = nullptr;
-        TLSF<>::TLSFFreeNode* newFreeNode = nullptr;
-
-        for (size_t i = 0; i < TLSF<>::FL_SIZE; ++i)
-        {
-            for (size_t j = 0; j < TLSF<>::SL_SIZE; ++j)
-            {
-                if (tlsf._freeList[i][j] != nullptr)
-                {
-                    ++oldFreeListSize;
-                    oldFreeNode = tlsf._freeList[i][j];
-                }
-            }
-        }
-
-        // Make some allocations and free
-        [[maybe_unused]] const auto mem1 = tlsf.malloc(1_KB);
-        [[maybe_unused]] const auto mem2 = tlsf.malloc(11_KB);
-        tlsf.mfree(mem1);
-        [[maybe_unused]] const auto mem3 = tlsf.malloc(15_KB);
-        [[maybe_unused]] const auto mem4 = tlsf.malloc(2_KB);
-        [[maybe_unused]] const auto mem5 = tlsf.malloc(2_KB);
-        tlsf.mfree(mem4);
-
-        // Clear tlsf
-        tlsf.clear();
-
-        // Query the state again
-        for (size_t i = 0; i < TLSF<>::FL_SIZE; ++i)
-        {
-            for (size_t j = 0; j < TLSF<>::SL_SIZE; ++j)
-            {
-                if (tlsf._freeList[i][j] != nullptr)
-                {
-                    ++newFreeListSize;
-                    newFreeNode = tlsf._freeList[i][j];
-                }
-            }
-        }
-
-        EXPECT_EQ(1, newFreeListSize);
-        EXPECT_EQ(oldFreeListSize, newFreeListSize);
-        EXPECT_EQ(oldFreeNode, newFreeNode);
-    }
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_CreatesValidFLAndSLBitmaps)
+    //     {
+    //         // Get the FL and SL bitmaps corresponding to our size.
+    //         const auto [flIndex, slIndex] = tlsf.mappingInsert(tlsfSize);
+    //         const auto expectedFLBitmap   = 1ULL << flIndex;
+    //         const auto expectedSLBitmap   = 1ULL << slIndex;
+    //
+    //         const auto flBitmap = tlsf._flBitmap;
+    //         const auto slBitmap = tlsf._slBitmap[flIndex];
+    //         EXPECT_EQ(expectedFLBitmap, flBitmap);
+    //         EXPECT_EQ(expectedSLBitmap, slBitmap);
+    //     }
+    //
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_SingleAllocation_FLBitmapIsSingleBit)
+    //     { EXPECT_TRUE(std::has_single_bit(tlsf._flBitmap)); }
+    //
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry)
+    //     {
+    //         size_t nonZeroEntry{ 0 };
+    //
+    //         for (const auto slBitmap : tlsf._slBitmap)
+    //         {
+    //             if (slBitmap != 0)
+    //             {
+    //                 ++nonZeroEntry;
+    //             }
+    //         }
+    //
+    //         EXPECT_EQ(1, nonZeroEntry);
+    //     }
+    //
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_SingleAllocation_OnlySingleFreeListIsPopulated)
+    //     {
+    //         size_t nonNullFLCount{}, nonNullSLCount{};
+    //
+    //         for (size_t i = 0; i < tlsf.FL_SIZE; ++i)
+    //         {
+    //             for (size_t j = 0; j < tlsf.SL_SIZE; ++j)
+    //             {
+    //                 if (tlsf._freeList[i][j] != nullptr)
+    //                 {
+    //                     nonNullFLCount++;
+    //                     nonNullSLCount++;
+    //                 }
+    //             }
+    //         }
+    //
+    //         EXPECT_EQ(1, nonNullFLCount);
+    //         EXPECT_EQ(1, nonNullSLCount);
+    //     }
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_WritesAppropriateHeaderToBuffer)
+    //     {
+    //         TLSF<>::TLSFFreeNode* freeNode;
+    //         // While we can directly query the buffer(_buffer member variable), it is better to iterate and get the
+    //         buffer
+    //         // since a) there is only one TLSFFreeNode that is non-null and b) _buffer internal variable may get
+    //         removed
+    //         // due to its redundancy.
+    //         for (const auto& flList : tlsf._freeList)
+    //         {
+    //             for (auto& slList : flList)
+    //             {
+    //                 if (slList != nullptr)
+    //                 {
+    //                     freeNode = slList;
+    //                 }
+    //             }
+    //         }
+    //
+    //         ASSERT_NE(nullptr, freeNode);
+    //         const auto header = TLSF<>::getHeader(freeNode);
+    //
+    //         EXPECT_EQ(tlsfSize, header->getSize());
+    //         EXPECT_TRUE(header->isFree());
+    //     }
+    //
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveCtor_ClearsMovedTLSFsInternalBuffer)
+    //     {
+    //         [[maybe_unused]] const TLSF<pmm::MemPolicy::Internal> tlsf2 = std::move(tlsf);
+    //         // NOLINT(bugprone-use-after-move)
+    //         EXPECT_EQ(nullptr, tlsf._buffer);
+    //     }
+    //
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveCtor_MovesBufferIntoNewObject)
+    //     {
+    //         const auto initialPointer  = tlsf._buffer;
+    //         const auto initialUsedSize = tlsf._usedSize;
+    //         const auto initialSize     = tlsf._size;
+    //         const auto initialFLMask   = tlsf._flBitmap;
+    //         const auto initialSLMask   = tlsf._slBitmap;
+    //
+    //         const TLSF<pmm::MemPolicy::Internal> tlsf2 = std::move(tlsf);
+    //         EXPECT_EQ(initialPointer, tlsf2._buffer);
+    //         EXPECT_EQ(initialUsedSize, tlsf2._usedSize);
+    //         EXPECT_EQ(initialSize, tlsf2._size);
+    //         EXPECT_EQ(initialFLMask, tlsf2._flBitmap);
+    //         EXPECT_EQ(initialSLMask, tlsf2._slBitmap);
+    //     }
+    //
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveAssign_ClearsMovedTLSF)
+    //     {
+    //         [[maybe_unused]] TLSF<pmm::MemPolicy::Internal> tlsf2(256);
+    //
+    //         static_cast<void>(tlsf2 = std::move(tlsf));
+    //         EXPECT_EQ(nullptr, tlsf._buffer);
+    //     }
+    //
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveAssign_MovesBufferIntoNewObject)
+    //     {
+    //         const auto initialPointer  = tlsf._buffer;
+    //         const auto initialUsedSize = tlsf._usedSize;
+    //         const auto initialSize     = tlsf._size;
+    //         const auto initialFLMask   = tlsf._flBitmap;
+    //         const auto initialSLMask   = tlsf._slBitmap;
+    //         TLSF<pmm::MemPolicy::Internal> tlsf2(256);
+    //
+    //         tlsf2 = std::move(tlsf);
+    //
+    //         EXPECT_EQ(initialPointer, tlsf2._buffer);
+    //         EXPECT_EQ(initialPointer, tlsf2._buffer);
+    //         EXPECT_EQ(initialUsedSize, tlsf2._usedSize);
+    //         EXPECT_EQ(initialSize, tlsf2._size);
+    //         EXPECT_EQ(initialFLMask, tlsf2._flBitmap);
+    //         EXPECT_EQ(initialSLMask, tlsf2._slBitmap);
+    //     }
+    //
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF)
+    //     {
+    //         const auto initialAddress = reinterpret_cast<uintptr_t>(tlsf._buffer);
+    //         const auto initialFLMask  = tlsf._flBitmap;
+    //         const auto initialSLMask  = tlsf._slBitmap;
+    // #ifdef __clang__
+    //     #pragma clang diagnostic push
+    //     #pragma clang diagnostic ignored "-Wself-move"
+    // #endif
+    // #ifdef __GNUC__
+    //     #pragma GCC diagnostic push
+    //     #pragma GCC diagnostic ignored "-Wself-move"
+    // #endif
+    //         tlsf = std::move(tlsf);
+    // #ifdef __GNUC__
+    //     #pragma GCC diagnostic pop
+    // #endif
+    // #if defined(__clang__)
+    //     #pragma clang diagnostic pop
+    // #endif
+    //
+    //         EXPECT_EQ(initialAddress, reinterpret_cast<uintptr_t>(tlsf._buffer));
+    //         EXPECT_EQ(initialFLMask, tlsf._flBitmap);
+    //         EXPECT_EQ(initialSLMask, tlsf._slBitmap);
+    //     }
+    //
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
+    //     MoveAssign_DeletingOriginalTLSFDoNotDeleteTheNewTLSFsMemory)
+    //     {
+    //         TLSF<pmm::MemPolicy::Internal> tlsf2(256);
+    //         constexpr auto scopedTLSFSize = 512;
+    //
+    //         // The tlsf being moved is scoped
+    //         {
+    //             TLSF<pmm::MemPolicy::Internal> scopedTLSF(scopedTLSFSize);
+    //             tlsf2 = std::move(scopedTLSF);
+    //         }
+    //         EXPECT_NE(nullptr, tlsf2._buffer);
+    //
+    //         // Write arbitrary data into the buffer
+    //         // NOTE: i % 255 ensures that uint8_t does not overflow
+    //         for (uint32_t i = 0; i < scopedTLSFSize; ++i)
+    //         {
+    //             tlsf2._buffer[i] = i % 255;
+    //         }
+    //
+    //         // Read the value from buffer
+    //         for (uint32_t i = 0; i < scopedTLSFSize / 4; i += 4)
+    //         {
+    //             EXPECT_EQ(i % 255, tlsf2._buffer[i]);
+    //         }
+    //     }
+    //
+    //     TEST_P(InternallyManagedTLSF_MappingInsertTests, ReturnsValidFLAndSLIndices)
+    //     {
+    //         const auto [size, expectedFl, expectedSl] = GetParam();
+    //         const auto [fl, sl]                       = TLSF<>::mappingInsert(size);
+    //         EXPECT_EQ(expectedFl, fl);
+    //         EXPECT_EQ(expectedSl, sl);
+    //     }
+    //
+    //
+    //
+    //     TEST_P(InternallyManagedTLSF_MappingSearchTests, ReturnsValidFLAndSLIndices)
+    //     {
+    //         const auto [size, expectedFl, expectedSl] = GetParam();
+    //         const auto [fl, sl]                       = TLSF<>::mappingSearch(size);
+    //         EXPECT_EQ(expectedFl, fl);
+    //         EXPECT_EQ(expectedSl, sl);
+    //     }
+    //
+    //     // TODO: Correct header is created(malloc back navigation)
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_NullsOutInitialBitmap)
+    //     {
+    //         // Store the initial FL bitmap
+    //         const auto initialBitmap = tlsf._flBitmap;
+    //         // Make an allocation
+    //         static_cast<void>(tlsf.malloc(32));
+    //         // Get the new bitmap
+    //         const auto newBitmap = tlsf._flBitmap;
+    //
+    //         // Ensure both are not equal
+    //         EXPECT_NE(initialBitmap, newBitmap);
+    //
+    //         // And together both bitmaps, if they don't have any equal bits
+    //         // result should be zero
+    //         // 0010 0000 & 1000 0000 = 0000 0000 (PASS)
+    //         // 1010 0000 & 1000 0000 = 1000 0000 (FAIL)
+    //         EXPECT_EQ(0, initialBitmap & newBitmap);
+    //     }
+    //
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_SingleAllocation_FLBitmapIsSingleBit)
+    //     {
+    //         static_cast<void>(tlsf.malloc(32));
+    //         EXPECT_TRUE(std::has_single_bit(tlsf._flBitmap));
+    //     }
+    //
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
+    //     Malloc_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry)
+    //     {
+    //         static_cast<void>(tlsf.malloc(32));
+    //         size_t nonZeroEntries = 0;
+    //
+    //         for (const auto mask : tlsf._slBitmap)
+    //         {
+    //             if (mask != 0)
+    //             {
+    //                 nonZeroEntries++;
+    //             }
+    //         }
+    //
+    //         EXPECT_EQ(1, nonZeroEntries);
+    //     }
+    //
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_SingleAllocation_OnlySingleFreeListIsPopulated)
+    //     {
+    //         static_cast<void>(tlsf.malloc(32));
+    //         size_t nonNullEntries = 0;
+    //
+    //         for (const auto& list : tlsf._freeList)
+    //         {
+    //             for (const auto& entry : list)
+    //             {
+    //                 if (entry != nullptr)
+    //                 {
+    //                     nonNullEntries++;
+    //                 }
+    //             }
+    //         }
+    //
+    //         EXPECT_EQ(1, nonNullEntries);
+    //     }
+    //
+    //
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
+    //     Malloc_SingleAllocation_FreeListIsUpdatedAfterAllocation)
+    //     {
+    //         // To check where the FL and SL entries in the free is updated
+    //         // we can make 1 allocation and ensure that the entries are updated
+    //         // from the initial location to the new location.
+    //         size_t initialNonNullFL, initialNonNullSL, updatedNonNullFL, updatedNonNullSL;
+    //
+    //         // Gather initial indices
+    //         for (size_t i = 0; i < tlsf.FL_SIZE; ++i)
+    //         {
+    //             for (size_t j = 0; j < tlsf.SL_SIZE; ++j)
+    //             {
+    //                 if (tlsf._freeList[i][j] != nullptr)
+    //                 {
+    //                     initialNonNullFL = i;
+    //                     initialNonNullSL = j;
+    //                 }
+    //             }
+    //         }
+    //         // Make an allocation
+    //         static_cast<void>(tlsf.malloc(tlsfSize / 2));
+    //         // Gather indices prior to allocation
+    //         for (size_t i = 0; i < tlsf.FL_SIZE; ++i)
+    //         {
+    //             for (size_t j = 0; j < tlsf.SL_SIZE; ++j)
+    //             {
+    //                 if (tlsf._freeList[i][j] != nullptr)
+    //                 {
+    //                     updatedNonNullFL = i;
+    //                     updatedNonNullSL = j;
+    //                 }
+    //             }
+    //         }
+    //         // Check if they are unequal
+    //         EXPECT_NE(initialNonNullFL, updatedNonNullFL);
+    //         EXPECT_NE(initialNonNullSL, updatedNonNullSL);
+    //
+    //         // We can also verify that the updated FL is always less than the initial one
+    //         // since are using nearly half the 2_KB space, but this may fail if updated with
+    //         // new parameters.
+    //         EXPECT_GT(initialNonNullFL, updatedNonNullFL);
+    //     }
+    //
+    //
+    //     /// @test Verify that malloc write cleaves the remaining buffer and writes appropriate
+    //     ///       header after allocation.
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
+    //     Malloc_WritesAppropriateHeaderToBuffer_AfterFirstAllocation)
+    //     {
+    //         using Header_t             = TLSF<>::Header;
+    //         using Offset_t             = TLSF<>::HeaderOffset_t;
+    //         constexpr size_t allocSize = 128;
+    //
+    //         // Allocate some buffer and query the header for its size by walking backwards
+    //         // with the memory address
+    //         const auto bytes  = static_cast<uint8_t*>(tlsf.malloc(allocSize));
+    //         const auto offset = reinterpret_cast<Offset_t*>(bytes - sizeof(Offset_t));
+    //         auto allocHeader  = reinterpret_cast<Header_t*>(bytes - *offset);
+    //
+    //         // Get the internal free node by iterating the freelist
+    //         // Invariant: After first allocation there should only be 1 buffer in freelist.
+    //         TLSF<>::TLSFFreeNode* freeNode;
+    //         for (const auto& flList : tlsf._freeList)
+    //         {
+    //             for (auto& slList : flList)
+    //             {
+    //                 if (slList != nullptr)
+    //                 {
+    //                     freeNode = slList;
+    //                 }
+    //             }
+    //         }
+    //
+    //         ASSERT_NE(nullptr, freeNode);
+    //         const auto freeHeader = TLSF<>::getHeader(freeNode);
+    //
+    //         // Then the size of the header must be totalsize - allocatedSize(this will not be actual size
+    //         // requested by the user, due to padding and metadata requirements).
+    //         EXPECT_EQ(tlsfSize - allocHeader->getSize(), freeHeader->getSize());
+    //         EXPECT_TRUE(freeHeader->isFree());
+    //     }
+    //
+    //
+    //     /// @test Verify that when trying to resizing to the same size, FL and SL bitmasks doesn't update.
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Resize_SameSizeDoesNotUpdateFLAndSLBitmaps)
+    //     {
+    //         constexpr auto oldSize = 1_KB, newSize = 1_KB;
+    //         // Note: While the test uses two variables for holding old and resized memory address, it is not
+    //         //       recommended for production use since that can lead to dangling pointers and memory corruptions
+    //         //       (if data is written to it).
+    //         // Allocate initial buffer
+    //         const auto mem = tlsf.malloc(oldSize);
+    //         // Get the FL and SL bitmasks
+    //         const auto oldFL = tlsf._flBitmap;
+    //         const auto oldSL = tlsf._slBitmap;
+    //         // Resize the buffer
+    //         [[maybe_unused]] const auto resized = tlsf.resize(mem, oldSize, newSize);
+    //
+    //         EXPECT_EQ(oldFL, tlsf._flBitmap);
+    //         EXPECT_EQ(oldSL, tlsf._slBitmap);
+    //     }
+    //
+    //
+    //     /// @test Verify that when resizing a buffer to a smaller size with the size difference
+    //     ///       smaller than split threshold, does not update the fl and sl bitmasks.
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
+    //            Resize_ToSmallerSize_SizeDiffSmallerThanSplitThreshold_DoesNotUpdateFLAndSLBitmaps)
+    //     {
+    //         constexpr auto oldSize = 1_KB, newSize = 1_KB - (TLSF<>::SPLIT_SIZE_THRESHOLD - 1);
+    //         // Note: While the test uses two variables for holding old and resized memory address, it is not
+    //         //       recommended for production use since that can lead to dangling pointers and memory corruptions
+    //         //       (if data is written to it).
+    //
+    //         // Allocate initial buffer
+    //         const auto mem = tlsf.malloc(oldSize);
+    //         // Get the FL and SL bitmasks
+    //         const auto oldFL = tlsf._flBitmap;
+    //         const auto oldSL = tlsf._slBitmap;
+    //         // Resize the buffer
+    //         [[maybe_unused]] const auto resized = tlsf.resize(mem, oldSize, newSize);
+    //
+    //         EXPECT_EQ(oldFL, tlsf._flBitmap);
+    //         EXPECT_EQ(oldSL, tlsf._slBitmap);
+    //     }
+    //
+    //
+    //     /// @test Verify that when resizing a buffer to a smaller size with the size difference
+    //     ///       equalling split threshold, updates the fl and sl bitmasks.
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
+    //            Resize_ToSmallerSize_SizeDiffEqualToSplitThreshold_UpdatesFLAndSLBitmaps)
+    //     {
+    //         constexpr auto oldSize = 1_KB, newSize = 1_KB - (TLSF<>::SPLIT_SIZE_THRESHOLD);
+    //         // Note: While the test uses two variables for holding old and resized memory address, it is not
+    //         //       recommended for production use since that can lead to dangling pointers and memory corruptions
+    //         //       (if data is written to it).
+    //
+    //         // Allocate initial buffer
+    //         const auto mem = tlsf.malloc(oldSize);
+    //         // Get the FL and SL bitmasks
+    //         const auto oldFL = tlsf._flBitmap;
+    //         const auto oldSL = tlsf._slBitmap;
+    //         // Resize the buffer
+    //         [[maybe_unused]] const auto resized = tlsf.resize(mem, oldSize, newSize);
+    //
+    //         EXPECT_NE(oldFL, tlsf._flBitmap);
+    //         EXPECT_NE(oldSL, tlsf._slBitmap);
+    //     }
+    //
+    //
+    //     /// @test Verify that when resizing a buffer to a smaller size with the size difference
+    //     ///       greater than split threshold, updates the fl and sl bitmasks.
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
+    //            Resize_ToSmallerSize_SizeDiffGreaterThanSplitThreshold_UpdatesFLAndSLBitmaps)
+    //     {
+    //         constexpr auto oldSize = 1_KB, newSize = 1_KB - (TLSF<>::SPLIT_SIZE_THRESHOLD + 1);
+    //         // Note: While the test uses two variables for holding old and resized memory address, it is not
+    //         //       recommended for production use since that can lead to dangling pointers and memory corruptions
+    //         //       (if data is written to it).
+    //
+    //         // Allocate initial buffer
+    //         const auto mem = tlsf.malloc(oldSize);
+    //         // Get the FL and SL bitmasks
+    //         const auto oldFL = tlsf._flBitmap;
+    //         const auto oldSL = tlsf._slBitmap;
+    //         // Resize the buffer
+    //         [[maybe_unused]] const auto resized = tlsf.resize(mem, oldSize, newSize);
+    //
+    //         EXPECT_NE(oldFL, tlsf._flBitmap);
+    //         EXPECT_NE(oldSL, tlsf._slBitmap);
+    //     }
+    //
+    //     /// @test Verify that when resizing a buffer to a larger size updates the fl and sl masks.
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Resize_LargerSizeSizeUpdatesFLAndSLBitmaps)
+    //     {
+    //         constexpr auto oldSize = 1_KB, newSize = 5_KB;
+    //         // Note: While the test uses two variables for holding old and resized memory address, it is not
+    //         //       recommended for production use since that can lead to dangling pointers and memory corruptions
+    //         //       (if data is written to it).
+    //
+    //         // Allocate initial buffer
+    //         const auto mem = tlsf.malloc(oldSize);
+    //         // Get the FL and SL bitmasks
+    //         const auto oldFL = tlsf._flBitmap;
+    //         const auto oldSL = tlsf._slBitmap;
+    //         // Resize the buffer
+    //         [[maybe_unused]] const auto resized = tlsf.resize(mem, oldSize, newSize);
+    //
+    //         EXPECT_NE(oldFL, tlsf._flBitmap);
+    //         EXPECT_NE(oldSL, tlsf._slBitmap);
+    //     }
+    //
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Clear_ResetsFLAndSLBitmaps)
+    //     {
+    //         // Store the initial FL and SL bitmasks
+    //         const auto oldFL = tlsf._flBitmap;
+    //         const auto oldSL = tlsf._slBitmap;
+    //
+    //         // Make some allocations and free
+    //         [[maybe_unused]] const auto mem1 = tlsf.malloc(1_KB);
+    //         [[maybe_unused]] const auto mem2 = tlsf.malloc(11_KB);
+    //         tlsf.mfree(mem1);
+    //         [[maybe_unused]] const auto mem3 = tlsf.malloc(15_KB);
+    //         [[maybe_unused]] const auto mem4 = tlsf.malloc(2_KB);
+    //         [[maybe_unused]] const auto mem5 = tlsf.malloc(2_KB);
+    //         tlsf.mfree(mem4);
+    //
+    //         // Clear tlsf
+    //         tlsf.clear();
+    //
+    //         EXPECT_EQ(oldFL, tlsf._flBitmap);
+    //         EXPECT_EQ(oldSL, tlsf._slBitmap);
+    //     }
+    //
+    //
+    //
+    //     TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Clear_ResetsFreeList)
+    //     {
+    //         // Store initial state
+    //         auto oldFreeListSize              = 0;
+    //         auto newFreeListSize              = 0;
+    //         TLSF<>::TLSFFreeNode* oldFreeNode = nullptr;
+    //         TLSF<>::TLSFFreeNode* newFreeNode = nullptr;
+    //
+    //         for (size_t i = 0; i < TLSF<>::FL_SIZE; ++i)
+    //         {
+    //             for (size_t j = 0; j < TLSF<>::SL_SIZE; ++j)
+    //             {
+    //                 if (tlsf._freeList[i][j] != nullptr)
+    //                 {
+    //                     ++oldFreeListSize;
+    //                     oldFreeNode = tlsf._freeList[i][j];
+    //                 }
+    //             }
+    //         }
+    //
+    //         // Make some allocations and free
+    //         [[maybe_unused]] const auto mem1 = tlsf.malloc(1_KB);
+    //         [[maybe_unused]] const auto mem2 = tlsf.malloc(11_KB);
+    //         tlsf.mfree(mem1);
+    //         [[maybe_unused]] const auto mem3 = tlsf.malloc(15_KB);
+    //         [[maybe_unused]] const auto mem4 = tlsf.malloc(2_KB);
+    //         [[maybe_unused]] const auto mem5 = tlsf.malloc(2_KB);
+    //         tlsf.mfree(mem4);
+    //
+    //         // Clear tlsf
+    //         tlsf.clear();
+    //
+    //         // Query the state again
+    //         for (size_t i = 0; i < TLSF<>::FL_SIZE; ++i)
+    //         {
+    //             for (size_t j = 0; j < TLSF<>::SL_SIZE; ++j)
+    //             {
+    //                 if (tlsf._freeList[i][j] != nullptr)
+    //                 {
+    //                     ++newFreeListSize;
+    //                     newFreeNode = tlsf._freeList[i][j];
+    //                 }
+    //             }
+    //         }
+    //
+    //         EXPECT_EQ(1, newFreeListSize);
+    //         EXPECT_EQ(oldFreeListSize, newFreeListSize);
+    //         EXPECT_EQ(oldFreeNode, newFreeNode);
+    //     }
 
     // TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_UpdatesTelemetryPadding)
     // {

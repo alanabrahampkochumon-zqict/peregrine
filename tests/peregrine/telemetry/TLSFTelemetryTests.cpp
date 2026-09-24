@@ -41,12 +41,12 @@ namespace
     {
         namespace telemetry_type
         {
-            /// @test Verify that TLSFTelemetryType returns TLSFTelemetry when the telemetry policy is Managed.
-            static_assert(std::same_as<pmm::TLSFTelemetryType<pmm::TelPolicy::Enabled>, pmm::TLSFTelemetry> == true);
+            /// @test Verify that TLSFTelemetry_t returns TLSFTelemetry when the telemetry policy is Managed.
+            static_assert(std::same_as<pmm::TLSFTelemetry_t<pmm::TelPolicy::Enabled>, pmm::TLSFTelemetry> == true);
 
 
-            /// @test Verify that TLSFTelemetryType returns DummyTLSFTelemetry when the telemetry policy is Disabled.
-            static_assert(std::same_as<pmm::TLSFTelemetryType<pmm::TelPolicy::Disabled>, pmm::DummyTLSFTelemetry> ==
+            /// @test Verify that TLSFTelemetry_t returns DummyTLSFTelemetry when the telemetry policy is Disabled.
+            static_assert(std::same_as<pmm::TLSFTelemetry_t<pmm::TelPolicy::Disabled>, pmm::DummyTLSFTelemetry> ==
                           true);
 
         } // namespace telemetry_type
