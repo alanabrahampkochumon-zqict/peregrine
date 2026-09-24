@@ -44,8 +44,12 @@ namespace pmm
         : _buffer{ std::exchange(tlsf._buffer, nullptr) },
           _size{ tlsf._size },
           _usedSize{ tlsf._usedSize },
-          _flBitmap{ tlsf._flBitmap }
-    { std::move(tlsf._slBitmap.begin(), tlsf._slBitmap.end(), _slBitmap.begin()); }
+          _flBitmap{ tlsf._flBitmap },
+          _telemetry{ tlsf._telemetry }
+    {
+        std::memcpy(_freeList, tlsf._freeList, sizeof(_freeList));
+        std::move(tlsf._slBitmap.begin(), tlsf._slBitmap.end(), _slBitmap.begin());
+    }
 
 
     template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
@@ -64,10 +68,12 @@ namespace pmm
             return *this;
         }
 
-        _buffer   = std::exchange(tlsf._buffer, nullptr);
-        _size     = tlsf._size;
-        _usedSize = tlsf._usedSize;
-        _flBitmap = tlsf._flBitmap;
+        _buffer    = std::exchange(tlsf._buffer, nullptr);
+        _size      = tlsf._size;
+        _usedSize  = tlsf._usedSize;
+        _flBitmap  = tlsf._flBitmap;
+        _telemetry = tlsf._telemetry;
+        std::memcpy(_freeList, tlsf._freeList, sizeof(_freeList));
         std::move(tlsf._slBitmap.begin(), tlsf._slBitmap.end(), _slBitmap.begin());
 
         return *this;
@@ -350,7 +356,6 @@ namespace pmm
         // Insert the block
         insertBlock(_buffer, _size);
     }
-
 
 
     /**************************************

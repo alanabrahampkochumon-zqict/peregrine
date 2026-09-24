@@ -360,7 +360,6 @@ namespace pmm
         void freeV(std::span<T> vector) noexcept;
 
 
-
         /**
          * @brief Resize a block of memory to a new size.
          *
@@ -373,8 +372,16 @@ namespace pmm
          */
         [[nodiscard]] constexpr void* resize(void* block, size_t oldSize, size_t newSize) noexcept;
 
-        /// Invalidates and resets all allocations made by TLSF.
+
+        /// @brief Invalidates and resets all allocations made by TLSF.
         constexpr void clear() noexcept;
+
+
+        /// @brief Get the telemetry instance associated with this allocator.
+        /// @note When TelPolicy is set to disabled this will return a DummyTelemetry
+        ///       which will not yield any useful information.
+        [[nodiscard]] constexpr TLSFTelemetry_t<TelemetryPolicy> getTelemetry() const noexcept { return _telemetry; }
+
 
 
     private:

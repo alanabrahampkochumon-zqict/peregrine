@@ -36,139 +36,54 @@ namespace
     /**
      * @brief Test fixture for managed @ref pmm::TLSF.
      */
-    class InternallyManagedTLSFTests: public testing::Test
+    class InternallyManagedTLSFTelemetryIntegrationTests: public testing::Test
     {
     public:
         static constexpr size_t tlsfSize{ 2_MB };
-        pmm::TLSF<> tlsf{ tlsfSize };
+        pmm::TLSF<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> tlsf{ tlsfSize };
     };
-
-
-    struct TLSFMappingInsertParams
-    {
-        size_t allocationSize, flIndex, slIndex;
-
-        friend std::ostream& operator<<(std::ostream& os, const TLSFMappingInsertParams& params)
-        {
-            os << std::format("Size: {}, Expected FL: {}, Expected SL: {}", params.allocationSize, params.flIndex,
-                              params.slIndex);
-            return os;
-        }
-    };
-
-
-    /// @brief Test fixture for TLSF mapping insert function.
-    class InternallyManagedTLSF_MappingInsertTests: public testing::TestWithParam<TLSFMappingInsertParams>
-    {};
-
-    INSTANTIATE_TEST_SUITE_P(
-        TLSF_InternalMappingTests, InternallyManagedTLSF_MappingInsertTests,
-        ::testing::Values(TLSFMappingInsertParams{ .allocationSize = 0, .flIndex = 0, .slIndex = 0 },
-                          // Values that are clamped to the minimum allocation size of 64 bytes(2^6)
-                          TLSFMappingInsertParams{ .allocationSize = 15, .flIndex = 0, .slIndex = 0 },
-                          TLSFMappingInsertParams{ .allocationSize = 64, .flIndex = 0, .slIndex = 0 },
-                          TLSFMappingInsertParams{ .allocationSize = 65, .flIndex = 0, .slIndex = 1 },
-                          TLSFMappingInsertParams{ .allocationSize = 66, .flIndex = 0, .slIndex = 2 },
-                          TLSFMappingInsertParams{ .allocationSize = 127, .flIndex = 0, .slIndex = 63 },
-                          TLSFMappingInsertParams{ .allocationSize = 128, .flIndex = 1, .slIndex = 0 },
-                          TLSFMappingInsertParams{ .allocationSize = 256, .flIndex = 2, .slIndex = 0 },
-                          TLSFMappingInsertParams{ .allocationSize = 512, .flIndex = 3, .slIndex = 0 },
-                          TLSFMappingInsertParams{ .allocationSize = 1024, .flIndex = 4, .slIndex = 0 },
-                          TLSFMappingInsertParams{ .allocationSize = 513, .flIndex = 3, .slIndex = 0 },
-                          TLSFMappingInsertParams{ .allocationSize = 520, .flIndex = 3, .slIndex = 1 },
-                          TLSFMappingInsertParams{ .allocationSize = 1000, .flIndex = 3, .slIndex = 61 },
-                          TLSFMappingInsertParams{ .allocationSize = 1_MB, .flIndex = 14, .slIndex = 0 },
-                          TLSFMappingInsertParams{ .allocationSize = 1_MB + 16_KB, .flIndex = 14, .slIndex = 1 },
-                          TLSFMappingInsertParams{ .allocationSize = 1_GB, .flIndex = 24, .slIndex = 0 }));
-
-
-    /// @brief Test fixture for TLSF mapping search function.
-    class InternallyManagedTLSF_MappingSearchTests: public testing::TestWithParam<TLSFMappingInsertParams>
-    {};
-
-    INSTANTIATE_TEST_SUITE_P(TLSF_InternalMappingTests, InternallyManagedTLSF_MappingSearchTests,
-                             ::testing::Values(
-                                 // Minimum value index (our LSB is considered to be 64 or 2^6)
-                                 // 0000 0001 -> <FL=0, SL=0>
-                                 TLSFMappingInsertParams{ .allocationSize = 64, .flIndex = 0, .slIndex = 0 },
-                                 // Values that are clamped to the minimum allocation size of 64 bytes(2^6)
-                                 // 0000 0100 -> <FL=2, SL=0>
-                                 TLSFMappingInsertParams{ .allocationSize = 256, .flIndex = 2, .slIndex = 0 },
-                                 // 0000 0101 -> <FL=2, SL=1>
-                                 TLSFMappingInsertParams{ .allocationSize = 257, .flIndex = 2, .slIndex = 1 },
-                                 // 0000 0111 Rounded to next block(0000 1000)-> <FL=3, SL=0>
-                                 TLSFMappingInsertParams{ .allocationSize = 511, .flIndex = 3, .slIndex = 0 },
-                                 TLSFMappingInsertParams{ .allocationSize = 66, .flIndex = 0, .slIndex = 2 },
-                                 // FL-4, SL-61 as the buckets are 61 [1000, 1008), 62 [1008, 1016), 63 [1016, 1024)
-                                 TLSFMappingInsertParams{ .allocationSize = 1000, .flIndex = 3, .slIndex = 61 },
-                                 TLSFMappingInsertParams{ .allocationSize = 1018, .flIndex = 4, .slIndex = 0 },
-                                 TLSFMappingInsertParams{ .allocationSize = 1024, .flIndex = 4, .slIndex = 0 },
-                                 TLSFMappingInsertParams{ .allocationSize = 1025, .flIndex = 4, .slIndex = 1 },
-                                 TLSFMappingInsertParams{ .allocationSize = 1_MB, .flIndex = 14, .slIndex = 0 },
-                                 // 1 MB nicely packs into the 14nth fl index
-                                 // And our sl index range at than size is 2^20(1MB) / 64(buckets) = 16KB(2^14)
-                                 // so it will fall into the [1MB_16KB, 1MB_32KB) bucket at index 1, due to rounding.
-                                 TLSFMappingInsertParams{ .allocationSize = 1_MB + 15_KB, .flIndex = 14, .slIndex = 1 },
-                                 TLSFMappingInsertParams{ .allocationSize = 1_MB + 16_KB, .flIndex = 14, .slIndex = 1 },
-                                 TLSFMappingInsertParams{ .allocationSize = 1_MB + 17_KB, .flIndex = 14, .slIndex = 2 },
-                                 TLSFMappingInsertParams{ .allocationSize = 1_GB, .flIndex = 24, .slIndex = 0 }));
-
-    /**************************************
-     *           STATIC TESTS             *
-     **************************************/
-
-    namespace static_tests
-    {
-        /** @test Verify that manged tlsf frees buffer it allocates.
-         *  @note Since we cant really confirm confirm if a buffer is freed and we only delete[] buffer in the dtor of
-         *        TLSF, we can check if it is trivially destructible to ensure memory is freed in the tlsf in unmanaged
-         * mode and opposite otherwise.
-         */
-        static_assert(std::is_trivially_destructible_v<pmm::TLSF<pmm::MemPolicy::Internal>> == false);
-    } // namespace static_tests
-
 } // namespace
 
 
 
 /**************************************
- *                                    *
  *           RUNTIME TESTS            *
- *                                    *
  **************************************/
 
 /**************************************
  *           INITIALIZATIONS          *
  **************************************/
-//
-// TEST_F(InternallyManagedTLSFTests, EnabledTelemetry_ReturnsRealTelemetry)
-// {
-//     [[maybe_unused]] pmm::TLSF<pmm::MemPolicy::Internal, pmm::telemetry::Enabled> telemetryEnabledTLSF(512);
-//     [[maybe_unused]] auto telemetry = telemetryEnabledTLSF.getTelemetry();
-//     const bool result               = std::is_same_v<decltype(telemetry), pmm::TLSFTelemetry>;
-//     EXPECT_TRUE(result);
-// }
-//
-//
-// TEST_F(InternallyManagedTLSFTests, DisabledTelemetry_ReturnsDummyTelemetry)
-// {
-//     [[maybe_unused]] const pmm::TLSF<pmm::MemPolicy::Internal, pmm::telemetry::Disabled> telemetryDisabledTLSF(512);
-//     [[maybe_unused]] auto telemetry = telemetryDisabledTLSF.getTelemetry();
-//     const bool result               = std::is_same_v<decltype(telemetry), pmm::DummyTLSFTelemetry>;
-//     EXPECT_TRUE(result);
-// }
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, EnabledTelemetry_ReturnsRealTelemetry)
+{
+    [[maybe_unused]] const pmm::TLSF<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> telemetryEnabledTLSF(512);
+    [[maybe_unused]] auto telemetry = telemetryEnabledTLSF.getTelemetry();
+    const bool result               = std::is_same_v<decltype(telemetry), pmm::TLSFTelemetry>;
+    EXPECT_TRUE(result);
+}
 
 
-TEST_F(InternallyManagedTLSFTests, Ctor_InitializesTLSFWithTheGivenBytes) { EXPECT_EQ(tlsfSize, tlsf.size()); }
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, DisabledTelemetry_ReturnsDummyTelemetry)
+{
+    [[maybe_unused]] const pmm::TLSF<pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> telemetryDisabledTLSF(512);
+    [[maybe_unused]] auto telemetry = telemetryDisabledTLSF.getTelemetry();
+    const bool result               = std::is_same_v<decltype(telemetry), pmm::DummyTLSFTelemetry>;
+    EXPECT_TRUE(result);
+}
 
 
-TEST_F(InternallyManagedTLSFTests, TLSFHasZeroUsedSizeInitially) { EXPECT_EQ(0, tlsf.usedSize()); }
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_InitializesTLSFWithTheGivenBytes)
+{ EXPECT_EQ(tlsfSize, tlsf.size()); }
 
 
-TEST_F(InternallyManagedTLSFTests, TLSFHasFreeSpaceEqualToSizeInitially) { EXPECT_EQ(tlsfSize, tlsf.freeSize()); }
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, TLSFHasZeroUsedSizeInitially) { EXPECT_EQ(0, tlsf.usedSize()); }
 
 
-TEST_F(InternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, TLSFHasFreeSpaceEqualToSizeInitially)
+{ EXPECT_EQ(tlsfSize, tlsf.freeSize()); }
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveCtor_CopiesAttributesToNewObject)
 {
     const pmm::TLSF<> tlsf2 = std::move(tlsf);
     EXPECT_EQ(tlsfSize, tlsf2.freeSize());
@@ -179,7 +94,7 @@ TEST_F(InternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 }
 //
 // TODO: Add back after adding telemetry and malloc
-// TEST_F(InternallyManagedTLSFTests, MoveCtor_MovesTelemetry)
+// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveCtor_MovesTelemetry)
 // {
 //     static_cast<void>(tlsf.malloc(120));
 //     static_cast<void>(tlsf.malloc(240));
@@ -198,7 +113,7 @@ TEST_F(InternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 // }
 //
 //
-// TEST_F(InternallyManagedTLSFTests, MoveAssign_CopiesAttributesToNewObject)
+// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveAssign_CopiesAttributesToNewObject)
 // {
 //     constexpr auto sampleAllocation = 50;
 //     static_cast<void>(tlsf.malloc(sampleAllocation));
@@ -211,7 +126,7 @@ TEST_F(InternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 // }
 //
 //
-// TEST_F(InternallyManagedTLSFTests, MoveAssign_MovesTelemetry)
+// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveAssign_MovesTelemetry)
 // {
 //     static_cast<void>(tlsf.malloc(120));
 //     static_cast<void>(tlsf.malloc(240));
@@ -240,7 +155,7 @@ TEST_F(InternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
  * @test Verify that malloc returns an address aligned to sizeof(void*) bytes
  *       given no alignment was passed-in.
  */
-TEST_F(InternallyManagedTLSFTests, Malloc_Returns8ByteAlignedAddressByDefault)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_Returns8ByteAlignedAddressByDefault)
 {
     // Misalign bytes to 2
     [[maybe_unused]] void* misalignedBytes = tlsf.malloc(2, 2);
@@ -252,7 +167,7 @@ TEST_F(InternallyManagedTLSFTests, Malloc_Returns8ByteAlignedAddressByDefault)
 }
 
 
-TEST_F(InternallyManagedTLSFTests, Malloc_ReturnsProvidedByteAlignedAddress)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_ReturnsProvidedByteAlignedAddress)
 {
     constexpr auto byteAlignment = 32;
     void* bytes                  = tlsf.malloc(128, byteAlignment);
@@ -262,7 +177,7 @@ TEST_F(InternallyManagedTLSFTests, Malloc_ReturnsProvidedByteAlignedAddress)
 }
 
 
-TEST_F(InternallyManagedTLSFTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryLessThanTLSFSize)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryLessThanTLSFSize)
 {
     void* bytes = tlsf.malloc(256);
 
@@ -270,7 +185,7 @@ TEST_F(InternallyManagedTLSFTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryL
 }
 
 
-TEST_F(InternallyManagedTLSFTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryEqualTLSFSize)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryEqualTLSFSize)
 {
 
     // 15 bytes used for worst case alignment, 16-bytes for header, and 4 bytes for offset.
@@ -280,7 +195,7 @@ TEST_F(InternallyManagedTLSFTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryE
 }
 
 
-TEST_F(InternallyManagedTLSFTests, Malloc_SubsequentAllocationDoNotCorruptMemory)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_SubsequentAllocationDoNotCorruptMemory)
 {
     constexpr auto bufferLength = 8;
     // Given two contiguous block of memory allocated back to back
@@ -306,7 +221,7 @@ TEST_F(InternallyManagedTLSFTests, Malloc_SubsequentAllocationDoNotCorruptMemory
 
 // TODO: Add more TLSF allocation tests.
 
-// TEST_F(InternallyManagedTLSFTests, Malloc_UpdatesTelemetry)
+// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_UpdatesTelemetry)
 // {
 //     constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
 //
@@ -325,7 +240,7 @@ TEST_F(InternallyManagedTLSFTests, Malloc_SubsequentAllocationDoNotCorruptMemory
 // }
 
 
-TEST_F(InternallyManagedTLSFTests, Malloc_HeaderIsPreservedInAddressBeforeGivenAddress)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_HeaderIsPreservedInAddressBeforeGivenAddress)
 {
     // NOTE: This tests works on the premise that the allocated memory follows a
     // [Header][Padding][OffsetToHeader][Ptr given to user] pattern
@@ -349,7 +264,7 @@ TEST_F(InternallyManagedTLSFTests, Malloc_HeaderIsPreservedInAddressBeforeGivenA
 /// @note While we can't directly test this, we can allocate a near full size
 ///       allocation and requesting a larger allocation after free shouldn't trigger
 ///       an out-of-memory exception.
-TEST_F(InternallyManagedTLSFTests, MFree_FreeTheBuffer)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MFree_FreeTheBuffer)
 {
     // TODO: This test can be used for checking if allocations smaller than min chunk size
     //       cleaves the memory.
@@ -365,7 +280,7 @@ TEST_F(InternallyManagedTLSFTests, MFree_FreeTheBuffer)
 
 /// @test Verify that free perform right only coalesce (latest allocations are freed in order).
 ///       AllocA, AllocB, AllocC, FreeB, FreeA
-TEST_F(InternallyManagedTLSFTests, MFree_PerformsRightOnlyCoalesce)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MFree_PerformsRightOnlyCoalesce)
 {
     // Total Memory size is 2KB so this would around half the memory or more.
     constexpr size_t firstAllocSize{ 128_KB }, secondAllocSize{ 64_KB }, thirdAllocSize{ 255 };
@@ -390,7 +305,7 @@ TEST_F(InternallyManagedTLSFTests, MFree_PerformsRightOnlyCoalesce)
 
 /// @test Verify that free perform left-only coalesce (first allocations are freed in order).
 ///       AllocA, AllocB, AllocC, FreeA, FreeB.
-TEST_F(InternallyManagedTLSFTests, MFree_PerformsLeftOnlyCoalesce)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MFree_PerformsLeftOnlyCoalesce)
 {
     // Total Memory size is 2KB so this would around half the memory or more.
     constexpr size_t firstAllocSize{ 128_KB }, secondAllocSize{ 64_KB }, thirdAllocSize{ 255 };
@@ -415,7 +330,7 @@ TEST_F(InternallyManagedTLSFTests, MFree_PerformsLeftOnlyCoalesce)
 
 /// @test Verify that free perform right only coalesce (allocations freed in a mixed order).
 ///       AllocA, AllocB, AllocC, FreeC, FreeA, FreeB.
-TEST_F(InternallyManagedTLSFTests, MFree_PerformsMixedCoalesce)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MFree_PerformsMixedCoalesce)
 {
     // Total Memory size is 2KB so this would around half the memory or more.
     constexpr auto firstAllocSize{ 512 }, secondAllocSize{ 128 }, thirdAllocSize{ 255 };
@@ -433,7 +348,7 @@ TEST_F(InternallyManagedTLSFTests, MFree_PerformsMixedCoalesce)
 }
 
 
-TEST_F(InternallyManagedTLSFTests, MFree_PerformRightCoalesceWithMultipleAllocations)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MFree_PerformRightCoalesceWithMultipleAllocations)
 {
     std::vector<void*> allocations;
     constexpr auto leeway            = 32;
@@ -458,7 +373,7 @@ TEST_F(InternallyManagedTLSFTests, MFree_PerformRightCoalesceWithMultipleAllocat
 }
 
 
-TEST_F(InternallyManagedTLSFTests, MFree_PerformLeftCoalesceWithMultipleAllocations)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MFree_PerformLeftCoalesceWithMultipleAllocations)
 {
     std::vector<void*> allocations;
     constexpr auto leeway            = 32;
@@ -483,7 +398,7 @@ TEST_F(InternallyManagedTLSFTests, MFree_PerformLeftCoalesceWithMultipleAllocati
 }
 
 
-TEST_F(InternallyManagedTLSFTests, MFree_PerformCoalesceWithMixedIntermittentFrees)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MFree_PerformCoalesceWithMixedIntermittentFrees)
 {
     std::vector<void*> allocations;
     constexpr auto leeway            = 32;
@@ -512,7 +427,7 @@ TEST_F(InternallyManagedTLSFTests, MFree_PerformCoalesceWithMixedIntermittentFre
 }
 
 
-TEST_F(InternallyManagedTLSFTests, Free_CallsClassDestructorForNonTrivialTypes)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Free_CallsClassDestructorForNonTrivialTypes)
 {
     int numDestructorCalls = 0;
     const auto nonTrivial  = tlsf.alloc<DestructionTracker>(&numDestructorCalls);
@@ -522,7 +437,7 @@ TEST_F(InternallyManagedTLSFTests, Free_CallsClassDestructorForNonTrivialTypes)
 }
 
 
-TEST_F(InternallyManagedTLSFTests, Free_FreesMemoryForNewAllocations)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Free_FreesMemoryForNewAllocations)
 {
     const auto firstAlloc = tlsf.alloc<LargeData<tlsfSize - 1_KB>>();
     tlsf.free(firstAlloc);
@@ -533,7 +448,7 @@ TEST_F(InternallyManagedTLSFTests, Free_FreesMemoryForNewAllocations)
 }
 
 
-TEST_F(InternallyManagedTLSFTests, FreeV_FreesMemoryForSubsequentAllocations)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, FreeV_FreesMemoryForSubsequentAllocations)
 {
 
     // NOTE: 64 bytes is some leeway for buffer header and alignment
@@ -560,7 +475,7 @@ TEST_F(InternallyManagedTLSFTests, FreeV_FreesMemoryForSubsequentAllocations)
 }
 
 
-TEST_F(InternallyManagedTLSFTests, FreeV_CallsClassDestructorForNonTrivialTypes)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, FreeV_CallsClassDestructorForNonTrivialTypes)
 {
     // @Warning Not thread safe
     int numDestructorCalls       = 0;
@@ -578,7 +493,7 @@ TEST_F(InternallyManagedTLSFTests, FreeV_CallsClassDestructorForNonTrivialTypes)
 
 
 
-TEST_F(InternallyManagedTLSFTests, Resize_SameSizeReturnsSameAddress)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Resize_SameSizeReturnsSameAddress)
 {
     constexpr auto oldSize = 1_KB, newSize = 1_KB;
     // Note: While the test uses two variables for holding old and resized memory address, it is not
@@ -594,7 +509,8 @@ TEST_F(InternallyManagedTLSFTests, Resize_SameSizeReturnsSameAddress)
 
 /// @test Verify that when resizing a buffer to a smaller size with the size difference
 ///       smaller than split threshold, returns the same memory address.
-TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffSmallerThanSplitThreshold_ReturnsSameAddress)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
+       Resize_ToSmallerSize_SizeDiffSmallerThanSplitThreshold_ReturnsSameAddress)
 {
     constexpr auto oldSize = 1_KB, newSize = 1_KB - (pmm::TLSF<>::SPLIT_SIZE_THRESHOLD - 1);
     // Note: While the test uses two variables for holding old and resized memory address, it is not
@@ -610,7 +526,8 @@ TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffSmallerThanSplit
 
 /// @test Verify that when resizing a buffer to a smaller size with the size difference
 ///       equalling split threshold, returns the same memory address.
-TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffEqualToSplitThreshold_ReturnsSameAddress)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
+       Resize_ToSmallerSize_SizeDiffEqualToSplitThreshold_ReturnsSameAddress)
 {
     constexpr auto oldSize = 1_KB, newSize = 1_KB - (pmm::TLSF<>::SPLIT_SIZE_THRESHOLD);
     // Note: While the test uses two variables for holding old and resized memory address, it is not
@@ -627,7 +544,8 @@ TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffEqualToSplitThre
 
 /// @test Verify that when resizing a buffer to a smaller size with the size difference
 ///       greater than split threshold, returns the same memory address.
-TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffGreaterThanSplitThreshold_ReturnsSameAddress)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
+       Resize_ToSmallerSize_SizeDiffGreaterThanSplitThreshold_ReturnsSameAddress)
 {
     constexpr auto oldSize = 1_KB, newSize = 1_KB - (pmm::TLSF<>::SPLIT_SIZE_THRESHOLD + 1);
     // Note: While the test uses two variables for holding old and resized memory address, it is not
@@ -643,7 +561,7 @@ TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffGreaterThanSplit
 
 
 /// @test Verify that when resizing a buffer to a larger size returns a new memory address.
-TEST_F(InternallyManagedTLSFTests, Resize_LargerSizeSizeReturnsNewAddress)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Resize_LargerSizeSizeReturnsNewAddress)
 {
     constexpr auto oldSize = 1_KB, newSize = 5_KB;
     // Note: While the test uses two variables for holding old and resized memory address, it is not
@@ -657,7 +575,7 @@ TEST_F(InternallyManagedTLSFTests, Resize_LargerSizeSizeReturnsNewAddress)
     EXPECT_NE(mem, resized);
 }
 
-TEST_F(InternallyManagedTLSFTests, Resize_LargerSizeSizeCopiesContentFromOldMemory)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Resize_LargerSizeSizeCopiesContentFromOldMemory)
 {
     constexpr auto oldSize = 1_KB, newSize = 5_KB;
     constexpr auto elementCount = oldSize / sizeof(int);
@@ -679,7 +597,7 @@ TEST_F(InternallyManagedTLSFTests, Resize_LargerSizeSizeCopiesContentFromOldMemo
 
 
 /// @test Verify that clear clears the TLSF allowing for new allocations.
-TEST_F(InternallyManagedTLSFTests, Clear_ClearsTLSFAllowingForNewAllocations)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Clear_ClearsTLSFAllowingForNewAllocations)
 {
     // Make some allocations and free
     [[maybe_unused]] const auto mem1 = tlsf.malloc(1_KB);
@@ -704,7 +622,7 @@ TEST_F(InternallyManagedTLSFTests, Clear_ClearsTLSFAllowingForNewAllocations)
  *              ALLOC                 *
  **************************************/
 
-TEST_F(InternallyManagedTLSFTests, Alloc_AllocatesAnObjectInTheTLSF)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Alloc_AllocatesAnObjectInTheTLSF)
 {
     const auto vec = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
@@ -715,7 +633,7 @@ TEST_F(InternallyManagedTLSFTests, Alloc_AllocatesAnObjectInTheTLSF)
 }
 
 
-TEST_F(InternallyManagedTLSFTests, Alloc_AlignsToTargetAlignment)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Alloc_AlignsToTargetAlignment)
 {
     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
     static_cast<void>(tlsf.malloc(2, 2));
@@ -727,7 +645,7 @@ TEST_F(InternallyManagedTLSFTests, Alloc_AlignsToTargetAlignment)
 }
 
 
-// TEST_F(InternallyManagedTLSFTests, Alloc_UpdatesTelemetry)
+// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Alloc_UpdatesTelemetry)
 // {
 //     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
 //     static_cast<void>(tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
@@ -750,7 +668,7 @@ TEST_F(InternallyManagedTLSFTests, Alloc_AlignsToTargetAlignment)
  *            ALLOC V(ector)           *
  **************************************/
 
-TEST_F(InternallyManagedTLSFTests, AllocV_ReturnsAContinguousBlockOfMemory)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, AllocV_ReturnsAContinguousBlockOfMemory)
 {
     constexpr auto blockCount = 10;
     const auto vertices       = tlsf.allocV<Vec4>(blockCount);
@@ -760,7 +678,7 @@ TEST_F(InternallyManagedTLSFTests, AllocV_ReturnsAContinguousBlockOfMemory)
 }
 
 
-TEST_F(InternallyManagedTLSFTests, AllocV_SubsequentAllocationDoNotCorruptMemory)
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, AllocV_SubsequentAllocationDoNotCorruptMemory)
 {
     constexpr auto blockCount       = 5;
     constexpr std::array vertexData = {
@@ -807,7 +725,7 @@ TEST_F(InternallyManagedTLSFTests, AllocV_SubsequentAllocationDoNotCorruptMemory
 }
 
 
-// TEST_F(InternallyManagedTLSFTests, AllocV_UpdatesTelemetry)
+// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, AllocV_UpdatesTelemetry)
 // {
 //     constexpr std::size_t count1 = 2, count2 = 4, count3 = 6;
 //
@@ -837,7 +755,7 @@ namespace pmm
 {
 
     // NOTE: For CTOR tests we are using the fixture allocated tlsf.
-    TEST_F(InternallyManagedTLSFTests, Ctor_CreatesValidFLAndSLBitmaps)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_CreatesValidFLAndSLBitmaps)
     {
         // Get the FL and SL bitmaps corresponding to our size.
         const auto [flIndex, slIndex] = tlsf.mappingInsert(tlsfSize);
@@ -851,11 +769,11 @@ namespace pmm
     }
 
 
-    TEST_F(InternallyManagedTLSFTests, Ctor_SingleAllocation_FLBitmapIsSingleBit)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_SingleAllocation_FLBitmapIsSingleBit)
     { EXPECT_TRUE(std::has_single_bit(tlsf._flBitmap)); }
 
 
-    TEST_F(InternallyManagedTLSFTests, Ctor_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry)
     {
         size_t nonZeroEntry{ 0 };
 
@@ -871,7 +789,7 @@ namespace pmm
     }
 
 
-    TEST_F(InternallyManagedTLSFTests, Ctor_SingleAllocation_OnlySingleFreeListIsPopulated)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_SingleAllocation_OnlySingleFreeListIsPopulated)
     {
         size_t nonNullFLCount{}, nonNullSLCount{};
 
@@ -891,7 +809,7 @@ namespace pmm
         EXPECT_EQ(1, nonNullSLCount);
     }
 
-    TEST_F(InternallyManagedTLSFTests, Ctor_WritesAppropriateHeaderToBuffer)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Ctor_WritesAppropriateHeaderToBuffer)
     {
         TLSF<>::TLSFFreeNode* freeNode;
         // While we can directly query the buffer(_buffer member variable), it is better to iterate and get the buffer
@@ -916,7 +834,7 @@ namespace pmm
     }
 
 
-    TEST_F(InternallyManagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveCtor_ClearsMovedTLSFsInternalBuffer)
     {
         [[maybe_unused]] const TLSF<pmm::MemPolicy::Internal> tlsf2 = std::move(tlsf);
         // NOLINT(bugprone-use-after-move)
@@ -924,7 +842,7 @@ namespace pmm
     }
 
 
-    TEST_F(InternallyManagedTLSFTests, MoveCtor_MovesBufferIntoNewObject)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveCtor_MovesBufferIntoNewObject)
     {
         const auto initialPointer  = tlsf._buffer;
         const auto initialUsedSize = tlsf._usedSize;
@@ -941,7 +859,7 @@ namespace pmm
     }
 
 
-    TEST_F(InternallyManagedTLSFTests, MoveAssign_ClearsMovedTLSF)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveAssign_ClearsMovedTLSF)
     {
         [[maybe_unused]] TLSF<pmm::MemPolicy::Internal> tlsf2(256);
 
@@ -950,7 +868,7 @@ namespace pmm
     }
 
 
-    TEST_F(InternallyManagedTLSFTests, MoveAssign_MovesBufferIntoNewObject)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveAssign_MovesBufferIntoNewObject)
     {
         const auto initialPointer  = tlsf._buffer;
         const auto initialUsedSize = tlsf._usedSize;
@@ -970,7 +888,7 @@ namespace pmm
     }
 
 
-    TEST_F(InternallyManagedTLSFTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF)
     {
         const auto initialAddress = reinterpret_cast<uintptr_t>(tlsf._buffer);
         const auto initialFLMask  = tlsf._flBitmap;
@@ -997,7 +915,7 @@ namespace pmm
     }
 
 
-    TEST_F(InternallyManagedTLSFTests, MoveAssign_DeletingOriginalTLSFDoNotDeleteTheNewTLSFsMemory)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveAssign_DeletingOriginalTLSFDoNotDeleteTheNewTLSFsMemory)
     {
         TLSF<pmm::MemPolicy::Internal> tlsf2(256);
         constexpr auto scopedTLSFSize = 512;
@@ -1043,7 +961,7 @@ namespace pmm
 
     // TODO: Correct header is created(malloc back navigation)
 
-    TEST_F(InternallyManagedTLSFTests, Malloc_NullsOutInitialBitmap)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_NullsOutInitialBitmap)
     {
         // Store the initial FL bitmap
         const auto initialBitmap = tlsf._flBitmap;
@@ -1063,14 +981,14 @@ namespace pmm
     }
 
 
-    TEST_F(InternallyManagedTLSFTests, Malloc_SingleAllocation_FLBitmapIsSingleBit)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_SingleAllocation_FLBitmapIsSingleBit)
     {
         static_cast<void>(tlsf.malloc(32));
         EXPECT_TRUE(std::has_single_bit(tlsf._flBitmap));
     }
 
 
-    TEST_F(InternallyManagedTLSFTests, Malloc_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry)
     {
         static_cast<void>(tlsf.malloc(32));
         size_t nonZeroEntries = 0;
@@ -1087,7 +1005,7 @@ namespace pmm
     }
 
 
-    TEST_F(InternallyManagedTLSFTests, Malloc_SingleAllocation_OnlySingleFreeListIsPopulated)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_SingleAllocation_OnlySingleFreeListIsPopulated)
     {
         static_cast<void>(tlsf.malloc(32));
         size_t nonNullEntries = 0;
@@ -1108,7 +1026,7 @@ namespace pmm
 
 
 
-    TEST_F(InternallyManagedTLSFTests, Malloc_SingleAllocation_FreeListIsUpdatedAfterAllocation)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_SingleAllocation_FreeListIsUpdatedAfterAllocation)
     {
         // To check where the FL and SL entries in the free is updated
         // we can make 1 allocation and ensure that the entries are updated
@@ -1154,7 +1072,7 @@ namespace pmm
 
     /// @test Verify that malloc write cleaves the remaining buffer and writes appropriate
     ///       header after allocation.
-    TEST_F(InternallyManagedTLSFTests, Malloc_WritesAppropriateHeaderToBuffer_AfterFirstAllocation)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_WritesAppropriateHeaderToBuffer_AfterFirstAllocation)
     {
         using Header_t             = TLSF<>::Header;
         using Offset_t             = TLSF<>::HeaderOffset_t;
@@ -1191,7 +1109,7 @@ namespace pmm
 
 
     /// @test Verify that when trying to resizing to the same size, FL and SL bitmasks doesn't update.
-    TEST_F(InternallyManagedTLSFTests, Resize_SameSizeDoesNotUpdateFLAndSLBitmaps)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Resize_SameSizeDoesNotUpdateFLAndSLBitmaps)
     {
         constexpr auto oldSize = 1_KB, newSize = 1_KB;
         // Note: While the test uses two variables for holding old and resized memory address, it is not
@@ -1212,7 +1130,7 @@ namespace pmm
 
     /// @test Verify that when resizing a buffer to a smaller size with the size difference
     ///       smaller than split threshold, does not update the fl and sl bitmasks.
-    TEST_F(InternallyManagedTLSFTests,
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
            Resize_ToSmallerSize_SizeDiffSmallerThanSplitThreshold_DoesNotUpdateFLAndSLBitmaps)
     {
         constexpr auto oldSize = 1_KB, newSize = 1_KB - (TLSF<>::SPLIT_SIZE_THRESHOLD - 1);
@@ -1235,7 +1153,8 @@ namespace pmm
 
     /// @test Verify that when resizing a buffer to a smaller size with the size difference
     ///       equalling split threshold, updates the fl and sl bitmasks.
-    TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffEqualToSplitThreshold_UpdatesFLAndSLBitmaps)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
+           Resize_ToSmallerSize_SizeDiffEqualToSplitThreshold_UpdatesFLAndSLBitmaps)
     {
         constexpr auto oldSize = 1_KB, newSize = 1_KB - (TLSF<>::SPLIT_SIZE_THRESHOLD);
         // Note: While the test uses two variables for holding old and resized memory address, it is not
@@ -1257,7 +1176,8 @@ namespace pmm
 
     /// @test Verify that when resizing a buffer to a smaller size with the size difference
     ///       greater than split threshold, updates the fl and sl bitmasks.
-    TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffGreaterThanSplitThreshold_UpdatesFLAndSLBitmaps)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
+           Resize_ToSmallerSize_SizeDiffGreaterThanSplitThreshold_UpdatesFLAndSLBitmaps)
     {
         constexpr auto oldSize = 1_KB, newSize = 1_KB - (TLSF<>::SPLIT_SIZE_THRESHOLD + 1);
         // Note: While the test uses two variables for holding old and resized memory address, it is not
@@ -1277,7 +1197,7 @@ namespace pmm
     }
 
     /// @test Verify that when resizing a buffer to a larger size updates the fl and sl masks.
-    TEST_F(InternallyManagedTLSFTests, Resize_LargerSizeSizeUpdatesFLAndSLBitmaps)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Resize_LargerSizeSizeUpdatesFLAndSLBitmaps)
     {
         constexpr auto oldSize = 1_KB, newSize = 5_KB;
         // Note: While the test uses two variables for holding old and resized memory address, it is not
@@ -1297,7 +1217,7 @@ namespace pmm
     }
 
 
-    TEST_F(InternallyManagedTLSFTests, Clear_ResetsFLAndSLBitmaps)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Clear_ResetsFLAndSLBitmaps)
     {
         // Store the initial FL and SL bitmasks
         const auto oldFL = tlsf._flBitmap;
@@ -1321,7 +1241,7 @@ namespace pmm
 
 
 
-    TEST_F(InternallyManagedTLSFTests, Clear_ResetsFreeList)
+    TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Clear_ResetsFreeList)
     {
         // Store initial state
         auto oldFreeListSize              = 0;
@@ -1371,7 +1291,7 @@ namespace pmm
         EXPECT_EQ(oldFreeNode, newFreeNode);
     }
 
-    // TEST_F(InternallyManagedTLSFTests, Malloc_UpdatesTelemetryPadding)
+    // TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_UpdatesTelemetryPadding)
     // {
     //     const auto buffer          = tlsf.malloc(128, 128);
     //     const auto expectedPadding = reinterpret_cast<uintptr_t>(buffer) - reinterpret_cast<uintptr_t>(tlsf._buffer);
@@ -1380,7 +1300,7 @@ namespace pmm
     // }
 
 
-    // TEST_F(InternallyManagedTLSFTests, Alloc_UpdatesTelemetryPadding)
+    // TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Alloc_UpdatesTelemetryPadding)
     // {
     //     const auto vec4            = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
     //     const auto expectedPadding = reinterpret_cast<uintptr_t>(vec4) - reinterpret_cast<uintptr_t>(tlsf._buffer);
@@ -1389,7 +1309,7 @@ namespace pmm
     // }
 
 
-    // TEST_F(InternallyManagedTLSFTests, AllocV_UpdatesTelemetryPadding)
+    // TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, AllocV_UpdatesTelemetryPadding)
     // {
     //     const auto data = tlsf.allocV<Vec4>(10);
     //     const auto expectedPadding =
@@ -1399,7 +1319,7 @@ namespace pmm
     // }
 
 
-    // TEST_F(InternallyManagedTLSFTests, Clear_OnlyResetsCurrentTelemetryUsage)
+    // TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Clear_OnlyResetsCurrentTelemetryUsage)
     // {
     //     constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
     //
