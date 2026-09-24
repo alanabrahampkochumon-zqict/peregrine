@@ -20,7 +20,7 @@ namespace pmm
     PMM_INLINE constexpr TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::TLSF(
         uint8_t* buffer, const size_t memorySize) noexcept
         requires(MemoryPolicy == MemPolicy::External)
-        : _buffer{ buffer }, _size{ memorySize }, _usedSize{ 0 }, _flBitmap{ 0 }, _slBitmap{}
+        : _buffer{ buffer }, _size{ memorySize }, _usedSize{ 0 }, _flBitmap{ 0 }, _slBitmap{}, _telemetry(memorySize)
     { insertBlock(_buffer, _size); }
 
 
@@ -33,7 +33,8 @@ namespace pmm
           _usedSize{ 0 },
           _flBitmap{ 0 },
           _slBitmap{},
-          _freeList{}
+          _freeList{},
+          _telemetry(allocatorSize)
     { insertBlock(_buffer, _size); }
 
     // TODO: Update move ctor to move bitmaps
@@ -123,17 +124,6 @@ namespace pmm
         // Unlink the free node from the bitmap
         unlinkNode(freeBlock);
 
-        // TODO: REMOVE
-        // Clear the SL bitmask. This is only applicable if the block is the only node is freelist.
-        // if (freeBlock->next == nullptr)
-        // {
-        //     // Let SLIndex be 2, then shifting gives use 0100 and mask is 1011.
-        //     _slBitmap[index.flIndex] &= ~(1ULL << index.slIndex);
-        // }
-        // // Clear the FL Bitmask if the sl bitmask is zero.
-        // _flBitmap = _slBitmap[index.flIndex] == 0 ? _flBitmap & ~(1ULL << index.flIndex) : _flBitmap;
-
-
         // For rewriting the header we need to get the free block's size.
         // Write the header with the used size and padding.
         // NOTE: Used size is the entire size of the block including padding and metadata.
@@ -179,6 +169,11 @@ namespace pmm
         // We only need to offset the memory by the size of header offset and padding as header is prepopulated before
         // the "freeBlock".
         const auto memoryStart = basePtr + metadataSize + padding;
+
+        if constexpr (TelemetryPolicy == TelPolicy::Enabled)
+        {
+            _telemetry.incUsage(size, usedSize - size);
+        }
         return memoryStart;
     }
 
@@ -287,6 +282,14 @@ namespace pmm
             const auto footer = reinterpret_cast<size_t*>(nextBlockAddress - sizeof(size_t));
             *footer           = header->getSize();
         }
+        if constexpr (TelemetryPolicy == TelPolicy::Enabled)
+        {
+            // [Header][Padding][HeaderOffset][Usable Memory]
+            // <=================== Size ===================>
+            // <=======HEADER OFFSET=========><===REQ SIZE==>
+            const auto reqSize = header->getSize() - *headerOffset;
+            _telemetry.decUsage(reqSize, *headerOffset);
+        }
     }
 
 
@@ -339,6 +342,11 @@ namespace pmm
         std::memset(_slBitmap.data(), 0, _slBitmap.size() * sizeof(Bitmask_t));
         // Clear the freelist
         std::memset(_freeList, 0, sizeof(_freeList));
+        // If telemetry is enabled we must reset it before inserting the freeblock
+        if constexpr (TelemetryPolicy == TelPolicy::Enabled)
+        {
+            _telemetry.resetTelemetry();
+        }
         // Insert the block
         insertBlock(_buffer, _size);
     }
@@ -481,6 +489,12 @@ namespace pmm
         Header* header = getHeader(freeNode);
         header->setSize(blockSize);
         header->markFree();
+
+        if constexpr (TelemetryPolicy == TelPolicy::Enabled)
+        {
+            _telemetry.incFreeBlockCount();
+            _telemetry.updateLargestFreeBlockSize(getLargestBlockSize());
+        }
     }
 
 
@@ -532,10 +546,7 @@ namespace pmm
         }
     }
 
-    // TODO: Add tests with looped allocations
-    //       1. Descending free
-    //       1. Ascending free
-    //       1. Free odd allocations and then even allocations
+
     template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
     PMM_INLINE constexpr uint8_t* TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::mergeNext(
         uint8_t* block) noexcept
@@ -596,6 +607,25 @@ namespace pmm
             _freeList[index.flIndex][index.slIndex] == nullptr ? newSL : _slBitmap[index.flIndex];
         const auto newFL = _flBitmap & ~(1ULL << index.flIndex);
         _flBitmap        = _slBitmap[index.flIndex] == 0 ? newFL : _flBitmap;
+        if constexpr (TelemetryPolicy == TelPolicy::Enabled)
+        {
+            _telemetry.decFreeBlockCount();
+            _telemetry.updateLargestFreeBlockSize(getLargestBlockSize());
+        }
+    }
+
+
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr size_t TLSF<MemoryPolicy, TelemetryPolicy, SafeMode,
+                                     MultithreadingPolicy>::getLargestBlockSize() noexcept
+    { // To get the largest block in the allocator
+        // we need to find the largest fl and sl index.
+        // Then for a accurate block size, we need to loop through the list but it can cause branch mispredictions
+        // which can make the allocator so, so we approximate the largest block by querying the first header.
+        const auto fl      = utils::fls(_flBitmap);
+        const auto sl      = utils::fls(_slBitmap[fl]);
+        TLSFFreeNode* node = _freeList[fl][sl];
+        return node == nullptr ? 0 : getHeader(node)->getSize();
     }
 
 

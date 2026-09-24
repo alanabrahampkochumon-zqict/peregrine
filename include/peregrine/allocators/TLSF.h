@@ -14,6 +14,7 @@
 
 #include "../utils/Bit.h"
 #include "Policy.h"
+#include "peregrine/telemetry/TLSFTelemetry.h"
 #include "peregrine/utils/Preprocessors.h"
 
 #include <array>
@@ -384,6 +385,8 @@ namespace pmm
 
         TLSFFreeNode* _freeList[FL_SIZE][SL_SIZE]; /// Free-list
 
+        PMM_NO_UNIQUE_ADDR TLSFTelemetry_t<TelemetryPolicy> _telemetry;
+
         /// Structure used for exchanging bit mask indices internally.
         struct BitmapIndices
         {
@@ -475,6 +478,11 @@ namespace pmm
          * @param block The block to unlink.
          */
         constexpr void unlinkNode(TLSFFreeNode* block) noexcept;
+
+        /// @brief Get the largest free block size in the allocator freelist.
+        /// @note This is an approximation as iterating through the allocator is expensive due to
+        ///       the required while loop.
+        constexpr size_t getLargestBlockSize() noexcept;
 
 
 

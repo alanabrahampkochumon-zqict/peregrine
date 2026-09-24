@@ -56,7 +56,7 @@ namespace pmm
          *       or the current offset.
          * @note This function must be called only once per allocation for logging accuracy.
          *
-         * @param[in] reqSize       The size of the allocation that was accessible by the user.
+         * @param[in] reqSize  The size of the allocation that was accessible by the user.
          * @param[in] overhead The size used for metadata (padding, offsets, and header size).
          *
          * @relatedalso incUsage()
@@ -179,7 +179,7 @@ namespace pmm
      * @tparam Policy Telemetry Policy used by the TLSF.
      */
     template <TelPolicy Policy>
-    using TLSFTelemetryType = std::conditional_t<Policy == TelPolicy::Enabled, TLSFTelemetry, DummyTLSFTelemetry>;
+    using TLSFTelemetry_t = std::conditional_t<Policy == TelPolicy::Enabled, TLSFTelemetry, DummyTLSFTelemetry>;
 
 
 
@@ -193,7 +193,7 @@ namespace pmm
      * @return A tlsf telemetry instance suited for the telemetry policy.
      */
     template <TelPolicy Policy>
-    constexpr TLSFTelemetryType<Policy> getTelemetryInstance(const size_t tlsfSize) noexcept
+    constexpr TLSFTelemetry_t<Policy> getTelemetryInstance(const size_t tlsfSize) noexcept
     {
         if constexpr (Policy == TelPolicy::Enabled)
         {
