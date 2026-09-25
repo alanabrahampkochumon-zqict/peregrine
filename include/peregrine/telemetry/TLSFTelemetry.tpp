@@ -106,7 +106,7 @@ namespace pmm
      **************************************/
 
 
-    PMM_INLINE constexpr size_t TLSFTelemetry::getTotalCapacity() const noexcept { return _allocatorSize; }
+    PMM_INLINE constexpr size_t TLSFTelemetry::getSize() const noexcept { return _allocatorSize; }
 
     PMM_INLINE constexpr size_t TLSFTelemetry::getCurrentBufferUsage() const noexcept { return _currentBufferUsage; }
     PMM_INLINE constexpr size_t TLSFTelemetry::getMinBufferUsage() const noexcept { return _minBufferUsage; }

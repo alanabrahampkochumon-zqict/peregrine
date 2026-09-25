@@ -75,7 +75,7 @@ namespace pmm
 
 
         /// @brief Get the total capacity of the allocator in bytes.
-        [[nodiscard]] constexpr size_t getTotalCapacity() const noexcept;
+        [[nodiscard]] constexpr size_t getSize() const noexcept;
 
         /// @brief Get the total memory used by the allocator, including metadata/overhead size.
         [[nodiscard]] constexpr size_t getCurrentBufferUsage() const noexcept;

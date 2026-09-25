@@ -615,7 +615,10 @@ namespace pmm
         if constexpr (TelemetryPolicy == TelPolicy::Enabled)
         {
             _telemetry.decFreeBlockCount();
-            _telemetry.updateLargestFreeBlockSize(getLargestBlockSize());
+            // An _flBitmap of 0 will cause a crash to due the invalid indexing.
+            // To prevent this we need to set the largest block size to 0 if _flIndex is zero.
+            const auto largestFreeBlock = _flBitmap == 0 ? 0 : getLargestBlockSize();
+            _telemetry.updateLargestFreeBlockSize(largestFreeBlock);
         }
     }
 

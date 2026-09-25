@@ -81,7 +81,7 @@ namespace
 TEST_F(TLSFTelemetryTests, IntializesWithSizeAndDefaultStats)
 {
     constexpr auto maxValue = std::numeric_limits<size_t>::max();
-    EXPECT_EQ(size, telemetry.getTotalCapacity());
+    EXPECT_EQ(size, telemetry.getSize());
     EXPECT_EQ(0, telemetry.getCurrentBufferUsage());
     EXPECT_EQ(maxValue, telemetry.getMinBufferUsage());
     EXPECT_EQ(0, telemetry.getPeakBufferUsage());
