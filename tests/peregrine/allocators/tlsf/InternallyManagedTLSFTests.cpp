@@ -935,7 +935,6 @@ namespace pmm
         EXPECT_EQ(expectedSl, sl);
     }
 
-    // TODO: Correct header is created(malloc back navigation)
 
     TEST_F(InternallyManagedTLSFTests, Malloc_NullsOutInitialBitmap)
     {

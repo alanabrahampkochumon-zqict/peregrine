@@ -41,6 +41,8 @@ namespace
     public:
         static constexpr size_t tlsfSize{ 2_MB };
         pmm::TLSF<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> tlsf{ tlsfSize };
+        using Offset_t = pmm::TLSF<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled>::HeaderOffset_t;
+        using Header   = pmm::TLSF<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled>::Header;
     };
 } // namespace
 
@@ -151,79 +153,233 @@ TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MoveAssign_MovesTelemetry
 }
 
 
-//
-// /**************************************
-//  *            ALLOC BYTES             *
-//  **************************************/
-//
-// /**
-//  * @test Verify that malloc returns an address aligned to sizeof(void*) bytes
-//  *       given no alignment was passed-in.
-//  */
-// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_Returns8ByteAlignedAddressByDefault)
-// {
-//     // Misalign bytes to 2
-//     [[maybe_unused]] void* misalignedBytes = tlsf.malloc(2, 2);
-//
-//     void* bytes = tlsf.malloc(8);
-//
-//     const auto address = reinterpret_cast<uintptr_t>(bytes);
-//     EXPECT_EQ(0, address % sizeof(void*));
-// }
-//
-//
-// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_ReturnsProvidedByteAlignedAddress)
-// {
-//     constexpr auto byteAlignment = 32;
-//     void* bytes                  = tlsf.malloc(128, byteAlignment);
-//
-//     const auto address = reinterpret_cast<uintptr_t>(bytes);
-//     EXPECT_EQ(0, address % byteAlignment);
-// }
-//
-//
-// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryLessThanTLSFSize)
-// {
-//     void* bytes = tlsf.malloc(256);
-//
-//     EXPECT_NE(nullptr, bytes);
-// }
-//
-//
-// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryEqualTLSFSize)
-// {
-//
-//     // 15 bytes used for worst case alignment, 16-bytes for header, and 4 bytes for offset.
-//     void* bytes = tlsf.malloc(tlsfSize - 64);
-//
-//     EXPECT_NE(nullptr, bytes);
-// }
-//
-//
-// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_SubsequentAllocationDoNotCorruptMemory)
-// {
-//     constexpr auto bufferLength = 8;
-//     // Given two contiguous block of memory allocated back to back
-//     const auto firstAlloc = static_cast<int*>(tlsf.malloc(bufferLength * sizeof(int)));
-//     for (std::size_t i = 0; i < bufferLength; ++i)
-//     {
-//         firstAlloc[i] = static_cast<int>(i + 5);
-//     }
-//
-//     const auto secondAlloc = static_cast<int*>(tlsf.malloc(bufferLength * sizeof(int)));
-//     for (std::size_t i = 0; i < bufferLength; ++i)
-//     {
-//         secondAlloc[i] = static_cast<int>(i + 7);
-//     }
-//
-//     // When read back there is no corruption
-//     for (std::size_t i = 0; i < bufferLength; ++i)
-//     {
-//         EXPECT_EQ(static_cast<int>(i + 5), firstAlloc[i]);
-//         EXPECT_EQ(static_cast<int>(i + 7), secondAlloc[i]);
-//     }
-// }
-//
+/**************************************
+ *            ALLOC BYTES             *
+ **************************************/
+
+// Single allocation tests
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, SingleMalloc_UpdatesAllocationCount)
+{
+    static_cast<void>(tlsf.malloc(512));
+    const auto& tel = tlsf.getTelemetry();
+    EXPECT_EQ(1, tel.getActiveAllocations());
+    EXPECT_EQ(1, tel.getLifetimeAllocations());
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, SingleMalloc_UpdatesCurrentBufferUsage)
+{
+    const auto mem    = static_cast<uint8_t*>(tlsf.malloc(512));
+    const auto offset = reinterpret_cast<Offset_t*>(mem - sizeof(Offset_t));
+    const auto& tel   = tlsf.getTelemetry();
+    EXPECT_EQ(512 + *offset, tel.getCurrentBufferUsage());
+    EXPECT_EQ(*offset, tel.getCurrentMetadataUsage());
+    EXPECT_EQ(512, tel.getCurrentPayloadUsage());
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, SingleMalloc_UpdatesMinBufferUsage)
+{
+    const auto mem    = static_cast<uint8_t*>(tlsf.malloc(512));
+    const auto offset = reinterpret_cast<Offset_t*>(mem - sizeof(Offset_t));
+    const auto& tel   = tlsf.getTelemetry();
+    EXPECT_EQ(512 + *offset, tel.getMinBufferUsage());
+    EXPECT_EQ(*offset, tel.getMinMetadataUsage());
+    EXPECT_EQ(512, tel.getMinPayloadUsage());
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, SingleMalloc_UpdatesPeakBufferUsage)
+{
+    const auto mem    = static_cast<uint8_t*>(tlsf.malloc(512));
+    const auto offset = reinterpret_cast<Offset_t*>(mem - sizeof(Offset_t));
+    const auto& tel   = tlsf.getTelemetry();
+    EXPECT_EQ(512 + *offset, tel.getPeakBufferUsage());
+    EXPECT_EQ(*offset, tel.getPeakMetadataUsage());
+    EXPECT_EQ(512, tel.getPeakPayloadUsage());
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, SingleMalloc_UpdatesFreeBlockInformation)
+{
+    const auto mem    = static_cast<uint8_t*>(tlsf.malloc(512));
+    const auto offset = reinterpret_cast<Offset_t*>(mem - sizeof(Offset_t));
+    const auto header = reinterpret_cast<Header*>(mem - *offset);
+    const auto& tel   = tlsf.getTelemetry();
+    EXPECT_EQ(tlsfSize - header->getSize(), tel.getLargestFreeBlockSize());
+    EXPECT_EQ(1, tel.getFreeBlockCount());
+}
+
+// Multiple allocation tests
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MultipleMalloc_UpdatesAllocationCount)
+{
+    static_cast<void>(tlsf.malloc(512));
+    static_cast<void>(tlsf.malloc(256_KB));
+    static_cast<void>(tlsf.malloc(1_KB));
+    static_cast<void>(tlsf.malloc(1_MB));
+    const auto& tel = tlsf.getTelemetry();
+    EXPECT_EQ(4, tel.getActiveAllocations());
+    EXPECT_EQ(4, tel.getLifetimeAllocations());
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MultipleMalloc_UpdatesCurrentBufferUsage)
+{
+    const auto mem1    = static_cast<uint8_t*>(tlsf.malloc(512));
+    const auto offset1 = reinterpret_cast<Offset_t*>(mem1 - sizeof(Offset_t));
+    const auto mem2    = static_cast<uint8_t*>(tlsf.malloc(1_KB));
+    const auto offset2 = reinterpret_cast<Offset_t*>(mem2 - sizeof(Offset_t));
+    const auto mem3    = static_cast<uint8_t*>(tlsf.malloc(1_MB));
+    const auto offset3 = reinterpret_cast<Offset_t*>(mem3 - sizeof(Offset_t));
+    const auto mem4    = static_cast<uint8_t*>(tlsf.malloc(256_KB));
+    const auto offset4 = reinterpret_cast<Offset_t*>(mem4 - sizeof(Offset_t));
+
+    const auto totalMetadataSize    = *offset1 + *offset2 + *offset3 + *offset4;
+    constexpr auto totalPayloadSize = 512 + 1_KB + 1_MB + 256_KB;
+
+    const auto& tel = tlsf.getTelemetry();
+    EXPECT_EQ(totalPayloadSize + totalMetadataSize, tel.getCurrentBufferUsage());
+    EXPECT_EQ(totalMetadataSize, tel.getCurrentMetadataUsage());
+    EXPECT_EQ(totalPayloadSize, tel.getCurrentPayloadUsage());
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MultipleMalloc_UpdatesMinBufferUsage)
+{
+    constexpr auto minPayloadSize = 512ull;
+    const auto mem1               = static_cast<uint8_t*>(tlsf.malloc(minPayloadSize, 128));
+    const auto offset1            = reinterpret_cast<Offset_t*>(mem1 - sizeof(Offset_t));
+    const auto mem2               = static_cast<uint8_t*>(tlsf.malloc(1_KB));
+    const auto offset2            = reinterpret_cast<Offset_t*>(mem2 - sizeof(Offset_t));
+    const auto mem3               = static_cast<uint8_t*>(tlsf.malloc(1_MB));
+    const auto offset3            = reinterpret_cast<Offset_t*>(mem3 - sizeof(Offset_t));
+    const auto mem4               = static_cast<uint8_t*>(tlsf.malloc(256_KB));
+    const auto offset4            = reinterpret_cast<Offset_t*>(mem4 - sizeof(Offset_t));
+
+    // Since we request a large alignment with mem1, we can guarantee a diff buffer usage
+    const auto expectedMinMetadataUsage = std::min({ *offset1, *offset2, *offset3, *offset4 });
+    const auto expectedMinBufferUsage =
+        std::min({ minPayloadSize + *offset1, 1_KB + *offset2, 1_MB + *offset3, 256_KB + *offset4 });
+
+    const auto& tel = tlsf.getTelemetry();
+    EXPECT_EQ(expectedMinBufferUsage, tel.getMinBufferUsage());
+    EXPECT_EQ(expectedMinMetadataUsage, tel.getMinMetadataUsage());
+    EXPECT_EQ(minPayloadSize, tel.getMinPayloadUsage());
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MultipleMalloc_UpdatesPeakBufferUsage)
+{
+    constexpr auto maxPayloadSize = 1_MB;
+    const auto mem1               = static_cast<uint8_t*>(tlsf.malloc(512, 128));
+    const auto offset1            = reinterpret_cast<Offset_t*>(mem1 - sizeof(Offset_t));
+    const auto mem2               = static_cast<uint8_t*>(tlsf.malloc(1_KB));
+    const auto offset2            = reinterpret_cast<Offset_t*>(mem2 - sizeof(Offset_t));
+    const auto mem3               = static_cast<uint8_t*>(tlsf.malloc(maxPayloadSize));
+    const auto offset3            = reinterpret_cast<Offset_t*>(mem3 - sizeof(Offset_t));
+    const auto mem4               = static_cast<uint8_t*>(tlsf.malloc(256_KB));
+    const auto offset4            = reinterpret_cast<Offset_t*>(mem4 - sizeof(Offset_t));
+
+    // Since we request a large alignment with mem1, we can guarantee a diff buffer usage
+    const auto expectedPeakMetadataUsage = std::max({ *offset1, *offset2, *offset3, *offset4 });
+    const auto expectedPeakBufferUsage =
+        std::max({ 512ull + *offset1, 1_KB + *offset2, maxPayloadSize + *offset3, 256_KB + *offset4 });
+
+    const auto& tel = tlsf.getTelemetry();
+    EXPECT_EQ(expectedPeakBufferUsage, tel.getPeakBufferUsage());
+    EXPECT_EQ(expectedPeakMetadataUsage, tel.getPeakMetadataUsage());
+    EXPECT_EQ(maxPayloadSize, tel.getPeakPayloadUsage());
+}
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MultipleMalloc_UpdatesFreeBlockInformation)
+{
+    const auto mem1    = static_cast<uint8_t*>(tlsf.malloc(512, 128));
+    const auto offset1 = reinterpret_cast<Offset_t*>(mem1 - sizeof(Offset_t));
+    const auto mem2    = static_cast<uint8_t*>(tlsf.malloc(1_KB));
+    const auto offset2 = reinterpret_cast<Offset_t*>(mem2 - sizeof(Offset_t));
+    const auto mem3    = static_cast<uint8_t*>(tlsf.malloc(1_MB));
+    const auto offset3 = reinterpret_cast<Offset_t*>(mem3 - sizeof(Offset_t));
+    const auto mem4    = static_cast<uint8_t*>(tlsf.malloc(256_KB));
+    const auto offset4 = reinterpret_cast<Offset_t*>(mem4 - sizeof(Offset_t));
+
+    const auto totalUsedBuffer = 512 + *offset1 + 1_KB + *offset2 + 1_MB + *offset3 + 256_KB + *offset4;
+
+    const auto& tel = tlsf.getTelemetry();
+    EXPECT_EQ(tlsfSize - totalUsedBuffer, tel.getLargestFreeBlockSize());
+    EXPECT_EQ(1, tel.getFreeBlockCount());
+}
+
+
+
+//====================
+/**
+ * @test Verify that malloc returns an address aligned to sizeof(void*) bytes
+ *       given no alignment was passed-in.
+ */
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_Returns8ByteAlignedAddressByDefault)
+{
+    // Misalign bytes to 2
+    [[maybe_unused]] void* misalignedBytes = tlsf.malloc(2, 2);
+
+    void* bytes = tlsf.malloc(8);
+
+    const auto address = reinterpret_cast<uintptr_t>(bytes);
+    EXPECT_EQ(0, address % sizeof(void*));
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_ReturnsProvidedByteAlignedAddress)
+{
+    constexpr auto byteAlignment = 32;
+    void* bytes                  = tlsf.malloc(128, byteAlignment);
+
+    const auto address = reinterpret_cast<uintptr_t>(bytes);
+    EXPECT_EQ(0, address % byteAlignment);
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryLessThanTLSFSize)
+{
+    void* bytes = tlsf.malloc(256);
+
+    EXPECT_NE(nullptr, bytes);
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryEqualTLSFSize)
+{
+
+    // 15 bytes used for worst case alignment, 16-bytes for header, and 4 bytes for offset.
+    void* bytes = tlsf.malloc(tlsfSize - 64);
+
+    EXPECT_NE(nullptr, bytes);
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_SubsequentAllocationDoNotCorruptMemory)
+{
+    constexpr auto bufferLength = 8;
+    // Given two contiguous block of memory allocated back to back
+    const auto firstAlloc = static_cast<int*>(tlsf.malloc(bufferLength * sizeof(int)));
+    for (std::size_t i = 0; i < bufferLength; ++i)
+    {
+        firstAlloc[i] = static_cast<int>(i + 5);
+    }
+
+    const auto secondAlloc = static_cast<int*>(tlsf.malloc(bufferLength * sizeof(int)));
+    for (std::size_t i = 0; i < bufferLength; ++i)
+    {
+        secondAlloc[i] = static_cast<int>(i + 7);
+    }
+
+    // When read back there is no corruption
+    for (std::size_t i = 0; i < bufferLength; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(i + 5), firstAlloc[i]);
+        EXPECT_EQ(static_cast<int>(i + 7), secondAlloc[i]);
+    }
+}
+
 // // TODO: Add more TLSF allocation tests.
 //
 // // TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_UpdatesTelemetry)
