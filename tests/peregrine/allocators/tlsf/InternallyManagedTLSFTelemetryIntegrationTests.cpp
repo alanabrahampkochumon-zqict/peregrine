@@ -310,117 +310,110 @@ TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MultipleMalloc_UpdatesFre
 }
 
 
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MultipleAlloc_UpdatesTelemetryParameters)
+{
+    constexpr size_t allocCount = 1000;
+    std::vector<Vec4*> allocations;
+    for (size_t i{ 0 }; i < allocCount; ++i)
+    {
+        const auto floatI = static_cast<float>(i);
+        allocations.push_back(tlsf.alloc<Vec4>(floatI, floatI + 1.0f, floatI + 2.0f, floatI + 3.0f));
+    }
+
+    constexpr size_t max    = std::numeric_limits<size_t>::max();
+    size_t minMetadataUsage = max, minBufferUsage = max, minPayloadUsage = sizeof(Vec4);
+    size_t peakMetadataUsage = 0, peakBufferUsage = 0, peakPayloadUsage = sizeof(Vec4);
+    size_t curMetadataUsage = 0, curBufferUsage = 0, curPayloadUsage = allocCount * sizeof(Vec4);
+
+    for (const auto allocation : allocations)
+    {
+        const auto offset = reinterpret_cast<Offset_t*>(reinterpret_cast<uint8_t*>(allocation) - sizeof(Offset_t));
+        curMetadataUsage += *offset;
+
+        minMetadataUsage  = std::min(minMetadataUsage, static_cast<size_t>(*offset));
+        peakMetadataUsage = std::max(peakMetadataUsage, static_cast<size_t>(*offset));
+
+        minBufferUsage  = std::min(minBufferUsage, minPayloadUsage + *offset);
+        peakBufferUsage = std::max(peakBufferUsage, peakPayloadUsage + *offset);
+    }
+    curBufferUsage = curMetadataUsage + curPayloadUsage;
+
+    const auto& tel                = tlsf.getTelemetry();
+    const auto largesFreeBlockSize = tlsfSize - curBufferUsage;
+
+    EXPECT_EQ(allocCount, tel.getActiveAllocations());
+    EXPECT_EQ(allocCount, tel.getLifetimeAllocations());
+
+    EXPECT_EQ(1, tel.getFreeBlockCount());
+    EXPECT_EQ(largesFreeBlockSize, tel.getLargestFreeBlockSize());
+    EXPECT_EQ(0, tel.getLifetimeFrees());
+
+    EXPECT_EQ(curBufferUsage, tel.getCurrentBufferUsage());
+    EXPECT_EQ(curMetadataUsage, tel.getCurrentMetadataUsage());
+    EXPECT_EQ(curPayloadUsage, tel.getCurrentPayloadUsage());
+    EXPECT_EQ(minBufferUsage, tel.getMinBufferUsage());
+    EXPECT_EQ(minMetadataUsage, tel.getMinMetadataUsage());
+    EXPECT_EQ(minPayloadUsage, tel.getMinPayloadUsage());
+    EXPECT_EQ(peakMetadataUsage, tel.getPeakMetadataUsage());
+    EXPECT_EQ(peakBufferUsage, tel.getPeakBufferUsage());
+    EXPECT_EQ(peakPayloadUsage, tel.getPeakPayloadUsage());
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MultipleAllocV_UpdatesTelemetryParameters)
+{
+    constexpr size_t allocCount = 100;
+    constexpr size_t arrSize    = 10;
+    std::vector<std::span<Vec4>> allocations;
+    for (size_t i{ 0 }; i < allocCount; ++i)
+    {
+        allocations.push_back(tlsf.allocV<Vec4>(arrSize));
+    }
+
+    constexpr size_t max    = std::numeric_limits<size_t>::max();
+    size_t minMetadataUsage = max, minBufferUsage = max, minPayloadUsage = arrSize * sizeof(Vec4);
+    size_t peakMetadataUsage = 0, peakBufferUsage = 0, peakPayloadUsage = arrSize * sizeof(Vec4);
+    size_t curMetadataUsage = 0, curBufferUsage = 0, curPayloadUsage = arrSize * allocCount * sizeof(Vec4);
+
+    for (const auto allocation : allocations)
+    {
+        const auto offset =
+            reinterpret_cast<Offset_t*>(reinterpret_cast<uint8_t*>(allocation.data()) - sizeof(Offset_t));
+        curMetadataUsage += *offset;
+
+        minMetadataUsage  = std::min(minMetadataUsage, static_cast<size_t>(*offset));
+        peakMetadataUsage = std::max(peakMetadataUsage, static_cast<size_t>(*offset));
+
+        minBufferUsage  = std::min(minBufferUsage, minPayloadUsage + *offset);
+        peakBufferUsage = std::max(peakBufferUsage, peakPayloadUsage + *offset);
+    }
+    curBufferUsage = curMetadataUsage + curPayloadUsage;
+
+    const auto& tel                = tlsf.getTelemetry();
+    const auto largesFreeBlockSize = tlsfSize - curBufferUsage;
+
+    EXPECT_EQ(allocCount, tel.getActiveAllocations());
+    EXPECT_EQ(allocCount, tel.getLifetimeAllocations());
+
+    EXPECT_EQ(1, tel.getFreeBlockCount());
+    EXPECT_EQ(largesFreeBlockSize, tel.getLargestFreeBlockSize());
+    EXPECT_EQ(0, tel.getLifetimeFrees());
+
+    EXPECT_EQ(curBufferUsage, tel.getCurrentBufferUsage());
+    EXPECT_EQ(curMetadataUsage, tel.getCurrentMetadataUsage());
+    EXPECT_EQ(curPayloadUsage, tel.getCurrentPayloadUsage());
+    EXPECT_EQ(minBufferUsage, tel.getMinBufferUsage());
+    EXPECT_EQ(minMetadataUsage, tel.getMinMetadataUsage());
+    EXPECT_EQ(minPayloadUsage, tel.getMinPayloadUsage());
+    EXPECT_EQ(peakMetadataUsage, tel.getPeakMetadataUsage());
+    EXPECT_EQ(peakBufferUsage, tel.getPeakBufferUsage());
+    EXPECT_EQ(peakPayloadUsage, tel.getPeakPayloadUsage());
+}
+
+
 
 //====================
-/**
- * @test Verify that malloc returns an address aligned to sizeof(void*) bytes
- *       given no alignment was passed-in.
- */
-TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_Returns8ByteAlignedAddressByDefault)
-{
-    // Misalign bytes to 2
-    [[maybe_unused]] void* misalignedBytes = tlsf.malloc(2, 2);
 
-    void* bytes = tlsf.malloc(8);
-
-    const auto address = reinterpret_cast<uintptr_t>(bytes);
-    EXPECT_EQ(0, address % sizeof(void*));
-}
-
-
-TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_ReturnsProvidedByteAlignedAddress)
-{
-    constexpr auto byteAlignment = 32;
-    void* bytes                  = tlsf.malloc(128, byteAlignment);
-
-    const auto address = reinterpret_cast<uintptr_t>(bytes);
-    EXPECT_EQ(0, address % byteAlignment);
-}
-
-
-TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryLessThanTLSFSize)
-{
-    void* bytes = tlsf.malloc(256);
-
-    EXPECT_NE(nullptr, bytes);
-}
-
-
-TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_ReturnsNonNullPtrWhenAllocatingMemoryEqualTLSFSize)
-{
-
-    // 15 bytes used for worst case alignment, 16-bytes for header, and 4 bytes for offset.
-    void* bytes = tlsf.malloc(tlsfSize - 64);
-
-    EXPECT_NE(nullptr, bytes);
-}
-
-
-TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_SubsequentAllocationDoNotCorruptMemory)
-{
-    constexpr auto bufferLength = 8;
-    // Given two contiguous block of memory allocated back to back
-    const auto firstAlloc = static_cast<int*>(tlsf.malloc(bufferLength * sizeof(int)));
-    for (std::size_t i = 0; i < bufferLength; ++i)
-    {
-        firstAlloc[i] = static_cast<int>(i + 5);
-    }
-
-    const auto secondAlloc = static_cast<int*>(tlsf.malloc(bufferLength * sizeof(int)));
-    for (std::size_t i = 0; i < bufferLength; ++i)
-    {
-        secondAlloc[i] = static_cast<int>(i + 7);
-    }
-
-    // When read back there is no corruption
-    for (std::size_t i = 0; i < bufferLength; ++i)
-    {
-        EXPECT_EQ(static_cast<int>(i + 5), firstAlloc[i]);
-        EXPECT_EQ(static_cast<int>(i + 7), secondAlloc[i]);
-    }
-}
-
-// // TODO: Add more TLSF allocation tests.
-//
-// // TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_UpdatesTelemetry)
-// // {
-// //     constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
-// //
-// //     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
-// //     static_cast<void>(tlsf.malloc(byte1));
-// //     static_cast<void>(tlsf.malloc(byte2));
-// //     static_cast<void>(tlsf.malloc(byte3));
-// //
-// //     constexpr std::size_t expectedMinUsage  = byte1;
-// //     constexpr std::size_t expectedPeakUsage = byte3;
-// //     constexpr std::size_t expectedUsage     = byte1 + byte2 + byte3;
-// //
-// //     EXPECT_EQ(expectedMinUsage, tlsf.getTelemetry().getMinUsage());
-// //     EXPECT_EQ(expectedPeakUsage, tlsf.getTelemetry().getPeakUsage());
-// //     EXPECT_EQ(expectedUsage, tlsf.getTelemetry().getUsedSize());
-// // }
-//
-//
-// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, Malloc_HeaderIsPreservedInAddressBeforeGivenAddress)
-// {
-//     // NOTE: This tests works on the premise that the allocated memory follows a
-//     // [Header][Padding][OffsetToHeader][Ptr given to user] pattern
-//     // and the OffsetToHeader is not itself corrupted.
-//     constexpr auto allocSize = 64;
-//     auto bytes               = static_cast<uint8_t*>(tlsf.malloc(allocSize));
-//     using Offset_t           = pmm::TLSF<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled>::HeaderOffset_t;
-//     using Header_t           = pmm::TLSF<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled>::Header;
-//
-//     const auto offset = reinterpret_cast<Offset_t*>(bytes - sizeof(Offset_t));
-//     const auto header = reinterpret_cast<Header_t*>(bytes - *offset);
-//
-//     const auto expectedSize = *offset + allocSize;
-//     // Padding equals the size left in the in offset after subtracting size of Header and HeaderOffset
-//     const auto expectedPadding = *offset - (sizeof(Offset_t) + sizeof(Header_t));
-//     EXPECT_EQ(expectedSize, header->getSize());
-//     EXPECT_EQ(expectedPadding, header->padding);
-// }
-//
 // /// @test Verify that free marks the internal buffer as free.
 // /// @note While we can't directly test this, we can allocate a near full size
 // ///       allocation and requesting a larger allocation after free shouldn't trigger
