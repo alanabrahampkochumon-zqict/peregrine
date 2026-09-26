@@ -935,6 +935,134 @@ TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, FreeingAllAllocations_Doe
     EXPECT_EQ(maxPayloadSize, tel.getPeakPayloadUsage());
 }
 
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MultipleFree_UpdatesTelemetryParameters)
+{
+    constexpr size_t allocCount = 1000;
+    std::vector<Vec4*> allocations;
+    for (size_t i{ 0 }; i < allocCount; ++i)
+    {
+        const auto floatI = static_cast<float>(i);
+        allocations.push_back(tlsf.alloc<Vec4>(floatI, floatI + 1.0f, floatI + 2.0f, floatI + 3.0f));
+    }
+
+    // Since max and min usages are not affected by free, update before freeing the allocations
+    constexpr size_t max    = std::numeric_limits<size_t>::max();
+    size_t minMetadataUsage = max, minBufferUsage = max, minPayloadUsage = sizeof(Vec4);
+    size_t peakMetadataUsage = 0, peakBufferUsage = 0, peakPayloadUsage = sizeof(Vec4);
+    for (const auto allocation : allocations)
+    {
+        const auto offset = *reinterpret_cast<Offset_t*>(reinterpret_cast<uint8_t*>(allocation) - sizeof(Offset_t));
+        minMetadataUsage  = std::min(minMetadataUsage, static_cast<size_t>(offset));
+        peakMetadataUsage = std::max(peakMetadataUsage, static_cast<size_t>(offset));
+
+        minBufferUsage  = std::min(minBufferUsage, minPayloadUsage + offset);
+        peakBufferUsage = std::max(peakBufferUsage, peakPayloadUsage + offset);
+    }
+
+    /// Free everything except the first allocation
+    for (size_t i{ 1 }; i < allocCount; ++i)
+    {
+        tlsf.free(allocations[i]);
+    }
+
+    /// Since we haven't freed the first allocation that will the one only one who will be
+    /// registered as used in telemetry.
+    const auto offset = *reinterpret_cast<Offset_t*>(reinterpret_cast<uint8_t*>(allocations[0]) - sizeof(Offset_t));
+    const auto header = reinterpret_cast<Header*>(reinterpret_cast<uint8_t*>(allocations[0]) - offset);
+
+    size_t curMetadataUsage = offset;
+    size_t curPayloadUsage  = sizeof(Vec4);
+    size_t curBufferUsage   = header->getSize();
+
+    const auto& tel                = tlsf.getTelemetry();
+    const auto largesFreeBlockSize = tlsfSize - curBufferUsage;
+
+
+    EXPECT_EQ(1, tel.getActiveAllocations());
+    EXPECT_EQ(allocCount, tel.getLifetimeAllocations());
+
+    EXPECT_EQ(1, tel.getFreeBlockCount());
+    EXPECT_EQ(largesFreeBlockSize, tel.getLargestFreeBlockSize());
+    EXPECT_EQ(allocCount - 1, tel.getLifetimeFrees());
+
+    EXPECT_EQ(curBufferUsage, tel.getCurrentBufferUsage());
+    EXPECT_EQ(curMetadataUsage, tel.getCurrentMetadataUsage());
+    EXPECT_EQ(curPayloadUsage, tel.getCurrentPayloadUsage());
+    EXPECT_EQ(minBufferUsage, tel.getMinBufferUsage());
+    EXPECT_EQ(minMetadataUsage, tel.getMinMetadataUsage());
+    EXPECT_EQ(minPayloadUsage, tel.getMinPayloadUsage());
+    EXPECT_EQ(peakMetadataUsage, tel.getPeakMetadataUsage());
+    EXPECT_EQ(peakBufferUsage, tel.getPeakBufferUsage());
+    EXPECT_EQ(peakPayloadUsage, tel.getPeakPayloadUsage());
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MultipleFreeV_UpdatesTelemetryParameters)
+{
+    constexpr size_t allocCount = 100;
+    constexpr size_t arrSize    = 10;
+    std::vector<std::span<Vec4>> allocations;
+    for (size_t i{ 0 }; i < allocCount; ++i)
+    {
+        allocations.push_back(tlsf.allocV<Vec4>(arrSize));
+    }
+
+    constexpr size_t max    = std::numeric_limits<size_t>::max();
+    size_t minMetadataUsage = max, minBufferUsage = max, minPayloadUsage = arrSize * sizeof(Vec4);
+    size_t peakMetadataUsage = 0, peakBufferUsage = 0, peakPayloadUsage = arrSize * sizeof(Vec4);
+
+    for (const auto allocation : allocations)
+    {
+        const auto offset =
+            *reinterpret_cast<Offset_t*>(reinterpret_cast<uint8_t*>(allocation.data()) - sizeof(Offset_t));
+
+        minMetadataUsage  = std::min(minMetadataUsage, static_cast<size_t>(offset));
+        peakMetadataUsage = std::max(peakMetadataUsage, static_cast<size_t>(offset));
+
+        minBufferUsage  = std::min(minBufferUsage, minPayloadUsage + offset);
+        peakBufferUsage = std::max(peakBufferUsage, peakPayloadUsage + offset);
+    }
+
+    /// Free everything except the first allocation
+    for (size_t i{ 1 }; i < allocCount; ++i)
+    {
+        tlsf.freeV(allocations[i]);
+    }
+
+    /// Since we haven't freed the first allocation that will the one only one who will be
+    /// registered as used in telemetry.
+    const auto offset =
+        *reinterpret_cast<Offset_t*>(reinterpret_cast<uint8_t*>(allocations[0].data()) - sizeof(Offset_t));
+    const auto header = reinterpret_cast<Header*>(reinterpret_cast<uint8_t*>(allocations[0].data()) - offset);
+
+    size_t curMetadataUsage = offset;
+    size_t curPayloadUsage  = sizeof(Vec4) * arrSize;
+    size_t curBufferUsage   = header->getSize();
+
+    const auto& tel                = tlsf.getTelemetry();
+    const auto largesFreeBlockSize = tlsfSize - curBufferUsage;
+
+
+    EXPECT_EQ(1, tel.getActiveAllocations());
+    EXPECT_EQ(allocCount, tel.getLifetimeAllocations());
+
+    EXPECT_EQ(1, tel.getFreeBlockCount());
+    EXPECT_EQ(largesFreeBlockSize, tel.getLargestFreeBlockSize());
+    EXPECT_EQ(allocCount - 1, tel.getLifetimeFrees());
+
+    EXPECT_EQ(curBufferUsage, tel.getCurrentBufferUsage());
+    EXPECT_EQ(curMetadataUsage, tel.getCurrentMetadataUsage());
+    EXPECT_EQ(curPayloadUsage, tel.getCurrentPayloadUsage());
+    EXPECT_EQ(minBufferUsage, tel.getMinBufferUsage());
+    EXPECT_EQ(minMetadataUsage, tel.getMinMetadataUsage());
+    EXPECT_EQ(minPayloadUsage, tel.getMinPayloadUsage());
+    EXPECT_EQ(peakMetadataUsage, tel.getPeakMetadataUsage());
+    EXPECT_EQ(peakBufferUsage, tel.getPeakBufferUsage());
+    EXPECT_EQ(peakPayloadUsage, tel.getPeakPayloadUsage());
+}
+
 /**************************************
  *                                    *
  *           INTERNAL TESTS           *
