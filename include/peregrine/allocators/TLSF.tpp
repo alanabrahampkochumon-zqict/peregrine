@@ -332,13 +332,28 @@ namespace pmm
             const auto oldOffset = reinterpret_cast<HeaderOffset_t*>(startAddress - sizeof(HeaderOffset_t));
             const auto oldHeader = reinterpret_cast<Header*>(startAddress - *oldOffset);
             oldHeader->setSize(newSize);
+
             // Insert the block
             insertBlock(startAddress + newSize, oldSize - newSize);
+            // We need to update the usage metrics in telemetry since the resize has decreased the block size
+            if constexpr (TelemetryPolicy == TelPolicy::Enabled)
+            {
+                // Metadata size is not decreased since we are only inserting the block left after
+                // splitting, and that block doesn't have any allocated metadata space.
+                _telemetry.decMemUsage(oldSize - newSize);
+                // We need to update the min usage as well since the memory is resized to a smaller size
+                _telemetry.updateMinUsage(newSize, *oldOffset);
+            }
             // Return
             return block;
         }
         else
         {
+            // NOTE: This branch of resize will create fragment without coalescing as ideally
+            // [Block][Free Memory] can resize to
+            // [NewBlock...][Free Memory] // TODO: Add this case
+            //
+            // [OldBlock][NewBlock][Free Memory] Since we are allocating first
             // If a larger memory is requested, get a new memory block
             // copy the existing content, free the old memory and return the new memory
             const auto newMemory = malloc(newSize);

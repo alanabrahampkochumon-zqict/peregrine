@@ -41,17 +41,15 @@ namespace pmm
     PMM_INLINE constexpr void TLSFTelemetry::incUsage(const size_t reqSize, const size_t overhead) noexcept
     {
         _currentPayloadUsage += reqSize;
-        _minPayloadUsage  = std::min(_minPayloadUsage, reqSize);
         _peakPayloadUsage = std::max(_peakPayloadUsage, reqSize);
 
         _currentMetadataUsage += overhead;
-        _minMetadataUsage  = std::min(_minMetadataUsage, overhead);
         _peakMetadataUsage = std::max(_peakMetadataUsage, overhead);
 
         const auto bufferSize = reqSize + overhead;
         _currentBufferUsage += bufferSize;
-        _minBufferUsage  = std::min(_minBufferUsage, bufferSize);
         _peakBufferUsage = std::max(_peakBufferUsage, bufferSize);
+        updateMinUsage(reqSize, overhead);
 
         ++_activeAllocationCount;
         ++_lifetimeAllocationCount;
@@ -76,6 +74,20 @@ namespace pmm
 
         ++_lifetimeFreeCount;
         --_activeAllocationCount;
+    }
+
+    PMM_INLINE constexpr void TLSFTelemetry::decMemUsage(const size_t size) noexcept
+    {
+        _currentPayloadUsage -= size;
+        _currentBufferUsage -= size;
+    }
+
+    PMM_INLINE constexpr void TLSFTelemetry::updateMinUsage(const size_t reqSize, const size_t metadataSize) noexcept
+    {
+        PMM_ASSERT_MSG(metadataSize > 0 && reqSize > 0, "Request and Metadata size cannot be zero");
+        _minPayloadUsage  = std::min(_minPayloadUsage, reqSize);
+        _minMetadataUsage = std::min(_minMetadataUsage, metadataSize);
+        _minBufferUsage   = std::min(_minBufferUsage, reqSize + metadataSize);
     }
 
 

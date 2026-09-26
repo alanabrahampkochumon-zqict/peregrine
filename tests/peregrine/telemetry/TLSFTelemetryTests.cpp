@@ -111,16 +111,16 @@ TEST_F(TLSFTelemetryTests, IncTelemetryUsage_UpdatesWithCorrectUsage)
     telemetry.incUsage(500, 24);
     telemetry.incUsage(200, 100);
     telemetry.incUsage(300, 4);
-    telemetry.incUsage(100, 0);
+    telemetry.incUsage(100, 8);
     constexpr auto totalBufferUsage = 1200;
-    constexpr auto metaSize         = 136;
+    constexpr auto metaSize         = 144;
 
     EXPECT_EQ(metaSize + totalBufferUsage, telemetry.getCurrentBufferUsage());
-    EXPECT_EQ(100, telemetry.getMinBufferUsage());
+    EXPECT_EQ(108, telemetry.getMinBufferUsage());
     EXPECT_EQ(524, telemetry.getPeakBufferUsage());
 
     EXPECT_EQ(metaSize, telemetry.getCurrentMetadataUsage());
-    EXPECT_EQ(0, telemetry.getMinMetadataUsage());
+    EXPECT_EQ(4, telemetry.getMinMetadataUsage());
     EXPECT_EQ(100, telemetry.getPeakMetadataUsage());
 
     EXPECT_EQ(totalBufferUsage, telemetry.getCurrentPayloadUsage());

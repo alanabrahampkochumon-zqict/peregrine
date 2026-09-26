@@ -63,6 +63,15 @@ namespace pmm
          */
         constexpr void decUsage(size_t reqSize, size_t overhead) noexcept;
 
+        /// @brief Decrease the memory usage from allocation(buffer + payload) by @p size.
+        /// @note This will update update the minimum usages.
+        /// @note This will not update the number of allocations.
+        constexpr void decMemUsage(size_t size) noexcept;
+
+        /// @brief Updates the minimum usages.
+        /// @warning Neither sizes should be zero.
+        constexpr void updateMinUsage(size_t reqSize, size_t metadataSize) noexcept;
+
         /// @ref Update the largest free block's size.
         /// @note The calculations needs to be done by the allocator as this a dummy setter.
         constexpr void updateLargestFreeBlockSize(size_t newSize) noexcept;
@@ -149,7 +158,9 @@ namespace pmm
 
         constexpr void incUsage(size_t, size_t) noexcept {}
         constexpr void decUsage(size_t, size_t) noexcept {}
+        constexpr void decMemUsage(size_t) noexcept {}
         constexpr void updateLargestFreeBlockSize(size_t) noexcept {}
+        constexpr void updateMinUsage(size_t, size_t) noexcept {}
         constexpr void incFreeBlockCount() noexcept {}
         constexpr void decFreeBlockCount() noexcept {}
 
