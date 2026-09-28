@@ -529,7 +529,8 @@ namespace pmm
                     Resize_ToSmallerSize_SizeDiffEqualToSplitThreshold_UpdatesFLAndSLBitmaps);
         FRIEND_TEST(InternallyManagedTLSFTests,
                     Resize_ToSmallerSize_SizeDiffGreaterThanSplitThreshold_UpdatesFLAndSLBitmaps);
-        FRIEND_TEST(InternallyManagedTLSFTests, Resize_LargerSizeSizeUpdatesFLAndSLBitmaps);
+        FRIEND_TEST(InternallyManagedTLSFTests, Resize_NonLatestAllocation_LargerSizeUpdatesFLAndSLBitmaps);
+        FRIEND_TEST(InternallyManagedTLSFTests, Resize_LatestAllocation_LargerSizeUpdatesFLAndSLBitmaps);
         FRIEND_TEST(InternallyManagedTLSFTests, Clear_ResetsFLAndSLBitmaps);
         FRIEND_TEST(InternallyManagedTLSFTests, Clear_ResetsFreeList);
 

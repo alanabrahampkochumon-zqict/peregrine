@@ -40,7 +40,9 @@ namespace
     {
     public:
         static constexpr size_t tlsfSize{ 2_MB };
-        pmm::TLSF<> tlsf{ tlsfSize };
+        pmm::TLSF<pmm::MemPolicy::Internal> tlsf{ tlsfSize };
+        using Header   = pmm::TLSF<pmm::MemPolicy::Internal>::Header;
+        using Offset_t = pmm::TLSF<pmm::MemPolicy::Internal>::HeaderOffset_t;
     };
 
 
@@ -518,15 +520,32 @@ TEST_F(InternallyManagedTLSFTests, Resize_SameSizeReturnsSameAddress)
     EXPECT_EQ(mem, resized);
 }
 
+/// @test Verify that when resizing to a larger size and the buffer having enough headroom for expansion
+///       the returned address is the same.
+TEST_F(InternallyManagedTLSFTests, Resize_LargerSizeAndBufferHavingEnoughRoomForExpansion_ReturnsSameAddress)
+{
+    // To test this we need to allocate near the limits of tlsf and ensure no split
+    // So we just need to leave enough room for the header expansion, any padding requirements, and
+    // the offset.
+    constexpr auto headerSize        = sizeof(Header);
+    constexpr auto offset            = sizeof(Offset_t);
+    constexpr auto worstAlignPadding = 7; // Since the default aligned is 8, but we can provide this value.
+    constexpr auto oldSize           = tlsfSize - (headerSize + offset + worstAlignPadding);
+    constexpr auto newSize           = oldSize + 5;
+
+    const auto mem     = tlsf.malloc(oldSize, 8);
+    const auto resized = tlsf.resize(mem, oldSize, newSize);
+
+    EXPECT_NE(nullptr, resized);
+    EXPECT_EQ(mem, resized);
+}
+
 
 /// @test Verify that when resizing a buffer to a smaller size with the size difference
 ///       smaller than split threshold, returns the same memory address.
 TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffSmallerThanSplitThreshold_ReturnsSameAddress)
 {
     constexpr auto oldSize = 1_KB, newSize = 1_KB - (pmm::TLSF<>::SPLIT_SIZE_THRESHOLD - 1);
-    // Note: While the test uses two variables for holding old and resized memory address, it is not
-    //       recommended for production use since that can lead to dangling pointers and memory corruptions
-    //       (if data is written to it).
     const auto mem     = tlsf.malloc(oldSize);
     const auto resized = tlsf.resize(mem, oldSize, newSize);
 
@@ -540,9 +559,6 @@ TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffSmallerThanSplit
 TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffEqualToSplitThreshold_ReturnsSameAddress)
 {
     constexpr auto oldSize = 1_KB, newSize = 1_KB - (pmm::TLSF<>::SPLIT_SIZE_THRESHOLD);
-    // Note: While the test uses two variables for holding old and resized memory address, it is not
-    //       recommended for production use since that can lead to dangling pointers and memory corruptions
-    //       (if data is written to it).
 
     const auto mem     = tlsf.malloc(oldSize);
     const auto resized = tlsf.resize(mem, oldSize, newSize);
@@ -557,9 +573,6 @@ TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffEqualToSplitThre
 TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffGreaterThanSplitThreshold_ReturnsSameAddress)
 {
     constexpr auto oldSize = 1_KB, newSize = 1_KB - (pmm::TLSF<>::SPLIT_SIZE_THRESHOLD + 1);
-    // Note: While the test uses two variables for holding old and resized memory address, it is not
-    //       recommended for production use since that can lead to dangling pointers and memory corruptions
-    //       (if data is written to it).
 
     const auto mem     = tlsf.malloc(oldSize);
     const auto resized = tlsf.resize(mem, oldSize, newSize);
@@ -569,29 +582,39 @@ TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffGreaterThanSplit
 }
 
 
-/// @test Verify that when resizing a buffer to a larger size returns a new memory address.
-TEST_F(InternallyManagedTLSFTests, Resize_LargerSizeSizeReturnsNewAddress)
+/// @test Verify that when resizing a buffer that is the latests allocation to a larger size
+///       returns same memory address.
+TEST_F(InternallyManagedTLSFTests, Resize_LatestAllocation_LargerSizeReturnsSameAddress)
 {
     constexpr auto oldSize = 1_KB, newSize = 5_KB;
-    // Note: While the test uses two variables for holding old and resized memory address, it is not
-    //       recommended for production use since that can lead to dangling pointers and memory corruptions
-    //       (if data is written to it).
 
     const auto mem     = tlsf.malloc(oldSize);
+    const auto resized = tlsf.resize(mem, oldSize, newSize);
+
+    EXPECT_NE(nullptr, resized);
+    EXPECT_EQ(mem, resized);
+}
+
+
+/// @test Verify that when resizing a buffer that is not the latest allocation to a larger size
+///       returns a new memory address.
+TEST_F(InternallyManagedTLSFTests, Resize_NonLatestAllocation_LargerSizeReturnsNewAddress)
+{
+    constexpr auto oldSize = 1_KB, newSize = 5_KB;
+
+    const auto mem = tlsf.malloc(oldSize);
+    static_cast<void>(tlsf.malloc(oldSize)); // Another allocation that makes the resize non-latest
     const auto resized = tlsf.resize(mem, oldSize, newSize);
 
     EXPECT_NE(nullptr, resized);
     EXPECT_NE(mem, resized);
 }
 
-TEST_F(InternallyManagedTLSFTests, Resize_LargerSizeSizeCopiesContentFromOldMemory)
+TEST_F(InternallyManagedTLSFTests, Resize_LargerSizeCopiesContentFromOldMemory)
 {
     constexpr auto oldSize = 1_KB, newSize = 5_KB;
     constexpr auto elementCount = oldSize / sizeof(int);
-    // Note: While the test uses two variables for holding old and resized memory address, it is not
-    //       recommended for production use since that can lead to dangling pointers and memory corruptions
-    //       (if data is written to it).
-    const auto mem = static_cast<int*>(tlsf.malloc(oldSize));
+    const auto mem              = static_cast<int*>(tlsf.malloc(oldSize));
     for (size_t i = 0; i < elementCount; ++i)
     {
         mem[i] = static_cast<int>(i + 13);
@@ -1083,13 +1106,15 @@ namespace pmm
     }
 
 
+
+    /// Note: While the resize test uses two variables for holding old and resized memory address, it is not
+    ///       recommended for production since that can lead to dangling pointers and memory corruptions
+    ///       (if data is written to it).
+
     /// @test Verify that when trying to resizing to the same size, FL and SL bitmasks doesn't update.
     TEST_F(InternallyManagedTLSFTests, Resize_SameSizeDoesNotUpdateFLAndSLBitmaps)
     {
         constexpr auto oldSize = 1_KB, newSize = 1_KB;
-        // Note: While the test uses two variables for holding old and resized memory address, it is not
-        //       recommended for production use since that can lead to dangling pointers and memory corruptions
-        //       (if data is written to it).
         // Allocate initial buffer
         const auto mem = tlsf.malloc(oldSize);
         // Get the FL and SL bitmasks
@@ -1109,10 +1134,6 @@ namespace pmm
            Resize_ToSmallerSize_SizeDiffSmallerThanSplitThreshold_DoesNotUpdateFLAndSLBitmaps)
     {
         constexpr auto oldSize = 1_KB, newSize = 1_KB - (TLSF<>::SPLIT_SIZE_THRESHOLD - 1);
-        // Note: While the test uses two variables for holding old and resized memory address, it is not
-        //       recommended for production use since that can lead to dangling pointers and memory corruptions
-        //       (if data is written to it).
-
         // Allocate initial buffer
         const auto mem = tlsf.malloc(oldSize);
         // Get the FL and SL bitmasks
@@ -1131,10 +1152,6 @@ namespace pmm
     TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffEqualToSplitThreshold_UpdatesFLAndSLBitmaps)
     {
         constexpr auto oldSize = 1_KB, newSize = 1_KB - (TLSF<>::SPLIT_SIZE_THRESHOLD);
-        // Note: While the test uses two variables for holding old and resized memory address, it is not
-        //       recommended for production use since that can lead to dangling pointers and memory corruptions
-        //       (if data is written to it).
-
         // Allocate initial buffer
         const auto mem = tlsf.malloc(oldSize);
         // Get the FL and SL bitmasks
@@ -1153,10 +1170,6 @@ namespace pmm
     TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_SizeDiffGreaterThanSplitThreshold_UpdatesFLAndSLBitmaps)
     {
         constexpr auto oldSize = 1_KB, newSize = 1_KB - (TLSF<>::SPLIT_SIZE_THRESHOLD + 1);
-        // Note: While the test uses two variables for holding old and resized memory address, it is not
-        //       recommended for production use since that can lead to dangling pointers and memory corruptions
-        //       (if data is written to it).
-
         // Allocate initial buffer
         const auto mem = tlsf.malloc(oldSize);
         // Get the FL and SL bitmasks
@@ -1171,13 +1184,29 @@ namespace pmm
 
 
     /// @test Verify that when resizing a buffer to a larger size updates the fl and sl masks.
-    TEST_F(InternallyManagedTLSFTests, Resize_LargerSizeSizeUpdatesFLAndSLBitmaps)
+    TEST_F(InternallyManagedTLSFTests, Resize_NonLatestAllocation_LargerSizeUpdatesFLAndSLBitmaps)
     {
         constexpr auto oldSize = 1_KB, newSize = 5_KB;
-        // Note: While the test uses two variables for holding old and resized memory address, it is not
-        //       recommended for production use since that can lead to dangling pointers and memory corruptions
-        //       (if data is written to it).
+        // Allocate initial buffer
+        const auto mem = tlsf.malloc(oldSize);
+        static_cast<void>(tlsf.malloc(512)); // Allocation to make resize non-latest
+        // Get the FL and SL bitmasks
+        const auto oldFL = tlsf._flBitmap;
+        const auto oldSL = tlsf._slBitmap;
+        // Resize the buffer
+        [[maybe_unused]] const auto resized = tlsf.resize(mem, oldSize, newSize);
 
+        EXPECT_NE(oldFL, tlsf._flBitmap);
+        EXPECT_NE(oldSL, tlsf._slBitmap);
+    }
+
+
+    /// @test Verify that when resizing a buffer to a larger size updates the fl and sl masks.
+    TEST_F(InternallyManagedTLSFTests, Resize_LatestAllocation_LargerSizeUpdatesFLAndSLBitmaps)
+    {
+        // NOTE: The allocation difference must be large enough to ensure that after cleaving
+        //       the allocation doesn't get store in the same buckets.
+        constexpr auto oldSize = 500_KB, newSize = 1_MB;
         // Allocate initial buffer
         const auto mem = tlsf.malloc(oldSize);
         // Get the FL and SL bitmasks
