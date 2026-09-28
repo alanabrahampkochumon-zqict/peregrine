@@ -675,6 +675,63 @@ TEST_F(InternallyManagedTLSFTests, Clear_ClearsTLSFAllowingForNewAllocations)
 }
 
 
+TEST_F(InternallyManagedTLSFTests, Resize_ToSmallerSize_CreateUsableAdjacentFreeBlock)
+{
+    constexpr size_t oldSize = 1_KB, newSize = 512;
+    const auto mem = static_cast<uint8_t*>(tlsf.malloc(oldSize));
+    static_cast<void>(tlsf.resize(mem, oldSize, newSize));
+
+    const auto newMem = static_cast<uint8_t*>(tlsf.malloc(newSize - (sizeof(Header) + sizeof(Offset_t))));
+
+    // The new allocation must be between the old memory boundaries
+    EXPECT_GT(newMem, mem);
+    EXPECT_LT(newMem, mem + oldSize + 64);
+}
+
+
+/// @test Verify that resizing an element after its neighboring block has been freed
+///       expands the current block.
+TEST_F(InternallyManagedTLSFTests, Resize_ToLargerSizeAfterFreeingAdjacent_ReturnsSameAddress)
+{
+    // Create 3 block A, B, C
+    constexpr size_t oldSize = 10_KB, newSize = 15_KB;
+    const auto mem1 = static_cast<uint8_t*>(tlsf.malloc(oldSize));
+    const auto mem2 = static_cast<uint8_t*>(tlsf.malloc(oldSize));
+    static_cast<void>(tlsf.malloc(oldSize));
+    // Free B
+    tlsf.free(mem2);
+
+    // Extend A
+    const auto resizedMem = static_cast<uint8_t*>(tlsf.resize(mem1, oldSize, newSize));
+
+    EXPECT_NE(nullptr, resizedMem);
+    EXPECT_EQ(mem1, resizedMem);
+}
+
+
+/// @test Verify that resizing an element after its neighboring block has been freed
+///       creates a usable free block.
+TEST_F(InternallyManagedTLSFTests, Resize_ToLargerSizeAfterFreeingAdjacent_CreatesAUsableBlock)
+{
+    // Create 3 block A, B, C
+    constexpr size_t oldSize = 10_KB, newSize = 15_KB;
+    const auto mem1 = static_cast<uint8_t*>(tlsf.malloc(oldSize));
+    const auto mem2 = static_cast<uint8_t*>(tlsf.malloc(oldSize));
+    const auto mem3 = static_cast<uint8_t*>(tlsf.malloc(oldSize));
+    // Free B (Middle Block)
+    tlsf.free(mem2);
+
+    // Extend A to some value that leaves some free memory
+    static_cast<void>(tlsf.resize(mem1, oldSize, newSize));
+
+    const auto newMem = static_cast<uint8_t*>(tlsf.malloc(3_KB));
+
+    // The new allocation must be between the old memory boundaries
+    EXPECT_GT(newMem, mem2);
+    EXPECT_LT(newMem, mem3);
+}
+
+
 /**************************************
  *    RESIZE WITH NEW ALIGNMENT       *
  **************************************/
