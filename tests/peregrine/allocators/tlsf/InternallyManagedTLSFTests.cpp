@@ -33,19 +33,6 @@ namespace
      **************************************/
     using namespace pmm::constants;
 
-    /**
-     * @brief Test fixture for managed @ref pmm::TLSF.
-     */
-    class InternallyManagedTLSFTests: public testing::Test
-    {
-    public:
-        static constexpr size_t tlsfSize{ 2_MB };
-        pmm::TLSF<pmm::MemPolicy::Internal> tlsf{ tlsfSize };
-        using Header   = pmm::TLSF<pmm::MemPolicy::Internal>::Header;
-        using Offset_t = pmm::TLSF<pmm::MemPolicy::Internal>::HeaderOffset_t;
-    };
-
-
     struct TLSFMappingInsertParams
     {
         size_t allocationSize, flIndex, slIndex;

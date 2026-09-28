@@ -21,7 +21,11 @@ namespace pmm
         uint8_t* buffer, const size_t memorySize) noexcept
         requires(MemoryPolicy == MemPolicy::External)
         : _buffer{ buffer }, _size{ memorySize }, _usedSize{ 0 }, _flBitmap{ 0 }, _slBitmap{}, _telemetry(memorySize)
-    { insertBlock(_buffer, _size); }
+    {
+        PMM_ASSERT_MSG(buffer != nullptr, "[TLSF]: Cannot create an allocator a nullptr for backing buffer");
+        PMM_ASSERT_MSG(memorySize > 0, "[TLSF]: Cannot create an allocator with zero memory size");
+        insertBlock(_buffer, _size);
+    }
 
 
     template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
@@ -35,7 +39,10 @@ namespace pmm
           _slBitmap{},
           _freeList{},
           _telemetry(allocatorSize)
-    { insertBlock(_buffer, _size); }
+    {
+        PMM_ASSERT_MSG(allocatorSize > 0, "[TLSF]: Cannot create an allocator with zero memory size");
+        insertBlock(_buffer, _size);
+    }
 
     // TODO: Update move ctor to move bitmaps
     // TODO: Update Strategy, and Policy to enum
@@ -111,7 +118,8 @@ namespace pmm
     PMM_INLINE constexpr void* TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::malloc(
         const size_t size, const size_t alignment) noexcept
     {
-        PMM_ASSERT_MSG(std::has_single_bit(alignment), "Alignment must be a power of 2");
+        PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment > 1, "[TLSF]: Alignment must be a power of 2");
+        PMM_ASSERT_MSG(size > 0, "[TLSF]: Cannot allocate a zero sized block");
         // [Header][Padding][OffsetToHeader][Ptr* returned to user]
         // The offset to header acts as a way for bidirectional access to header. From the base address,
         // as well as from the pointer handed over to the user.

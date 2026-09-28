@@ -53,6 +53,7 @@ target_sources(
         pool/DeathTests.cpp
         stack/DeathTests.cpp
         arena/DeathTests.cpp
+        tlsf/DeathTests.cpp
 )
 
 target_include_directories(
