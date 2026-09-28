@@ -507,6 +507,10 @@ TEST_F(InternallyManagedTLSFTests, FreeV_CallsClassDestructorForNonTrivialTypes)
 
 
 
+/**************************************
+ *              RESIZE                *
+ **************************************/
+
 TEST_F(InternallyManagedTLSFTests, Resize_SameSizeReturnsSameAddress)
 {
     constexpr auto oldSize = 1_KB, newSize = 1_KB;
@@ -519,6 +523,7 @@ TEST_F(InternallyManagedTLSFTests, Resize_SameSizeReturnsSameAddress)
     EXPECT_NE(nullptr, resized);
     EXPECT_EQ(mem, resized);
 }
+
 
 /// @test Verify that when resizing to a larger size and the buffer having enough headroom for expansion
 ///       the returned address is the same.
@@ -610,11 +615,31 @@ TEST_F(InternallyManagedTLSFTests, Resize_NonLatestAllocation_LargerSizeReturnsN
     EXPECT_NE(mem, resized);
 }
 
-TEST_F(InternallyManagedTLSFTests, Resize_LargerSizeCopiesContentFromOldMemory)
+
+TEST_F(InternallyManagedTLSFTests, Resize_LatestAllocation_LargerSizeCopiesContentFromOldMemory)
 {
     constexpr auto oldSize = 1_KB, newSize = 5_KB;
     constexpr auto elementCount = oldSize / sizeof(int);
     const auto mem              = static_cast<int*>(tlsf.malloc(oldSize));
+    for (size_t i = 0; i < elementCount; ++i)
+    {
+        mem[i] = static_cast<int>(i + 13);
+    }
+
+    const auto resized = static_cast<int*>(tlsf.resize(mem, oldSize, newSize));
+    for (size_t i = 0; i < elementCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(i + 13), resized[i]);
+    }
+}
+
+
+TEST_F(InternallyManagedTLSFTests, Resize_NonLatestAllocation_LargerSizeCopiesContentFromOldMemory)
+{
+    constexpr auto oldSize = 1_KB, newSize = 5_KB;
+    constexpr auto elementCount = oldSize / sizeof(int);
+    const auto mem              = static_cast<int*>(tlsf.malloc(oldSize));
+    static_cast<void>(tlsf.malloc(oldSize)); // Another allocation that makes the resize non-latest
     for (size_t i = 0; i < elementCount; ++i)
     {
         mem[i] = static_cast<int>(i + 13);
@@ -647,6 +672,141 @@ TEST_F(InternallyManagedTLSFTests, Clear_ClearsTLSFAllowingForNewAllocations)
     const auto newMem = tlsf.malloc(tlsfSize - 32);
 
     EXPECT_NE(nullptr, newMem);
+}
+
+
+/**************************************
+ *    RESIZE WITH NEW ALIGNMENT       *
+ **************************************/
+
+TEST_F(InternallyManagedTLSFTests, Resize_NewAlignment_SameSizeReturnsAlignedAddress)
+{
+    constexpr size_t alignment = 128;
+    constexpr auto oldSize = 1_KB, newSize = 1_KB;
+    const auto mem     = tlsf.malloc(oldSize);
+    const auto resized = tlsf.resize(mem, oldSize, newSize, alignment);
+
+    EXPECT_NE(nullptr, resized);
+    EXPECT_TRUE(reinterpret_cast<uintptr_t>(resized) % alignment == 0);
+}
+
+
+TEST_F(InternallyManagedTLSFTests, Resize_NewAlignment_CopiesDataOver)
+{
+    constexpr size_t alignment = 128;
+    constexpr auto oldSize = 1_KB, newSize = 1_KB;
+    constexpr auto elementCount = oldSize / sizeof(int);
+    const auto mem              = static_cast<int*>(tlsf.malloc(oldSize));
+    for (size_t i = 0; i < elementCount; ++i)
+    {
+        mem[i] = static_cast<int>(i + 13);
+    }
+
+    const auto resized = static_cast<int*>(tlsf.resize(mem, oldSize, newSize, alignment));
+    for (size_t i = 0; i < elementCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(i + 13), resized[i]);
+    }
+}
+
+
+TEST_F(InternallyManagedTLSFTests, Resize_NewAlignment_ToSmallerSizeReturnsAlignedAddress)
+{
+    constexpr size_t alignment = 128;
+    constexpr auto oldSize = 2_KB, newSize = 1_KB;
+    const auto mem     = tlsf.malloc(oldSize);
+    const auto resized = tlsf.resize(mem, oldSize, newSize, alignment);
+
+    EXPECT_NE(nullptr, resized);
+    EXPECT_TRUE(reinterpret_cast<uintptr_t>(resized) % alignment == 0);
+}
+
+
+TEST_F(InternallyManagedTLSFTests, Resize_NewAlignment_ToSmallerSizeCopiesDataUpUntilNewSizeLimit)
+{
+    constexpr size_t alignment = 128;
+    constexpr auto oldSize = 2_KB, newSize = 1_KB;
+    constexpr auto elementCount = oldSize / sizeof(int);
+    const auto mem              = static_cast<int*>(tlsf.malloc(oldSize));
+    for (size_t i = 0; i < elementCount; ++i)
+    {
+        mem[i] = static_cast<int>(i + 13);
+    }
+
+    constexpr auto newElementCount = newSize / sizeof(int);
+    const auto resized             = static_cast<int*>(tlsf.resize(mem, oldSize, newSize, alignment));
+    for (size_t i = 0; i < newElementCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(i + 13), resized[i]);
+    }
+}
+
+
+TEST_F(InternallyManagedTLSFTests, Resize_NewAlignment_LatestAllocation_ToLargerSizeReturnsAlignedAddress)
+{
+    constexpr size_t alignment = 128;
+    constexpr auto oldSize = 1_KB, newSize = 2_KB;
+    const auto mem     = tlsf.malloc(oldSize);
+    const auto resized = tlsf.resize(mem, oldSize, newSize, alignment);
+
+    EXPECT_NE(nullptr, resized);
+    EXPECT_TRUE(reinterpret_cast<uintptr_t>(resized) % alignment == 0);
+}
+
+
+TEST_F(InternallyManagedTLSFTests, Resize_NewAlignment_LatestAllocation_ToLargerSizeCopiesDataOver)
+{
+    constexpr size_t alignment = 128;
+    constexpr auto oldSize = 1_KB, newSize = 2_KB;
+    constexpr auto elementCount = oldSize / sizeof(int);
+    const auto mem              = static_cast<int*>(tlsf.malloc(oldSize));
+    for (size_t i = 0; i < elementCount; ++i)
+    {
+        mem[i] = static_cast<int>(i + 13);
+    }
+
+    const auto resized = static_cast<int*>(tlsf.resize(mem, oldSize, newSize, alignment));
+    for (size_t i = 0; i < elementCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(i + 13), resized[i]);
+    }
+}
+
+
+TEST_F(InternallyManagedTLSFTests, Resize_NewAlignment_NonLatestAllocation_ToLargerSizeReturnsAlignedAddress)
+{
+    constexpr size_t alignment = 128;
+    constexpr auto oldSize = 1_KB, newSize = 2_KB;
+    const auto mem = tlsf.malloc(oldSize);
+
+    static_cast<void>(tlsf.malloc(512));
+
+    const auto resized = tlsf.resize(mem, oldSize, newSize, alignment);
+
+    EXPECT_NE(nullptr, resized);
+    EXPECT_TRUE(reinterpret_cast<uintptr_t>(resized) % alignment == 0);
+}
+
+
+TEST_F(InternallyManagedTLSFTests, Resize_NewAlignment_NonLatestAllocation_ToLargerSizeCopiesDataOver)
+{
+    constexpr size_t alignment = 128;
+    constexpr auto oldSize = 1_KB, newSize = 2_KB;
+    constexpr auto elementCount = oldSize / sizeof(int);
+    const auto mem              = static_cast<int*>(tlsf.malloc(oldSize));
+
+    static_cast<void>(tlsf.malloc(512));
+
+    for (size_t i = 0; i < elementCount; ++i)
+    {
+        mem[i] = static_cast<int>(i + 13);
+    }
+
+    const auto resized = static_cast<int*>(tlsf.resize(mem, oldSize, newSize, alignment));
+    for (size_t i = 0; i < elementCount; ++i)
+    {
+        EXPECT_EQ(static_cast<int>(i + 13), resized[i]);
+    }
 }
 
 

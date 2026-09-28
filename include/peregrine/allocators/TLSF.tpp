@@ -404,7 +404,7 @@ namespace pmm
 
         // [Block][Another Used Block]...[Free Memory]
         const auto newMemory = malloc(newSize, alignment);
-        std::memcpy(newMemory, block, oldSize);
+        std::memcpy(newMemory, block, std::min(oldSize, newSize));
         mfree(block);
         return newMemory;
     }
