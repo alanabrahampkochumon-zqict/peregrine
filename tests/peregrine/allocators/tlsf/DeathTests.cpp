@@ -97,7 +97,7 @@ TEST_F(InternallyManagedTLSFTests, Resize_FromZeroSizeTriggersAssertionInDebugMo
 TEST_F(InternallyManagedTLSFTests, Resize_GreaterThanTLSFSizeTriggersAssertionInDebugMode)
 {
     const auto mem1 = tlsf.malloc(1500_KB);
-    EXPECT_DEBUG_DEATH(static_cast<void>(tlsf.resize(mem1, 1500_KB, 2000_KB)), "");
+    EXPECT_DEBUG_DEATH(static_cast<void>(tlsf.resize(mem1, 1500_KB, 2048_KB)), "");
 }
 
 
@@ -213,7 +213,7 @@ TEST_F(ExternallyManagedTLSFTests, Resize_FromZeroSizeTriggersAssertionInDebugMo
 TEST_F(ExternallyManagedTLSFTests, Resize_GreaterThanTLSFSizeTriggersAssertionInDebugMode)
 {
     const auto mem1 = tlsf.malloc(1500_KB);
-    EXPECT_DEBUG_DEATH(static_cast<void>(tlsf.resize(mem1, 1500_KB, 2000_KB)), "");
+    EXPECT_DEBUG_DEATH(static_cast<void>(tlsf.resize(mem1, 1500_KB, 2048_KB)), "");
 }
 
 
