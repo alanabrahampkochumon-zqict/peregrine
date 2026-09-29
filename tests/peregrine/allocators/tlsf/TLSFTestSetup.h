@@ -40,11 +40,11 @@ class ExternallyManagedTLSFTests: public testing::Test
 {
 public:
     static constexpr size_t tlsfSize{ 2_MB };
-    uint8_t* buffer = new uint8_t[tlsfSize];
+    uint8_t* buffer = new uint8_t[tlsfSize]();
     pmm::TLSF<pmm::MemPolicy::External> tlsf{ buffer, tlsfSize };
     using Header   = pmm::TLSF<pmm::MemPolicy::External>::Header;
     using Offset_t = pmm::TLSF<pmm::MemPolicy::External>::HeaderOffset_t;
 
 protected:
-    void TearDown() override { delete[] buffer; }
+    ~ExternallyManagedTLSFTests() override { delete[] buffer; }
 };

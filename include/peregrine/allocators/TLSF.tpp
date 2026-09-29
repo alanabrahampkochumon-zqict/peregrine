@@ -24,7 +24,7 @@ namespace pmm
     {
         PMM_ASSERT_MSG(buffer != nullptr, "[TLSF]: Cannot create an allocator a nullptr for backing buffer");
         PMM_ASSERT_MSG(memorySize > 0, "[TLSF]: Cannot create an allocator with zero memory size");
-        insertBlock(_buffer, _size);
+        clear();
     }
 
 
@@ -41,7 +41,7 @@ namespace pmm
           _telemetry(allocatorSize)
     {
         PMM_ASSERT_MSG(allocatorSize > 0, "[TLSF]: Cannot create an allocator with zero memory size");
-        insertBlock(_buffer, _size);
+        clear();
     }
 
     // TODO: Update move ctor to move bitmaps
@@ -572,7 +572,6 @@ namespace pmm
         Header* header = getHeader(freeNode);
         header->setSize(blockSize);
         header->markFree();
-
         if constexpr (TelemetryPolicy == TelPolicy::Enabled)
         {
             _telemetry.incFreeBlockCount();
