@@ -120,6 +120,13 @@ namespace pmm
     {
         PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment > 1, "[TLSF]: Alignment must be a power of 2");
         PMM_ASSERT_MSG(size > 0, "[TLSF]: Cannot allocate a zero sized block");
+        if constexpr (SafeMode == SafeModePolicy::Safe)
+        {
+            if (!std::has_single_bit(alignment) || alignment < 2 || size < 1)
+            {
+                return nullptr;
+            }
+        }
         // [Header][Padding][OffsetToHeader][Ptr* returned to user]
         // The offset to header acts as a way for bidirectional access to header. From the base address,
         // as well as from the pointer handed over to the user.
@@ -131,6 +138,14 @@ namespace pmm
         // For allocating memory we need to find the FL and SL indices.
         auto index     = mappingSearch(requiredSize);
         auto freeBlock = searchSuitableBlock(index);
+
+        if constexpr (SafeMode == SafeModePolicy::Safe)
+        {
+            if (freeBlock == nullptr)
+            {
+                return nullptr;
+            }
+        }
 
         // searchSuitable block doesn't return a nullptr by default on in safe mode
         // so we can skip the nullptr check and assume a valid block is returned. TODO(SAFEMODE)
@@ -260,6 +275,14 @@ namespace pmm
     PMM_INLINE constexpr void TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::mfree(
         void* block) noexcept
     {
+        PMM_ASSERT_MSG(block != nullptr, "Cannot free a nullptr");
+        if constexpr (SafeMode == SafeModePolicy::Safe)
+        {
+            if (block == nullptr)
+            {
+                return;
+            }
+        }
         // prev_offset := sizeof(block) - padding(block) - sizeof(size_t)
         // [[Header][...][size_t]] + [[Header][padding][HeaderOffset][block....]] =COALESCED=> [[Header][....]]
         // ^             ^            ^                              ^
@@ -320,12 +343,19 @@ namespace pmm
     PMM_INLINE constexpr void* TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::resize(
         void* block, const size_t oldSize, const size_t newSize, const size_t alignment) noexcept
     {
-        // TODO: Add death tests
         PMM_ASSERT_MSG(block != nullptr && oldSize > 0,
                        "[TLSF]: Cannot resize a nullptr or a zero sized block. Use `malloc` for creating a new block");
         PMM_ASSERT_MSG(newSize > 0, "[TLSF]: Cannot resize to 0 bytes. Use `mfree` for freeing memory.");
         PMM_ASSERT_MSG(std::has_single_bit(alignment) && alignment > 1,
                        "[TLSF]: Cannot resize to a non-power of 2 alignment");
+
+        if constexpr (SafeMode == SafeModePolicy::Safe)
+        {
+            if (block == nullptr || oldSize == 0 || newSize == 0 || !std::has_single_bit(alignment) || alignment < 2)
+            {
+                return nullptr;
+            }
+        }
 
         // ARCH NOTE: While we can move memory if resize requires alignment, owing to code cleanliness and
         //            and memmove taking O(n) like memcpy, we have decided to fallback to new allocation
@@ -412,6 +442,13 @@ namespace pmm
 
         // [Block][Another Used Block]...[Free Memory]
         const auto newMemory = malloc(newSize, alignment);
+        if constexpr (SafeMode == SafeModePolicy::Safe)
+        {
+            if (newMemory == nullptr)
+            {
+                return nullptr;
+            }
+        }
         std::memcpy(newMemory, block, std::min(oldSize, newSize));
         mfree(block);
         return newMemory;
@@ -520,6 +557,13 @@ namespace pmm
         {
             bitmapTemp = _flBitmap & (~0ULL << (index.flIndex + 1));
             PMM_ASSERT_MSG(bitmapTemp > 0, "Out of memory: No suitable FL bucket.");
+            if constexpr (SafeMode == SafeModePolicy::Safe)
+            {
+                if (bitmapTemp == 0)
+                {
+                    return nullptr;
+                }
+            }
             nonEmptyFL = utils::ffs(bitmapTemp);
             nonEmptySL = utils::ffs(_slBitmap[nonEmptyFL]);
         }
@@ -531,6 +575,14 @@ namespace pmm
                 "FL and/or SL indices out-of-range.\nProvided\n\tFL: {} and SL: {}.\nDeduced\n\tFL: {} and SL: {}.\n",
                 index.flIndex, index.slIndex, nonEmptyFL, nonEmptySL)
                 .c_str());
+
+        if constexpr (SafeMode == SafeModePolicy::Safe)
+        {
+            if (nonEmptyFL >= FL_SIZE && nonEmptySL >= SL_SIZE)
+            {
+                return nullptr;
+            }
+        }
 
         index.flIndex = nonEmptyFL;
         index.slIndex = nonEmptySL;

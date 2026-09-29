@@ -10,6 +10,7 @@
 
 
 #include "Mocks.h"
+#include "TLSFTestSetup.h"
 #include "Utils.h"
 
 #include <array>
@@ -221,19 +222,19 @@ TEST_F(InternallyManagedTLSFTests, Malloc_SubsequentAllocationDoNotCorruptMemory
     constexpr auto bufferLength = 8;
     // Given two contiguous block of memory allocated back to back
     const auto firstAlloc = static_cast<int*>(tlsf.malloc(bufferLength * sizeof(int)));
-    for (std::size_t i = 0; i < bufferLength; ++i)
+    for (size_t i = 0; i < bufferLength; ++i)
     {
         firstAlloc[i] = static_cast<int>(i + 5);
     }
 
     const auto secondAlloc = static_cast<int*>(tlsf.malloc(bufferLength * sizeof(int)));
-    for (std::size_t i = 0; i < bufferLength; ++i)
+    for (size_t i = 0; i < bufferLength; ++i)
     {
         secondAlloc[i] = static_cast<int>(i + 7);
     }
 
     // When read back there is no corruption
-    for (std::size_t i = 0; i < bufferLength; ++i)
+    for (size_t i = 0; i < bufferLength; ++i)
     {
         EXPECT_EQ(static_cast<int>(i + 5), firstAlloc[i]);
         EXPECT_EQ(static_cast<int>(i + 7), secondAlloc[i]);
@@ -463,13 +464,13 @@ TEST_F(InternallyManagedTLSFTests, FreeV_FreesMemoryForSubsequentAllocations)
     const auto intV = tlsf.allocV<int>(tlsfSize / sizeof(int) - leeway);
 
     // Allocate Memory
-    for (std::size_t i = 0; i < intV.size(); ++i)
+    for (size_t i = 0; i < intV.size(); ++i)
     {
         intV[i] = static_cast<int>(i + 316);
     }
 
     // Verify the allocation is successful with data writes
-    for (std::size_t i = 0; i < intV.size(); ++i)
+    for (size_t i = 0; i < intV.size(); ++i)
     {
         EXPECT_EQ(static_cast<int>(i + 316), intV[i]);
     }
@@ -911,20 +912,20 @@ TEST_F(InternallyManagedTLSFTests, AllocV_SubsequentAllocationDoNotCorruptMemory
     auto edges    = tlsf.allocV<Vec4>(blockCount);
 
     // Write into the first allocated span
-    for (std::size_t i = 0; i < blockCount; ++i)
+    for (size_t i = 0; i < blockCount; ++i)
     {
         vertices[i] = Vec4{ vertexData[i * 4], vertexData[i * 4 + 1], vertexData[i * 4 + 2], vertexData[i * 4 + 3] };
     }
 
     // Write into the second allocated span
-    for (std::size_t i = 0; i < blockCount; ++i)
+    for (size_t i = 0; i < blockCount; ++i)
     {
         edges[i] = Vec4{ edgeData[i * 4], edgeData[i * 4 + 1], edgeData[i * 4 + 2], edgeData[i * 4 + 3] };
     }
 
 
     // Verify data integrity is maintained for both
-    for (std::size_t i = 0; i < blockCount; ++i)
+    for (size_t i = 0; i < blockCount; ++i)
     {
         constexpr auto epsilon = 1e-5;
         const auto vert        = vertices[i];

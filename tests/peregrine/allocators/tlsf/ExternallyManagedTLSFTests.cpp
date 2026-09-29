@@ -232,19 +232,19 @@ TEST_F(ExternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     constexpr auto bufferLength = 8;
 //     // Given two contiguous block of memory allocated back to back
 //     const auto firstAlloc = static_cast<int*>(tlsf.allocBytes(bufferLength * sizeof(int)));
-//     for (std::size_t i = 0; i < bufferLength; ++i)
+//     for (size_t i = 0; i < bufferLength; ++i)
 //     {
 //         firstAlloc[i] = static_cast<int>(i + 5);
 //     }
 //
 //     const auto secondAlloc = static_cast<int*>(tlsf.allocBytes(bufferLength * sizeof(int)));
-//     for (std::size_t i = 0; i < bufferLength; ++i)
+//     for (size_t i = 0; i < bufferLength; ++i)
 //     {
 //         secondAlloc[i] = static_cast<int>(i + 7);
 //     }
 //
 //     // When read back there is no corruption
-//     for (std::size_t i = 0; i < bufferLength; ++i)
+//     for (size_t i = 0; i < bufferLength; ++i)
 //     {
 //         EXPECT_EQ(static_cast<int>(i + 5), firstAlloc[i]);
 //         EXPECT_EQ(static_cast<int>(i + 7), secondAlloc[i]);
@@ -253,16 +253,16 @@ TEST_F(ExternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //
 // TEST_F(UnmanagedTLSFTests, AllocBytes_UpdatesTelemetry)
 // {
-//     constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
+//     constexpr size_t byte1 = 20, byte2 = 56, byte3 = 128;
 //
 //     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
 //     static_cast<void>(tlsf.allocBytes(byte1));
 //     static_cast<void>(tlsf.allocBytes(byte2));
 //     static_cast<void>(tlsf.allocBytes(byte3));
 //
-//     constexpr std::size_t expectedMinUsage  = byte1;
-//     constexpr std::size_t expectedPeakUsage = byte3;
-//     constexpr std::size_t expectedUsage     = byte1 + byte2 + byte3;
+//     constexpr size_t expectedMinUsage  = byte1;
+//     constexpr size_t expectedPeakUsage = byte3;
+//     constexpr size_t expectedUsage     = byte1 + byte2 + byte3;
 //
 //     EXPECT_EQ(expectedMinUsage, tlsf.getTelemetry().getMinUsage());
 //     EXPECT_EQ(expectedPeakUsage, tlsf.getTelemetry().getPeakUsage());
@@ -306,9 +306,9 @@ TEST_F(ExternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     static_cast<void>(tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f));
 //     static_cast<void>(tlsf.alloc<int>(1));
 //
-//     constexpr std::size_t expectedMinUsage  = sizeof(int);
-//     constexpr std::size_t expectedPeakUsage = sizeof(Vec4);
-//     constexpr std::size_t expectedUsage     = sizeof(Vec4) * 3 + sizeof(int);
+//     constexpr size_t expectedMinUsage  = sizeof(int);
+//     constexpr size_t expectedPeakUsage = sizeof(Vec4);
+//     constexpr size_t expectedUsage     = sizeof(Vec4) * 3 + sizeof(int);
 //
 //     EXPECT_EQ(expectedMinUsage, tlsf.getTelemetry().getMinUsage());
 //     EXPECT_EQ(expectedPeakUsage, tlsf.getTelemetry().getPeakUsage());
@@ -347,21 +347,21 @@ TEST_F(ExternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     auto edges    = tlsf.allocV<Vec4>(blockCount);
 //
 //     // Write into the first allocated span
-//     for (std::size_t i = 0; i < blockCount; ++i)
+//     for (size_t i = 0; i < blockCount; ++i)
 //     {
 //         vertices[i] = Vec4{ vertexData[i * 4], vertexData[(i * 4) + 1], vertexData[i * 4 + 2], vertexData[i * 4 + 3]
 //         };
 //     }
 //
 //     // Write into the second allocated span
-//     for (std::size_t i = 0; i < blockCount; ++i)
+//     for (size_t i = 0; i < blockCount; ++i)
 //     {
 //         edges[i] = Vec4{ edgeData[i * 4], edgeData[(i * 4) + 1], edgeData[i * 4 + 2], edgeData[i * 4 + 3] };
 //     }
 //
 //
 //     // Verify data integrity is maintained for both
-//     for (std::size_t i = 0; i < blockCount; ++i)
+//     for (size_t i = 0; i < blockCount; ++i)
 //     {
 //         constexpr auto epsilon = 1e-5;
 //         const auto vert        = vertices[i];
@@ -381,16 +381,16 @@ TEST_F(ExternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //
 // TEST_F(UnmanagedTLSFTests, AllocV_UpdatesTelemetry)
 // {
-//     constexpr std::size_t count1 = 2, count2 = 4, count3 = 6;
+//     constexpr size_t count1 = 2, count2 = 4, count3 = 6;
 //
 //     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
 //     static_cast<void>(tlsf.allocV<Vec4>(count1));
 //     static_cast<void>(tlsf.allocV<Vec4>(count2));
 //     static_cast<void>(tlsf.allocV<Vec4>(count3));
 //
-//     constexpr std::size_t expectedMinUsage  = count1 * sizeof(Vec4);
-//     constexpr std::size_t expectedPeakUsage = count3 * sizeof(Vec4);
-//     constexpr std::size_t expectedUsage     = (count1 + count2 + count3) * sizeof(Vec4);
+//     constexpr size_t expectedMinUsage  = count1 * sizeof(Vec4);
+//     constexpr size_t expectedPeakUsage = count3 * sizeof(Vec4);
+//     constexpr size_t expectedUsage     = (count1 + count2 + count3) * sizeof(Vec4);
 //
 //     EXPECT_EQ(expectedMinUsage, tlsf.getTelemetry().getMinUsage());
 //     EXPECT_EQ(expectedPeakUsage, tlsf.getTelemetry().getPeakUsage());
@@ -429,7 +429,7 @@ TEST_F(ExternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     constexpr auto firstArraySize = newByteSize / sizeof(int);
 //
 //     // Write some data
-//     for (std::size_t i = 0; i < firstArraySize; ++i)
+//     for (size_t i = 0; i < firstArraySize; ++i)
 //     {
 //         data[i] = static_cast<int>(i + 100);
 //     }
@@ -438,7 +438,7 @@ TEST_F(ExternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     [[maybe_unused]] auto vec = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 //
 //     // Verify data is not overwritten
-//     for (std::size_t i = 0; i < firstArraySize; ++i)
+//     for (size_t i = 0; i < firstArraySize; ++i)
 //     {
 //         EXPECT_EQ(i + 100, data[i]);
 //     }
@@ -472,7 +472,7 @@ TEST_F(ExternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     constexpr auto arraySize  = byteSize / sizeof(int);
 //
 //     // Write some data to the allocated memory
-//     for (std::size_t i = 0; i < arraySize; ++i)
+//     for (size_t i = 0; i < arraySize; ++i)
 //     {
 //         firstByteChunk[i] = static_cast<int>(i + 100);
 //     }
@@ -484,7 +484,7 @@ TEST_F(ExternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     const auto data = static_cast<int*>(tlsf.resize(firstByteChunk, byteSize, newByteSize, alignof(int)));
 //
 //     // Verify data is copied
-//     for (std::size_t i = 0; i < arraySize; ++i)
+//     for (size_t i = 0; i < arraySize; ++i)
 //     {
 //         EXPECT_EQ(i + 100, data[i]);
 //     }
@@ -589,7 +589,7 @@ TEST_F(ExternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //
 //     EXPECT_NE(reinterpret_cast<uintptr_t>(firstByteChunk), reinterpret_cast<uintptr_t>(data));
 //     // Verify data is not overwritten
-//     for (std::size_t i = 0; i < dataCount; ++i)
+//     for (size_t i = 0; i < dataCount; ++i)
 //     {
 //         EXPECT_EQ(i + 11, data[i]);
 //     }
@@ -610,7 +610,7 @@ TEST_F(ExternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     constexpr auto firstArraySize = newByteSize / sizeof(int);
 //
 //     // Write some data
-//     for (std::size_t i = 0; i < firstArraySize; ++i)
+//     for (size_t i = 0; i < firstArraySize; ++i)
 //     {
 //         data[i] = static_cast<int>(i + 100);
 //     }
@@ -619,7 +619,7 @@ TEST_F(ExternallyManagedTLSFTests, MoveCtor_CopiesAttributesToNewObject)
 //     [[maybe_unused]] auto vec = tlsf.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 //
 //     // Verify data is not overwritten
-//     for (std::size_t i = 0; i < firstArraySize; ++i)
+//     for (size_t i = 0; i < firstArraySize; ++i)
 //     {
 //         EXPECT_EQ(i + 100, data[i]);
 //     }
@@ -969,15 +969,15 @@ namespace pmm
     //
     // TEST_F(UnmanagedTLSFTests, Clear_OnlyResetsCurrentTelemetryUsage)
     // {
-    //     constexpr std::size_t byte1 = 20, byte2 = 56, byte3 = 128;
+    //     constexpr size_t byte1 = 20, byte2 = 56, byte3 = 128;
     //
     //     // Allocate a 2 byte alignment forcing a misalignment to 2 bytes
     //     static_cast<void>(tlsf.allocBytes(byte1));
     //     static_cast<void>(tlsf.allocBytes(byte2));
     //     static_cast<void>(tlsf.allocBytes(byte3));
     //
-    //     constexpr std::size_t expectedMinUsage  = byte1;
-    //     constexpr std::size_t expectedPeakUsage = byte3;
+    //     constexpr size_t expectedMinUsage  = byte1;
+    //     constexpr size_t expectedPeakUsage = byte3;
     //
     //     tlsf.clear();
     //
