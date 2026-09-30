@@ -42,11 +42,11 @@ namespace pmm
          * @note This function must be called only once per allocation for logging accuracy.
          *
          * @param[in] reqSize  The size requested by the user.
-         * @param[in] overhead The size used for metadata (padding, offsets, and header size).
+         * @param[in] metadataSize The size used for metadata (padding, offsets, and header size).
          *
          * @relatedalso decUsage()
          */
-        constexpr void incUsage(size_t reqSize, size_t overhead) noexcept;
+        constexpr void incUsage(size_t reqSize, size_t metadataSize) noexcept;
 
         /**
          *
@@ -57,11 +57,11 @@ namespace pmm
          * @note This function must be called only once per allocation for logging accuracy.
          *
          * @param[in] reqSize  The size of the allocation that was accessible by the user.
-         * @param[in] overhead The size used for metadata (padding, offsets, and header size).
+         * @param[in] metadataSize The size used for metadata (padding, offsets, and header size).
          *
          * @relatedalso incUsage()
          */
-        constexpr void decUsage(size_t reqSize, size_t overhead) noexcept;
+        constexpr void decUsage(size_t reqSize, size_t metadataSize) noexcept;
 
         /// @brief Decrease the memory usage from allocation(buffer + payload) by @p size.
         /// @note This will update update the minimum usages.

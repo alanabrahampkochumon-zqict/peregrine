@@ -38,30 +38,30 @@ namespace pmm
     {}
 
 
-    PMM_INLINE constexpr void TLSFTelemetry::incUsage(const size_t reqSize, const size_t overhead) noexcept
+    PMM_INLINE constexpr void TLSFTelemetry::incUsage(const size_t reqSize, const size_t metadataSize) noexcept
     {
         _currentPayloadUsage += reqSize;
         _peakPayloadUsage = std::max(_peakPayloadUsage, reqSize);
 
-        _currentMetadataUsage += overhead;
-        _peakMetadataUsage = std::max(_peakMetadataUsage, overhead);
+        _currentMetadataUsage += metadataSize;
+        _peakMetadataUsage = std::max(_peakMetadataUsage, metadataSize);
 
-        const auto bufferSize = reqSize + overhead;
+        const auto bufferSize = reqSize + metadataSize;
         _currentBufferUsage += bufferSize;
         _peakBufferUsage = std::max(_peakBufferUsage, bufferSize);
-        updateMinUsage(reqSize, overhead);
+        updateMinUsage(reqSize, metadataSize);
 
         ++_activeAllocationCount;
         ++_lifetimeAllocationCount;
     }
 
-    PMM_INLINE constexpr void TLSFTelemetry::decUsage(const size_t reqSize, const size_t overhead) noexcept
+    PMM_INLINE constexpr void TLSFTelemetry::decUsage(const size_t reqSize, const size_t metadataSize) noexcept
     {
         PMM_ASSERT_MSG(_currentPayloadUsage >= reqSize,
                        std::format("Payload size out-of-bounds.\nCurrent Request Size: {}\nAllocator Payload usage{}",
                                    reqSize, _currentPayloadUsage)
                            .c_str());
-        PMM_ASSERT_MSG(_currentMetadataUsage >= overhead,
+        PMM_ASSERT_MSG(_currentMetadataUsage >= metadataSize,
                        std::format("Metadata size out-of-bounds.\nCurrent Request Size: {}\nAllocator Metadata usage{}",
                                    reqSize, _currentPayloadUsage)
                            .c_str());
@@ -69,8 +69,8 @@ namespace pmm
 
 
         _currentPayloadUsage -= reqSize;
-        _currentMetadataUsage -= overhead;
-        _currentBufferUsage -= reqSize + overhead;
+        _currentMetadataUsage -= metadataSize;
+        _currentBufferUsage -= reqSize + metadataSize;
 
         ++_lifetimeFreeCount;
         --_activeAllocationCount;
