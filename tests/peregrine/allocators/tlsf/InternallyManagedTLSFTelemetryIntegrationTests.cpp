@@ -314,16 +314,21 @@ TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MultipleAlloc_UpdatesTele
 {
     constexpr size_t allocCount = 1000;
     std::vector<Vec4*> allocations;
+
     for (size_t i{ 0 }; i < allocCount; ++i)
     {
         const auto floatI = static_cast<float>(i);
         allocations.push_back(tlsf.alloc<Vec4>(floatI, floatI + 1.0f, floatI + 2.0f, floatI + 3.0f));
     }
 
+    constexpr size_t minPayloadUsage  = sizeof(Vec4);
+    constexpr size_t peakPayloadUsage = sizeof(Vec4);
+    constexpr size_t curPayloadUsage  = allocCount * sizeof(Vec4);
+
     constexpr size_t max    = std::numeric_limits<size_t>::max();
-    size_t minMetadataUsage = max, minBufferUsage = max, minPayloadUsage = sizeof(Vec4);
-    size_t peakMetadataUsage = 0, peakBufferUsage = 0, peakPayloadUsage = sizeof(Vec4);
-    size_t curMetadataUsage = 0, curBufferUsage = 0, curPayloadUsage = allocCount * sizeof(Vec4);
+    size_t minMetadataUsage = max, minBufferUsage = max;
+    size_t peakMetadataUsage = 0, peakBufferUsage = 0;
+    size_t curMetadataUsage = 0, curBufferUsage = 0;
 
     for (const auto allocation : allocations)
     {
@@ -370,10 +375,14 @@ TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, MultipleAllocV_UpdatesTel
         allocations.push_back(tlsf.allocV<Vec4>(arrSize));
     }
 
+    constexpr size_t minPayloadUsage  = arrSize * sizeof(Vec4);
+    constexpr size_t peakPayloadUsage = arrSize * sizeof(Vec4);
+    constexpr size_t curPayloadUsage  = arrSize * allocCount * sizeof(Vec4);
+
     constexpr size_t max    = std::numeric_limits<size_t>::max();
-    size_t minMetadataUsage = max, minBufferUsage = max, minPayloadUsage = arrSize * sizeof(Vec4);
-    size_t peakMetadataUsage = 0, peakBufferUsage = 0, peakPayloadUsage = arrSize * sizeof(Vec4);
-    size_t curMetadataUsage = 0, curBufferUsage = 0, curPayloadUsage = arrSize * allocCount * sizeof(Vec4);
+    size_t minMetadataUsage = max, minBufferUsage = max;
+    size_t peakMetadataUsage = 0, peakBufferUsage = 0;
+    size_t curMetadataUsage = 0, curBufferUsage = 0;
 
     for (const auto allocation : allocations)
     {
@@ -1168,7 +1177,7 @@ TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
     const auto initialActiveAllocations   = tel.getActiveAllocations();
     const auto initialLifetimeAllocations = tel.getLifetimeAllocations();
 
-    static_cast<void>(tlsf.resize(mem, size, size - (tlsf.SPLIT_SIZE_THRESHOLD)));
+    static_cast<void>(tlsf.resize(mem, size, size - tlsf.SPLIT_SIZE_THRESHOLD));
 
     EXPECT_EQ(initialActiveAllocations, tel.getActiveAllocations());
     EXPECT_EQ(initialLifetimeAllocations, tel.getLifetimeAllocations());
@@ -1186,7 +1195,7 @@ TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
     const auto initialMetadataUsage = tel.getCurrentMetadataUsage();
     const auto initialPayloadUsage  = tel.getCurrentPayloadUsage();
 
-    static_cast<void>(tlsf.resize(mem, size, size - (tlsf.SPLIT_SIZE_THRESHOLD)));
+    static_cast<void>(tlsf.resize(mem, size, size - tlsf.SPLIT_SIZE_THRESHOLD));
     // The metadata usage should stay the same since we are only cleaving the left over buffer
     EXPECT_EQ(initialBufferUsage - tlsf.SPLIT_SIZE_THRESHOLD, tel.getCurrentBufferUsage());
     EXPECT_EQ(initialMetadataUsage, tel.getCurrentMetadataUsage());
@@ -1205,7 +1214,7 @@ TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
     const auto initialMinMetadataUsage = tel.getMinMetadataUsage();
     const auto initialMinPayloadUsage  = tel.getMinPayloadUsage();
 
-    static_cast<void>(tlsf.resize(mem, size, size - (tlsf.SPLIT_SIZE_THRESHOLD)));
+    static_cast<void>(tlsf.resize(mem, size, size - tlsf.SPLIT_SIZE_THRESHOLD));
 
     // Min usage will be updated but only for buffer and payload usage
     EXPECT_EQ(initialMinBufferUsage - tlsf.SPLIT_SIZE_THRESHOLD, tel.getMinBufferUsage());
@@ -1225,7 +1234,7 @@ TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
     const auto initialPeakMetadataUsage = tel.getPeakMetadataUsage();
     const auto initialPeakPayloadUsage  = tel.getPeakPayloadUsage();
 
-    static_cast<void>(tlsf.resize(mem, size, size - (tlsf.SPLIT_SIZE_THRESHOLD)));
+    static_cast<void>(tlsf.resize(mem, size, size - tlsf.SPLIT_SIZE_THRESHOLD));
 
     EXPECT_EQ(initialPeakBufferUsage, tel.getPeakBufferUsage());
     EXPECT_EQ(initialPeakMetadataUsage, tel.getPeakMetadataUsage());
@@ -1351,111 +1360,120 @@ TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
 // TODO: When resizing to a smaller size that split threshold try to coalesce forward
 //       Backward coalesce is not possible since that block is being used and handed back to the user
 
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
+       ResizeToLargerSize_LatestAllocation_DoesNotUpdateLifetimeAllocationCount)
+{
+    constexpr auto size                   = 512;
+    const auto mem                        = tlsf.malloc(size);
+    const auto& tel                       = tlsf.getTelemetry();
+    const auto initialLifetimeAllocations = tel.getLifetimeAllocations();
 
-// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, ResizeToLargerSize_UpdatesLifetimeAllocationCount)
-// {
-//     constexpr auto size                   = 512;
-//     const auto mem                        = tlsf.malloc(size);
-//     const auto& tel                       = tlsf.getTelemetry();
-//     const auto initialLifetimeAllocations = tel.getLifetimeAllocations();
-//
-//     static_cast<void>(tlsf.resize(mem, size, 768));
-//     // NOTE: There will only be one active allocation but 2 lifetime allocations
-//     //       since for larger allocations we are freeing and then allocating a new block
-//     EXPECT_EQ(initialLifetimeAllocations + 1, tel.getLifetimeAllocations());
-// }
-//
-// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, ResizeToLargerSize_DoesNotUpdateActiveAllocationCount)
-// {
-//     constexpr auto size                 = 512;
-//     const auto mem                      = tlsf.malloc(size);
-//     const auto& tel                     = tlsf.getTelemetry();
-//     const auto initialActiveAllocations = tel.getActiveAllocations();
-//
-//     static_cast<void>(tlsf.resize(mem, size, 768));
-//     // NOTE: There will only be one active allocation but 2 lifetime allocations
-//     //       since for larger allocations we are freeing and then allocating a new block
-//     EXPECT_EQ(initialActiveAllocations, tel.getActiveAllocations());
-// }
-//
-//
-// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, ResizeToLargerSize_UpdatesCurrentMemoryUsages)
-// {
-//     constexpr auto size    = 512;
-//     constexpr auto newSize = 768;
-//     auto mem               = static_cast<uint8_t*>(tlsf.malloc(size));
-//     const auto& tel        = tlsf.getTelemetry();
-//
-//     mem               = static_cast<uint8_t*>(tlsf.resize(mem, size, newSize));
-//     const auto offset = reinterpret_cast<Offset_t*>(mem - sizeof(Offset_t));
-//
-//     EXPECT_EQ(newSize + *offset, tel.getCurrentBufferUsage());
-//     EXPECT_EQ(*offset, tel.getCurrentMetadataUsage());
-//     EXPECT_EQ(newSize, tel.getCurrentPayloadUsage());
-// }
-//
-//
-// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, ResizeToLargerSize_DoesNotUpdateMinMemoryUsageStats)
-// {
-//     constexpr auto size    = 512;
-//     constexpr auto newSize = 768;
-//     auto mem               = static_cast<uint8_t*>(tlsf.malloc(size));
-//     const auto& tel        = tlsf.getTelemetry();
-//
-//     const auto initialMinBufferUsage   = tel.getMinBufferUsage();
-//     const auto initialMinMetadataUsage = tel.getMinMetadataUsage();
-//     const auto initialMinPayloadUsage  = tel.getMinPayloadUsage();
-//
-//     mem               = static_cast<uint8_t*>(tlsf.resize(mem, size, newSize));
-//     const auto offset = reinterpret_cast<Offset_t*>(mem - sizeof(Offset_t));
-//
-//     const auto minMetadataUsage = std::min(static_cast<size_t>(*offset), initialMinMetadataUsageStats);
-//
-//     // NOTE: Min metadata usage must not update in a ideal situation, i.e,
-//     //       the padding requirement for both the allocations are the same.
-//     // And since we are increasing by a larger amount compared to any sizeable difference in padding
-//     // which can waver only by a maximum of 7(8 being default alignment), we can safely assume min buffer
-//     // size is unchanged.
-//     EXPECT_EQ(initialMinBufferUsage, tel.getMinBufferUsage());
-//     EXPECT_EQ(minMetadataUsage, tel.getMinMetadataUsage());
-//     EXPECT_EQ(initialMinPayloadUsage, tel.getMinPayloadUsage());
-// }
-//
-//
-// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, ResizeToLargerSize_UpdatesPeakMemoryUsageStats)
-// {
-//     constexpr auto size    = 512;
-//     constexpr auto newSize = 768;
-//     auto mem               = static_cast<uint8_t*>(tlsf.malloc(size));
-//     const auto& tel        = tlsf.getTelemetry();
-//
-//     const auto initialPeakMetadataUsage = tel.getPeakMetadataUsage();
-//
-//     mem               = static_cast<uint8_t*>(tlsf.resize(mem, size, newSize));
-//     const auto offset = reinterpret_cast<Offset_t*>(mem - sizeof(Offset_t));
-//
-//     const auto peakMetadataUsage = std::max(static_cast<size_t>(*offset), initialPeakMetadataUsageStats);
-//
-//     EXPECT_EQ(newSize + *offset, tel.getPeakBufferUsage());
-//     EXPECT_EQ(peakMetadataUsage, tel.getPeakMetadataUsage());
-//     EXPECT_EQ(newSize, tel.getPeakPayloadUsage());
-// }
+    static_cast<void>(tlsf.resize(mem, size, 768));
+    EXPECT_EQ(initialLifetimeAllocations, tel.getLifetimeAllocations());
+}
 
-// TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, ResizeToLargerSize_UpdatesFreeBlockInformation)
-// {
-//     constexpr auto size    = 512_KB;
-//     constexpr auto newSize = 1200_KB;
-//     auto mem               = static_cast<uint8_t*>(tlsf.malloc(size));
-//     const auto& tel = tlsf.getTelemetry();
-//
-//     mem               = static_cast<uint8_t*>(tlsf.resize(mem, size, newSize));
-//     const auto offset = *reinterpret_cast<Offset_t*>(mem - sizeof(Offset_t));
-//
-//     // Largest Block will be the one we freed with coalesce so left over size + old size
-//     const auto expectedFreeBlockSize = tlsfSize - (newSize + offset);
-//     EXPECT_EQ(expectedFreeBlockSize, tel.getLargestFreeBlockSize());
-//     EXPECT_EQ(2, tel.getFreeBlockCount());
-// }
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
+       ResizeToLargerSize_LatestAllocation_DoesNotUpdateActiveAllocationCount)
+{
+    constexpr auto size                 = 512;
+    const auto mem                      = tlsf.malloc(size);
+    const auto& tel                     = tlsf.getTelemetry();
+    const auto initialActiveAllocations = tel.getActiveAllocations();
+
+    static_cast<void>(tlsf.resize(mem, size, 768));
+    // NOTE: There will only be one active allocation but 2 lifetime allocations
+    //       since for larger allocations we are freeing and then allocating a new block
+    EXPECT_EQ(initialActiveAllocations, tel.getActiveAllocations());
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, ResizeToLargerSize_LatestAllocation_UpdatesCurrentMemoryUsages)
+{
+    constexpr auto size    = 512;
+    constexpr auto newSize = 768;
+    auto mem               = static_cast<uint8_t*>(tlsf.malloc(size));
+    const auto& tel        = tlsf.getTelemetry();
+
+    mem               = static_cast<uint8_t*>(tlsf.resize(mem, size, newSize));
+    const auto offset = reinterpret_cast<Offset_t*>(mem - sizeof(Offset_t));
+
+    EXPECT_EQ(newSize + *offset, tel.getCurrentBufferUsage());
+    EXPECT_EQ(*offset, tel.getCurrentMetadataUsage());
+    EXPECT_EQ(newSize, tel.getCurrentPayloadUsage());
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
+       ResizeToLargerSize_LatestAllocation_DoesNotUpdateMinMemoryUsageStats)
+{
+    constexpr auto size    = 512;
+    constexpr auto newSize = 768;
+    auto mem               = static_cast<uint8_t*>(tlsf.malloc(size));
+    const auto& tel        = tlsf.getTelemetry();
+
+    const auto initialMinBufferUsage   = tel.getMinBufferUsage();
+    const auto initialMinMetadataUsage = tel.getMinMetadataUsage();
+    const auto initialMinPayloadUsage  = tel.getMinPayloadUsage();
+
+    mem               = static_cast<uint8_t*>(tlsf.resize(mem, size, newSize));
+    const auto offset = reinterpret_cast<Offset_t*>(mem - sizeof(Offset_t));
+
+    const auto minMetadataUsage = std::min(static_cast<size_t>(*offset), initialMinMetadataUsage);
+
+    EXPECT_EQ(initialMinBufferUsage, tel.getMinBufferUsage());
+    EXPECT_EQ(minMetadataUsage, tel.getMinMetadataUsage());
+    EXPECT_EQ(initialMinPayloadUsage, tel.getMinPayloadUsage());
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, ResizeToLargerSize_LatestAllocation_UpdatesPeakMemoryUsageStats)
+{
+    constexpr auto size    = 512;
+    constexpr auto newSize = 768;
+    auto mem               = static_cast<uint8_t*>(tlsf.malloc(size));
+    const auto& tel        = tlsf.getTelemetry();
+
+    const auto initialPeakMetadataUsage = tel.getPeakMetadataUsage();
+
+    mem               = static_cast<uint8_t*>(tlsf.resize(mem, size, newSize));
+    const auto offset = reinterpret_cast<Offset_t*>(mem - sizeof(Offset_t));
+
+    const auto peakMetadataUsage = std::max(static_cast<size_t>(*offset), initialPeakMetadataUsage);
+
+    EXPECT_EQ(newSize + *offset, tel.getPeakBufferUsage());
+    EXPECT_EQ(peakMetadataUsage, tel.getPeakMetadataUsage());
+    EXPECT_EQ(newSize, tel.getPeakPayloadUsage());
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, ResizeToLargerSize_LatestAllocation_UpdatesLargestFreeBlock)
+{
+    constexpr auto size    = 512_KB;
+    constexpr auto newSize = 1200_KB;
+    auto mem               = static_cast<uint8_t*>(tlsf.malloc(size));
+    const auto& tel        = tlsf.getTelemetry();
+
+    mem               = static_cast<uint8_t*>(tlsf.resize(mem, size, newSize));
+    const auto offset = *reinterpret_cast<Offset_t*>(mem - sizeof(Offset_t));
+
+    // Largest Block will be the one we freed with coalesce so left over size + old size
+    const auto expectedFreeBlockSize = tlsfSize - (newSize + offset);
+    EXPECT_EQ(expectedFreeBlockSize, tel.getLargestFreeBlockSize());
+}
+
+
+TEST_F(InternallyManagedTLSFTelemetryIntegrationTests, ResizeToLargerSize_LatestAllocation_DoesNotUpdateFreeBlockCount)
+{
+    constexpr auto size              = 512_KB;
+    constexpr auto newSize           = 1200_KB;
+    auto mem                         = static_cast<uint8_t*>(tlsf.malloc(size));
+    const auto& tel                  = tlsf.getTelemetry();
+    const auto initialFreeBlockCount = tel.getFreeBlockCount();
+    mem                              = static_cast<uint8_t*>(tlsf.resize(mem, size, newSize));
+
+    EXPECT_EQ(initialFreeBlockCount, tel.getFreeBlockCount());
+}
 
 
 /// @test Verify that an allocation that is not the last one, when resized,
@@ -1602,15 +1620,3 @@ TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
     EXPECT_EQ(expectedFreeBlockSize, tel.getLargestFreeBlockSize());
     EXPECT_EQ(2, tel.getFreeBlockCount());
 }
-
-
-
-/**************************************
- *                                    *
- *           INTERNAL TESTS           *
- *                                    *
- **************************************/
-
-// Namespacing is required for testing internal state
-namespace pmm
-{} // namespace pmm

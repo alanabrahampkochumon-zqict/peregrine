@@ -44,8 +44,7 @@ namespace pmm
         clear();
     }
 
-    // TODO: Update move ctor to move bitmaps
-    // TODO: Update Strategy, and Policy to enum
+
     template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode, MTPolicy MultithreadingPolicy>
     PMM_INLINE constexpr TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::TLSF(TLSF&& tlsf) noexcept
         : _buffer{ std::exchange(tlsf._buffer, nullptr) },
@@ -69,7 +68,7 @@ namespace pmm
         {
             memFree(_buffer, _size);
         }
-        // TODO: Update to assert if hampering performance
+
         if (this == &tlsf)
         {
             return *this;
@@ -141,14 +140,13 @@ namespace pmm
 
         if constexpr (SafeMode == SafeModePolicy::Safe)
         {
+            // searchSuitable block ONLY return a nullptr in safe mode.
             if (freeBlock == nullptr)
             {
                 return nullptr;
             }
         }
 
-        // searchSuitable block doesn't return a nullptr by default on in safe mode
-        // so we can skip the nullptr check and assume a valid block is returned. TODO(SAFEMODE)
 
         // Unlink the free node from the bitmap
         unlinkNode(freeBlock);
@@ -186,6 +184,7 @@ namespace pmm
             auto remainingBlockStart = basePtr + usedSize;
             insertBlock(remainingBlockStart, sizeLeft);
         }
+
         // TODO: If the padding can store the header, then do so
         //                Offset
         //                  ↓
@@ -481,13 +480,8 @@ namespace pmm
         // so, we assert that minimal value with debug asserts in unsafe mode or
         // round up it up to 64-bytes in safe mode.
         BitmapIndices indices;
-        PMM_ASSERT_MSG(blockSize >= SPLIT_SIZE_THRESHOLD,
-                       "[TLSF Internal]: Cannot insert a block less than SPLIT_SIZE_THRESHOLD");
-        if constexpr (SafeMode == SafeModePolicy::Safe)
-        {
-            // Only rounds block size in safe mode.
-            blockSize = std::max(SPLIT_SIZE_THRESHOLD, blockSize);
-        }
+        // Round the block to split threshold size, since that is our minimum size.
+        blockSize = std::max(SPLIT_SIZE_THRESHOLD, blockSize);
         // The flIndex can be found using floor(log_2(size)) and fls(First Last Set)
         // can be used to get the value using bit manipulation.
         const auto rawFL = utils::fls(blockSize);
