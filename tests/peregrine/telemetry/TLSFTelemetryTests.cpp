@@ -44,7 +44,6 @@ namespace
             /// @test Verify that TLSFTelemetry_t returns TLSFTelemetry when the telemetry policy is Managed.
             static_assert(std::same_as<pmm::TLSFTelemetry_t<pmm::TelPolicy::Enabled>, pmm::TLSFTelemetry> == true);
 
-
             /// @test Verify that TLSFTelemetry_t returns DummyTLSFTelemetry when the telemetry policy is Disabled.
             static_assert(std::same_as<pmm::TLSFTelemetry_t<pmm::TelPolicy::Disabled>, pmm::DummyTLSFTelemetry> ==
                           true);
@@ -55,14 +54,14 @@ namespace
         namespace telemetry_helpers
         {
             /// @test Verify that getTelemetryInstance returns a real TLSF when the telemetry policy is Managed.
-            [[maybe_unused]] constexpr auto STACK_TEL_MANAGED = pmm::getTelemetryInstance<pmm::TelPolicy::Enabled>(512);
-            static_assert(std::is_same_v<decltype(STACK_TEL_MANAGED), const pmm::TLSFTelemetry> == true);
+            [[maybe_unused]] constexpr auto TLSF_TEL_MANAGED = pmm::getTelemetryInstance<pmm::TelPolicy::Enabled>(512);
+            static_assert(std::is_same_v<decltype(TLSF_TEL_MANAGED), const pmm::TLSFTelemetry> == true);
 
 
             /// @test Verify that getTelemetryInstance returns a real TLSF when the telemetry policy is Disabled.
-            [[maybe_unused]] constexpr auto STACK_TEL_DISABLED =
+            [[maybe_unused]] constexpr auto TLSF_TEL_DISABLED =
                 pmm::getTelemetryInstance<pmm::TelPolicy::Disabled>(512);
-            static_assert(std::is_same_v<decltype(STACK_TEL_DISABLED), const pmm::DummyTLSFTelemetry> == true);
+            static_assert(std::is_same_v<decltype(TLSF_TEL_DISABLED), const pmm::DummyTLSFTelemetry> == true);
 
         } // namespace telemetry_helpers
     } // namespace static_tests
@@ -72,9 +71,7 @@ namespace
 
 
 /**************************************
- *                                    *
  *           RUNTIME TESTS            *
- *                                    *
  **************************************/
 
 /** @test Verify that TLSF telemetry is initialized with size and usage defaults. */
@@ -101,6 +98,69 @@ TEST_F(TLSFTelemetryTests, IntializesWithSizeAndDefaultStats)
     EXPECT_EQ(0, telemetry.getFreeBlockCount());
 
     EXPECT_FALSE(telemetry.hasMemoryLeak());
+}
+
+
+TEST_F(TLSFTelemetryTests, DecMemUsage_OnlyDecrementsThePayloadAndBufferUsage)
+{
+    telemetry.incUsage(100, 8);
+    telemetry.incUsage(500, 24);
+
+    telemetry.decPayloadUsage(200);
+
+    EXPECT_EQ(400, telemetry.getCurrentPayloadUsage());
+    EXPECT_EQ(432, telemetry.getCurrentBufferUsage());
+}
+
+
+TEST_F(TLSFTelemetryTests, DecMemUsage_DoesNotUpdateMetadataUsage)
+{
+    telemetry.incUsage(100, 8);
+    telemetry.incUsage(500, 24);
+    const auto initialMetadataUsage = telemetry.getCurrentMetadataUsage();
+
+    telemetry.decPayloadUsage(200);
+
+    EXPECT_EQ(initialMetadataUsage, telemetry.getCurrentMetadataUsage());
+}
+
+
+TEST_F(TLSFTelemetryTests, DecMemUsage_DoesNotUpdateMinAndMaxUsage)
+{
+    telemetry.incUsage(100, 8);
+    telemetry.incUsage(500, 24);
+
+    const auto initialPeakBufferUsage   = telemetry.getPeakBufferUsage();
+    const auto initialPeakMetadataUsage = telemetry.getPeakMetadataUsage();
+    const auto initialPeakPayloadUsage  = telemetry.getPeakPayloadUsage();
+
+    const auto initialMinBufferUsage   = telemetry.getMinBufferUsage();
+    const auto initialMinMetadataUsage = telemetry.getMinMetadataUsage();
+    const auto initialMinPayloadUsage  = telemetry.getMinPayloadUsage();
+
+    telemetry.decPayloadUsage(200);
+
+    EXPECT_EQ(initialPeakBufferUsage, telemetry.getPeakBufferUsage());
+    EXPECT_EQ(initialPeakMetadataUsage, telemetry.getPeakMetadataUsage());
+    EXPECT_EQ(initialPeakPayloadUsage, telemetry.getPeakPayloadUsage());
+
+    EXPECT_EQ(initialMinBufferUsage, telemetry.getMinBufferUsage());
+    EXPECT_EQ(initialMinMetadataUsage, telemetry.getMinMetadataUsage());
+    EXPECT_EQ(initialMinPayloadUsage, telemetry.getMinPayloadUsage());
+}
+
+
+TEST_F(TLSFTelemetryTests, UpdateMinUsage_UpdatesMinimumUsages)
+{
+    telemetry.incUsage(100, 8);
+    telemetry.incUsage(500, 24);
+
+    telemetry.updateMinUsage(40, 4);
+
+
+    EXPECT_EQ(44, telemetry.getMinBufferUsage());
+    EXPECT_EQ(4, telemetry.getMinMetadataUsage());
+    EXPECT_EQ(40, telemetry.getMinPayloadUsage());
 }
 
 

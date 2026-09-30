@@ -66,7 +66,7 @@ namespace pmm
         /// @brief Decrease the memory usage from allocation(buffer + payload) by @p size.
         /// @note This will update update the minimum usages.
         /// @note This will not update the number of allocations.
-        constexpr void decMemUsage(size_t size) noexcept;
+        constexpr void decPayloadUsage(size_t size) noexcept;
 
         /// @brief Updates the minimum usages.
         /// @warning Neither sizes should be zero.

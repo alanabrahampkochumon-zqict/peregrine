@@ -76,7 +76,7 @@ namespace pmm
         --_activeAllocationCount;
     }
 
-    PMM_INLINE constexpr void TLSFTelemetry::decMemUsage(const size_t size) noexcept
+    PMM_INLINE constexpr void TLSFTelemetry::decPayloadUsage(const size_t size) noexcept
     {
         _currentPayloadUsage -= size;
         _currentBufferUsage -= size;

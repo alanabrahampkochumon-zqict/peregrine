@@ -390,7 +390,7 @@ namespace pmm
                 {
                     // Metadata size is not decreased since we are only inserting the block left after
                     // splitting, and that block doesn't have any allocated metadata space.
-                    _telemetry.decMemUsage(sizeDiff);
+                    _telemetry.decPayloadUsage(sizeDiff);
                     // We need to update the min usage as well since the memory is resized to a smaller size
                     _telemetry.updateMinUsage(newSize, currentOffset);
                 }

@@ -112,7 +112,6 @@ TEST_P(SafeTLSFAlignmentNonPowersOfTwo, InternallyManagedTLSF_Resize_NonPowerOfT
 {
     pmm::TLSF<pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled, pmm::SafeModePolicy::Safe> tlsf{ 1_KB };
     const auto mem = tlsf.malloc(128);
-    auto alignment = this->GetParam();
     EXPECT_EQ(nullptr, tlsf.resize(mem, 128, 256, this->GetParam()));
 }
 
