@@ -54,8 +54,6 @@ namespace pmm
              *       Moreover, the allocator can suffer from corruption if they are stored in LSB, like when allocating
              *       an odd size, the FREE BIT can get overridden.
              */
-
-
             size_t sizeWithFlags; /// The size of the memory block with 2 LSB used for flags.
             size_t padding;       /// Padding requirements. Unused when the block is free.
 

@@ -53,10 +53,7 @@ namespace
 
     INSTANTIATE_TEST_SUITE_P(
         TLSF_InternalMappingTests, InternallyManagedTLSF_MappingInsertTests,
-        ::testing::Values(TLSFMappingInsertParams{ .allocationSize = 0, .flIndex = 0, .slIndex = 0 },
-                          // Values that are clamped to the minimum allocation size of 64 bytes(2^6)
-                          TLSFMappingInsertParams{ .allocationSize = 15, .flIndex = 0, .slIndex = 0 },
-                          TLSFMappingInsertParams{ .allocationSize = 64, .flIndex = 0, .slIndex = 0 },
+        ::testing::Values(TLSFMappingInsertParams{ .allocationSize = 64, .flIndex = 0, .slIndex = 0 },
                           TLSFMappingInsertParams{ .allocationSize = 65, .flIndex = 0, .slIndex = 1 },
                           TLSFMappingInsertParams{ .allocationSize = 66, .flIndex = 0, .slIndex = 2 },
                           TLSFMappingInsertParams{ .allocationSize = 127, .flIndex = 0, .slIndex = 63 },

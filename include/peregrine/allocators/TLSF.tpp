@@ -429,10 +429,8 @@ namespace pmm
                     currentBlockHeader->setSize(adjustedNewSize);
                     if constexpr (TelemetryPolicy == TelPolicy::Enabled)
                     {
-                        // TODO: Add after adding these telemetry methods
-                        // _telemetry.incMemUsage(sizeDiff);
-                        // We need to update the peak usage as the new size may update the usage
-                        // _telemetry.updatePeakUsage(newSize, currentOffset);
+                        _telemetry.incPayloadUsage(sizeDiff);
+                        _telemetry.updatePeakUsage(newSize, currentOffset);
                     }
                     return block;
                 }
@@ -485,9 +483,13 @@ namespace pmm
         // so, we assert that minimal value with debug asserts in unsafe mode or
         // round up it up to 64-bytes in safe mode.
         BitmapIndices indices;
-        // TODO: Move rounding to safe mode only and introduce and assert for debug safety in
-        //       non-safe mode.
-        blockSize = std::max(SPLIT_SIZE_THRESHOLD, blockSize);
+        PMM_ASSERT_MSG(blockSize >= SPLIT_SIZE_THRESHOLD,
+                       "[TLSF Internal]: Cannot insert a block less than SPLIT_SIZE_THRESHOLD");
+        if constexpr (SafeMode == SafeModePolicy::Safe)
+        {
+            // Only rounds block size in safe mode.
+            blockSize = std::max(SPLIT_SIZE_THRESHOLD, blockSize);
+        }
         // The flIndex can be found using floor(log_2(size)) and fls(First Last Set)
         // can be used to get the value using bit manipulation.
         const auto rawFL = utils::fls(blockSize);
