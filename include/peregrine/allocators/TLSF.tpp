@@ -351,6 +351,8 @@ namespace pmm
 
         if constexpr (SafeMode == SafeModePolicy::Safe)
         {
+            std::cout << std::format("Block Address: {}, OldSize: {}, New Size: {}, Has Single Bit: {}, Alignment\n",
+                                     block, oldSize, newSize, std::has_single_bit(alignment), alignment);
             if (block == nullptr || oldSize == 0 || newSize == 0 || !std::has_single_bit(alignment) || alignment < 2)
             {
                 return nullptr;
@@ -360,7 +362,6 @@ namespace pmm
         // ARCH NOTE: While we can move memory if resize requires alignment, owing to code cleanliness and
         //            and memmove taking O(n) like memcpy, we have decided to fallback to new allocation
         //            if the resize requires a new alignment.
-
         const auto startAddress       = static_cast<uint8_t*>(block);
         const auto currentOffset      = *reinterpret_cast<HeaderOffset_t*>(startAddress - sizeof(HeaderOffset_t));
         const auto baseAddress        = startAddress - currentOffset;

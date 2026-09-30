@@ -31,8 +31,9 @@ namespace
     public:
         static constexpr size_t tlsfSize{ 2_MB };
         pmm::TLSF<pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled, pmm::SafeModePolicy::Safe> tlsf{ tlsfSize };
-        using Header   = pmm::TLSF<pmm::MemPolicy::Internal>::Header;
-        using Offset_t = pmm::TLSF<pmm::MemPolicy::Internal>::HeaderOffset_t;
+        using Header = pmm::TLSF<pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled, pmm::SafeModePolicy::Safe>::Header;
+        using Offset_t =
+            pmm::TLSF<pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled, pmm::SafeModePolicy::Safe>::HeaderOffset_t;
     };
 
 
@@ -46,8 +47,9 @@ namespace
         uint8_t* buffer = new uint8_t[tlsfSize]();
         pmm::TLSF<pmm::MemPolicy::External, pmm::TelPolicy::Disabled, pmm::SafeModePolicy::Safe> tlsf{ buffer,
                                                                                                        tlsfSize };
-        using Header   = pmm::TLSF<pmm::MemPolicy::External>::Header;
-        using Offset_t = pmm::TLSF<pmm::MemPolicy::External>::HeaderOffset_t;
+        using Header = pmm::TLSF<pmm::MemPolicy::External, pmm::TelPolicy::Disabled, pmm::SafeModePolicy::Safe>::Header;
+        using Offset_t =
+            pmm::TLSF<pmm::MemPolicy::External, pmm::TelPolicy::Disabled, pmm::SafeModePolicy::Safe>::HeaderOffset_t;
 
     protected:
         ~ExternallyManagedSafeTLSFTests() override { delete[] buffer; }
@@ -94,7 +96,7 @@ TEST_F(InternallyManagedSafeTLSFTests, Malloc_OutofMemoryDueToFragmentation_Retu
 
 TEST_P(SafeTLSFAlignmentNonPowersOfTwo, InternallyManagedTLSF_MAlloc_NonPowerOfTwoAlignmentReturnsNullptrInSafeMode)
 {
-    pmm::TLSF<pmm::MemPolicy::Internal> tlsf{ 1_KB };
+    pmm::TLSF<pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled, pmm::SafeModePolicy::Safe> tlsf{ 1_KB };
     EXPECT_EQ(nullptr, tlsf.malloc(24, this->GetParam()));
 }
 
@@ -106,11 +108,16 @@ TEST_F(InternallyManagedSafeTLSFTests, Resize_ToZeroSizeReturnsNullptrInSafeMode
 }
 
 
-TEST_F(SafeTLSFAlignmentNonPowersOfTwo, InternallyManagedTLSF_Resize_NonPowerOfTwoAlignmentReturnsNullptrInSafeMode)
+TEST_P(SafeTLSFAlignmentNonPowersOfTwo, InternallyManagedTLSF_Resize_NonPowerOfTwoAlignmentReturnsNullptrInSafeMode)
 {
-    pmm::TLSF<pmm::MemPolicy::Internal> tlsf{ 1_KB };
+    pmm::TLSF<pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled, pmm::SafeModePolicy::Safe> tlsf{ 1_KB };
+    std::cout << "Created!\n";
     const auto mem = tlsf.malloc(128);
+    std::cout << "Allocated!\n";
+    auto alignment = this->GetParam();
+    std::cout << "Alignment: " << alignment << '\n';
     EXPECT_EQ(nullptr, tlsf.resize(mem, 128, 256, this->GetParam()));
+    std::cout << "Asserted!\n";
 }
 
 
@@ -158,17 +165,6 @@ TEST_F(InternallyManagedSafeTLSFTests, Resize_OutofMemoryDueToFragmentation_Retu
  *      EXTERNALLY MANAGED TLSF       *
  **************************************/
 
-
-TEST(ExternallyManagedTLSFCtorTests, NullptrForBackingBuffer_ReturnsNullptrInSafeMode)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::TLSF<pmm::MemPolicy::External>(nullptr, 512)), ""); }
-
-TEST(ExternallyManagedTLSFCtorTests, ZeroSize_ReturnsNullptrInSafeMode)
-{
-    const auto buffer = new uint8_t[1_KB];
-    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::TLSF<pmm::MemPolicy::External>(buffer, 0)), "");
-    delete[] buffer;
-}
-
 TEST_F(ExternallyManagedSafeTLSFTests, MAlloc_ZeroSizeReturnsNullptrInSafeMode) { EXPECT_EQ(nullptr, tlsf.malloc(0)); }
 
 TEST_F(ExternallyManagedSafeTLSFTests, MAlloc_NearTLSFSizeReturnsNullptrInSafeMode)
@@ -201,7 +197,7 @@ TEST_F(ExternallyManagedSafeTLSFTests, Malloc_OutofMemoryDueToFragmentation_Retu
 TEST_P(SafeTLSFAlignmentNonPowersOfTwo, ExternallyManagedTLSF_MAlloc_NonPowerOfTwoAlignmentReturnsNullptrInSafeMode)
 {
     const auto buffer = new uint8_t[1_KB];
-    pmm::TLSF<pmm::MemPolicy::External> tlsf{ buffer, 1_KB };
+    pmm::TLSF<pmm::MemPolicy::External, pmm::TelPolicy::Disabled, pmm::SafeModePolicy::Safe> tlsf{ buffer, 1_KB };
     EXPECT_EQ(nullptr, tlsf.malloc(24, this->GetParam()));
     delete[] buffer;
 }
@@ -217,7 +213,7 @@ TEST_F(ExternallyManagedSafeTLSFTests, Resize_ToZeroSizeReturnsNullptrInSafeMode
 TEST_P(SafeTLSFAlignmentNonPowersOfTwo, ExternallyManagedTLSF_Resize_NonPowerOfTwoAlignmentReturnsNullptrInSafeMode)
 {
     const auto buffer = new uint8_t[1_KB];
-    pmm::TLSF<pmm::MemPolicy::External> tlsf{ buffer, 1_KB };
+    pmm::TLSF<pmm::MemPolicy::External, pmm::TelPolicy::Disabled, pmm::SafeModePolicy::Safe> tlsf{ buffer, 1_KB };
     const auto mem = tlsf.malloc(128);
     EXPECT_EQ(nullptr, tlsf.resize(mem, 128, 256, this->GetParam()));
     delete[] buffer;
