@@ -351,8 +351,6 @@ namespace pmm
 
         if constexpr (SafeMode == SafeModePolicy::Safe)
         {
-            std::cout << std::format("Block Address: {}, OldSize: {}, New Size: {}, Has Single Bit: {}, Alignment\n",
-                                     block, oldSize, newSize, std::has_single_bit(alignment), alignment);
             if (block == nullptr || oldSize == 0 || newSize == 0 || !std::has_single_bit(alignment) || alignment < 2)
             {
                 return nullptr;

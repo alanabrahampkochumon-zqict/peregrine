@@ -111,13 +111,9 @@ TEST_F(InternallyManagedSafeTLSFTests, Resize_ToZeroSizeReturnsNullptrInSafeMode
 TEST_P(SafeTLSFAlignmentNonPowersOfTwo, InternallyManagedTLSF_Resize_NonPowerOfTwoAlignmentReturnsNullptrInSafeMode)
 {
     pmm::TLSF<pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled, pmm::SafeModePolicy::Safe> tlsf{ 1_KB };
-    std::cout << "Created!\n";
     const auto mem = tlsf.malloc(128);
-    std::cout << "Allocated!\n";
     auto alignment = this->GetParam();
-    std::cout << "Alignment: " << alignment << '\n';
     EXPECT_EQ(nullptr, tlsf.resize(mem, 128, 256, this->GetParam()));
-    std::cout << "Asserted!\n";
 }
 
 

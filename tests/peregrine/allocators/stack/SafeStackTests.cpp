@@ -682,7 +682,6 @@ TEST_F(ManagedStrictSafeStackTests, Resize_PriorToLatestsAllocation_FullStackRet
     [[maybe_unused]] const auto firstAllocation = stack.allocBytes(firstAllocSize);
     [[maybe_unused]] const auto nearFullSize =
         stack.allocBytes(stackSize - (firstAllocSize + alignof(void*) + 2 * sizeof(pmm::StrictStackHeader)));
-    std::cout << "First: " << firstAllocation << " Near Full Size: " << nearFullSize << "\n";
     [[maybe_unused]] const auto resize = stack.resize(firstAllocation, firstAllocSize, firstAllocSize + 120);
     EXPECT_EQ(nullptr, resize);
 }
