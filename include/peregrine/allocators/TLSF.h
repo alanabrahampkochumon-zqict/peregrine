@@ -534,34 +534,44 @@ namespace pmm
         FRIEND_TEST(InternallyManagedTLSFTests, Clear_ResetsFLAndSLBitmaps);
         FRIEND_TEST(InternallyManagedTLSFTests, Clear_ResetsFreeList);
 
-
-
-        FRIEND_TEST(InternallyManagedTLSFTests, Alloc_UpdatesTelemetryPadding);
-        FRIEND_TEST(InternallyManagedTLSFTests, AllocV_UpdatesTelemetryPadding);
-        FRIEND_TEST(InternallyManagedTLSFTests, Resize_LatestAllocationResizeBuffer);
-        FRIEND_TEST(InternallyManagedTLSFTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
-        FRIEND_TEST(InternallyManagedTLSFTests, Clear_ResetsOffsetToZero);
-        FRIEND_TEST(InternallyManagedTLSFTests, ZeroOut_ZeroesOutTheInternalBuffer);
-
         FRIEND_TEST(InternallyManagedTLSF_MappingInsertTests, ReturnsValidFLAndSLIndices);
         FRIEND_TEST(InternallyManagedTLSF_MappingSearchTests, ReturnsValidFLAndSLIndices);
 
+
+        FRIEND_TEST(ExternallyManagedTLSFTests, Ctor_CreatesValidFLAndSLBitmaps);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Ctor_SingleAllocation_FLBitmapIsSingleBit);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Ctor_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Ctor_SingleAllocation_OnlySingleFreeListIsPopulated);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Ctor_WritesAppropriateHeaderToBuffer);
         FRIEND_TEST(ExternallyManagedTLSFTests, MoveCtor_ClearsMovedTLSFsInternalBuffer);
         FRIEND_TEST(ExternallyManagedTLSFTests, MoveCtor_MovesBufferIntoNewObject);
         FRIEND_TEST(ExternallyManagedTLSFTests, MoveAssign_ClearsMovedTLSF);
         FRIEND_TEST(ExternallyManagedTLSFTests, MoveAssign_MovesBufferIntoNewObject);
         FRIEND_TEST(ExternallyManagedTLSFTests, MoveAssign_SelfAssignmentReturnsTheSameTLSF);
         FRIEND_TEST(ExternallyManagedTLSFTests, MoveAssign_DeletingOriginalTLSFDoNotDeleteTheNewTLSFsMemory);
-        FRIEND_TEST(ExternallyManagedTLSFTests, AllocBytes_MovesPrevOffset);
-        FRIEND_TEST(ExternallyManagedTLSFTests, Alloc_MovesPrevOffset);
-        FRIEND_TEST(ExternallyManagedTLSFTests, AllocBytes_UpdatesTelemetryPadding);
-        FRIEND_TEST(ExternallyManagedTLSFTests, Alloc_UpdatesTelemetryPadding);
-        FRIEND_TEST(ExternallyManagedTLSFTests, AllocV_UpdatesTelemetryPadding);
-        FRIEND_TEST(ExternallyManagedTLSFTests, Resize_LatestAllocationResizeBuffer);
-        FRIEND_TEST(ExternallyManagedTLSFTests, Resize_LatestAllocationOnlyResizeByOffsetDifference);
-        FRIEND_TEST(ExternallyManagedTLSFTests, Clear_ResetsOffsetToZero);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Malloc_NullsOutInitialBitmap);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Malloc_CreatesANewSingleBitmap);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Malloc_SingleAllocation_FLBitmapIsSingleBit);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Malloc_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Malloc_SingleAllocation_OnlySingleFreeListIsPopulated);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Malloc_SingleAllocation_FreeListIsUpdatedAfterAllocation);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Malloc_WritesAppropriateHeaderToBuffer_AfterFirstAllocation);
+        /// Note: The resize tests is necessary for internal state mutation as the memory address returned from resize
+        ///       only changes in one instance(when the new size is larger).
+        FRIEND_TEST(ExternallyManagedTLSFTests, Resize_SameSizeDoesNotUpdateFLAndSLBitmaps);
+        FRIEND_TEST(ExternallyManagedTLSFTests,
+                    Resize_ToSmallerSize_SizeDiffSmallerThanSplitThreshold_DoesNotUpdateFLAndSLBitmaps);
+        FRIEND_TEST(ExternallyManagedTLSFTests,
+                    Resize_ToSmallerSize_SizeDiffEqualToSplitThreshold_UpdatesFLAndSLBitmaps);
+        FRIEND_TEST(ExternallyManagedTLSFTests,
+                    Resize_ToSmallerSize_SizeDiffGreaterThanSplitThreshold_UpdatesFLAndSLBitmaps);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Resize_NonLatestAllocation_LargerSizeUpdatesFLAndSLBitmaps);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Resize_LatestAllocation_LargerSizeUpdatesFLAndSLBitmaps);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Clear_ResetsFLAndSLBitmaps);
+        FRIEND_TEST(ExternallyManagedTLSFTests, Clear_ResetsFreeList);
 
         FRIEND_TEST(ExternallyManagedTLSF_MappingInsertTests, ReturnsValidFLAndSLIndices);
+        FRIEND_TEST(ExternallyManagedTLSF_MappingSearchTests, ReturnsValidFLAndSLIndices);
 #endif
     };
 

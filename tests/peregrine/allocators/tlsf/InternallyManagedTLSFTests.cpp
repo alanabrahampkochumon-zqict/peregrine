@@ -3,7 +3,7 @@
  * @author Alan Abraham P Kochumon
  * @date Created on: September 08, 2026
  *
- * @brief Verify managed tlsf allocation, free, and helper function logic.
+ * @brief Verify internally memory managed tlsf allocation, free, and helper function logic.
  *
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
@@ -16,7 +16,6 @@
 #include <array>
 #include <format>
 #include <gtest/gtest.h>
-#include <iostream>
 #include <peregrine/allocators/TLSF.h>
 #include <peregrine/utils/Constants.h>
 #include <utility>
@@ -107,9 +106,9 @@ namespace
     namespace static_tests
     {
         /** @test Verify that manged tlsf frees buffer it allocates.
-         *  @note Since we cant really confirm confirm if a buffer is freed and we only delete[] buffer in the dtor of
-         *        TLSF, we can check if it is trivially destructible to ensure memory is freed in the tlsf in unmanaged
-         * mode and opposite otherwise.
+         *  @note Since we can't really confirm confirm if a buffer is freed and we only delete[] buffer in the dtor of
+         *        TLSF. So, we can check if it is trivially destructible to ensure memory is freed in the tlsf in
+         *        internally memory managed mode.
          */
         static_assert(std::is_trivially_destructible_v<pmm::TLSF<pmm::MemPolicy::Internal>> == false);
     } // namespace static_tests
@@ -265,8 +264,6 @@ TEST_F(InternallyManagedTLSFTests, Malloc_HeaderIsPreservedInAddressBeforeGivenA
 ///       an out-of-memory exception.
 TEST_F(InternallyManagedTLSFTests, MFree_FreeTheBuffer)
 {
-    // TODO: This test can be used for checking if allocations smaller than min chunk size
-    //       cleaves the memory.
     // Leeway to ensure the allocation passes.
     constexpr auto leeway = 32;
     const auto firstMem   = tlsf.malloc(tlsfSize - leeway);
@@ -1497,3 +1494,5 @@ namespace pmm
     }
 
 } // namespace pmm
+
+/** @} */

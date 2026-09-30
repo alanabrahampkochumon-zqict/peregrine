@@ -1357,9 +1357,6 @@ TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
 }
 
 
-// TODO: When resizing to a smaller size that split threshold try to coalesce forward
-//       Backward coalesce is not possible since that block is being used and handed back to the user
-
 TEST_F(InternallyManagedTLSFTelemetryIntegrationTests,
        ResizeToLargerSize_LatestAllocation_DoesNotUpdateLifetimeAllocationCount)
 {
