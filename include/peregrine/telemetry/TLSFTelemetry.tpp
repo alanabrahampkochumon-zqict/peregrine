@@ -40,6 +40,8 @@ namespace pmm
 
     PMM_INLINE constexpr void TLSFTelemetry::incUsage(const size_t reqSize, const size_t metadataSize) noexcept
     {
+        PMM_ASSERT_MSG(metadataSize > 0 && reqSize > 0, "Request and Metadata size cannot be zero");
+
         _currentPayloadUsage += reqSize;
         _peakPayloadUsage = std::max(_peakPayloadUsage, reqSize);
 
@@ -74,6 +76,20 @@ namespace pmm
 
         ++_lifetimeFreeCount;
         --_activeAllocationCount;
+    }
+
+    PMM_INLINE constexpr void TLSFTelemetry::incPayloadUsage(size_t size) noexcept
+    {
+        _currentPayloadUsage += size;
+        _currentBufferUsage += size;
+    }
+
+    PMM_INLINE constexpr void TLSFTelemetry::updatePeakUsage(const size_t reqSize, const size_t metadataSize) noexcept
+    {
+        PMM_ASSERT_MSG(metadataSize > 0 && reqSize > 0, "Request and Metadata size cannot be zero");
+        _peakPayloadUsage  = std::max(_peakPayloadUsage, reqSize);
+        _peakMetadataUsage = std::max(_peakMetadataUsage, metadataSize);
+        _peakBufferUsage   = std::max(_peakBufferUsage, reqSize + metadataSize);
     }
 
     PMM_INLINE constexpr void TLSFTelemetry::decPayloadUsage(const size_t size) noexcept

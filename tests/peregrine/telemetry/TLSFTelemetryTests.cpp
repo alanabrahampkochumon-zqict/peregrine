@@ -101,6 +101,55 @@ TEST_F(TLSFTelemetryTests, IntializesWithSizeAndDefaultStats)
 }
 
 
+TEST_F(TLSFTelemetryTests, IncMemUsage_OnlyDecrementsThePayloadAndBufferUsage)
+{
+    telemetry.incUsage(100, 8);
+    telemetry.incUsage(500, 24);
+
+    telemetry.incPayloadUsage(200);
+
+    EXPECT_EQ(800, telemetry.getCurrentPayloadUsage());
+    EXPECT_EQ(832, telemetry.getCurrentBufferUsage());
+}
+
+
+TEST_F(TLSFTelemetryTests, IncMemUsage_DoesNotUpdateMetadataUsage)
+{
+    telemetry.incUsage(100, 8);
+    telemetry.incUsage(500, 24);
+    const auto initialMetadataUsage = telemetry.getCurrentMetadataUsage();
+
+    telemetry.incPayloadUsage(200);
+
+    EXPECT_EQ(initialMetadataUsage, telemetry.getCurrentMetadataUsage());
+}
+
+
+TEST_F(TLSFTelemetryTests, IncMemUsage_DoesNotUpdateMinAndMaxUsage)
+{
+    telemetry.incUsage(100, 8);
+    telemetry.incUsage(500, 24);
+
+    const auto initialPeakBufferUsage   = telemetry.getPeakBufferUsage();
+    const auto initialPeakMetadataUsage = telemetry.getPeakMetadataUsage();
+    const auto initialPeakPayloadUsage  = telemetry.getPeakPayloadUsage();
+
+    const auto initialMinBufferUsage   = telemetry.getMinBufferUsage();
+    const auto initialMinMetadataUsage = telemetry.getMinMetadataUsage();
+    const auto initialMinPayloadUsage  = telemetry.getMinPayloadUsage();
+
+    telemetry.incPayloadUsage(200);
+
+    EXPECT_EQ(initialPeakBufferUsage, telemetry.getPeakBufferUsage());
+    EXPECT_EQ(initialPeakMetadataUsage, telemetry.getPeakMetadataUsage());
+    EXPECT_EQ(initialPeakPayloadUsage, telemetry.getPeakPayloadUsage());
+
+    EXPECT_EQ(initialMinBufferUsage, telemetry.getMinBufferUsage());
+    EXPECT_EQ(initialMinMetadataUsage, telemetry.getMinMetadataUsage());
+    EXPECT_EQ(initialMinPayloadUsage, telemetry.getMinPayloadUsage());
+}
+
+
 TEST_F(TLSFTelemetryTests, DecMemUsage_OnlyDecrementsThePayloadAndBufferUsage)
 {
     telemetry.incUsage(100, 8);
@@ -150,7 +199,7 @@ TEST_F(TLSFTelemetryTests, DecMemUsage_DoesNotUpdateMinAndMaxUsage)
 }
 
 
-TEST_F(TLSFTelemetryTests, UpdateMinUsage_UpdatesMinimumUsages)
+TEST_F(TLSFTelemetryTests, UpdateMinUsage_UpdateMinimumUsages)
 {
     telemetry.incUsage(100, 8);
     telemetry.incUsage(500, 24);
@@ -161,6 +210,19 @@ TEST_F(TLSFTelemetryTests, UpdateMinUsage_UpdatesMinimumUsages)
     EXPECT_EQ(44, telemetry.getMinBufferUsage());
     EXPECT_EQ(4, telemetry.getMinMetadataUsage());
     EXPECT_EQ(40, telemetry.getMinPayloadUsage());
+}
+
+
+TEST_F(TLSFTelemetryTests, UpdatePeakUsage_UpdatePeakUsages)
+{
+    telemetry.incUsage(100, 8);
+    telemetry.incUsage(500, 24);
+
+    telemetry.updatePeakUsage(700, 32);
+
+    EXPECT_EQ(732, telemetry.getPeakBufferUsage());
+    EXPECT_EQ(32, telemetry.getPeakMetadataUsage());
+    EXPECT_EQ(700, telemetry.getPeakPayloadUsage());
 }
 
 
