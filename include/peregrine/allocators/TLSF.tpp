@@ -212,14 +212,13 @@ namespace pmm
     PMM_INLINE T* TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::alloc(Args... args) noexcept
     {
         auto rawMemory = malloc(sizeof(T), alignof(T));
-        // TODO: Add safe-mode
-        // if constexpr (Safe == true)
-        // {
-        //     if (rawMemory == nullptr)
-        //     {
-        //         return nullptr;
-        //     }
-        // }
+        if constexpr (SafeMode == SafeModePolicy::Safe)
+        {
+            if (rawMemory == nullptr)
+            {
+                return nullptr;
+            }
+        }
         return new (rawMemory) T(std::forward<Args>(args)...);
     }
 
@@ -230,15 +229,15 @@ namespace pmm
         std::size_t count) noexcept
     {
         PMM_ASSERT_MSG(count > 0, "[TLSF]: Cannot allocate an array of size 0");
-        // TODO: Add safe mode
-        // if constexpr (Safe == true)
-        // {
-        //     if (_offset + sizeof(T) * count > _stackSize || count == 0)
-        //     {
-        //         return std::span<T>();
-        //     }
-        // }
-        return std::span(static_cast<T*>(malloc(sizeof(T) * count, alignof(T))), count);
+        const auto rawMemory = static_cast<T*>(malloc(sizeof(T) * count, alignof(T)));
+        if constexpr (SafeMode == SafeModePolicy::Safe)
+        {
+            if (sizeof(T) * count > _size || count == 0 || rawMemory == nullptr)
+            {
+                return std::span<T>();
+            }
+        }
+        return std::span(rawMemory, count);
     }
 
 
@@ -306,7 +305,6 @@ namespace pmm
         block       = mergePrevious(static_cast<uint8_t*>(block));
         block       = mergeNext(static_cast<uint8_t*>(block));
         auto header = static_cast<Header*>(block);
-        // const auto index = mappingInsert(header->getSize()); // TODO: REMOVE
 
         // TODO: Insert block needs to be made more granular since we are doing repeated work(separate write headers).
         insertBlock(static_cast<uint8_t*>(block), header->getSize());

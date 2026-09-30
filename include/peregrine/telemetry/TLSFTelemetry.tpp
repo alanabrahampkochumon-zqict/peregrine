@@ -57,6 +57,7 @@ namespace pmm
         ++_lifetimeAllocationCount;
     }
 
+
     PMM_INLINE constexpr void TLSFTelemetry::decUsage(const size_t reqSize, const size_t metadataSize) noexcept
     {
         PMM_ASSERT_MSG(_currentPayloadUsage >= reqSize,
@@ -78,11 +79,13 @@ namespace pmm
         --_activeAllocationCount;
     }
 
+
     PMM_INLINE constexpr void TLSFTelemetry::incPayloadUsage(size_t size) noexcept
     {
         _currentPayloadUsage += size;
         _currentBufferUsage += size;
     }
+
 
     PMM_INLINE constexpr void TLSFTelemetry::updatePeakUsage(const size_t reqSize, const size_t metadataSize) noexcept
     {
@@ -92,11 +95,13 @@ namespace pmm
         _peakBufferUsage   = std::max(_peakBufferUsage, reqSize + metadataSize);
     }
 
+
     PMM_INLINE constexpr void TLSFTelemetry::decPayloadUsage(const size_t size) noexcept
     {
         _currentPayloadUsage -= size;
         _currentBufferUsage -= size;
     }
+
 
     PMM_INLINE constexpr void TLSFTelemetry::updateMinUsage(const size_t reqSize, const size_t metadataSize) noexcept
     {
@@ -126,13 +131,9 @@ namespace pmm
     }
 
 
-
     /**************************************
-     *                                    *
      *              GETTERS               *
-     *                                    *
      **************************************/
-
 
     PMM_INLINE constexpr size_t TLSFTelemetry::getSize() const noexcept { return _allocatorSize; }
 
@@ -148,7 +149,6 @@ namespace pmm
     { return _currentMetadataUsage; }
     PMM_INLINE constexpr size_t TLSFTelemetry::getMinMetadataUsage() const noexcept { return _minMetadataUsage; }
     PMM_INLINE constexpr size_t TLSFTelemetry::getPeakMetadataUsage() const noexcept { return _peakMetadataUsage; }
-
 
     PMM_INLINE constexpr size_t TLSFTelemetry::getLargestFreeBlockSize() const noexcept
     { return _largestFreeBlockSize; }

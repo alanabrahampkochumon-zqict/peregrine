@@ -156,6 +156,62 @@ TEST_F(InternallyManagedSafeTLSFTests, Resize_OutofMemoryDueToFragmentation_Retu
 }
 
 
+TEST_F(InternallyManagedSafeTLSFTests, Alloc_OutofMemory_ReturnsNullptrInSafeMode)
+{
+    static_cast<void>(tlsf.malloc(1800_KB));
+    EXPECT_EQ(nullptr, tlsf.alloc<LargeData<300_KB>>());
+}
+
+
+TEST_F(InternallyManagedSafeTLSFTests, Alloc_OutofMemoryDueToFragmentation_ReturnsNullptrInSafeMode)
+{
+    [[maybe_unused]] const auto mem1 = tlsf.malloc(300_KB);
+    const auto mem2                  = tlsf.malloc(300_KB);
+    [[maybe_unused]] const auto mem3 = tlsf.malloc(300_KB);
+    const auto mem4                  = tlsf.malloc(300_KB);
+    [[maybe_unused]] const auto mem5 = tlsf.malloc(300_KB);
+    const auto mem6                  = tlsf.malloc(300_KB);
+    tlsf.mfree(mem2);
+    tlsf.mfree(mem4);
+    tlsf.mfree(mem6);
+
+    EXPECT_EQ(nullptr, tlsf.alloc<LargeData<650_KB>>());
+}
+
+
+TEST_F(InternallyManagedSafeTLSFTests, AllocV_ZeroCount_ReturnsEmptySpanInSafeMode)
+{
+    static_cast<void>(tlsf.malloc(1800_KB));
+    EXPECT_EQ(0, tlsf.allocV<LargeData<2_KB>>(0).size());
+}
+
+
+TEST_F(InternallyManagedSafeTLSFTests, AllocV_OutofMemory_ReturnsEmptySpanInSafeMode)
+{
+    static_cast<void>(tlsf.malloc(1800_KB));
+    // Approx 280_KB goes over threshold of nearly 240_KB free.
+    EXPECT_EQ(0, tlsf.allocV<LargeData<2_KB>>(140).size());
+}
+
+
+TEST_F(InternallyManagedSafeTLSFTests, AllocV_OutofMemoryDueToFragmentation_ReturnsEmptySpanInSafeMode)
+{
+    [[maybe_unused]] const auto mem1 = tlsf.malloc(300_KB);
+    const auto mem2                  = tlsf.malloc(300_KB);
+    [[maybe_unused]] const auto mem3 = tlsf.malloc(300_KB);
+    const auto mem4                  = tlsf.malloc(300_KB);
+    [[maybe_unused]] const auto mem5 = tlsf.malloc(300_KB);
+    const auto mem6                  = tlsf.malloc(300_KB);
+    // 900_KB Freed but fragmented
+    tlsf.mfree(mem2);
+    tlsf.mfree(mem4);
+    tlsf.mfree(mem6);
+
+    // Trying to allocate a 700_KB contiguous block
+    EXPECT_EQ(0, tlsf.allocV<LargeData<20_KB>>(35).size());
+}
+
+
 /**************************************
  *      EXTERNALLY MANAGED TLSF       *
  **************************************/
@@ -258,5 +314,60 @@ TEST_F(ExternallyManagedSafeTLSFTests, Resize_OutofMemoryDueToFragmentation_Retu
 TEST_F(ExternallyManagedSafeTLSFTests, MFree_NullptrReturnsNullptrInSafeMode)
 { EXPECT_DEBUG_DEATH(tlsf.mfree(nullptr), ""); }
 
+
+TEST_F(ExternallyManagedSafeTLSFTests, Alloc_OutofMemory_ReturnsNullptrInSafeMode)
+{
+    static_cast<void>(tlsf.malloc(1800_KB));
+    EXPECT_EQ(nullptr, tlsf.alloc<LargeData<300_KB>>());
+}
+
+
+TEST_F(ExternallyManagedSafeTLSFTests, Alloc_OutofMemoryDueToFragmentation_ReturnsNullptrInSafeMode)
+{
+    [[maybe_unused]] const auto mem1 = tlsf.malloc(300_KB);
+    const auto mem2                  = tlsf.malloc(300_KB);
+    [[maybe_unused]] const auto mem3 = tlsf.malloc(300_KB);
+    const auto mem4                  = tlsf.malloc(300_KB);
+    [[maybe_unused]] const auto mem5 = tlsf.malloc(300_KB);
+    const auto mem6                  = tlsf.malloc(300_KB);
+    tlsf.mfree(mem2);
+    tlsf.mfree(mem4);
+    tlsf.mfree(mem6);
+
+    EXPECT_EQ(nullptr, tlsf.alloc<LargeData<650_KB>>());
+}
+
+
+TEST_F(ExternallyManagedSafeTLSFTests, AllocV_ZeroCount_ReturnsEmptySpanInSafeMode)
+{
+    static_cast<void>(tlsf.malloc(1800_KB));
+    EXPECT_EQ(0, tlsf.allocV<LargeData<2_KB>>(0).size());
+}
+
+
+TEST_F(ExternallyManagedSafeTLSFTests, AllocV_OutofMemory_ReturnsEmptySpanInSafeMode)
+{
+    static_cast<void>(tlsf.malloc(1800_KB));
+    // Approx 280_KB goes over threshold of nearly 240_KB free.
+    EXPECT_EQ(0, tlsf.allocV<LargeData<2_KB>>(140).size());
+}
+
+
+TEST_F(ExternallyManagedSafeTLSFTests, AllocV_OutofMemoryDueToFragmentation_ReturnsEmptySpanInSafeMode)
+{
+    [[maybe_unused]] const auto mem1 = tlsf.malloc(300_KB);
+    const auto mem2                  = tlsf.malloc(300_KB);
+    [[maybe_unused]] const auto mem3 = tlsf.malloc(300_KB);
+    const auto mem4                  = tlsf.malloc(300_KB);
+    [[maybe_unused]] const auto mem5 = tlsf.malloc(300_KB);
+    const auto mem6                  = tlsf.malloc(300_KB);
+    // 900_KB Freed but fragmented
+    tlsf.mfree(mem2);
+    tlsf.mfree(mem4);
+    tlsf.mfree(mem6);
+
+    // Trying to allocate a 700_KB contiguous block
+    EXPECT_EQ(0, tlsf.allocV<LargeData<20_KB>>(35).size());
+}
 
 #endif
