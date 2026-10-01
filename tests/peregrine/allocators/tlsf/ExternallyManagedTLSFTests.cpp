@@ -155,16 +155,16 @@ TEST_F(ExternallyManagedTLSFTests, MoveCtor_MovesAllocatorEnablingAllocationsWit
 
 /// @test Verify that the move assign operator moves all the internal allocator state, enabling allocations
 ///       with the new instance.
-/// TODO: Fix test infinite loop
-// TEST_F(ExternallyManagedTLSFTests, MoveAssignOperator_MovesAllocatorEnablingAllocationsWithNewAllocator)
-// {
-//     uint8_t* internalBuffer = new uint8_t[512];
-//     pmm::TLSF<pmm::MemPolicy::External> tlsf2(internalBuffer, 512);
-//     tlsf2          = std::move(tlsf);
-//     const auto mem = tlsf2.malloc(512);
-//     EXPECT_NE(nullptr, mem);
-//     delete[] buffer;
-// }
+TEST_F(ExternallyManagedTLSFTests, MoveAssignOperator_MovesAllocatorEnablingAllocationsWithNewAllocator)
+{
+    const auto internalBuffer = new uint8_t[512];
+    pmm::TLSF<pmm::MemPolicy::External> tlsf2(internalBuffer, 512);
+    tlsf2 = std::move(tlsf);
+    delete[] internalBuffer;
+
+    const auto mem = tlsf2.malloc(512);
+    EXPECT_NE(nullptr, mem);
+}
 
 /**************************************
  *            ALLOC BYTES             *
