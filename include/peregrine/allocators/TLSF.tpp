@@ -24,7 +24,6 @@ namespace pmm
     {
         PMM_ASSERT_MSG(buffer != nullptr, "[TLSF]: Cannot create an allocator a nullptr for backing buffer");
         PMM_ASSERT_MSG(memorySize > 0, "[TLSF]: Cannot create an allocator with zero memory size");
-        std::memset(_buffer, 0, _size);
         clear();
     }
 
@@ -42,7 +41,6 @@ namespace pmm
           _telemetry(allocatorSize)
     {
         PMM_ASSERT_MSG(allocatorSize > 0, "[TLSF]: Cannot create an allocator with zero memory size");
-        std::memset(_buffer, 0, _size);
         clear();
     }
 
@@ -459,6 +457,8 @@ namespace pmm
         std::memset(_slBitmap.data(), 0, _slBitmap.size() * sizeof(Bitmask_t));
         // Clear the freelist
         std::memset(_freeList, 0, sizeof(_freeList));
+        // Clear the buffer
+        std::memset(_buffer, 0, _size);
         // If telemetry is enabled we must reset it before inserting the free block
         if constexpr (TelemetryPolicy == TelPolicy::Enabled)
         {

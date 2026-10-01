@@ -946,7 +946,6 @@ TEST_F(InternallyManagedTLSFTests, AllocV_SubsequentAllocationDoNotCorruptMemory
 // Namespacing is required for testing internal state
 namespace pmm
 {
-
     // NOTE: For CTOR tests we are using the fixture allocated tlsf.
     TEST_F(InternallyManagedTLSFTests, Ctor_CreatesValidFLAndSLBitmaps)
     {
@@ -1001,6 +1000,7 @@ namespace pmm
         EXPECT_EQ(1, nonNullFLCount);
         EXPECT_EQ(1, nonNullSLCount);
     }
+
 
     TEST_F(InternallyManagedTLSFTests, Ctor_WritesAppropriateHeaderToBuffer)
     {
@@ -1440,7 +1440,6 @@ namespace pmm
         EXPECT_EQ(oldFL, tlsf._flBitmap);
         EXPECT_EQ(oldSL, tlsf._slBitmap);
     }
-
 
 
     TEST_F(InternallyManagedTLSFTests, Clear_ResetsFreeList)
