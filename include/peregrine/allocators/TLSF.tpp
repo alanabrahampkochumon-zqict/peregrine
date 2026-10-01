@@ -185,7 +185,6 @@ namespace pmm
             insertBlock(remainingBlockStart, sizeLeft);
         }
 
-        // TODO: If the padding can store the header, then do so
         //                Offset
         //                  ↓
         // [Header][Padding][OffsetAmount][Address Returned to user]
@@ -305,14 +304,12 @@ namespace pmm
         block       = mergeNext(static_cast<uint8_t*>(block));
         auto header = static_cast<Header*>(block);
 
-        // TODO: Insert block needs to be made more granular since we are doing repeated work(separate write headers).
         insertBlock(static_cast<uint8_t*>(block), header->getSize());
 
         // Mark the next block's prevFree.
         // If this is not the final block, then we can mark the next block's prevFreeBlock as true.
         // The currently freed block is considered non-final if and only if the current block with its size leaves
         // enough space for at least a header.
-        // TODO: Check if its much safe to use the SPLIT_SIZE_THRESHOLD as the invalidation boundary.
         if (reinterpret_cast<uintptr_t>(block) + header->getSize() + sizeof(Header) <
             reinterpret_cast<uintptr_t>(_buffer) + _size)
         {
@@ -539,8 +536,6 @@ namespace pmm
         //          = 0010 1100
         //    newFL = ffs(00101100) which returns 2.
         // and taking the ffs(_slBitmap[newFL]), gives the correct sl index since block are arranged in order.
-        // TODO: Update to branchless variant(exploiting ?: which compiles down to cmovcc)
-        //       after adding allocation and tests
         auto bitmapTemp = _slBitmap[index.flIndex] & (~0ULL << index.slIndex);
         size_t nonEmptyFL, nonEmptySL;
         if (bitmapTemp != 0)
