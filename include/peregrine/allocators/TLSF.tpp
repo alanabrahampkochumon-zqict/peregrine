@@ -24,6 +24,7 @@ namespace pmm
     {
         PMM_ASSERT_MSG(buffer != nullptr, "[TLSF]: Cannot create an allocator a nullptr for backing buffer");
         PMM_ASSERT_MSG(memorySize > 0, "[TLSF]: Cannot create an allocator with zero memory size");
+        std::memset(_buffer, 0, _size);
         clear();
     }
 
@@ -41,6 +42,7 @@ namespace pmm
           _telemetry(allocatorSize)
     {
         PMM_ASSERT_MSG(allocatorSize > 0, "[TLSF]: Cannot create an allocator with zero memory size");
+        std::memset(_buffer, 0, _size);
         clear();
     }
 
