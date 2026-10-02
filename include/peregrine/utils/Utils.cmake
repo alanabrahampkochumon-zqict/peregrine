@@ -7,6 +7,7 @@ set(UtilHeaders
         Helpers.h
         Helpers.tpp
         Bit.h
+        Multithreading.h
 )
 
 list(TRANSFORM UtilHeaders PREPEND ${UtilsDir})

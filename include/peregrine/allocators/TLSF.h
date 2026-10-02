@@ -13,6 +13,7 @@
 
 
 #include "../utils/Bit.h"
+#include "../utils/Multithreading.h"
 #include "Policy.h"
 #include "peregrine/telemetry/TLSFTelemetry.h"
 #include "peregrine/utils/Preprocessors.h"
@@ -502,7 +503,6 @@ namespace pmm
 
 
 
-        FRIEND_TEST(InternallyManagedTLSFTests, Ctor_ZeroesOutBuffer);
         FRIEND_TEST(InternallyManagedTLSFTests, Ctor_CreatesValidFLAndSLBitmaps);
         FRIEND_TEST(InternallyManagedTLSFTests, Ctor_SingleAllocation_FLBitmapIsSingleBit);
         FRIEND_TEST(InternallyManagedTLSFTests, Ctor_SingleAllocation_SLBitmapHasOnlyOneNonZeroEntry);
@@ -534,7 +534,6 @@ namespace pmm
         FRIEND_TEST(InternallyManagedTLSFTests, Resize_LatestAllocation_LargerSizeUpdatesFLAndSLBitmaps);
         FRIEND_TEST(InternallyManagedTLSFTests, Clear_ResetsFLAndSLBitmaps);
         FRIEND_TEST(InternallyManagedTLSFTests, Clear_ResetsFreeList);
-        FRIEND_TEST(InternallyManagedTLSFTests, Clear_ZeroesOutBuffer);
 
         FRIEND_TEST(InternallyManagedTLSF_MappingInsertTests, ReturnsValidFLAndSLIndices);
         FRIEND_TEST(InternallyManagedTLSF_MappingSearchTests, ReturnsValidFLAndSLIndices);

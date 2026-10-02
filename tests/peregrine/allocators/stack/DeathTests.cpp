@@ -1,7 +1,7 @@
 /**
  * @file DeathTests.cpp
  * @author Alan Abraham P Kochumon
- * @date Created on: August 3, 2026
+ * @date Created on: August 03, 2026
  *
  * @brief Verifies stack allocators's assertions trigger correctly in DEBUG MODE.
  *
@@ -119,7 +119,7 @@ TEST_F(LooseStackTests, FreeBytes_BelowFirstAllocationAddress_TriggersAssertion)
     constexpr auto alignment = 8;
 
     const auto memory = static_cast<char*>(stack.allocBytes(size, alignment));
-    
+
     // Move 1 below assume header size
     EXPECT_DEBUG_DEATH(stack.freeBytes(memory - 1), "");
 }
@@ -314,7 +314,7 @@ TEST_F(StrictStackTests, FreeBytes_BelowFirstAllocationAddress_TriggersAssertion
 {
     constexpr auto size      = 512;
     constexpr auto alignment = 8;
-    const auto memory = static_cast<char*>(stack.allocBytes(size, alignment));
+    const auto memory        = static_cast<char*>(stack.allocBytes(size, alignment));
     // Move 1 below assume header size
     EXPECT_DEBUG_DEATH(stack.freeBytes(memory - 1), "");
 }
