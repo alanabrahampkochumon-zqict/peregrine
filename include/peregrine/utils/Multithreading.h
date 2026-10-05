@@ -14,6 +14,14 @@
 namespace pmm::mt
 {
 
+    /// @brief Multithreading policy.
+    enum class MTPolicy : uint8_t
+    {
+        NoMTPolicy,    /// Not safe for multithreaded environments.
+        SpinLockPolicy /// Multithreading support with spin locks.
+    };
+
+
 #if defined(__i386__) || deifned(__x86_64__) || defined(_M_IX86) || defined(_M_X64)
     #include <immintrin.h>
     #define _PMM_MT_YIELD() _mm_pause()
@@ -24,12 +32,11 @@ namespace pmm::mt
 #endif
 
 
-
     /// @brief Standard SpinLock with a spin-wait loop hint on supported platforms.
+    /// @note Direct use discouraged. Use @ref Mutex_t to switch based on the current MT Policy.
     struct SpinLock
     {
         std::atomic_flag flag = ATOMIC_FLAG_INIT;
-
         void lock() noexcept
         {
             while (flag.test_and_set(std::memory_order_acquire))
@@ -41,12 +48,40 @@ namespace pmm::mt
         void unlock() { flag.clear(std::memory_order_release); }
     };
 
-    /// @brief Dummy SpinLock to be used when MTPolicy is non-thread safe.
+
+    /// @brief Dummy SpinLock used when MTPolicy is disable.
+    /// @note Direct use discouraged. Use @ref Mutex_t to switch based on the current MT Policy.
     struct DummySpinLock
     {
         void lock() noexcept {}
         void unlock() noexcept {}
     };
+
+
+    /// @brief Type of Mutex available based on @ref MTPolicy.
+    template <MTPolicy Policy>
+    using Mutex_t = std::conditional_t<Policy == MTPolicy::SpinLockPolicy, SpinLock, DummySpinLock>;
+
+
+    /// @brief Concept defining a simple mutex with functionalities for locking and unlocking.
+    template <typename T>
+    concept SimpleMutex = requires(T t) {
+        t.lock();
+        t.unlock();
+    };
+
+
+    /// @brief Mutex wrapper providing RAII mechanism for the duration of the scoped block.
+    template <SimpleMutex T>
+    struct LockGuard
+    {
+        explicit constexpr LockGuard(T& mutex) noexcept: _mutex{ mutex } { _mutex.lock(); }
+        constexpr ~LockGuard() noexcept { _mutex.unlock(); }
+
+    private:
+        T& _mutex;
+    };
+
 
 
 } // namespace pmm::mt

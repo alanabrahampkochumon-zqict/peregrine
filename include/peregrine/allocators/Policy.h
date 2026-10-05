@@ -163,12 +163,12 @@ namespace pmm
     {
         /**
          * @brief Concept defining the requirements for multithreading safety.
-         *
+         * @deprecated
          * @relatedalso ThreadSafe
          * @relatedalso NonThreadSafe
          */
         template <typename T>
-        concept MTPolicy = requires(T) {
+        concept MTPolicyConc = requires(T) {
             { T::getPolicyName() } -> std::same_as<std::string>;
         };
 
@@ -216,14 +216,6 @@ namespace pmm
     {
         Safe,  ///< Policy for safe allocator. Recommended for allocations/deallocation where validation is required.
         Unsafe ///< Policy for unsafe allocator. Faster due to lack of safe guardrails like nullptr checking.
-    };
-
-
-    /// @brief Allocator multithreading configuration.
-    enum class MTPolicy : uint8_t
-    {
-        NoMTPolicy,    /// Not safe for multithread environments.
-        SpinLockPolicy /// Multithreading support with spin locks.
     };
 
     /** @} */
