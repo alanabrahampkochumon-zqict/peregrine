@@ -40,8 +40,7 @@ namespace pmm
      *                              Default: @ref mt::MTPolicy::NoMTPolicy.
      */
     template <MemPolicy MemoryPolicy = MemPolicy::Internal, TelPolicy TelemetryPolicy = TelPolicy::Disabled,
-              SafeModePolicy SafeMode           = SafeModePolicy::Unsafe,
-              mt::MTPolicy MultithreadingPolicy = mt::MTPolicy::NoMTPolicy>
+              SafeModePolicy SafeMode = SafeModePolicy::Unsafe, mt::MTPolicy MultithreadingPolicy = mt::MTPolicy::NoMT>
     class TLSF
     {
     public:

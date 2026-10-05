@@ -66,6 +66,12 @@
      * @brief Utility functions and structures.
      * @ingroup PMM_Lib
      */
+
+    /**
+    * @defgroup PMM_MT Multithreading
+    * @brief Multithreading primitives and helpers.
+    * @ingroup PMM_Lib
+    */
     
 /** @} */ // End of PMM_Lib
 

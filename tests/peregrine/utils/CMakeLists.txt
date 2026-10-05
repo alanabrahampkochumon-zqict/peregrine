@@ -1,15 +1,12 @@
 add_library(
         UtilsTests OBJECT
         BitTests.cpp
+        ConstantTests.cpp
+        HelpersTest.cpp
+        MultithreadingTests.cpp
 )
 
 target_compile_features(UtilsTests PUBLIC cxx_std_20)
-
-target_sources(
-        UtilsTests PRIVATE
-        ConstantTests.cpp
-        HelpersTest.cpp
-)
 
 target_include_directories(
         UtilsTests PRIVATE

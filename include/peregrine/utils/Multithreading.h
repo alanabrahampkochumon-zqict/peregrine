@@ -11,18 +11,13 @@
 
 #include <atomic>
 
-namespace pmm::mt
-{
 
-    /// @brief Multithreading policy.
-    enum class MTPolicy : uint8_t
-    {
-        NoMTPolicy,    /// Not safe for multithreaded environments.
-        SpinLockPolicy /// Multithreading support with spin locks.
-    };
+/**
+ * @addtogroup PMM_MT
+ * @{
+ */
 
-
-#if defined(__i386__) || deifned(__x86_64__) || defined(_M_IX86) || defined(_M_X64)
+#if defined(__i386__) || defined(__x86_64__) || defined(_M_IX86) || defined(_M_X64)
     #include <immintrin.h>
     #define _PMM_MT_YIELD() _mm_pause()
 #elif defined(__arm64__) || defined(_M_ARM64)
@@ -30,6 +25,15 @@ namespace pmm::mt
 #else
     #define _PMM_MT_YIELD()
 #endif
+
+namespace pmm::mt
+{
+    /// @brief Multithreading policy.
+    enum class MTPolicy : uint8_t
+    {
+        NoMT,    /// Not safe for multithreaded environments.
+        SpinLock /// Multithreading support with spin locks.
+    };
 
 
     /// @brief Standard SpinLock with a spin-wait loop hint on supported platforms.
@@ -60,7 +64,7 @@ namespace pmm::mt
 
     /// @brief Type of Mutex available based on @ref MTPolicy.
     template <MTPolicy Policy>
-    using Mutex_t = std::conditional_t<Policy == MTPolicy::SpinLockPolicy, SpinLock, DummySpinLock>;
+    using Mutex_t = std::conditional_t<Policy == MTPolicy::SpinLock, SpinLock, DummySpinLock>;
 
 
     /// @brief Concept defining a simple mutex with functionalities for locking and unlocking.
@@ -82,6 +86,7 @@ namespace pmm::mt
         T& _mutex;
     };
 
-
-
 } // namespace pmm::mt
+
+
+/** @} */
