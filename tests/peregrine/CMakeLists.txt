@@ -4,7 +4,7 @@ add_executable(PeregrineDeathTests $<TARGET_OBJECTS:AllocatorDeathTests>)
 add_library(PeregrineTestSetup INTERFACE)
 target_link_libraries(PeregrineTestSetup INTERFACE
         GTest::gtest_main
-        StrictWarnings
+        ${PROJECT_NAME}-StrictWarnings
         Peregrine
 )
 # Enable death tests only in debug mode

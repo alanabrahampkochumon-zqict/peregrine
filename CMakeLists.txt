@@ -2,8 +2,8 @@ cmake_minimum_required(VERSION 3.28)
 project(Peregrine LANGUAGES CXX)
 enable_testing()
 
-add_library(StrictWarnings INTERFACE) # Used for linking Warning flags
-add_library(ProjectASan INTERFACE) # Used for linking ASan
+add_library(${PROJECT_NAME}-StrictWarnings INTERFACE) # Used for linking Warning flags
+add_library(${PROJECT_NAME}-ASan INTERFACE) # Used for linking ASan
 
 # Turn on solution folders
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)

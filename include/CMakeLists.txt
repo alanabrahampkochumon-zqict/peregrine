@@ -14,7 +14,7 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-target_link_libraries(Peregrine PUBLIC StrictWarnings PeregrineMemory)
+target_link_libraries(Peregrine PUBLIC ${PROJECT_NAME}-StrictWarnings PeregrineMemory)
 
 source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} PREFIX "Header Files" FILES
         ${HeaderFiles}

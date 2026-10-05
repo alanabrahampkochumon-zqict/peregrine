@@ -10,13 +10,13 @@ if (CLANG_FORMATTER)
     )
     # Only add the target if files were actually found to avoid the stdin error
     if (ALL_SOURCE_FILES)
-        add_custom_target(format
+        add_custom_target(${PROJECT_NAME}-Format
                 COMMAND "${CLANG_FORMATTER}" -i -style=file ${ALL_SOURCE_FILES}
                 WORKING_DIRECTORY "${CMAKE_SOURCE_DIR}"
                 COMMENT "Formatting source files..."
                 VERBATIM
         )
-        set_target_properties(format PROPERTIES FOLDER ${DevToolsDir})
+        set_target_properties(${PROJECT_NAME}-Format PROPERTIES FOLDER ${DevToolsDir})
     else ()
         message(STATUS "No source files found for formatting.")
     endif ()

@@ -16,7 +16,7 @@ target_sources(
 target_link_libraries(
         Pong PRIVATE
         Peregrine
-        StrictWarnings
+        ${PROJECT_NAME}-StrictWarnings
 
         imgui
         SDL3::SDL3

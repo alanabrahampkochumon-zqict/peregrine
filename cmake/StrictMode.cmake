@@ -3,11 +3,11 @@ include_guard()
 message(STATUS "Configuring Strict Warnings")
 if (MSVC AND NOT CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     # 4324 -> Extra padding added due to alignment specifier
-    target_compile_options(StrictWarnings INTERFACE
+    target_compile_options(${PROJECT_NAME}-StrictWarnings INTERFACE
             $<$<COMPILE_LANGUAGE:CXX>:/WX;/W4;/permissive-;/fp:strict;/wd4723;/wd4324>
     )
 elseif (MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-    target_compile_options(StrictWarnings INTERFACE
+    target_compile_options(${PROJECT_NAME}-StrictWarnings INTERFACE
             $<$<COMPILE_LANGUAGE:CXX>:-Wall;-Wextra;-Wpedantic;-Werror>
             $<$<CXX_COMPILER_ID:Clang>:
             # Backwards compatibility warning suppression
@@ -34,7 +34,7 @@ elseif (MSVC AND CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     )
     set(CMAKE_DISABLE_PRECOMPILE_HEADERS ON)
 else ()
-    target_compile_options(StrictWarnings INTERFACE
+    target_compile_options(${PROJECT_NAME}-StrictWarnings INTERFACE
             $<$<COMPILE_LANGUAGE:CXX>:-Wall;-Wextra;-Werror;-pedantic-errors>
             $<$<CXX_COMPILER_ID:Clang>:-Wno-c++98-compat;-Wno-c++98-compat-pedantic;-Wno-pre-c++14-compat;-Wno-pre-c++17-compat;-Wno-c++20-compat;-Wno-reserved-macro-identifier>
             $<$<CXX_COMPILER_ID:AppleClang>:-Wno-c++98-compat;-Wno-c++98-compat-pedantic;-Wno-pre-c++14-compat;-Wno-pre-c++17-compat;-Wno-c++20-compat>

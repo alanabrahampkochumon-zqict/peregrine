@@ -41,7 +41,7 @@ target_include_directories(Asteroids PRIVATE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(
         Asteroids PRIVATE
         Peregrine
-        StrictWarnings
+        ${PROJECT_NAME}-StrictWarnings
         PSMath
 
         imgui
