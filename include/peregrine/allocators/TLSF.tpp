@@ -144,7 +144,14 @@ namespace pmm
         const auto requiredSize = metadataSize + (alignment - 1) + size;
 
         // For allocating memory we need to find the FL and SL indices.
-        auto index     = mappingSearch(requiredSize);
+        auto index = mappingSearch(requiredSize);
+
+        // Multithreading TODO: Add test
+        if constexpr (MultithreadingPolicy == mt::MTPolicy::SpinLock)
+        {
+            [[maybe_unused]] mt::LockGuard guard(_mutex);
+        }
+
         auto freeBlock = searchSuitableBlock(index);
 
         if constexpr (SafeMode == SafeModePolicy::Safe)

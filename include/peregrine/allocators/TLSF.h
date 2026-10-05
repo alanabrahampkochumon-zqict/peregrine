@@ -12,20 +12,17 @@
  */
 
 
-#include "../utils/Bit.h"
-#include "../utils/Multithreading.h"
 #include "Policy.h"
 #include "peregrine/telemetry/TLSFTelemetry.h"
+#include "peregrine/utils/Bit.h"
+#include "peregrine/utils/Multithreading.h"
 #include "peregrine/utils/Preprocessors.h"
 
 #include <array>
-#include <bit>
-#include <format>
 
 
 namespace pmm
 {
-    // TODO: Add a thread safe variant using spin lock
     /**
      * @brief Constant time dynamic memory allocator(Two Level Segregated Fit).
      *
@@ -395,6 +392,7 @@ namespace pmm
         TLSFFreeNode* _freeList[FL_SIZE][SL_SIZE]; /// Free-list
 
         PMM_NO_UNIQUE_ADDR TLSFTelemetry_t<TelemetryPolicy> _telemetry;
+        PMM_NO_UNIQUE_ADDR mt::Mutex_t<MultithreadingPolicy> _mutex;
 
         /// Structure used for exchanging bit mask indices internally.
         struct BitmapIndices
@@ -575,8 +573,6 @@ namespace pmm
         FRIEND_TEST(ExternallyManagedTLSF_MappingSearchTests, ReturnsValidFLAndSLIndices);
 #endif
     };
-
-
 
 } // namespace pmm
 
