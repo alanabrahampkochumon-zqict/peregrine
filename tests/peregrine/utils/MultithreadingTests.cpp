@@ -46,7 +46,7 @@ namespace
 
 
 /// @ref Verify that @ref pmm::mt::SpinLock is able to keep mutual exclusivity of resources.
-TEST(PeregrineMultithreadindTests, SpinLockKeepsMutualExclusivity)
+TEST(PeregrineMultithreadingTests, SpinLockKeepsMutualExclusivity)
 {
     constexpr size_t numTotalIterations = 10000000; // 10MIL
     const size_t numThreads = std::thread::hardware_concurrency() == 0 ? 4 : std::thread::hardware_concurrency();
@@ -62,6 +62,66 @@ TEST(PeregrineMultithreadindTests, SpinLockKeepsMutualExclusivity)
             mutex.lock();     // Lock runningCounter
             ++runningCounter; // Mutate the value
             mutex.unlock();   // Unlock runningCounter
+        }
+    };
+
+    // Loop and dispatch the incrementCounter on each thread.
+    for (size_t i{ 0 }; i < numThreads; ++i)
+    {
+        threads.emplace_back(std::thread(incrementCounter));
+    }
+
+    // Join the threads so the program will wait for the threads to finish before exiting
+    for (size_t i{ 0 }; i < numThreads; ++i)
+    {
+        threads[i].join();
+    }
+
+    // Assert the equality of the expected and the real cumulative sum.
+    EXPECT_EQ(numThreads * numIterationsPerThread, runningCounter);
+}
+
+
+// @test Verify that @ref pmm::mt::LockGuard provides an RAII-based locking and unlocking.
+TEST(PeregrineMultithreadingTests, LockGuardProvidesRAIIBasedMutexControl)
+{
+
+    /// Mutex for testing. Must satisfy SimpleMutex concept to be used with LockGuard
+    struct MockMutex
+    {
+        size_t lockCalled{ 0 }, unlockCalled{ 0 };
+
+        void lock() { ++lockCalled; }
+        void unlock() { ++unlockCalled; }
+    };
+
+
+    MockMutex mutex;
+    // Test scoped locking and unlocking
+    {
+        [[maybe_unused]] pmm::mt::LockGuard guard(mutex);
+    }
+
+    EXPECT_EQ(1, mutex.lockCalled);
+    EXPECT_EQ(1, mutex.unlockCalled);
+}
+
+
+TEST(PeregrineMultithreadingTests, LockGuardWithSpinLockKeepsMutualExclusivity)
+{
+    constexpr size_t numTotalIterations = 10000000; // 10MIL
+    const size_t numThreads = std::thread::hardware_concurrency() == 0 ? 4 : std::thread::hardware_concurrency();
+    const size_t numIterationsPerThread = numTotalIterations / numThreads;
+    pmm::mt::SpinLock mutex;
+    std::vector<std::thread> threads{};
+    size_t runningCounter = 0; // Shared resource
+
+    // Helper function for incrementing the running counter for each thread
+    const auto incrementCounter = [&]() {
+        for (size_t j{ 0 }; j < numIterationsPerThread; ++j)
+        {
+            [[maybe_unused]] pmm::mt::LockGuard guard(mutex); // Use the lock guard for spinlock
+            ++runningCounter;                                 // Mutate the value
         }
     };
 

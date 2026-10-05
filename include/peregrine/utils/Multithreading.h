@@ -38,27 +38,42 @@ namespace pmm::mt
 
     /// @brief Standard SpinLock with a spin-wait loop hint on supported platforms.
     /// @note Direct use discouraged. Use @ref Mutex_t to switch based on the current MT Policy.
-    struct SpinLock
+    class SpinLock
     {
-        std::atomic_flag flag = ATOMIC_FLAG_INIT;
+    public:
+        SpinLock() {}
+
         void lock() noexcept
         {
-            while (flag.test_and_set(std::memory_order_acquire))
+            while (_flag.test_and_set(std::memory_order_acquire))
             {
                 _PMM_MT_YIELD();
             }
         }
+        void unlock() { _flag.clear(std::memory_order_release); }
 
-        void unlock() { flag.clear(std::memory_order_release); }
+        SpinLock(const SpinLock& other)                = delete;
+        SpinLock(SpinLock&& other) noexcept            = delete;
+        SpinLock& operator=(const SpinLock& other)     = delete;
+        SpinLock& operator=(SpinLock&& other) noexcept = delete;
+
+    private:
+        std::atomic_flag _flag = ATOMIC_FLAG_INIT;
     };
 
 
     /// @brief Dummy SpinLock used when MTPolicy is disable.
     /// @note Direct use discouraged. Use @ref Mutex_t to switch based on the current MT Policy.
-    struct DummySpinLock
+    class DummySpinLock
     {
+    public:
         void lock() noexcept {}
         void unlock() noexcept {}
+
+        DummySpinLock(const DummySpinLock& other)                = delete;
+        DummySpinLock(DummySpinLock&& other) noexcept            = delete;
+        DummySpinLock& operator=(const DummySpinLock& other)     = delete;
+        DummySpinLock& operator=(DummySpinLock&& other) noexcept = delete;
     };
 
 
@@ -77,10 +92,16 @@ namespace pmm::mt
 
     /// @brief Mutex wrapper providing RAII mechanism for the duration of the scoped block.
     template <SimpleMutex T>
-    struct LockGuard
+    class LockGuard
     {
+    public:
         explicit constexpr LockGuard(T& mutex) noexcept: _mutex{ mutex } { _mutex.lock(); }
         constexpr ~LockGuard() noexcept { _mutex.unlock(); }
+
+        LockGuard(const LockGuard& other)                = delete;
+        LockGuard(LockGuard&& other) noexcept            = delete;
+        LockGuard& operator=(const LockGuard& other)     = delete;
+        LockGuard& operator=(LockGuard&& other) noexcept = delete;
 
     private:
         T& _mutex;
