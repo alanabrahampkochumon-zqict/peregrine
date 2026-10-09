@@ -69,7 +69,7 @@ namespace pmm
           _arenaSize{ arena._arenaSize },
           _offset{ arena._offset },
           _prevOffset{ arena._prevOffset },
-          _telemetry{ std::exchange(arena._telemetry, getTelemetryInstance<TelemetryPolicy>(_arenaSize)) }
+          _telemetry{ arena._telemetry }
     {}
 
 
@@ -338,8 +338,8 @@ namespace pmm
 
     template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
               mt::MTPolicy MultithreadingPolicy>
-    PMM_INLINE constexpr const ArenaTelemetryType<TelemetryPolicy>& Arena<MemoryPolicy, TelemetryPolicy, SafeMode,
-                                                                    MultithreadingPolicy>::getTelemetry() const noexcept
+    PMM_INLINE constexpr const ArenaTelemetryType<TelemetryPolicy>& Arena<
+        MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::getTelemetry() const noexcept
     { return _telemetry; }
 
 } // namespace pmm

@@ -8,7 +8,6 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
-#undef ENABLE_PMM_DEATH_TESTS
 #ifndef ENABLE_PMM_DEATH_TESTS
 
     #include "Utils.h"

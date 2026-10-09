@@ -39,7 +39,7 @@ namespace
     {
     public:
         size_t arenaSize{ 2_KB };
-        pmm::Arena<> arena{ arenaSize };
+        pmm::Arena<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> arena{ arenaSize };
     };
 
 
@@ -101,7 +101,7 @@ TEST_F(ManagedArenaTests, ArenaHasFreeSpaceEqualToSizeInitially) { EXPECT_EQ(are
 
 TEST_F(ManagedArenaTests, MoveCtor_CopiesAttributesToNewObject)
 {
-    const pmm::Arena<> arena2 = std::move(arena);
+    const pmm::Arena<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> arena2 = std::move(arena);
     EXPECT_EQ(arenaSize, arena2.freeSize());
     EXPECT_EQ(arenaSize, arena2.size());
     EXPECT_EQ(0, arena2.usedSize());
@@ -117,7 +117,7 @@ TEST_F(ManagedArenaTests, MoveCtor_MovesTelemetry)
     // DON'T get by reference as it will change internally
     const auto telemetry = arena.getTelemetry();
 
-    const pmm::Arena<> arena2 = std::move(arena);
+    const pmm::Arena<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> arena2 = std::move(arena);
 
     // Checking for telemetry equality
     EXPECT_EQ(telemetry.getUsedSize(), arena2.getTelemetry().getUsedSize());
@@ -132,7 +132,7 @@ TEST_F(ManagedArenaTests, MoveAssign_CopiesAttributesToNewObject)
 {
     constexpr auto sampleAllocation = 50;
     static_cast<void>(arena.allocBytes(sampleAllocation));
-    pmm::Arena<> arena2(256);
+    pmm::Arena<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> arena2(256);
 
     arena2 = std::move(arena);
     EXPECT_EQ(arenaSize - sampleAllocation, arena2.freeSize());
@@ -149,7 +149,7 @@ TEST_F(ManagedArenaTests, MoveAssign_MovesTelemetry)
     // DON'T get by reference as it will change internally
     const auto telemetry = arena.getTelemetry();
 
-    pmm::Arena<> arena2(256);
+    pmm::Arena<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> arena2(256);
     arena2 = std::move(arena);
 
     // Checking for telemetry equality
@@ -728,7 +728,7 @@ namespace pmm
 
     TEST_F(ManagedArenaTests, MoveCtor_ClearsMovedArena)
     {
-        const Arena<> arena2 = std::move(arena);
+        const Arena<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> arena2 = std::move(arena);
         // NOLINT(bugprone-use-after-move)
         EXPECT_EQ(nullptr, arena._buffer);
         EXPECT_EQ(0, arena.getTelemetry().getUsedSize());
@@ -741,7 +741,7 @@ namespace pmm
         const auto initialOffset     = arena._offset;
         const auto initialPrevOffset = arena._prevOffset;
 
-        const Arena<> arena2 = std::move(arena);
+        const Arena<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> arena2 = std::move(arena);
         EXPECT_EQ(initialPointer, arena2._buffer);
         EXPECT_EQ(initialOffset, arena2._offset);
         EXPECT_EQ(initialPrevOffset, arena2._prevOffset);
@@ -751,7 +751,7 @@ namespace pmm
 
     TEST_F(ManagedArenaTests, MoveAssign_ClearsMovedArena)
     {
-        [[maybe_unused]] Arena<> arena2(256);
+        [[maybe_unused]] Arena<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> arena2(256);
 
         static_cast<void>(arena2 = std::move(arena));
         EXPECT_EQ(nullptr, arena._buffer);
@@ -761,7 +761,7 @@ namespace pmm
     TEST_F(ManagedArenaTests, MoveAssign_MovesBufferIntoNewObject)
     {
         const auto initialPointer = arena._buffer;
-        Arena<> arena2(256);
+        Arena<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> arena2(256);
 
         arena2 = std::move(arena);
 
@@ -801,12 +801,12 @@ namespace pmm
 
     TEST_F(ManagedArenaTests, MoveAssign_DeletingOriginalArenaDoNotDeleteTheNewArenasMemory)
     {
-        Arena<> arena2(256);
+        Arena<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> arena2(256);
         constexpr auto scopedArenaSize = 512;
 
         // The arena being moved is scoped
         {
-            Arena<> scopedArena(scopedArenaSize);
+            Arena<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> scopedArena(scopedArenaSize);
             arena2 = std::move(scopedArena);
         }
         EXPECT_NE(nullptr, arena2._buffer);
