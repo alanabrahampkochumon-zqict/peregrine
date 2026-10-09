@@ -29,12 +29,21 @@ namespace pmm
      *        instantly "freeing" all memory allocated during its lifetime.
      *
      * @warning You MUST assign this to a named local variable to maintain its scope.
+     * @tparam MemoryPolicy         Memory management type. See @ref pmm::MemPolicy.
+     * @tparam TelemetryPolicy      Policy indicating whether telemetry is enabled for this allocator.
+     *                              See @ref pmm::TelPolicy. Disabled by default.
+     * @tparam SafeMode             Policy dictating the safety of this allocator. When in safe mode, certain actions
+     *                              like `nullptr` resize or free are handled gracefully, in *Release Mode*. Assertions
+     *                              acts as safety value in both mode, given *Debug Mode* is enabled. Disabled by
+     *                              default to prevent any performance stalls incurred by conditional checks.
+     * @tparam MultithreadingPolicy Policy hinting whether the instance can handle multithreading safety.
+     *                              Default: @ref mt::MTPolicy::NoMTPolicy.
      */
-    template <MemoryStrategy MemStrategy = ManagedMemory, telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled,
-              bool Safe = false>
+    template <MemPolicy MemoryPolicy = MemPolicy::Internal, TelPolicy TelemetryPolicy = TelPolicy::Disabled,
+              SafeModePolicy SafeMode = SafeModePolicy::Unsafe, mt::MTPolicy MultithreadingPolicy = mt::MTPolicy::NoMT>
     struct [[nodiscard]] TempArena
     {
-        Arena<MemStrategy, TelPolicy, Safe>* targetArena;
+        Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>* targetArena;
         std::size_t prevOffset, currentOffset;
 
         /**
@@ -42,7 +51,8 @@ namespace pmm
          *
          * @param arena The arena to take a snapshot of.
          */
-        [[nodiscard]] explicit constexpr TempArena(Arena<MemStrategy, TelPolicy, Safe>* arena) noexcept;
+        [[nodiscard]] explicit constexpr TempArena(
+            Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>* arena) noexcept;
 
 
         /**

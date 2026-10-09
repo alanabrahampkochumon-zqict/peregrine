@@ -205,11 +205,11 @@ namespace pmm
 
 
     /**
-     * @brief Get a telemetry instance depending the telemetry policy in use by the target tlsf.
+     * @brief Get a telemetry instance depending on the telemetry policy in use by the target tlsf.
      *
      * @tparam Policy The Telemetry policy in use by the target tlsf.
      *
-     * @param tlsfSize The size of the tlsf
+     * @param tlsfSize The size of the tlsf.
      *
      * @return A tlsf telemetry instance suited for the telemetry policy.
      */

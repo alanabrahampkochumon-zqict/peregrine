@@ -275,7 +275,7 @@ namespace pmm
 
 
     /**
-     * @brief Get a telemetry instance depending the telemetry policy in use by the target stack.
+     * @brief Get a telemetry instance depending on the telemetry policy in use by the target stack.
      *
      * @tparam Policy The Telemetry policy in use by the target stack.
      *

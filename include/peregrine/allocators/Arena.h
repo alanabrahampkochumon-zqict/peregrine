@@ -12,6 +12,7 @@
 
 #include "Policy.h"
 #include "peregrine/telemetry/ArenaTelemetry.h"
+#include "peregrine/utils/Multithreading.h"
 #include "peregrine/utils/Preprocessors.h"
 
 #include <cstdint>
@@ -27,20 +28,25 @@ namespace pmm
      */
 
     // Forward Declaration
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
     struct TempArena;
 
     /**
      * @brief Linear memory allocator.
      *
-     * @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
-     * @tparam TelPolicy   Flag indicating whether or not telemetry is enabled for this arena. See @ref pmm::telemetry.
-     * @tparam Safe        Flags an arena as safe, implying certain operations like resizing a `nullptr` are handled
-     *                     gracefully when assertions are disabled. `False` by default to prevent any performance
-     *                     stalls incurred by conditional checks.
+     * @tparam MemoryPolicy         Memory management type. See @ref pmm::MemPolicy.
+     * @tparam TelemetryPolicy      Policy indicating whether telemetry is enabled for this allocator.
+     *                              See @ref pmm::TelPolicy. Disabled by default.
+     * @tparam SafeMode             Policy dictating the safety of this allocator. When in safe mode, certain actions
+     *                              like `nullptr` resize or free are handled gracefully, in *Release Mode*. Assertions
+     *                              acts as safety value in both mode, given *Debug Mode* is enabled. Disabled by
+     *                              default to prevent any performance stalls incurred by conditional checks.
+     * @tparam MultithreadingPolicy Policy hinting whether the instance can handle multithreading safety.
+     *                              Default: @ref mt::MTPolicy::NoMTPolicy.
      */
-    template <MemoryStrategy MemStrategy = ManagedMemory, telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled,
-              bool Safe = false>
+    template <MemPolicy MemoryPolicy = MemPolicy::Internal, TelPolicy TelemetryPolicy = TelPolicy::Disabled,
+              SafeModePolicy SafeMode = SafeModePolicy::Unsafe, mt::MTPolicy MultithreadingPolicy = mt::MTPolicy::NoMT>
     struct Arena
     {
 
@@ -57,7 +63,7 @@ namespace pmm
          * @remarks API specialized for @ref pmm::ManagedMemory.
          */
         constexpr explicit Arena(size_t arenaSize) noexcept
-            requires std::same_as<MemStrategy, ManagedMemory>;
+            requires(MemoryPolicy == MemPolicy::Internal);
 
 
         /**
@@ -74,7 +80,7 @@ namespace pmm
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
          */
         constexpr explicit Arena(void* backingBuffer, size_t bufferSize) noexcept
-            requires std::same_as<MemStrategy, UnmanagedMemory>;
+            requires(MemoryPolicy == MemPolicy::External);
 
 
         /**
@@ -85,7 +91,7 @@ namespace pmm
          * @remarks API specialized for @ref pmm::ManagedMemory.
          */
         constexpr ~Arena() noexcept
-            requires std::same_as<MemStrategy, ManagedMemory>;
+            requires(MemoryPolicy == MemPolicy::Internal);
 
 
         /**
@@ -95,7 +101,7 @@ namespace pmm
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
          */
         constexpr ~Arena() noexcept
-            requires std::same_as<MemStrategy, UnmanagedMemory>
+            requires(MemoryPolicy == MemPolicy::External)
         = default;
 
 
@@ -301,13 +307,13 @@ namespace pmm
          * @brief Get the telemetry instance associated with this arena.
          * @return A const reference to the @ref ArenaTelemetry instance.
          */
-        [[nodiscard]] constexpr const ArenaTelemetryType<TelPolicy>& getTelemetry() const noexcept;
+        [[nodiscard]] constexpr const ArenaTelemetryType<TelemetryPolicy>& getTelemetry() const noexcept;
 
 
     private:
         uint8_t* _buffer;
         uint64_t _arenaSize, _offset, _prevOffset;
-        PMM_NO_UNIQUE_ADDR ArenaTelemetryType<TelPolicy> _telemetry{ 0 };
+        PMM_NO_UNIQUE_ADDR ArenaTelemetryType<TelemetryPolicy> _telemetry{ 0 };
 
         /**
          * @brief Align the internal buffer to @p alignment.

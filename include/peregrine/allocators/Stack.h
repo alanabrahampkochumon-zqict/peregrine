@@ -62,7 +62,7 @@ namespace pmm
      *                     stack::Strict takes up twice the header space, but ensure LIFO compliance via asserts in
      *                     Debug Mode and conditionals in Release Mode with @p Safe.
      * @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
-     * @tparam TelPolicy   Flag indicating whether or not telemetry is enabled for this stack. See @ref pmm::telemetry.
+     * @tparam TelPolicy   Flag indicating whether telemetry is enabled for this stack. See @ref pmm::telemetry.
      * @tparam Safe        Flags an stack as safe, implying certain operations like resizing a `nullptr` are handled
      *                     gracefully when assertions are disabled. `False` by default to prevent any performance
      *                     stalls incurred by conditional checks.

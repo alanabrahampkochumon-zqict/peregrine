@@ -207,7 +207,7 @@ namespace pmm
 
 
     /**
-     * @brief Get a telemetry instance depending the telemetry policy in use by the target pool.
+     * @brief Get a telemetry instance depending on the telemetry policy in use by the target pool.
      *
      * @tparam Policy The Telemetry policy in use by the target pool.
      *

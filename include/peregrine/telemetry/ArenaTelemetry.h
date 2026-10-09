@@ -12,7 +12,7 @@
  */
 
 
-#include "../allocators/Policy.h"
+#include "peregrine/allocators/Policy.h"
 
 namespace pmm
 {
@@ -150,24 +150,23 @@ namespace pmm
      *
      * @tparam Policy Telemetry Policy used by the arena.
      */
-    template <telemetry::TelemetryPolicy Policy>
-    using ArenaTelemetryType =
-        std::conditional_t<std::is_same_v<Policy, telemetry::Disabled>, DummyArenaTelemetry, ArenaTelemetry>;
+    template <TelPolicy Policy>
+    using ArenaTelemetryType = std::conditional_t<Policy == TelPolicy::Disabled, DummyArenaTelemetry, ArenaTelemetry>;
 
 
     /**
-     * @brief Get a telemetry instance depending the telemetry policy in use by the target arena.
+     * @brief Get a telemetry instance depending on the telemetry policy in use by the target arena.
      *
      * @tparam Policy The Telemetry policy in use by the target arena.
      *
      * @param[in] arenaSize  The size of the Arena.
      *
-     * @return A arena telemetry instance suited for the telemetry policy.
+     * @return An arena telemetry instance suited for the telemetry policy.
      */
-    template <telemetry::TelemetryPolicy Policy>
+    template <TelPolicy Policy>
     constexpr ArenaTelemetryType<Policy> getTelemetryInstance(const std::size_t arenaSize) noexcept
     {
-        if constexpr (std::same_as<Policy, telemetry::Disabled>)
+        if constexpr (Policy == TelPolicy::Disabled)
         {
             return DummyArenaTelemetry(arenaSize);
         }
@@ -176,7 +175,6 @@ namespace pmm
             return ArenaTelemetry(arenaSize);
         }
     }
-
 
     /** @} */
 

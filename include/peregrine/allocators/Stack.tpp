@@ -296,7 +296,7 @@ namespace pmm
                 return nullptr;
             }
         }
-        // Used for comparing if two offsets are matching giving us whether or not the resize is of the latest
+        // Used for comparing if two offsets are matching giving us whether the resize is of the latest
         // allocation
         const auto currentOffset = reinterpret_cast<uintptr_t>(oldMemory) - reinterpret_cast<uintptr_t>(_buffer);
 

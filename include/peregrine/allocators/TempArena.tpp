@@ -20,15 +20,17 @@ namespace pmm
      *          INITIALIZATIONS           *
      **************************************/
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr TempArena<MemStrategy, TelPolicy, Safe>::TempArena(
-        Arena<MemStrategy, TelPolicy, Safe>* arena) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr TempArena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::TempArena(
+        Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>* arena) noexcept
         : targetArena(arena), prevOffset(arena->_prevOffset), currentOffset(arena->_offset)
     {}
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr TempArena<MemStrategy, TelPolicy, Safe>::~TempArena() noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr TempArena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::~TempArena() noexcept
     {
         targetArena->_prevOffset = prevOffset;
         targetArena->_offset     = currentOffset;
@@ -39,21 +41,24 @@ namespace pmm
      *            ALLOCATIONS             *
      **************************************/
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE void* TempArena<MemStrategy, TelPolicy, Safe>::allocBytes(const std::size_t bytes,
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE void* TempArena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::allocBytes(const std::size_t bytes,
                                                                          const std::size_t alignment) const noexcept
     { return targetArena->allocBytes(bytes, alignment); }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
     template <typename T, typename... Args>
-    PMM_INLINE constexpr T* TempArena<MemStrategy, TelPolicy, Safe>::alloc(Args... args) noexcept
+    PMM_INLINE constexpr T* TempArena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::alloc(Args... args) noexcept
     { return targetArena->template alloc<T>(args...); }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
     template <typename T>
-    PMM_INLINE constexpr std::span<T> TempArena<MemStrategy, TelPolicy, Safe>::allocV(const std::size_t count) noexcept
+    PMM_INLINE constexpr std::span<T> TempArena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::allocV(const std::size_t count) noexcept
     { return targetArena->template allocV<T>(count); }
 
 
