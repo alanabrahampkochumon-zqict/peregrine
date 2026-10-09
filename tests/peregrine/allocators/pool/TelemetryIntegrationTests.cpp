@@ -23,7 +23,8 @@
 
 TEST_F(ManagedPoolAllocatorTests, EnabledTelemetry_ReturnsRealTelemetry)
 {
-    [[maybe_unused]] const pmm::Pool<pmm::ManagedMemory, pmm::telemetry::Enabled> telemetryEnabledPool(512, 16, 8);
+    [[maybe_unused]] const pmm::Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> telemetryEnabledPool(512, 16,
+                                                                                                             8);
 
     [[maybe_unused]] auto telemetry = telemetryEnabledPool.getTelemetry();
     const bool result               = std::is_same_v<decltype(telemetry), pmm::PoolTelemetry>;
@@ -34,7 +35,8 @@ TEST_F(ManagedPoolAllocatorTests, EnabledTelemetry_ReturnsRealTelemetry)
 
 TEST_F(ManagedPoolAllocatorTests, DisabledTelemetry_ReturnsDummyTelemetry)
 {
-    [[maybe_unused]] const pmm::Pool<pmm::ManagedMemory, pmm::telemetry::Disabled> telemetryDisabledPool(512, 16, 8);
+    [[maybe_unused]] const pmm::Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> telemetryDisabledPool(512, 16,
+                                                                                                              8);
 
     [[maybe_unused]] auto telemetry = telemetryDisabledPool.getTelemetry();
     const bool result               = std::is_same_v<decltype(telemetry), pmm::DummyPoolTelemetry>;
@@ -48,7 +50,7 @@ TEST_F(ManagedPoolAllocatorTests, IsTelemetryEnabled_ReturnsTrue) { EXPECT_TRUE(
 
 TEST(ManagedPoolAllocatorTests_TelemetryDisabled, IsTelemetryEnabled_ReturnsFalse)
 {
-    const pmm::Pool<pmm::ManagedMemory, pmm::telemetry::Disabled> pool(512, 24, 4);
+    const pmm::Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> pool(512, 24, 4);
     EXPECT_FALSE(pool.isTelemetryEnabled());
 }
 
@@ -115,7 +117,7 @@ TEST_F(UnmanagedPoolAllocatorTests, EnabledTelemetry_ReturnsRealTelemetry)
 {
     const auto backingBuffer = new uint8_t[512];
 
-    [[maybe_unused]] const pmm::Pool<pmm::UnmanagedMemory, pmm::telemetry::Enabled> telemetryEnabledPool(backingBuffer,
+    [[maybe_unused]] const pmm::Pool<pmm::MemPolicy::External, pmm::TelPolicy::Enabled> telemetryEnabledPool(backingBuffer,
                                                                                                          512, 16, 8);
 
     [[maybe_unused]] auto telemetry = telemetryEnabledPool.getTelemetry();
@@ -130,7 +132,7 @@ TEST_F(UnmanagedPoolAllocatorTests, DisabledTelemetry_ReturnsDummyTelemetry)
 {
     const auto backingBuffer = new uint8_t[512];
 
-    [[maybe_unused]] const pmm::Pool<pmm::UnmanagedMemory, pmm::telemetry::Disabled> telemetryDisabledPool(
+    [[maybe_unused]] const pmm::Pool<pmm::MemPolicy::External, pmm::TelPolicy::Disabled> telemetryDisabledPool(
         backingBuffer, 512, 16, 8);
     [[maybe_unused]] auto telemetry = telemetryDisabledPool.getTelemetry();
 
@@ -149,7 +151,7 @@ TEST(UnmanagedPoolAllocator_TelemetryDisabledTests, IsTelemetryEnabled_ReturnsFa
     constexpr size_t size{ 512 };
     const auto buffer = new uint8_t[size];
 
-    const pmm::Pool<pmm::UnmanagedMemory, pmm::telemetry::Disabled> pool(buffer, 512, 24, 4);
+    const pmm::Pool<pmm::MemPolicy::External, pmm::TelPolicy::Disabled> pool(buffer, 512, 24, 4);
     EXPECT_FALSE(pool.isTelemetryEnabled());
 
     delete[] buffer;

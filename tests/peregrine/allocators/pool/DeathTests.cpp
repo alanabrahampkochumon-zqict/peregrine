@@ -65,7 +65,7 @@ TEST_P(PoolAllocatorCtorAssertionTests, Managed_InadequateChunkSize_TriggersAsse
 
 
 TEST(ManagedPoolCtorTests, ZeroSize_TriggersAssertionInDebugMode)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Pool<pmm::ManagedMemory>{ 0, 16, 8 }), ""); }
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Pool<pmm::MemPolicy::Internal>{ 0, 16, 8 }), ""); }
 
 
 
@@ -83,7 +83,7 @@ TEST_F(ManagedPoolAllocatorTests, Free_NullptrTriggersAssertionInDebugMode)
 
 TEST_F(ManagedPoolAllocatorTests, FreeChunk_GreaterThanMaxMemoryAddressTriggersAssertionInDebugMode)
 {
-    // Since we arranging memory from back to front
+    // Since we are arranging memory from back to front
     // the first allocation holds the largest allocation memory address
     // so we can try to free 1 + last address which should trigger assertion
     const auto lastAddressChunk = reinterpret_cast<uintptr_t>(pool.allocChunk());
@@ -113,7 +113,7 @@ TEST_P(PoolAllocatorCtorAssertionTests, Unmanaged_InadequateChunkSize_TriggersAs
 {
     const auto [poolSize, chunkSize, alignment] = GetParam();
     const auto buffer                           = new uint8_t[poolSize];
-    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Pool<pmm::UnmanagedMemory>{ buffer, poolSize, chunkSize, alignment }),
+    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Pool<pmm::MemPolicy::External>{ buffer, poolSize, chunkSize, alignment }),
                        "");
     delete[] buffer;
 }
@@ -122,13 +122,13 @@ TEST_P(PoolAllocatorCtorAssertionTests, Unmanaged_InadequateChunkSize_TriggersAs
 TEST(UnmanagedPoolCtorTests, ZeroSize_TriggersAssertionInDebugMode)
 {
     const auto buffer = new uint8_t[512];
-    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Pool<pmm::UnmanagedMemory>{ buffer, 0, 16, 8 }), "");
+    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Pool<pmm::MemPolicy::External>{ buffer, 0, 16, 8 }), "");
     delete[] buffer;
 }
 
 
 TEST(UnmanagedPoolCtorTests, NullptrForBuffer_TriggersAssertionInDebugMode)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Pool<pmm::UnmanagedMemory>{ nullptr, 512, 16, 8 }), ""); }
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Pool<pmm::MemPolicy::External>{ nullptr, 512, 16, 8 }), ""); }
 
 
 TEST_F(UnmanagedPoolAllocatorTests, Alloc_AllocatingObjectWithSizeGreaterThanChunkSizeTriggersAssertionInDebugMode)

@@ -8,7 +8,6 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
-
 #ifndef ENABLE_PMM_DEATH_TESTS
 
     #include "Mocks.h"
@@ -34,7 +33,8 @@ namespace
     public:
         size_t poolSize{ 2_KB };
         static constexpr size_t chunkSize{ 1_KB };
-        pmm::Pool<pmm::ManagedMemory, pmm::telemetry::Enabled, true> pool{ poolSize, chunkSize, 8 };
+        pmm::Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled, pmm::SafeModePolicy::Safe> pool{ poolSize,
+                                                                                                      chunkSize, 8 };
     };
 
 
@@ -47,7 +47,8 @@ namespace
         size_t poolSize{ 2_KB };
         uint8_t* buffer = new uint8_t[poolSize];
         static constexpr size_t chunkSize{ 1_KB };
-        pmm::Pool<pmm::UnmanagedMemory, pmm::telemetry::Enabled, true> pool{ buffer, poolSize, chunkSize, 8 };
+        pmm::Pool<pmm::MemPolicy::External, pmm::TelPolicy::Enabled, pmm::SafeModePolicy::Safe> pool{ buffer, poolSize,
+                                                                                                      chunkSize, 8 };
 
     protected:
         void TearDown() override { delete[] buffer; }

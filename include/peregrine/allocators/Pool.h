@@ -12,6 +12,7 @@
 
 #include "Policy.h"
 #include "peregrine/telemetry/PoolTelemetry.h"
+#include "peregrine/utils/Multithreading.h"
 #include "peregrine/utils/Preprocessors.h"
 
 #include <cstdint>
@@ -31,14 +32,18 @@ namespace pmm
     /**
      *  @brief Pool/Chunk memory allocator.
      *
-     *  @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
-     *  @tparam TelPolicy   Flag indicating whether telemetry is enabled for this pool. See @ref pmm::telemetry.
-     *  @tparam Safe        Flags an pool as safe, implying certain operations like freeing a `nullptr` are handled
-     *                      gracefully when assertions are disabled. `False` by default to prevent any performance
-     *                      stalls incurred by conditional checks.
+     * @tparam MemoryPolicy         Memory management type. See @ref pmm::MemPolicy.
+     * @tparam TelemetryPolicy      Policy indicating whether telemetry is enabled for this allocator.
+     *                              See @ref pmm::TelPolicy. Disabled by default.
+     * @tparam SafeMode             Policy dictating the safety of this allocator. When in safe mode, certain actions
+     *                              like `nullptr` resize or free are handled gracefully, in *Release Mode*. Assertions
+     *                              acts as safety value in both mode, given *Debug Mode* is enabled. Disabled by
+     *                              default to prevent any performance stalls incurred by conditional checks.
+     * @tparam MultithreadingPolicy Policy hinting whether the instance can handle multithreading safety.
+     *                              Default: @ref mt::MTPolicy::NoMTPolicy.
      */
-    template <MemoryStrategy MemStrategy = ManagedMemory, telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled,
-              bool Safe = false>
+    template <MemPolicy MemoryPolicy = MemPolicy::Internal, TelPolicy TelemetryPolicy = TelPolicy::Disabled,
+              SafeModePolicy SafeMode = SafeModePolicy::Unsafe, mt::MTPolicy MultithreadingPolicy = mt::MTPolicy::NoMT>
     class Pool
     {
     public:
@@ -54,7 +59,7 @@ namespace pmm
          * @warning This allocator is NOT thread-safe by default.
          */
         [[nodiscard]] explicit constexpr Pool(size_t poolSize, size_t chuckSize, size_t chunkAlignment) noexcept
-            requires std::same_as<MemStrategy, ManagedMemory>;
+            requires (MemoryPolicy == MemPolicy::Internal);
 
 
         /**
@@ -72,7 +77,7 @@ namespace pmm
          */
         [[nodiscard]] explicit constexpr Pool(uint8_t* backingBuffer, size_t bufferSize, size_t chuckSize,
                                               size_t chunkAlignment) noexcept
-            requires std::same_as<MemStrategy, UnmanagedMemory>;
+            requires (MemoryPolicy == MemPolicy::External);
 
 
         /**
@@ -201,7 +206,7 @@ namespace pmm
          * @remarks API specialized for @ref pmm::ManagedMemory.
          */
         ~Pool() noexcept
-            requires std::same_as<MemStrategy, ManagedMemory>;
+            requires (MemoryPolicy == MemPolicy::Internal);
 
 
         /**
@@ -214,7 +219,7 @@ namespace pmm
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
          */
         ~Pool() noexcept
-            requires std::same_as<MemStrategy, UnmanagedMemory>
+            requires (MemoryPolicy == MemPolicy::External)
         = default;
 
 
@@ -223,7 +228,7 @@ namespace pmm
          *
          * @return A telemetry instance if telemetry policy is not Disabled, else an empty struct.
          */
-        [[nodiscard]] constexpr const PoolTelemetryType<TelPolicy>& getTelemetry() const noexcept;
+        [[nodiscard]] constexpr const PoolTelemetryType<TelemetryPolicy>& getTelemetry() const noexcept;
 
 
         /**
@@ -238,7 +243,7 @@ namespace pmm
         uint8_t* _buffer;
         size_t _poolSize, _chunkSize, _chunkAlignment, _initialAlignmentPadding, _chunkCount;
         PoolFreeNode* _head;
-        PMM_NO_UNIQUE_ADDR PoolTelemetryType<TelPolicy> _telemetry{ 0 };
+        PMM_NO_UNIQUE_ADDR PoolTelemetryType<TelemetryPolicy> _telemetry{ 0 };
 
 
 

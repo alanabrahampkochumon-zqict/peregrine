@@ -22,16 +22,17 @@
 namespace pmm
 {
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr Pool<MemStrategy, TelPolicy, Safe>::Pool(const size_t poolSize, const size_t chuckSize,
-                                                                  const size_t chunkAlignment) noexcept
-        requires std::same_as<MemStrategy, ManagedMemory>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr Pool<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::Pool(
+        const size_t poolSize, const size_t chuckSize, const size_t chunkAlignment) noexcept
+        requires(MemoryPolicy == MemPolicy::Internal)
         : _buffer{ static_cast<uint8_t*>(memAlloc(poolSize)) },
           _poolSize{ poolSize },
           _chunkSize{ chuckSize },
           _chunkAlignment{ chunkAlignment },
           _head(nullptr),
-          _telemetry{ getTelemetryInstance<TelPolicy>(poolSize, chuckSize, chunkAlignment) }
+          _telemetry{ getTelemetryInstance<TelemetryPolicy>(poolSize, chuckSize, chunkAlignment) }
     {
         const auto baseAddress = reinterpret_cast<uintptr_t>(_buffer);
 
@@ -53,16 +54,16 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr Pool<MemStrategy, TelPolicy, Safe>::Pool(uint8_t* backingBuffer, const size_t bufferSize,
-                                                                  const size_t chuckSize,
-                                                                  const size_t chunkAlignment) noexcept
-        requires std::same_as<MemStrategy, UnmanagedMemory>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr Pool<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::Pool(
+        uint8_t* backingBuffer, const size_t bufferSize, const size_t chuckSize, const size_t chunkAlignment) noexcept
+        requires(MemoryPolicy == MemPolicy::External)
         : _buffer{ backingBuffer },
           _poolSize{ bufferSize },
           _chunkSize{ chuckSize },
           _chunkAlignment{ chunkAlignment },
-          _telemetry{ getTelemetryInstance<TelPolicy>(bufferSize, chuckSize, chunkAlignment) }
+          _telemetry{ getTelemetryInstance<TelemetryPolicy>(bufferSize, chuckSize, chunkAlignment) }
     {
         const auto baseAddress = reinterpret_cast<uintptr_t>(_buffer);
 
@@ -84,8 +85,9 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr Pool<MemStrategy, TelPolicy, Safe>::Pool(Pool&& pool) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr Pool<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::Pool(Pool&& pool) noexcept
         : _buffer{ std::exchange(pool._buffer, nullptr) },
           _poolSize{ pool._poolSize },
           _chunkSize{ pool._chunkSize },
@@ -94,13 +96,14 @@ namespace pmm
           _chunkCount{ pool._chunkCount },
           _head{ std::exchange(pool._head, nullptr) },
           _telemetry{ std::exchange(pool._telemetry,
-                                    getTelemetryInstance<TelPolicy>(_poolSize, _chunkSize, _chunkAlignment)) }
+                                    getTelemetryInstance<TelemetryPolicy>(_poolSize, _chunkSize, _chunkAlignment)) }
     {}
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr Pool<MemStrategy, TelPolicy, Safe>& Pool<MemStrategy, TelPolicy, Safe>::operator=(
-        Pool&& pool) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr Pool<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>& Pool<
+        MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::operator=(Pool&& pool) noexcept
     {
         // For self assignment return the current pool.
         if (this == &pool)
@@ -108,7 +111,7 @@ namespace pmm
             return *this;
         }
 
-        if constexpr (std::same_as<MemStrategy, ManagedMemory>)
+        if constexpr (MemoryPolicy == MemPolicy::Internal)
         {
             // Release the buffer held by the current pool (ONLY applicable for managed pool)
             memFree(_buffer, _poolSize);
@@ -122,26 +125,29 @@ namespace pmm
         _initialAlignmentPadding = pool._initialAlignmentPadding;
         _chunkCount              = pool._chunkCount;
         _head                    = std::exchange(pool._head, nullptr);
-        _telemetry =
-            std::exchange(pool._telemetry, getTelemetryInstance<TelPolicy>(_poolSize, _chunkSize, _chunkAlignment));
+        _telemetry               = std::exchange(pool._telemetry,
+                                                 getTelemetryInstance<TelemetryPolicy>(_poolSize, _chunkSize, _chunkAlignment));
 
         return *this;
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr size_t Pool<MemStrategy, TelPolicy, Safe>::getMaxAllocationCount() const noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr size_t Pool<MemoryPolicy, TelemetryPolicy, SafeMode,
+                                     MultithreadingPolicy>::getMaxAllocationCount() const noexcept
     { return _chunkCount; }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE void* Pool<MemStrategy, TelPolicy, Safe>::allocChunk() noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE void* Pool<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::allocChunk() noexcept
     {
         // Return the current head's address and move the head forward
         const auto node = _head;
 
         PMM_ASSERT_MSG(node != nullptr, "Pool allocator has no free memory");
-        if constexpr (Safe == true)
+        if constexpr (SafeMode == SafeModePolicy::Safe)
         {
             if (node == nullptr)
             {
@@ -156,14 +162,15 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
     template <typename T, typename... Args>
-    PMM_INLINE T* Pool<MemStrategy, TelPolicy, Safe>::alloc(Args... args) noexcept
+    PMM_INLINE T* Pool<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::alloc(Args... args) noexcept
     {
         PMM_ASSERT_MSG(sizeof(T) <= _chunkSize,
                        std::format("Size of object({}) exceeds chunk size({})", sizeof(T), _chunkSize).c_str());
         auto rawBuffer = allocChunk();
-        if constexpr (Safe == true)
+        if constexpr (SafeMode == SafeModePolicy::Safe)
         {
             if (rawBuffer == nullptr)
             {
@@ -174,14 +181,15 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE bool Pool<MemStrategy, TelPolicy, Safe>::freeChunk(void* ptr) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE bool Pool<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::freeChunk(void* ptr) noexcept
     {
         PMM_ASSERT_MSG(ptr != nullptr, "Cannot free a nullptr");
         [[maybe_unused]] const auto minFreeAddr = _buffer + _initialAlignmentPadding;
         [[maybe_unused]] const auto maxFreeAddr = _buffer + _poolSize - _initialAlignmentPadding - _chunkSize;
         PMM_ASSERT_MSG(ptr >= minFreeAddr && ptr <= maxFreeAddr, "Out of bounds free");
-        if constexpr (Safe == true)
+        if constexpr (SafeMode == SafeModePolicy::Safe)
         {
             // Validate if the free is possible
             if (ptr == nullptr || ptr < minFreeAddr || ptr > maxFreeAddr ||
@@ -199,9 +207,10 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
     template <typename T>
-    PMM_INLINE bool Pool<MemStrategy, TelPolicy, Safe>::free(T* ptr) noexcept
+    PMM_INLINE bool Pool<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::free(T* ptr) noexcept
     {
         // Invoke the dtor if the type is not trivially destructible
         if (!std::is_trivially_destructible_v<T>)
@@ -213,8 +222,9 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE void Pool<MemStrategy, TelPolicy, Safe>::clear()
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE void Pool<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::clear()
     {
         // Required as some compilers put pattern in debug mode
         // when the buffer is user provided.
@@ -236,20 +246,24 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE Pool<MemStrategy, TelPolicy, Safe>::~Pool() noexcept
-        requires std::same_as<MemStrategy, ManagedMemory>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE Pool<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::~Pool() noexcept
+        requires(MemoryPolicy == MemPolicy::Internal)
     { memFree(_buffer, _poolSize); }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr const PoolTelemetryType<TelPolicy>& Pool<MemStrategy, TelPolicy, Safe>::getTelemetry()
-        const noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr const PoolTelemetryType<TelemetryPolicy>& Pool<
+        MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::getTelemetry() const noexcept
     { return _telemetry; }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr bool Pool<MemStrategy, TelPolicy, Safe>::isTelemetryEnabled() noexcept
-    { return std::same_as<TelPolicy, telemetry::Enabled>; }
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr bool Pool<MemoryPolicy, TelemetryPolicy, SafeMode,
+                                   MultithreadingPolicy>::isTelemetryEnabled() noexcept
+    { return TelemetryPolicy == TelPolicy::Enabled; }
 
 } // namespace pmm

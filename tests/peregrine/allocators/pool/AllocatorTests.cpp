@@ -42,7 +42,7 @@ namespace
     };
 
 
-    /// @brief Parameterized test fixture for @ref pmm::Pool<> base address and chunk size alignment.
+    /// @brief Parameterized test fixture for @ref pmm::Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> base address and chunk size alignment.
     class PoolAllocatorAlignmentTests: public testing::TestWithParam<PoolAllocatorAlignmentParams>
     {};
     INSTANTIATE_TEST_SUITE_P(
@@ -64,12 +64,12 @@ namespace
          *        we can check if it is trivially destructible to ensure memory is freed in the pool in unmanaged mode
          *        and opposite otherwise.
          */
-        static_assert(std::is_trivially_destructible_v<pmm::Pool<pmm::UnmanagedMemory>> == true);
-        static_assert(std::is_trivially_destructible_v<pmm::Pool<pmm::UnmanagedMemory>> == true);
+        static_assert(std::is_trivially_destructible_v<pmm::Pool<pmm::MemPolicy::External, pmm::TelPolicy::Enabled>> == true);
+        static_assert(std::is_trivially_destructible_v<pmm::Pool<pmm::MemPolicy::External, pmm::TelPolicy::Enabled>> == true);
 
         /// @test Verify that manged pool frees buffer it allocates.
-        static_assert(std::is_trivially_destructible_v<pmm::Pool<pmm::ManagedMemory>> == false);
-        static_assert(std::is_trivially_destructible_v<pmm::Pool<pmm::ManagedMemory>> == false);
+        static_assert(std::is_trivially_destructible_v<pmm::Pool<pmm::MemPolicy::Internal>> == false);
+        static_assert(std::is_trivially_destructible_v<pmm::Pool<pmm::MemPolicy::Internal>> == false);
 
     } // namespace static_tests
 
@@ -212,8 +212,8 @@ TEST_F(ManagedPoolAllocatorTests, Free_OnNonTrivialTypesCallsDtor)
 
 TEST_F(ManagedPoolAllocatorTests, MoveCtor_CopiesAttributesToNewObject)
 {
-    const auto prevAllocationCount = pool.getMaxAllocationCount();
-    const pmm::Pool<> pool2        = std::move(pool);
+    const auto prevAllocationCount                                           = pool.getMaxAllocationCount();
+    const pmm::Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> pool2 = std::move(pool);
     EXPECT_EQ(prevAllocationCount, pool2.getMaxAllocationCount());
     EXPECT_EQ(poolSize, pool2.getTelemetry().getPoolSize());
 }
@@ -227,7 +227,7 @@ TEST_F(ManagedPoolAllocatorTests, MoveCtor_MovesTelemetry)
     // DON'T get by reference as it will change internally
     const auto telemetry = pool.getTelemetry();
 
-    const pmm::Pool<> pool2 = std::move(pool);
+    const pmm::Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> pool2 = std::move(pool);
 
     // Checking for telemetry equality
     EXPECT_EQ(telemetry.getUsedSize(), pool2.getTelemetry().getUsedSize());
@@ -241,7 +241,7 @@ TEST_F(ManagedPoolAllocatorTests, MoveAssign_CopiesAttributesToNewObject)
 {
     const auto prevAllocationCount = pool.getMaxAllocationCount();
 
-    pmm::Pool<> pool2(256, 16, 16);
+    pmm::Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> pool2(256, 16, 16);
 
     pool2 = std::move(pool);
 
@@ -258,7 +258,7 @@ TEST_F(ManagedPoolAllocatorTests, MoveAssign_MovesTelemetry)
     // DON'T get by reference as it will change internally
     const auto telemetry = pool.getTelemetry();
 
-    pmm::Pool<> pool2(256, 16, 16);
+    pmm::Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> pool2(256, 16, 16);
     pool2 = std::move(pool);
 
     // Checking for telemetry equality
@@ -267,7 +267,6 @@ TEST_F(ManagedPoolAllocatorTests, MoveAssign_MovesTelemetry)
     EXPECT_EQ(telemetry.getUsedAllocationCount(), pool2.getTelemetry().getUsedAllocationCount());
     EXPECT_EQ(telemetry.getMaxAllocationCount(), pool2.getTelemetry().getMaxAllocationCount());
 }
-
 
 
 /**************************************
@@ -397,8 +396,8 @@ TEST_F(UnmanagedPoolAllocatorTests, Free_OnNonTrivialTypesCallsDtor)
 
 TEST_F(UnmanagedPoolAllocatorTests, MoveCtor_CopiesAttributesToNewObject)
 {
-    const auto prevAllocationCount              = pool.getMaxAllocationCount();
-    const pmm::Pool<pmm::UnmanagedMemory> pool2 = std::move(pool);
+    const auto prevAllocationCount                  = pool.getMaxAllocationCount();
+    const pmm::Pool<pmm::MemPolicy::External, pmm::TelPolicy::Enabled> pool2 = std::move(pool);
 
     EXPECT_EQ(prevAllocationCount, pool2.getMaxAllocationCount());
     EXPECT_EQ(bufferSize, pool2.getTelemetry().getPoolSize());
@@ -413,7 +412,7 @@ TEST_F(UnmanagedPoolAllocatorTests, MoveCtor_MovesTelemetry)
     // DON'T get by reference as it will change internally
     const auto telemetry = pool.getTelemetry();
 
-    const pmm::Pool<pmm::UnmanagedMemory> pool2 = std::move(pool);
+    const pmm::Pool<pmm::MemPolicy::External, pmm::TelPolicy::Enabled> pool2 = std::move(pool);
 
     // Checking for telemetry equality
     EXPECT_EQ(telemetry.getUsedSize(), pool2.getTelemetry().getUsedSize());
@@ -427,7 +426,7 @@ TEST_F(UnmanagedPoolAllocatorTests, MoveAssign_CopiesAttributesToNewObject)
 {
     const auto prevAllocationCount = pool.getMaxAllocationCount();
     const auto backingBuffer       = new uint8_t[256];
-    pmm::Pool<pmm::UnmanagedMemory> pool2(backingBuffer, 256, 16, 16);
+    pmm::Pool<pmm::MemPolicy::External, pmm::TelPolicy::Enabled> pool2(backingBuffer, 256, 16, 16);
 
     pool2 = std::move(pool);
 
@@ -446,7 +445,7 @@ TEST_F(UnmanagedPoolAllocatorTests, MoveAssign_MovesTelemetry)
     // DON'T get by reference as it will change internally
     const auto telemetry     = pool.getTelemetry();
     const auto backingBuffer = new uint8_t[256];
-    pmm::Pool<pmm::UnmanagedMemory> pool2(backingBuffer, 256, 16, 16);
+    pmm::Pool<pmm::MemPolicy::External, pmm::TelPolicy::Enabled> pool2(backingBuffer, 256, 16, 16);
 
     pool2 = std::move(pool);
 
@@ -503,7 +502,7 @@ namespace pmm
     TEST_P(PoolAllocatorAlignmentTests, Managed_Ctor_AlignsBaseAddress)
     {
         const auto [poolSize, chunkSize, alignment] = GetParam();
-        const Pool<> pool{ poolSize, chunkSize, alignment };
+        const Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> pool{ poolSize, chunkSize, alignment };
         const auto startAddress = reinterpret_cast<uintptr_t>(pool._buffer) + pool._initialAlignmentPadding;
 
         EXPECT_EQ(0, startAddress % alignment);
@@ -513,14 +512,14 @@ namespace pmm
     TEST_P(PoolAllocatorAlignmentTests, Managed_Ctor_AlignsChunksize)
     {
         const auto [poolSize, chunkSize, alignment] = GetParam();
-        const Pool<> pool{ poolSize, chunkSize, alignment };
+        const Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> pool{ poolSize, chunkSize, alignment };
 
         EXPECT_EQ(0, pool._chunkSize % alignment);
     }
 
     TEST_F(ManagedPoolAllocatorTests, MoveCtor_ClearsMovedPool)
     {
-        const Pool<> pool2 = std::move(pool);
+        const Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> pool2 = std::move(pool);
         // NOLINT(bugprone-use-after-move)
         EXPECT_EQ(nullptr, pool._buffer);
         EXPECT_EQ(nullptr, pool._head);
@@ -538,7 +537,7 @@ namespace pmm
         const auto initialHeadPtr                 = pool._head;
 
 
-        const Pool<> pool2 = std::move(pool);
+        const Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> pool2 = std::move(pool);
 
         EXPECT_EQ(initialBufferPtr, pool2._buffer);
         EXPECT_EQ(poolSize, pool2._poolSize);
@@ -553,7 +552,7 @@ namespace pmm
 
     TEST_F(ManagedPoolAllocatorTests, MoveAssign_ClearsMovedPool)
     {
-        [[maybe_unused]] Pool<> pool2(256, 16, 16);
+        [[maybe_unused]] Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> pool2(256, 16, 16);
 
         static_cast<void>(pool2 = std::move(pool));
 
@@ -572,7 +571,7 @@ namespace pmm
         const auto initialChunkCount              = pool._chunkCount;
         const auto initialHeadPtr                 = pool._head;
 
-        Pool<> pool2(256, 16, 16);
+        Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> pool2(256, 16, 16);
 
         pool2 = std::move(pool);
 
@@ -624,12 +623,12 @@ namespace pmm
 
     TEST_F(ManagedPoolAllocatorTests, MoveAssign_DeletingOriginalPoolDoNotDeleteTheNewPoolsMemory)
     {
-        Pool<> pool2(256, 16, 16);
+        Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> pool2(256, 16, 16);
         constexpr auto scopedPoolSize = 512;
 
         // The pool being moved is scoped
         {
-            Pool<> scopedPool(scopedPoolSize, 16, 16);
+            Pool<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> scopedPool(scopedPoolSize, 16, 16);
             pool2 = std::move(scopedPool);
         }
         EXPECT_NE(nullptr, pool2._buffer);
@@ -709,7 +708,7 @@ namespace pmm
     {
         const auto [poolSize, chunkSize, alignment] = GetParam();
         const auto buffer                           = new uint8_t[poolSize];
-        const Pool<UnmanagedMemory> pool{ buffer, poolSize, chunkSize, alignment };
+        const Pool<MemPolicy::External> pool{ buffer, poolSize, chunkSize, alignment };
         const auto startAddress = reinterpret_cast<uintptr_t>(pool._buffer) + pool._initialAlignmentPadding;
 
         EXPECT_EQ(0, startAddress % alignment);
@@ -720,7 +719,7 @@ namespace pmm
     {
         const auto [poolSize, chunkSize, alignment] = GetParam();
         const auto buffer                           = new uint8_t[poolSize];
-        const Pool<UnmanagedMemory> pool{ buffer, poolSize, chunkSize, alignment };
+        const Pool<MemPolicy::External> pool{ buffer, poolSize, chunkSize, alignment };
         EXPECT_EQ(0, pool._chunkSize % alignment);
 
         delete[] buffer;
@@ -729,7 +728,7 @@ namespace pmm
 
     TEST_F(UnmanagedPoolAllocatorTests, MoveCtor_ClearsMovedPool)
     {
-        [[maybe_unused]] const Pool<pmm::UnmanagedMemory> pool2 = std::move(pool);
+        [[maybe_unused]] const Pool<pmm::MemPolicy::External, pmm::TelPolicy::Enabled> pool2 = std::move(pool);
         // NOLINT(bugprone-use-after-move)
         EXPECT_EQ(nullptr, pool._buffer);
         EXPECT_EQ(nullptr, pool._head);
@@ -747,7 +746,7 @@ namespace pmm
         const auto initialHeadPtr                 = pool._head;
 
 
-        const Pool<pmm::UnmanagedMemory> pool2 = std::move(pool);
+        const Pool<pmm::MemPolicy::External, pmm::TelPolicy::Enabled> pool2 = std::move(pool);
 
         EXPECT_EQ(initialBufferPtr, pool2._buffer);
         EXPECT_EQ(bufferSize, pool2._poolSize);
@@ -763,7 +762,7 @@ namespace pmm
     TEST_F(UnmanagedPoolAllocatorTests, MoveAssign_ClearsMovedPool)
     {
         const auto backingBuffer = new uint8_t[256];
-        [[maybe_unused]] Pool<pmm::UnmanagedMemory> pool2(backingBuffer, 256, 16, 16);
+        [[maybe_unused]] Pool<pmm::MemPolicy::External, pmm::TelPolicy::Enabled> pool2(backingBuffer, 256, 16, 16);
 
         static_cast<void>(pool2 = std::move(pool));
 
@@ -785,7 +784,7 @@ namespace pmm
         const auto initialHeadPtr                 = pool._head;
 
         const auto backingBuffer = new uint8_t[256];
-        Pool<pmm::UnmanagedMemory> pool2(backingBuffer, 256, 16, 16);
+        Pool<pmm::MemPolicy::External, pmm::TelPolicy::Enabled> pool2(backingBuffer, 256, 16, 16);
 
         pool2 = std::move(pool);
 
@@ -841,11 +840,11 @@ namespace pmm
         constexpr auto scopedPoolSize = 512;
         const auto backingBuffer      = new uint8_t[256];
         const auto backingBuffer2     = new uint8_t[scopedPoolSize];
-        Pool<pmm::UnmanagedMemory> pool2(backingBuffer, 256, 16, 16);
+        Pool<pmm::MemPolicy::External, pmm::TelPolicy::Enabled> pool2(backingBuffer, 256, 16, 16);
 
         // The pool being moved is scoped
         {
-            Pool<pmm::UnmanagedMemory> scopedPool(backingBuffer2, scopedPoolSize, 16, 16);
+            Pool<pmm::MemPolicy::External, pmm::TelPolicy::Enabled> scopedPool(backingBuffer2, scopedPoolSize, 16, 16);
             pool2 = std::move(scopedPool);
         }
         EXPECT_NE(nullptr, pool2._buffer);
