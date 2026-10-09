@@ -51,11 +51,11 @@ namespace
     namespace static_tests
     {
         /** @test Verify that manged arena frees buffer it allocates.
-         *  @note Since we cant really confirm confirm if a buffer is freed and we only delete[] buffer in the dtor of
+         *  @note Since we cant really confirm if a buffer is freed, and we only delete[] buffer in the dtor of
          *        Arena, we can check if it is trivially destructible to ensure memory is freed in the arena in
-         * unmanaged mode and opposite otherwise.
+         *        unmanaged mode and opposite otherwise.
          */
-        static_assert(std::is_trivially_destructible_v<pmm::Arena<pmm::ManagedMemory>> == false);
+        static_assert(std::is_trivially_destructible_v<pmm::Arena<pmm::MemPolicy::Internal>> == false);
     } // namespace static_tests
 
 } // namespace
@@ -74,7 +74,7 @@ namespace
 
 TEST_F(ManagedArenaTests, EnabledTelemetry_ReturnsRealTelemetry)
 {
-    [[maybe_unused]] pmm::Arena<pmm::ManagedMemory, pmm::telemetry::Enabled> telemetryEnabledArena(512);
+    [[maybe_unused]] pmm::Arena<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> telemetryEnabledArena(512);
     [[maybe_unused]] auto telemetry = telemetryEnabledArena.getTelemetry();
     const bool result               = std::is_same_v<decltype(telemetry), pmm::ArenaTelemetry>;
     EXPECT_TRUE(result);
@@ -83,7 +83,7 @@ TEST_F(ManagedArenaTests, EnabledTelemetry_ReturnsRealTelemetry)
 
 TEST_F(ManagedArenaTests, DisabledTelemetry_ReturnsDummyTelemetry)
 {
-    [[maybe_unused]] const pmm::Arena<pmm::ManagedMemory, pmm::telemetry::Disabled> telemetryDisabledArena(512);
+    [[maybe_unused]] const pmm::Arena<pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> telemetryDisabledArena(512);
     [[maybe_unused]] auto telemetry = telemetryDisabledArena.getTelemetry();
     const bool result               = std::is_same_v<decltype(telemetry), pmm::DummyArenaTelemetry>;
     EXPECT_TRUE(result);

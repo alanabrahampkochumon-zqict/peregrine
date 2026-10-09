@@ -21,7 +21,13 @@ namespace pmm
     PMM_INLINE constexpr TLSF<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::TLSF(
         uint8_t* buffer, const size_t memorySize) noexcept
         requires(MemoryPolicy == MemPolicy::External)
-        : _buffer{ buffer }, _size{ memorySize }, _usedSize{ 0 }, _flBitmap{ 0 }, _slBitmap{}, _telemetry(memorySize)
+        : _buffer{ buffer },
+          _size{ memorySize },
+          _usedSize{ 0 },
+          _flBitmap{ 0 },
+          _slBitmap{},
+          _telemetry(memorySize),
+          _mutex{ mt::getMutex<MultithreadingPolicy>() }
     {
         PMM_ASSERT_MSG(buffer != nullptr, "[TLSF]: Cannot create an allocator a nullptr for backing buffer");
         PMM_ASSERT_MSG(memorySize > 0, "[TLSF]: Cannot create an allocator with zero memory size");
@@ -40,7 +46,8 @@ namespace pmm
           _flBitmap{ 0 },
           _slBitmap{},
           _freeList{},
-          _telemetry(allocatorSize)
+          _telemetry(allocatorSize),
+          _mutex{ mt::getMutex<MultithreadingPolicy>() }
     {
         PMM_ASSERT_MSG(allocatorSize > 0, "[TLSF]: Cannot create an allocator with zero memory size");
         clear();
@@ -54,7 +61,9 @@ namespace pmm
           _size{ tlsf._size },
           _usedSize{ tlsf._usedSize },
           _flBitmap{ tlsf._flBitmap },
-          _telemetry{ tlsf._telemetry }
+          _telemetry{ tlsf._telemetry },
+          _mutex{ mt::getMutex<MultithreadingPolicy>() }
+          /// TODO: Update after looking into mutex update, maybe delete move ctor?
     {
         std::memcpy(_freeList, tlsf._freeList, sizeof(_freeList));
         std::move(tlsf._slBitmap.begin(), tlsf._slBitmap.end(), _slBitmap.begin());

@@ -106,7 +106,7 @@ namespace
     namespace static_tests
     {
         /** @test Verify that manged tlsf frees buffer it allocates.
-         *  @note Since we can't really confirm confirm if a buffer is freed and we only delete[] buffer in the dtor of
+         *  @note Since we can't really confirm if a buffer is freed and we only delete[] buffer in the dtor of
          *        TLSF. So, we can check if it is trivially destructible to ensure memory is freed in the tlsf in
          *        internally memory managed mode.
          */

@@ -25,51 +25,58 @@ namespace pmm
      *           CONSTRUCTORS             *
      **************************************/
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::Arena(const size_t arenaSize) noexcept
-        requires std::same_as<MemStrategy, ManagedMemory>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::Arena(
+        const size_t arenaSize) noexcept
+        requires(MemoryPolicy == MemPolicy::Internal)
         : _buffer(static_cast<uint8_t*>(memAlloc(arenaSize))),
           _arenaSize(arenaSize),
           _offset(0),
           _prevOffset(0),
-          _telemetry{ getTelemetryInstance<TelPolicy>(arenaSize) }
+          _telemetry{ getTelemetryInstance<TelemetryPolicy>(arenaSize) }
     { PMM_ASSERT_MSG(arenaSize > 0, "Cannot allocate zero size arena"); }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::Arena(void* backingBuffer,
-                                                                    const size_t bufferSize) noexcept
-        requires std::same_as<MemStrategy, UnmanagedMemory>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::Arena(
+        void* backingBuffer, const size_t bufferSize) noexcept
+        requires(MemoryPolicy == MemPolicy::External)
         : _buffer(static_cast<uint8_t*>(backingBuffer)),
           _arenaSize(bufferSize),
           _offset(0),
           _prevOffset(0),
-          _telemetry{ getTelemetryInstance<TelPolicy>(bufferSize) }
+          _telemetry{ getTelemetryInstance<TelemetryPolicy>(bufferSize) }
     {
         PMM_ASSERT_MSG(backingBuffer != nullptr, "Backing buffer cannot be a nullptr");
         PMM_ASSERT_MSG(bufferSize > 0, "Cannot allocate zero size arena");
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::~Arena() noexcept
-        requires std::same_as<MemStrategy, ManagedMemory>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::~Arena() noexcept
+        requires(MemoryPolicy == MemPolicy::Internal)
     { memFree(_buffer, _arenaSize); }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>::Arena(Arena&& arena) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::Arena(
+        Arena&& arena) noexcept
         : _buffer{ std::exchange(arena._buffer, nullptr) },
           _arenaSize{ arena._arenaSize },
           _offset{ arena._offset },
           _prevOffset{ arena._prevOffset },
-          _telemetry{ std::exchange(arena._telemetry, getTelemetryInstance<TelPolicy>(_arenaSize)) }
+          _telemetry{ std::exchange(arena._telemetry, getTelemetryInstance<TelemetryPolicy>(_arenaSize)) }
     {}
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr Arena<MemStrategy, TelPolicy, Safe>& Arena<MemStrategy, TelPolicy, Safe>::operator=(
-        Arena&& arena) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>& Arena<
+        MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::operator=(Arena&& arena) noexcept
     {
         // For self assignment return the current arena.
         if (this == &arena)
@@ -77,7 +84,7 @@ namespace pmm
             return *this;
         }
 
-        if constexpr (std::same_as<MemStrategy, ManagedMemory>)
+        if constexpr ((MemoryPolicy == MemPolicy::Internal))
         {
             memFree(_buffer, _arenaSize);
         }
@@ -87,24 +94,30 @@ namespace pmm
         _offset     = arena._offset;
         _prevOffset = arena._prevOffset;
         _arenaSize  = arena._arenaSize;
-        _telemetry  = std::exchange(arena._telemetry, getTelemetryInstance<TelPolicy>(_arenaSize));
+        _telemetry  = std::exchange(arena._telemetry, getTelemetryInstance<TelemetryPolicy>(_arenaSize));
 
         return *this;
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr std::size_t Arena<MemStrategy, TelPolicy, Safe>::freeSize() const noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr std::size_t Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::freeSize()
+        const noexcept
     { return _arenaSize - _offset; }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr std::size_t Arena<MemStrategy, TelPolicy, Safe>::usedSize() const noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr std::size_t Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::usedSize()
+        const noexcept
     { return _offset; }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr std::size_t Arena<MemStrategy, TelPolicy, Safe>::size() const noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr std::size_t Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::size()
+        const noexcept
     { return _arenaSize; }
 
 
@@ -112,8 +125,10 @@ namespace pmm
      * Align the "base address" of the arena's next allocation to @p alignment.
      * @param alignment The alignment to which the offset + base address is aligned to.
      */
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE void Arena<MemStrategy, TelPolicy, Safe>::_alignForward(const std::size_t alignment) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE void Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::_alignForward(
+        const std::size_t alignment) noexcept
     {
         // To make sure alignment is the power of 2
         PMM_ASSERT_MSG(std::has_single_bit(alignment), "Alignment must be a power of 2");
@@ -140,13 +155,14 @@ namespace pmm
         _offset += padding;
     }
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE void* Arena<MemStrategy, TelPolicy, Safe>::allocBytes(const std::size_t sizeInBytes,
-                                                                     const std::size_t alignment) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE void* Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::allocBytes(
+        const std::size_t sizeInBytes, const std::size_t alignment) noexcept
     {
         _alignForward(alignment);
         PMM_ASSERT_MSG(sizeInBytes > 0 && _arenaSize >= _offset + sizeInBytes, "Arena: Not Enough Memory");
-        if constexpr (Safe == true)
+        if constexpr (SafeMode == SafeModePolicy::Safe)
         {
             if (sizeInBytes == 0 || _offset + sizeInBytes > _arenaSize)
             {
@@ -165,13 +181,14 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
     template <typename T, typename... Args>
-    PMM_INLINE T* Arena<MemStrategy, TelPolicy, Safe>::alloc(Args... args) noexcept
+    PMM_INLINE T* Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::alloc(Args... args) noexcept
     {
         // Allocate memory in the arena.
         void* raw = allocBytes(sizeof(T), alignof(T));
-        if constexpr (Safe == true)
+        if constexpr (SafeMode == SafeModePolicy::Safe)
         {
             if (raw == nullptr)
             {
@@ -185,11 +202,13 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
     template <typename T>
-    PMM_INLINE std::span<T> Arena<MemStrategy, TelPolicy, Safe>::allocV(std::size_t count) noexcept
+    PMM_INLINE std::span<T> Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::allocV(
+        std::size_t count) noexcept
     {
-        if constexpr (Safe == true)
+        if constexpr (SafeMode == SafeModePolicy::Safe)
         {
             if (_offset + sizeof(T) * count > _arenaSize)
             {
@@ -200,8 +219,9 @@ namespace pmm
         return std::span<T>(static_cast<T*>(allocBytes(sizeof(T) * count, alignof(T))), count);
     }
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE void Arena<MemStrategy, TelPolicy, Safe>::clear() noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE void Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::clear() noexcept
     {
         _offset     = 0;
         _prevOffset = _offset;
@@ -210,21 +230,22 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE void Arena<MemStrategy, TelPolicy, Safe>::zeroOut() const noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE void Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::zeroOut() const noexcept
     { std::memset(_buffer, 0, _arenaSize); }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE void* Arena<MemStrategy, TelPolicy, Safe>::resize(void* oldMemory, const std::size_t oldSize,
-                                                                 const std::size_t newSize,
-                                                                 const std::size_t alignment) noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE void* Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::resize(
+        void* oldMemory, const std::size_t oldSize, const std::size_t newSize, const std::size_t alignment) noexcept
     {
         PMM_ASSERT_MSG(oldMemory != nullptr, "Cannot resize a nullptr. Use alloc* variants for fresh allocations.");
         PMM_ASSERT_MSG(oldSize != 0, "Cannot resize 0 bytes of memory.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 bytes. Arena does not support individual frees.");
 
-        if constexpr (Safe == true)
+        if constexpr (SafeMode == SafeModePolicy::Safe)
         {
             if (oldMemory == nullptr || oldSize == 0 || newSize == 0 || !std::has_single_bit(alignment))
             {
@@ -245,7 +266,7 @@ namespace pmm
         const auto offsetDiff           = newSize - oldSize;
 
         // Lastest allocation safe check
-        if constexpr (Safe == true)
+        if constexpr (SafeMode == SafeModePolicy::Safe)
         {
             if (allocationAddress == lastAllocatedAddress && _offset + offsetDiff > _arenaSize)
             {
@@ -269,7 +290,7 @@ namespace pmm
         // copy the existing data and return it
         // @note: This leaves a "hole" where the previous allocation was
         PMM_ASSERT_MSG(_arenaSize >= _offset + newSize, "Not enough memory for resize");
-        if constexpr (Safe == true)
+        if constexpr (SafeMode == SafeModePolicy::Safe)
         {
             if (_offset + newSize > _arenaSize)
             {
@@ -283,17 +304,17 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE void* Arena<MemStrategy, TelPolicy, Safe>::resizeFast(const void* oldMemory, const std::size_t oldSize,
-                                                                     const std::size_t newSize,
-                                                                     const std::size_t alignment)
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE void* Arena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>::resizeFast(
+        const void* oldMemory, const std::size_t oldSize, const std::size_t newSize, const std::size_t alignment)
     {
         PMM_ASSERT_MSG(
             oldMemory != nullptr,
             "Cannot resize a nullptr. If you want to allocate memory, use alloc<Type>, allocBytes, or allocV instead.");
         PMM_ASSERT_MSG(oldSize != 0, "Cannot resize 0 bytes of memory.");
         PMM_ASSERT_MSG(newSize != 0, "Cannot resize to 0 size. Use `free` to deallocate memory.");
-        if constexpr (Safe == true)
+        if constexpr (SafeMode == SafeModePolicy::Safe)
         {
             if (oldMemory == nullptr || oldSize == 0 || newSize == 0 || !std::has_single_bit(alignment))
             {
@@ -302,7 +323,7 @@ namespace pmm
         }
 
         const auto newPtr = allocBytes(newSize, alignment);
-        if constexpr (Safe == true)
+        if constexpr (SafeMode == SafeModePolicy::Safe)
         {
             if (newPtr == nullptr)
             {
@@ -315,9 +336,10 @@ namespace pmm
     }
 
 
-    template <MemoryStrategy MemStrategy, telemetry::TelemetryPolicy TelPolicy, bool Safe>
-    PMM_INLINE constexpr const ArenaTelemetryType<TelPolicy>& Arena<MemStrategy, TelPolicy, Safe>::getTelemetry()
-        const noexcept
+    template <MemPolicy MemoryPolicy, TelPolicy TelemetryPolicy, SafeModePolicy SafeMode,
+              mt::MTPolicy MultithreadingPolicy>
+    PMM_INLINE constexpr const ArenaTelemetryType<TelemetryPolicy>& Arena<MemoryPolicy, TelemetryPolicy, SafeMode,
+                                                                    MultithreadingPolicy>::getTelemetry() const noexcept
     { return _telemetry; }
 
 } // namespace pmm

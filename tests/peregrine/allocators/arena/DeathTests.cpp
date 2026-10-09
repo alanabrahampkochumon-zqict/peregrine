@@ -53,7 +53,7 @@ namespace
  **************************************/
 
 TEST(ManagedArenaCtorTests, ZeroArenaSize_TriggersAssertionInDebugMode)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Arena<pmm::ManagedMemory>{ 0 }), ""); }
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Arena<pmm::MemPolicy::Internal>{ 0 }), ""); }
 
 TEST_F(ManagedArenaDeathTests, AllocBytes_ZeroSize_TriggersAssertionInDebugMode)
 { EXPECT_DEBUG_DEATH(static_cast<void>(arena.allocBytes(0)), ""); }
@@ -132,13 +132,13 @@ TEST_F(ManagedArenaDeathTests, ResizeFast_LargerThanArenaSize_TriggersAssertionI
 TEST(UnmanagedArenaCtorTests, ZeroArenaSize_TriggersAssertionInDebugMode)
 {
     const auto buffer = new uint8_t[512];
-    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Arena<pmm::UnmanagedMemory>(buffer, 0)), "");
+    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Arena<pmm::MemPolicy::External>(buffer, 0)), "");
     delete[] buffer;
 }
 
 
 TEST(UnmanagedArenaCtorTests, NullptrForBackingBuffer_TriggersAssertionInDebugMode)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Arena<pmm::UnmanagedMemory>(nullptr, 512)), ""); }
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Arena<pmm::MemPolicy::External>(nullptr, 512)), ""); }
 
 
 TEST_F(UnmanagedArenaDeathTests, AllocBytes_ZeroSize_TriggersAssertionInDebugMode)
@@ -152,7 +152,7 @@ TEST_F(UnmanagedArenaDeathTests, AllocBytes_SizeGreaterThanArenaSize_TriggersAss
 TEST_P(ArenaAllocAlignmentTests, UnmanagedArena_AllocBytes_UnevenAlignment_TriggersAssertionInDebugMode)
 {
     const auto buffer = new uint8_t[512];
-    pmm::Arena<pmm::UnmanagedMemory> arena(buffer, 512);
+    pmm::Arena<pmm::MemPolicy::External> arena(buffer, 512);
     EXPECT_DEBUG_DEATH(static_cast<void>(arena.allocBytes(12, 12)), "");
     delete[] buffer;
 }

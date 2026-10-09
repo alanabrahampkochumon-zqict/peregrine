@@ -104,7 +104,7 @@ namespace
     namespace static_tests
     {
         /** @test Verify that externally memory manged tlsf doesn't have a non-trivial destructor.
-         *  @note Since we cant really confirm confirm if a buffer is freed and we only delete[] buffer in the dtor of
+         *  @note Since we cant really confirm if a buffer is freed and we only delete[] buffer in the dtor of
          *        TLSF. So, we can check if it is trivially destructible to ensure memory is freed in the tlsf in
          *        externally memory managed mode.
          */

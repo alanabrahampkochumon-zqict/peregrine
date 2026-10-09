@@ -322,7 +322,7 @@ namespace pmm
         void _alignForward(std::size_t alignment) noexcept;
 
         // For internal variable access
-        friend struct TempArena<MemStrategy, TelPolicy, Safe>;
+        friend struct TempArena<MemoryPolicy, TelemetryPolicy, SafeMode, MultithreadingPolicy>;
 
 #ifdef ENABLE_PMM_TESTS
     // FRIEND TEST macros for verifying internal states

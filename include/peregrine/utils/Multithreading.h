@@ -41,7 +41,7 @@ namespace pmm::mt
     class SpinLock
     {
     public:
-        SpinLock() {}
+        SpinLock() noexcept = default;
 
         void lock() noexcept
         {
@@ -67,6 +67,7 @@ namespace pmm::mt
     class DummySpinLock
     {
     public:
+        DummySpinLock() noexcept = default;
         void lock() noexcept {}
         void unlock() noexcept {}
 
@@ -80,6 +81,19 @@ namespace pmm::mt
     /// @brief Type of Mutex available based on @ref MTPolicy.
     template <MTPolicy Policy>
     using Mutex_t = std::conditional_t<Policy == MTPolicy::SpinLock, SpinLock, DummySpinLock>;
+
+    template <MTPolicy Policy>
+    [[nodiscard]] constexpr Mutex_t<Policy> getMutex() noexcept
+    {
+        if constexpr (Policy == MTPolicy::SpinLock)
+        {
+            return SpinLock();
+        }
+        else
+        {
+            return DummySpinLock();
+        }
+    }
 
 
     /// @brief Concept defining a simple mutex with functionalities for locking and unlocking.

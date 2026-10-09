@@ -23,7 +23,7 @@ namespace
     namespace static_tests
     {
         /** @test Verify that unmanaged stack does not free memory.
-         *  @note Since we cant really confirm confirm if a buffer is freed and we only delete[] buffer in the dtor of
+         *  @note Since we cant really confirm if a buffer is freed and we only delete[] buffer in the dtor of
          * Stack, we can check if it is trivially destructible to ensure memory is freed in the stack in unmanaged mode
          *        and opposite otherwise.
          */

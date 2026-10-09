@@ -133,12 +133,14 @@ namespace pmm
     {
         [[nodiscard]] explicit constexpr DummyArenaTelemetry(size_t) noexcept {}
         constexpr void logAllocationUsage(size_t) noexcept {}
+        constexpr void logPaddingUsage(size_t) noexcept {}
         constexpr void logMinUsage(size_t) noexcept {}
         constexpr void logPeakUsage(size_t) noexcept {}
         constexpr void resetCurrentUsage() noexcept {}
         constexpr void resetTelemetry() noexcept {}
         [[nodiscard]] constexpr size_t getArenaSize() const noexcept { return 0; }
         [[nodiscard]] constexpr size_t getFreeSize() const noexcept { return 0; }
+        [[nodiscard]] constexpr size_t getTotalPadding() const noexcept { return 0; }
         [[nodiscard]] constexpr size_t getUsedSize() const noexcept { return 0; }
         [[nodiscard]] constexpr size_t getMinUsage() const noexcept { return 0; }
         [[nodiscard]] constexpr size_t getPeakUsage() const noexcept { return 0; }

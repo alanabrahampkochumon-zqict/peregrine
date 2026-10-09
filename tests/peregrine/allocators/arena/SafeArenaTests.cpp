@@ -8,7 +8,7 @@
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
  */
 
-
+#undef ENABLE_PMM_DEATH_TESTS
 #ifndef ENABLE_PMM_DEATH_TESTS
 
     #include "Utils.h"
@@ -32,7 +32,7 @@ namespace
     {
     public:
         size_t arenaSize{ 2_KB };
-        pmm::Arena<pmm::ManagedMemory, pmm::telemetry::Enabled, true> arena{ arenaSize };
+        pmm::Arena<pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled, pmm::SafeModePolicy::Safe> arena{ arenaSize };
     };
 
 
@@ -44,7 +44,8 @@ namespace
     public:
         size_t arenaSize{ 2_KB };
         uint8_t* buffer = new uint8_t[arenaSize];
-        pmm::Arena<pmm::UnmanagedMemory, pmm::telemetry::Enabled, true> arena{ buffer, arenaSize };
+        pmm::Arena<pmm::MemPolicy::External, pmm::TelPolicy::Enabled, pmm::SafeModePolicy::Safe> arena{ buffer,
+                                                                                                        arenaSize };
 
     protected:
         void TearDown() override { delete[] buffer; }
