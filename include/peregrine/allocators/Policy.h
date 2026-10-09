@@ -66,6 +66,14 @@ namespace pmm
     } // namespace stack
 
 
+    /// @brief Stack allocator type.
+    enum class StackPolicy : uint8_t
+    {
+        Loose,
+        Strict
+    };
+
+
     /// @brief Allocator Telemetry configuration.
     enum class TelPolicy : uint8_t
     {
