@@ -13,6 +13,7 @@
 #include "Policy.h"
 #include "peregrine/telemetry/StackTelemetry.h"
 #include "peregrine/utils/Helpers.h"
+#include "peregrine/utils/Multithreading.h"
 #include "peregrine/utils/Preprocessors.h"
 
 #include <cstdint>
@@ -54,21 +55,27 @@ namespace pmm
         std::size_t padding{};    /// Target allocation's block size.
     };
 
+
     /**
      * @brief Linear memory allocator following LIFO principle.
      *
-     * @tparam Type        The type of stack.
-     *                     stack::Loose takes up minimal header space but does not ensure full LIFO compliance.
-     *                     stack::Strict takes up twice the header space, but ensure LIFO compliance via asserts in
-     *                     Debug Mode and conditionals in Release Mode with @p Safe.
-     * @tparam MemStrategy Memory management type. See @ref pmm::MemoryStrategy.
-     * @tparam TelPolicy   Flag indicating whether telemetry is enabled for this stack. See @ref pmm::telemetry.
-     * @tparam Safe        Flags an stack as safe, implying certain operations like resizing a `nullptr` are handled
-     *                     gracefully when assertions are disabled. `False` by default to prevent any performance
-     *                     stalls incurred by conditional checks.
+     * @tparam Type                 The type of stack.
+     *                              stack::Loose takes up minimal header space but does not ensure full LIFO compliance.
+     *                              stack::Strict takes up twice the header space, but ensure LIFO compliance via
+     *                              asserts in Debug Mode and conditionals in Release Mode with @p Safe.
+     * @tparam MemoryPolicy         Memory management type. See @ref pmm::MemPolicy.
+     * @tparam TelemetryPolicy      Policy indicating whether telemetry is enabled for this allocator.
+     *                              See @ref pmm::TelPolicy. Disabled by default.
+     * @tparam SafeMode             Policy dictating the safety of this allocator. When in safe mode, certain actions
+     *                              like `nullptr` resize or free are handled gracefully, in *Release Mode*. Assertions
+     *                              acts as safety value in both mode, given *Debug Mode* is enabled. Disabled by
+     *                              default to prevent any performance stalls incurred by conditional checks.
+     * @tparam MultithreadingPolicy Policy hinting whether the instance can handle multithreading safety.
+     *                              Default: @ref mt::MTPolicy::NoMTPolicy.
      */
-    template <stack::StackType Type = stack::Loose, MemoryStrategy MemStrategy = ManagedMemory,
-              telemetry::TelemetryPolicy TelPolicy = telemetry::Enabled, bool Safe = false>
+    template <stack::StackType Type = stack::Loose, MemPolicy MemoryPolicy = MemPolicy::Internal,
+              TelPolicy TelemetryPolicy = TelPolicy::Disabled, SafeModePolicy SafeMode = SafeModePolicy::Unsafe,
+              mt::MTPolicy MultithreadingPolicy = mt::MTPolicy::NoMT>
     class Stack
     {
     public:
@@ -84,7 +91,7 @@ namespace pmm
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
         [[nodiscard]] explicit constexpr Stack(std::size_t stackSize) noexcept
-            requires std::same_as<MemStrategy, ManagedMemory>;
+            requires(MemoryPolicy == MemPolicy::Internal);
 
 
         /**
@@ -99,7 +106,7 @@ namespace pmm
          * @warning This allocator is Linear and is NOT thread-safe by default.
          */
         [[nodiscard]] explicit constexpr Stack(uint8_t* buffer, std::size_t bufferSize) noexcept
-            requires std::same_as<MemStrategy, UnmanagedMemory>;
+            requires(MemoryPolicy == MemPolicy::External);
 
 
         /**
@@ -168,7 +175,7 @@ namespace pmm
          *
          * @return A telemetry instance if telemetry policy is not Disabled, else an empty struct.
          */
-        [[nodiscard]] constexpr const StackTelemetryType<TelPolicy>& getTelemetry() const noexcept;
+        [[nodiscard]] constexpr const StackTelemetryType<TelemetryPolicy>& getTelemetry() const noexcept;
 
 
         /**
@@ -500,7 +507,7 @@ namespace pmm
          * @remarks API specialized for @ref pmm::ManagedMemory.
          */
         ~Stack() noexcept
-            requires std::same_as<MemStrategy, ManagedMemory>;
+            requires(MemoryPolicy == MemPolicy::Internal);
 
 
         /**
@@ -513,7 +520,7 @@ namespace pmm
          * @remarks API specialized for @ref pmm::UnmanagedMemory.
          */
         ~Stack() noexcept
-            requires std::same_as<MemStrategy, UnmanagedMemory>
+            requires(MemoryPolicy == MemPolicy::External)
         = default;
 
 
@@ -535,7 +542,7 @@ namespace pmm
         uint8_t* _buffer;
         std::size_t _stackSize, _offset{ 0 };
         PMM_NO_UNIQUE_ADDR PreviousOffsetType _prevOffset;
-        PMM_NO_UNIQUE_ADDR StackTelemetryType<TelPolicy> _telemetry;
+        PMM_NO_UNIQUE_ADDR StackTelemetryType<TelemetryPolicy> _telemetry;
 
 
 

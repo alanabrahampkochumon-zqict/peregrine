@@ -83,9 +83,7 @@ namespace pmm
 
 
     /**************************************
-     *                                    *
      *              GETTERS               *
-     *                                    *
      **************************************/
 
     PMM_INLINE constexpr std::size_t StackTelemetry::getStackSize() const noexcept { return _size; }

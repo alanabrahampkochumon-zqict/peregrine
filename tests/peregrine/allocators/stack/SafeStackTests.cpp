@@ -32,7 +32,7 @@ namespace
     {
     public:
         size_t stackSize{ 2_KB };
-        pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory, pmm::telemetry::Enabled, true> stack{ stackSize };
+        pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::Internal, pmm::telemetry::Enabled, true> stack{ stackSize };
     };
 
 
@@ -44,7 +44,7 @@ namespace
     public:
         size_t stackSize{ 2_KB };
         uint8_t* buffer = new uint8_t[stackSize];
-        pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory, pmm::telemetry::Enabled, true> stack{ buffer, stackSize };
+        pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::External, pmm::telemetry::Enabled, true> stack{ buffer, stackSize };
 
     protected:
         void TearDown() override { delete[] buffer; }
@@ -58,7 +58,7 @@ namespace
     {
     public:
         size_t stackSize{ 2_KB };
-        pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory, pmm::telemetry::Enabled, true> stack{ stackSize };
+        pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::Internal, pmm::telemetry::Enabled, true> stack{ stackSize };
     };
 
 
@@ -70,7 +70,7 @@ namespace
     public:
         size_t stackSize{ 2_KB };
         uint8_t* buffer = new uint8_t[stackSize];
-        pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory, pmm::telemetry::Enabled, true> stack{ buffer, stackSize };
+        pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::External, pmm::telemetry::Enabled, true> stack{ buffer, stackSize };
 
     protected:
         void TearDown() override { delete[] buffer; }

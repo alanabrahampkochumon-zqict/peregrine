@@ -46,11 +46,11 @@ namespace
         namespace telemetry_type
         {
             /// @test Verify that StackTelemetryType returns StackTelemetry when the telemetry policy is Managed.
-            static_assert(std::same_as<pmm::StackTelemetryType<pmm::telemetry::Enabled>, pmm::StackTelemetry> == true);
+            static_assert(std::same_as<pmm::StackTelemetryType<pmm::TelPolicy::Enabled>, pmm::StackTelemetry> == true);
 
 
             /// @test Verify that StackTelemetryType returns DummyStackTelemetry when the telemetry policy is Disabled.
-            static_assert(std::same_as<pmm::StackTelemetryType<pmm::telemetry::Disabled>, pmm::DummyStackTelemetry> ==
+            static_assert(std::same_as<pmm::StackTelemetryType<pmm::TelPolicy::Disabled>, pmm::DummyStackTelemetry> ==
                           true);
 
         } // namespace telemetry_type
@@ -59,13 +59,13 @@ namespace
         namespace telemetry_helpers
         {
             /// @test Verify that getTelemetryInstance returns a real stack when the telemetry policy is Managed.
-            [[maybe_unused]] constexpr auto STACK_TEL_MANAGED = pmm::getTelemetryInstance<pmm::telemetry::Enabled>(512);
+            [[maybe_unused]] constexpr auto STACK_TEL_MANAGED = pmm::getTelemetryInstance<pmm::TelPolicy::Enabled>(512);
             static_assert(std::is_same_v<decltype(STACK_TEL_MANAGED), const pmm::StackTelemetry> == true);
 
 
             /// @test Verify that getTelemetryInstance returns a real stack when the telemetry policy is Disabled.
             [[maybe_unused]] constexpr auto STACK_TEL_DISABLED =
-                pmm::getTelemetryInstance<pmm::telemetry::Disabled>(512);
+                pmm::getTelemetryInstance<pmm::TelPolicy::Disabled>(512);
             static_assert(std::is_same_v<decltype(STACK_TEL_DISABLED), const pmm::DummyStackTelemetry> == true);
 
         } // namespace telemetry_helpers

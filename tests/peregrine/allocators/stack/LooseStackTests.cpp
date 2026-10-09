@@ -144,7 +144,7 @@ TEST_F(LooseStackTests, UsedSize_ClearAllocation_ReturnsStackSize)
 
 TEST_F(LooseStackTests, MoveCtor_CopiesAttributesToNewObject)
 {
-    const pmm::Stack<> stack2 = std::move(stack);
+    const pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack2 = std::move(stack);
     EXPECT_EQ(stackSize, stack2.freeSize());
     EXPECT_EQ(stackSize, stack2.size());
     EXPECT_EQ(0, stack2.usedSize());
@@ -158,7 +158,7 @@ TEST_F(LooseStackTests, MoveCtor_MovesTelemetry)
     static_cast<void>(stack.allocBytes(250, 16));
     // Must get the telemetry by value here else the reference will be reset
     const auto initialTelemetry = stack.getTelemetry();
-    const pmm::Stack<> stack2   = std::move(stack);
+    const pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack2 = std::move(stack);
 
     // Checking for telemetry equality
     EXPECT_EQ(initialTelemetry.getCurrentMemoryUsage(), stack2.getTelemetry().getCurrentMemoryUsage());
@@ -254,7 +254,7 @@ TEST_P(LooseStackAllocationAlignmentTests, AllocBytes_AlwaysReturnAnAlignedMemor
     const auto alignment = this->GetParam();
     const auto blockSize = 5 * alignment;
     const auto stackSize = 10 * alignment;
-    // pmm::Stack<> stack(stackSize);
+    // pmm::Stack<pmm::MemPolicy::External> stack(stackSize);
     pmm::Stack<pmm::stack::Loose> stack{ stackSize };
     const void* dataAddress = stack.allocBytes(blockSize, alignment);
 
@@ -1119,7 +1119,7 @@ namespace pmm
 
     TEST_F(LooseStackTests, MoveCtor_NullsOutInternalBuffer)
     {
-        [[maybe_unused]] const Stack<> stack2 = std::move(stack);
+        [[maybe_unused]] const Stack<stack::Loose, MemPolicy::Internal, TelPolicy::Enabled> stack2 = std::move(stack);
         // NOLINT(bugprone-use-after-move)
         EXPECT_EQ(nullptr, stack._buffer);
     }
@@ -1132,7 +1132,7 @@ namespace pmm
         const auto initialPointer = stack._buffer;
         const auto initialOffset  = stack._offset;
 
-        const Stack<> stack2 = std::move(stack);
+        const Stack<stack::Loose, MemPolicy::Internal, TelPolicy::Enabled> stack2 = std::move(stack);
         EXPECT_EQ(initialPointer, stack2._buffer);
         EXPECT_EQ(initialOffset, stack2._offset);
         EXPECT_EQ(stackSize, stack2._stackSize);
@@ -1141,7 +1141,7 @@ namespace pmm
 
     TEST_F(LooseStackTests, MoveOperator_NullsOutInternalBuffer)
     {
-        [[maybe_unused]] Stack<> stack2(256);
+        [[maybe_unused]] Stack<stack::Loose, MemPolicy::Internal, TelPolicy::Enabled> stack2(256);
         static_cast<void>(stack2 = std::move(stack));
         EXPECT_EQ(nullptr, stack._buffer);
     }
@@ -1152,7 +1152,7 @@ namespace pmm
     {
         const auto initialPointer = stack._buffer;
 
-        Stack<> stack2(256);
+        Stack<stack::Loose, MemPolicy::Internal, TelPolicy::Enabled> stack2(256);
         stack2 = std::move(stack);
 
         EXPECT_EQ(initialPointer, stack2._buffer);
@@ -1192,7 +1192,7 @@ namespace pmm
 
     TEST_F(LooseStackTests, MoveOperator_DeletingOriginalStackDoNotDeleteTheNewStacksMemory)
     {
-        Stack<> stack2(256);
+        Stack<stack::Loose, MemPolicy::Internal, TelPolicy::Enabled> stack2(256);
         constexpr auto size = 512;
 
         {
@@ -1243,7 +1243,7 @@ namespace pmm
         // Allocate and clear the stack to ensure there is some data
         const auto stackSize = 4_KB;
         const auto buffer    = new uint8_t[stackSize];
-        Stack<stack::Loose, UnmanagedMemory> stack{ buffer, stackSize };
+        Stack<stack::Loose, MemPolicy::External> stack{ buffer, stackSize };
 
         // Fill the buffer with arbitrary data
         for (size_t i = 0; i < stack.size(); ++i)

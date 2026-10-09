@@ -29,19 +29,19 @@ namespace
  **************************************/
 
 TEST(ManagedLooseStackCtorTests, ZeroSize_TriggersAssertionInDebugMode)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Loose, pmm::ManagedMemory>(0)), ""); }
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::Internal>(0)), ""); }
 
 
 TEST(UnmanagedLooseStackCtorTests, ZeroSize_TriggersAssertionInDebugMode)
 {
     const auto buffer = new uint8_t[512];
-    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory>(buffer, 0)), "");
+    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::External>(buffer, 0)), "");
     delete[] buffer;
 }
 
 
 TEST(UnmanagedLooseStackCtorTests, NullptrForBackingBuffer_TriggersAssertionInDebugMode)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Loose, pmm::UnmanagedMemory>(nullptr, 512)), ""); }
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::External>(nullptr, 512)), ""); }
 
 
 /**
@@ -226,19 +226,19 @@ TEST_F(LooseStackTests, ResizeLast_FromZero_TriggersAssertion)
  **************************************/
 
 TEST(ManagedStrictStackCtorTests, ZeroSize_TriggersAssertionInDebugMode)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Strict, pmm::ManagedMemory>(0)), ""); }
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::Internal>(0)), ""); }
 
 
 TEST(UnmanagedStrictStackCtorTests, ZeroSize_TriggersAssertionInDebugMode)
 {
     const auto buffer = new uint8_t[512];
-    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory>(buffer, 0)), "");
+    EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::External>(buffer, 0)), "");
     delete[] buffer;
 }
 
 
 TEST(UnmanagedStrictStackCtorTests, NullptrForBackingBuffer_TriggersAssertionInDebugMode)
-{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Strict, pmm::UnmanagedMemory>(nullptr, 512)), ""); }
+{ EXPECT_DEBUG_DEATH(static_cast<void>(pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::External>(nullptr, 512)), ""); }
 
 
 /**

@@ -27,7 +27,7 @@ class LooseStackTests: public testing::Test
 
 public:
     std::size_t stackSize{ STACK_SIZE };
-    pmm::Stack<pmm::stack::Loose> stack{ stackSize };
+    pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack{ stackSize };
 };
 
 
@@ -35,8 +35,5 @@ class StrictStackTests: public testing::Test
 {
 public:
     std::size_t stackSize{ STACK_SIZE };
-    pmm::Stack<pmm::stack::Strict> stack{ stackSize };
+    pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack{ stackSize };
 };
-
-
-

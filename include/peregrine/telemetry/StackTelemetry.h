@@ -268,9 +268,8 @@ namespace pmm
      *
      * @tparam Policy Telemetry Policy used by the stack.
      */
-    template <telemetry::TelemetryPolicy Policy>
-    using StackTelemetryType =
-        std::conditional_t<std::is_same_v<Policy, telemetry::Disabled>, DummyStackTelemetry, StackTelemetry>;
+    template <TelPolicy Policy>
+    using StackTelemetryType = std::conditional_t<Policy == TelPolicy::Disabled, DummyStackTelemetry, StackTelemetry>;
 
 
 
@@ -283,10 +282,10 @@ namespace pmm
      *
      * @return A stack telemetry instance suited for the telemetry policy.
      */
-    template <telemetry::TelemetryPolicy Policy>
+    template <TelPolicy Policy>
     constexpr StackTelemetryType<Policy> getTelemetryInstance(const std::size_t stackSize) noexcept
     {
-        if constexpr (std::same_as<Policy, telemetry::Disabled>)
+        if constexpr (Policy == TelPolicy::Disabled)
         {
             return DummyStackTelemetry(stackSize);
         }
