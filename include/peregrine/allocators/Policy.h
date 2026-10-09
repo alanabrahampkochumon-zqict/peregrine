@@ -20,6 +20,7 @@ namespace pmm
      * @{
      */
 
+    // TODO: Update stack to enum type
 
     /**************************************
      *            STACK TYPES             *
@@ -64,134 +65,6 @@ namespace pmm
 
     } // namespace stack
 
-
-
-    /**************************************
-     *                                    *
-     *          MEMORY OWNERSHIP          *
-     *                                    *
-     **************************************/
-
-    /**
-     * @brief Concept defining the requirements for a memory ownership strategy.
-     *
-     * @relatedalso ManagedMemory
-     * @relatedalso UnmanagedMemory
-     */
-    template <typename Strategy>
-    concept MemoryStrategy = requires {
-        { Strategy::getId() } -> std::same_as<std::size_t>;
-    };
-
-
-    /**
-     * @brief Memory strategy indicating that the allocator owns the memory.
-     *        The allocator handles allocation/deallocation; users cannot directly free it.
-     *
-     * @relatedalso UnmanagedMemory
-     */
-    struct ManagedMemory
-    {
-        static constexpr std::size_t getId() noexcept { return 1; }
-    };
-
-
-    /**
-     * @brief Memory strategy indicating that the memory is shared with or managed by the user.
-     *        The allocator does not own the memory life cycle; the user must ensure its validity.
-     *
-     * @relatedalso ManagedMemory
-     */
-    struct UnmanagedMemory
-    {
-        static constexpr std::size_t getId() noexcept { return 2; }
-    };
-
-
-
-    /**************************************
-     *                                    *
-     *             TELEMETRY              *
-     *                                    *
-     **************************************/
-
-    namespace telemetry
-    {
-
-        /**
-         * @brief Concept defining the requirements for telemetry.
-         *
-         * @relatedalso Enabled
-         * @relatedalso Disabled
-         */
-        template <typename T>
-        concept TelemetryPolicy = requires(T) {
-            { T::getPolicyName() } -> std::same_as<std::string>;
-        };
-
-
-        /**
-         * @brief Telemetry policy indicating that the telemetry is enabled.
-         *
-         * @relatedalso Disabled
-         */
-        struct Enabled
-        {
-            static constexpr std::string getPolicyName() noexcept { return "Telemetry Enabled"; }
-        };
-
-
-        /**
-         * @brief Telemetry policy indicating that telemetry is disabled.
-         *
-         * @relatedalso Enabled
-         */
-        struct Disabled
-        {
-            static constexpr std::string getPolicyName() noexcept { return "No Telemetry"; }
-        };
-
-    } // namespace telemetry
-
-    // TODO: Migrate all policies to enum and remove all the concepts and struct based policies.
-    /**************************************
-     *           MULTITHREADING           *
-     **************************************/
-    namespace mt
-    {
-        /**
-         * @brief Concept defining the requirements for multithreading safety.
-         * @deprecated
-         * @relatedalso ThreadSafe
-         * @relatedalso NonThreadSafe
-         */
-        template <typename T>
-        concept MTPolicyConc = requires(T) {
-            { T::getPolicyName() } -> std::same_as<std::string>;
-        };
-
-
-        /**
-         * @brief Multithreading policy indicating that the allocator is thread-safe.
-         *
-         * @relatedalso NonThreadSafe
-         */
-        struct ThreadSafe
-        {
-            static constexpr std::string getPolicyName() noexcept { return "Thread safe(Mutex Locked)"; }
-        };
-
-
-        /**
-         * @brief Multithreading policy indicating that the allocator is *not* thread-safe.
-         *
-         * @relatedalso ThreadSafe
-         */
-        struct NonThreadSafe
-        {
-            static constexpr std::string getPolicyName() noexcept { return "Thread Unsafe"; }
-        };
-    } // namespace mt
 
     /// @brief Allocator Telemetry configuration.
     enum class TelPolicy : uint8_t
