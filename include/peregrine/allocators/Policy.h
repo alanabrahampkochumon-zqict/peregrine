@@ -10,9 +10,6 @@
  */
 
 
-#include <concepts>
-#include <mutex>
-
 namespace pmm
 {
     /**
@@ -20,51 +17,9 @@ namespace pmm
      * @{
      */
 
-    // TODO: Update stack to enum type
-
     /**************************************
      *            STACK TYPES             *
      **************************************/
-
-    namespace stack
-    {
-        /**
-         * @brief Concept defining requirements for different stack types.
-         */
-        template <typename T>
-        concept StackType = requires(T policy) {
-            // Member variables
-            { T::getTypeIndex() } -> std::same_as<std::size_t>;
-        };
-
-
-        /**
-         * @brief Stack with minimal header footprint, but it may not define absolute stack behavior.
-         *
-         * @relatedalso Strict
-         */
-        struct Loose
-        {
-            static std::size_t getTypeIndex() { return 1; }
-        };
-
-
-        /**
-         * @brief Stack with full LIFO compliance, using more memory than @ref stack::Loose.
-         *
-         * @note The foolproofness of the policy are implementation dependant.
-         *       For example: free(void*) may or may not check for `nullptr` depending on whether
-         *       assertions or conditionals are used.
-         *
-         * @relatedalso Loose
-         */
-        struct Strict
-        {
-            static std::size_t getTypeIndex() { return 2; }
-        };
-
-    } // namespace stack
-
 
     /// @brief Stack allocator type.
     enum class StackPolicy : uint8_t
