@@ -69,8 +69,8 @@ namespace pmm
     /// @brief Stack allocator type.
     enum class StackPolicy : uint8_t
     {
-        Loose,
-        Strict
+        Loose, /// Stack with minimal memory footprint.
+        Strict /// Stack with full LIFO compliance. Uses more memory than @ref StackPolicy::Loose.
     };
 
 

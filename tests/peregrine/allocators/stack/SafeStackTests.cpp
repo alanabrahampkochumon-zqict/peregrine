@@ -32,7 +32,7 @@ namespace
     {
     public:
         size_t stackSize{ 2_KB };
-        pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled, pmm::SafeModePolicy::Safe>
+        pmm::Stack<pmm::StackPolicy::Loose, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled, pmm::SafeModePolicy::Safe>
             stack{ stackSize };
     };
 
@@ -45,7 +45,7 @@ namespace
     public:
         size_t stackSize{ 2_KB };
         uint8_t* buffer = new uint8_t[stackSize];
-        pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::External, pmm::TelPolicy::Enabled, pmm::SafeModePolicy::Safe>
+        pmm::Stack<pmm::StackPolicy::Loose, pmm::MemPolicy::External, pmm::TelPolicy::Enabled, pmm::SafeModePolicy::Safe>
             stack{ buffer, stackSize };
 
     protected:
@@ -60,7 +60,7 @@ namespace
     {
     public:
         size_t stackSize{ 2_KB };
-        pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled, pmm::SafeModePolicy::Safe>
+        pmm::Stack<pmm::StackPolicy::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled, pmm::SafeModePolicy::Safe>
             stack{ stackSize };
     };
 
@@ -73,7 +73,7 @@ namespace
     public:
         size_t stackSize{ 2_KB };
         uint8_t* buffer = new uint8_t[stackSize];
-        pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::External, pmm::TelPolicy::Enabled, pmm::SafeModePolicy::Safe>
+        pmm::Stack<pmm::StackPolicy::Strict, pmm::MemPolicy::External, pmm::TelPolicy::Enabled, pmm::SafeModePolicy::Safe>
             stack{ buffer, stackSize };
 
     protected:

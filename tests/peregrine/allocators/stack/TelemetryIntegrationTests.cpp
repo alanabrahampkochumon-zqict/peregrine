@@ -31,7 +31,7 @@ namespace
     {
     public:
         std::size_t size = 2_MB;
-        pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack{ size };
+        pmm::Stack<pmm::StackPolicy::Loose, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack{ size };
     };
 
 
@@ -40,7 +40,7 @@ namespace
     {
     public:
         std::size_t size = 2_MB;
-        pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack{ size };
+        pmm::Stack<pmm::StackPolicy::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack{ size };
     };
 
 
@@ -50,7 +50,7 @@ namespace
     public:
         static constexpr std::size_t size = 2_MB;
         uint8_t* buffer                   = new uint8_t[size];
-        pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::External, pmm::TelPolicy::Enabled> stack{ buffer, size };
+        pmm::Stack<pmm::StackPolicy::Loose, pmm::MemPolicy::External, pmm::TelPolicy::Enabled> stack{ buffer, size };
 
     protected:
         void TearDown() override { delete[] buffer; }
@@ -63,7 +63,7 @@ namespace
     public:
         static constexpr std::size_t size = 2_MB;
         uint8_t* buffer                   = new uint8_t[size];
-        pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::External, pmm::TelPolicy::Enabled> stack{ buffer, size };
+        pmm::Stack<pmm::StackPolicy::Strict, pmm::MemPolicy::External, pmm::TelPolicy::Enabled> stack{ buffer, size };
 
     protected:
         void TearDown() override { delete[] buffer; }
@@ -87,7 +87,7 @@ TEST_F(ManagedLooseStackTelemetryIntegrationTests, EnabledTelemetry_ReturnsRealT
 
 TEST_F(ManagedLooseStackTelemetryIntegrationTests, DisabledTelemetry_ReturnsDummyTelemetry)
 {
-    const pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> noTelemetryStack{ size };
+    const pmm::Stack<pmm::StackPolicy::Loose, pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> noTelemetryStack{ size };
     [[maybe_unused]] const auto telemetry = noTelemetryStack.getTelemetry();
     const bool result                     = std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry>;
     EXPECT_TRUE(result);
@@ -109,7 +109,7 @@ TEST_F(ManagedLooseStackTelemetryIntegrationTests, TelemetryEnabledStack_Returns
 TEST_F(ManagedLooseStackTelemetryIntegrationTests, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
 {
     constexpr auto noTelStackSize = 2_KB;
-    const pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> noTelemetryStack{
+    const pmm::Stack<pmm::StackPolicy::Loose, pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> noTelemetryStack{
         noTelStackSize
     };
     EXPECT_FALSE(noTelemetryStack.isTelemetryEnabled());
@@ -119,7 +119,7 @@ TEST_F(ManagedLooseStackTelemetryIntegrationTests, TelemetryDisabled_IsTelemetry
 TEST_F(ManagedLooseStackTelemetryIntegrationTests, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
 {
     constexpr auto noTelStackSize = 2_KB;
-    const pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> noTelemetryStack{
+    const pmm::Stack<pmm::StackPolicy::Loose, pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> noTelemetryStack{
         noTelStackSize
     };
     const auto& telemetry = noTelemetryStack.getTelemetry();
@@ -435,7 +435,7 @@ TEST_F(ManagedStrictStackTelemetryIntegrationTests, EnabledTelemetry_ReturnsReal
 
 TEST_F(ManagedStrictStackTelemetryIntegrationTests, DisabledTelemetry_ReturnsDummyTelemetry)
 {
-    const pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> noTelemetryStack{ size };
+    const pmm::Stack<pmm::StackPolicy::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> noTelemetryStack{ size };
     [[maybe_unused]] const auto telemetry = noTelemetryStack.getTelemetry();
     const bool result                     = std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry>;
     EXPECT_TRUE(result);
@@ -457,7 +457,7 @@ TEST_F(ManagedStrictStackTelemetryIntegrationTests, TelemetryEnabledStack_Return
 TEST_F(ManagedStrictStackTelemetryIntegrationTests, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
 {
     constexpr auto noTelStackSize = 2_KB;
-    const pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> noTelemetryStack{
+    const pmm::Stack<pmm::StackPolicy::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> noTelemetryStack{
         noTelStackSize
     };
     EXPECT_FALSE(noTelemetryStack.isTelemetryEnabled());
@@ -467,7 +467,7 @@ TEST_F(ManagedStrictStackTelemetryIntegrationTests, TelemetryDisabled_IsTelemetr
 TEST_F(ManagedStrictStackTelemetryIntegrationTests, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
 {
     constexpr auto noTelStackSize = 2_KB;
-    const pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> noTelemetryStack{
+    const pmm::Stack<pmm::StackPolicy::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Disabled> noTelemetryStack{
         noTelStackSize
     };
     const auto& telemetry = noTelemetryStack.getTelemetry();
@@ -823,7 +823,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, EnabledTelemetry_ReturnsRea
 
 TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, DisabledTelemetry_ReturnsDummyTelemetry)
 {
-    const pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::External, pmm::TelPolicy::Disabled> noTelemetryStack{ buffer,
+    const pmm::Stack<pmm::StackPolicy::Loose, pmm::MemPolicy::External, pmm::TelPolicy::Disabled> noTelemetryStack{ buffer,
                                                                                                           size };
     [[maybe_unused]] const auto telemetry = noTelemetryStack.getTelemetry();
     const bool result                     = std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry>;
@@ -845,7 +845,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, TelemetryEnabledStack_Retur
 
 TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
 {
-    const pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::External, pmm::TelPolicy::Disabled> noTelemetryStack{ buffer,
+    const pmm::Stack<pmm::StackPolicy::Loose, pmm::MemPolicy::External, pmm::TelPolicy::Disabled> noTelemetryStack{ buffer,
                                                                                                           size };
     EXPECT_FALSE(noTelemetryStack.isTelemetryEnabled());
 }
@@ -853,7 +853,7 @@ TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, TelemetryDisabled_IsTelemet
 
 TEST_F(UnmanagedLooseStackTelemetryIntegrationTests, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
 {
-    const pmm::Stack<pmm::stack::Loose, pmm::MemPolicy::External, pmm::TelPolicy::Disabled> noTelemetryStack{ buffer,
+    const pmm::Stack<pmm::StackPolicy::Loose, pmm::MemPolicy::External, pmm::TelPolicy::Disabled> noTelemetryStack{ buffer,
                                                                                                           size };
     const auto& telemetry = noTelemetryStack.getTelemetry();
     static_assert(std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry&> == true);
@@ -1168,7 +1168,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, EnabledTelemetry_ReturnsRe
 
 TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, DisabledTelemetry_ReturnsDummyTelemetry)
 {
-    const pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::External, pmm::TelPolicy::Disabled> noTelemetryStack{ buffer,
+    const pmm::Stack<pmm::StackPolicy::Strict, pmm::MemPolicy::External, pmm::TelPolicy::Disabled> noTelemetryStack{ buffer,
                                                                                                            size };
     [[maybe_unused]] const auto telemetry = noTelemetryStack.getTelemetry();
     const bool result                     = std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry>;
@@ -1190,7 +1190,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, TelemetryEnabledStack_Retu
 
 TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, TelemetryDisabled_IsTelemetryEnabled_ReturnsFalse)
 {
-    const pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::External, pmm::TelPolicy::Disabled> noTelemetryStack{ buffer,
+    const pmm::Stack<pmm::StackPolicy::Strict, pmm::MemPolicy::External, pmm::TelPolicy::Disabled> noTelemetryStack{ buffer,
                                                                                                            size };
     EXPECT_FALSE(noTelemetryStack.isTelemetryEnabled());
 }
@@ -1199,7 +1199,7 @@ TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, TelemetryDisabled_IsTeleme
 TEST_F(UnmanagedStrictStackTelemetryIntegrationTests, TelemetryDisabledStack_ReturnsZeroForTelemetryData)
 {
 
-    const pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::External, pmm::TelPolicy::Disabled> noTelemetryStack{ buffer,
+    const pmm::Stack<pmm::StackPolicy::Strict, pmm::MemPolicy::External, pmm::TelPolicy::Disabled> noTelemetryStack{ buffer,
                                                                                                            size };
     const auto& telemetry = noTelemetryStack.getTelemetry();
     static_assert(std::is_same_v<decltype(telemetry), const pmm::DummyStackTelemetry&> == true);

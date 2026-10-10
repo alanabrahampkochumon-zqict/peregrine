@@ -60,8 +60,9 @@ namespace pmm
      * @brief Linear memory allocator following LIFO principle.
      *
      * @tparam Type                 The type of stack.
-     *                              stack::Loose takes up minimal header space but does not ensure full LIFO compliance.
-     *                              stack::Strict takes up twice the header space, but ensure LIFO compliance via
+     *                              StackPolicy::Loose takes up minimal header space but does not ensure full LIFO
+     *                              compliance.
+     *                              StackPolicy::Strict takes up twice the header space, but ensure LIFO compliance via
      *                              asserts in Debug Mode and conditionals in Release Mode with @p Safe.
      * @tparam MemoryPolicy         Memory management type. See @ref pmm::MemPolicy.
      * @tparam TelemetryPolicy      Policy indicating whether telemetry is enabled for this allocator.
@@ -73,7 +74,7 @@ namespace pmm
      * @tparam MultithreadingPolicy Policy hinting whether the instance can handle multithreading safety.
      *                              Default: @ref mt::MTPolicy::NoMTPolicy.
      */
-    template <stack::StackType Type = stack::Loose, MemPolicy MemoryPolicy = MemPolicy::Internal,
+    template <StackPolicy Type = StackPolicy::Loose, MemPolicy MemoryPolicy = MemPolicy::Internal,
               TelPolicy TelemetryPolicy = TelPolicy::Disabled, SafeModePolicy SafeMode = SafeModePolicy::Unsafe,
               mt::MTPolicy MultithreadingPolicy = mt::MTPolicy::NoMT>
     class Stack
@@ -196,7 +197,7 @@ namespace pmm
          * @relatedalso allocV
          */
         [[nodiscard]] void* allocBytes(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept
-            requires std::same_as<Type, stack::Loose>;
+            requires(Type == StackPolicy::Loose);
 
 
         /**
@@ -217,7 +218,7 @@ namespace pmm
          * @relatedalso allocV
          */
         [[nodiscard]] void* allocBytes(std::size_t size, std::size_t alignment = sizeof(void*)) noexcept
-            requires std::same_as<Type, stack::Strict>;
+            requires(Type == StackPolicy::Strict);
 
 
         /**
@@ -287,7 +288,7 @@ namespace pmm
          */
         [[nodiscard]] void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
                                    std::size_t alignment = sizeof(void*))
-            requires std::same_as<Type, stack::Loose>;
+            requires(Type == StackPolicy::Loose);
 
 
         /**
@@ -315,7 +316,7 @@ namespace pmm
          */
         [[nodiscard]] void* resize(void* oldMemory, std::size_t oldSize, std::size_t newSize,
                                    std::size_t alignment = sizeof(void*))
-            requires std::same_as<Type, stack::Strict>;
+            requires(Type == StackPolicy::Strict);
 
 
         /**
@@ -367,7 +368,7 @@ namespace pmm
          * @relatedalso resizeFast
          */
         [[nodiscard]] void* resizeLast(void* oldMemory, std::size_t oldSize, std::size_t newSize)
-            requires std::same_as<Type, stack::Loose>;
+            requires(Type == StackPolicy::Loose);
 
 
         /**
@@ -392,7 +393,7 @@ namespace pmm
          * @relatedalso resizeFast
          */
         [[nodiscard]] void* resizeLast(void* oldMemory, std::size_t oldSize, std::size_t newSize)
-            requires std::same_as<Type, stack::Strict>;
+            requires(Type == StackPolicy::Strict);
 
 
         /**
@@ -415,7 +416,7 @@ namespace pmm
          * @relatedalso clear
          */
         bool freeBytes(void* ptr) noexcept
-            requires std::same_as<Type, stack::Loose>;
+            requires(Type == StackPolicy::Loose);
 
 
         /**
@@ -438,7 +439,7 @@ namespace pmm
          * @relatedalso clear
          */
         bool freeBytes(void* ptr) noexcept
-            requires std::same_as<Type, stack::Strict>;
+            requires(Type == StackPolicy::Strict);
 
 
         /**
@@ -536,7 +537,7 @@ namespace pmm
 
 
         /// Custom Types
-        using PreviousOffsetType = std::conditional_t<std::is_same_v<Type, stack::Strict>, std::size_t, EmptyMember>;
+        using PreviousOffsetType = std::conditional_t<Type == StackPolicy::Strict, std::size_t, EmptyMember>;
 
         /// Member Variables
         uint8_t* _buffer;

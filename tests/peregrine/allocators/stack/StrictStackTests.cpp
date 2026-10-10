@@ -3,7 +3,7 @@
  * @author Alan Abraham P Kochumon
  * @date Created on: June 20, 2026
  *
- * @brief Verify @ref pmm::Stack<pmm::stack::Strict> allocation, deallocation, and other related memory management
+ * @brief Verify @ref pmm::Stack<pmm::StackPolicy::Strict> allocation, deallocation, and other related memory management
  * logic.
  *
  * @copyright Copyright (c) 2026 Alan Abraham P Kochumon
@@ -149,7 +149,7 @@ TEST_F(StrictStackTests, UsedSize_ClearAllocation_ReturnsStackSize)
 
 TEST_F(StrictStackTests, MoveCtor_CopiesAttributesToNewObject)
 {
-    const pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack2 = std::move(stack);
+    const pmm::Stack<pmm::StackPolicy::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack2 = std::move(stack);
     EXPECT_EQ(stackSize, stack2.freeSize());
     EXPECT_EQ(stackSize, stack2.size());
     EXPECT_EQ(0, stack2.usedSize());
@@ -163,7 +163,7 @@ TEST_F(StrictStackTests, MoveCtor_MovesTelemetry)
     static_cast<void>(stack.allocBytes(250, 16));
     // Must get the telemetry by value here else the reference will be reset
     const auto initialTelemetry = stack.getTelemetry();
-    const pmm::Stack<pmm::stack::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack2 = std::move(stack);
+    const pmm::Stack<pmm::StackPolicy::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack2 = std::move(stack);
 
     // Checking for telemetry equality
     EXPECT_EQ(initialTelemetry.getCurrentMemoryUsage(), stack2.getTelemetry().getCurrentMemoryUsage());
@@ -258,7 +258,7 @@ TEST_P(StrictStackAllocationAlignmentTests, AllocBytes_AlwaysReturnAnAlignedMemo
     const auto alignment = this->GetParam();
     const auto blockSize = 5 * alignment;
     const auto stackSize = 10 * alignment;
-    pmm::Stack<pmm::stack::Strict> stack{ stackSize };
+    pmm::Stack<pmm::StackPolicy::Strict> stack{ stackSize };
     const void* dataAddress = stack.allocBytes(blockSize, alignment);
 
     // Verify returned address is 0 by using 2^n modulo trick
@@ -331,7 +331,7 @@ TEST_F(StrictStackTests, Alloc_HeaderIsStoredBehindReturnedAddress)
 /** @brief Verify that allocation using alloc always return an address aligned to the alignment of the type. */
 TEST_P(StrictStackAllocationAlignmentTests, Alloc_AlwaysReturnAnAlignedMemoryAddress)
 {
-    pmm::Stack<pmm::stack::Strict> stack{ 512 };
+    pmm::Stack<pmm::StackPolicy::Strict> stack{ 512 };
     const auto vector = stack.alloc<Vec4>(1.0f, 2.0f, 3.0f, 4.0f);
 
     // Verify returned address is 0 by using 2^n module trick
@@ -1073,7 +1073,7 @@ namespace pmm
     TEST(StrictStackInitializationTests, InitializesDefaultStateAndBuffer)
     {
         constexpr std::size_t sizeInBytes = 512;
-        const Stack<pmm::stack::Strict> stack{ sizeInBytes };
+        const Stack<pmm::StackPolicy::Strict> stack{ sizeInBytes };
 
         EXPECT_EQ(sizeInBytes, stack._stackSize);
         EXPECT_EQ(0, stack._offset);
@@ -1111,7 +1111,7 @@ namespace pmm
     /** @brief Verify that stack.resizeLast, moves the offset in the correct direction. */
     TEST_P(StrictStackResizeLastTests, ResizeLast_MovesOffsetInCorrectDirection)
     {
-        Stack<stack::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack(20_KB);
+        Stack<StackPolicy::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack(20_KB);
         const auto [oldSize, newSize] = GetParam();
         auto oldMemory                = stack.allocBytes(oldSize);
         const auto oldOffset          = stack._offset;
@@ -1130,7 +1130,7 @@ namespace pmm
 
     TEST_F(StrictStackTests, MoveCtor_NullsOutInternalBuffer)
     {
-        [[maybe_unused]] const Stack<stack::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack2 = std::move(stack);
+        [[maybe_unused]] const Stack<StackPolicy::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack2 = std::move(stack);
         // NOLINT(bugprone-use-after-move)
         EXPECT_EQ(nullptr, stack._buffer);
     }
@@ -1144,7 +1144,7 @@ namespace pmm
         const auto initialOffset     = stack._offset;
         const auto initialPrevOffset = stack._prevOffset;
 
-        const Stack<stack::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack2 = std::move(stack);
+        const Stack<StackPolicy::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack2 = std::move(stack);
         EXPECT_EQ(initialPointer, stack2._buffer);
         EXPECT_EQ(initialOffset, stack2._offset);
         EXPECT_EQ(initialPrevOffset, stack2._prevOffset);
@@ -1154,7 +1154,7 @@ namespace pmm
 
     TEST_F(StrictStackTests, MoveOperator_NullsOutInternalBuffer)
     {
-        [[maybe_unused]] Stack<stack::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack2(256);
+        [[maybe_unused]] Stack<StackPolicy::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack2(256);
         static_cast<void>(stack2 = std::move(stack));
         EXPECT_EQ(nullptr, stack._buffer);
     }
@@ -1165,7 +1165,7 @@ namespace pmm
     {
         const auto initialPointer = stack._buffer;
 
-        Stack<stack::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack2(256);
+        Stack<StackPolicy::Strict, pmm::MemPolicy::Internal, pmm::TelPolicy::Enabled> stack2(256);
         stack2 = std::move(stack);
 
         EXPECT_EQ(initialPointer, stack2._buffer);
@@ -1205,7 +1205,7 @@ namespace pmm
 
     TEST_F(StrictStackTests, MoveOperator_DeletingOriginalStackDoNotDeleteTheNewStacksMemory)
     {
-        Stack<stack::Strict, MemPolicy::Internal, TelPolicy::Enabled> stack2(256);
+        Stack<StackPolicy::Strict, MemPolicy::Internal, TelPolicy::Enabled> stack2(256);
         constexpr auto size = 512;
 
         {
@@ -1256,7 +1256,7 @@ namespace pmm
         // Allocate and clear the stack to ensure there is some data
         const auto stackSize = 4_KB;
         const auto buffer    = new uint8_t[stackSize];
-        Stack<stack::Loose, MemPolicy::External> stack{ buffer, stackSize };
+        Stack<StackPolicy::Loose, MemPolicy::External> stack{ buffer, stackSize };
 
         // Fill the buffer with arbitrary data
         for (size_t i = 0; i < stack.size(); ++i)
